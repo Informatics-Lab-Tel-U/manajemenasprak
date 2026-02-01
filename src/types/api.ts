@@ -11,3 +11,13 @@ export interface ServiceResult<T> {
   data?: T;
   error?: string;
 }
+
+/**
+ * Input type for creating a new Pelanggaran record
+ */
+export interface CreatePelanggaranInput {
+  id_asprak: string;
+  id_jadwal: number;
+  jenis: string;
+  modul?: string;
+}
