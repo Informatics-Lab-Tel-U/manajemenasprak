@@ -5,6 +5,20 @@ import { Trash2, Upload, FileSpreadsheet, Download } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import * as importFetcher from '@/lib/fetchers/importFetcher';
 import * as XLSX from 'xlsx';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { cn } from '@/lib/utils';
 
 export default function DatabasePage() {
   const [termYear, setTermYear] = useState('24');
@@ -181,86 +195,43 @@ export default function DatabasePage() {
 
   return (
     <div className="container">
-      <header style={{ marginBottom: '2rem' }}>
-        <h1 className="title-gradient" style={{ fontSize: '2rem', fontWeight: 'bold' }}>
+      <header className="mb-8">
+        <h1 className="title-gradient text-4xl font-bold">
           Database Manager{' '}
-          <span style={{ fontSize: '1rem', opacity: 0.6, fontWeight: 'normal' }}>
-            (Developer Mode)
-          </span>
+          <span className="text-base opacity-60 font-normal">(Developer Mode)</span>
         </h1>
-        <p style={{ color: 'var(--text-secondary)' }}>Manage imports and cleanup</p>
+        <p className="text-muted-foreground mt-1">Manage imports and cleanup</p>
       </header>
 
       {status && (
-        <div
-          style={{
-            padding: '1rem',
-            borderRadius: 'var(--radius)',
-            marginBottom: '2rem',
-            background:
-              status.type === 'error'
-                ? 'rgba(239, 68, 68, 0.1)'
-                : status.type === 'success'
-                  ? 'rgba(16, 185, 129, 0.1)'
-                  : 'rgba(59, 130, 246, 0.1)',
-            color:
-              status.type === 'error'
-                ? 'var(--danger)'
-                : status.type === 'success'
-                  ? 'var(--success)'
-                  : 'var(--primary)',
-            border: `1px solid ${
-              status.type === 'error'
-                ? 'var(--danger)'
-                : status.type === 'success'
-                  ? 'var(--success)'
-                  : 'var(--primary)'
-            }`,
-          }}
+        <Alert
+          className={cn(
+            'mb-8',
+            status.type === 'error' && 'border-destructive/50 text-destructive',
+            status.type === 'success' && 'border-chart-4/50 text-chart-4',
+            status.type === 'info' && 'border-chart-2/50 text-chart-2'
+          )}
         >
-          {status.message}
-        </div>
+          <AlertDescription>{status.message}</AlertDescription>
+        </Alert>
       )}
 
-      <div
-        style={{
-          display: 'grid',
-          gap: '2rem',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-        }}
-      >
+      <div className="grid gap-8 grid-cols-1 lg:grid-cols-2">
         {/* Import Section - Dropzone */}
-        <div className="card glass">
-          <div
-            style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}
-          >
-            <div
-              style={{
-                padding: '0.75rem',
-                borderRadius: '12px',
-                background: 'rgba(59, 130, 246, 0.1)',
-                color: 'var(--primary)',
-              }}
-            >
-              <Upload size={24} />
-            </div>
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 600 }}>Import Excel Dataset</h3>
-          </div>
-
-          <div style={{ marginBottom: '1.5rem' }}>
-            <label
-              style={{
-                display: 'block',
-                marginBottom: '0.5rem',
-                fontSize: '0.875rem',
-                color: 'var(--text-secondary)',
-              }}
-            >
-              Tahun Ajaran
-            </label>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <div style={{ position: 'relative', width: '80px' }}>
-                <input
+        <Card className="bg-card/80 backdrop-blur-sm shadow-md">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-3">
+              <div className="p-3 rounded-xl bg-chart-2/10 text-chart-2">
+                <Upload size={24} />
+              </div>
+              Import Excel Dataset
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="space-y-2">
+              <Label>Tahun Ajaran</Label>
+              <div className="flex items-center gap-2">
+                <Input
                   required
                   type="number"
                   min="10"
@@ -268,167 +239,101 @@ export default function DatabasePage() {
                   placeholder="YY"
                   value={termYear}
                   onChange={(e) => setTermYear(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    background: 'rgba(0,0,0,0.2)',
-                    border: '1px solid var(--card-border)',
-                    borderRadius: 'var(--radius)',
-                    color: 'white',
-                    textAlign: 'center',
-                  }}
+                  className="w-20 text-center"
                 />
+
+                <span className="text-muted-foreground">/</span>
+
+                <div className="w-20 px-3 py-2 bg-muted/30 rounded-md text-muted-foreground text-center text-sm">
+                  {termYear ? parseInt(termYear) + 1 : 'YY'}
+                </div>
+
+                <span className="text-muted-foreground">-</span>
+
+                <Select value={termSem} onValueChange={(val) => setTermSem(val as '1' | '2')}>
+                  <SelectTrigger className="flex-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectItem value="1">1 (Ganjil)</SelectItem>
+                      <SelectItem value="2">2 (Genap)</SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
               </div>
-
-              <span style={{ color: 'var(--text-muted)' }}>/</span>
-
-              <div
-                style={{
-                  width: '80px',
-                  padding: '0.75rem',
-                  background: 'rgba(255,255,255,0.05)',
-                  borderRadius: 'var(--radius)',
-                  color: 'var(--text-muted)',
-                  textAlign: 'center',
-                }}
-              >
-                {termYear ? parseInt(termYear) + 1 : 'YY'}
-              </div>
-
-              <span style={{ color: 'var(--text-muted)' }}>-</span>
-
-              <select
-                value={termSem}
-                onChange={(e) => setTermSem(e.target.value as '1' | '2')}
-                style={{
-                  flex: 1,
-                  padding: '0.75rem',
-                  background: 'rgba(0,0,0,0.2)',
-                  border: '1px solid var(--card-border)',
-                  borderRadius: 'var(--radius)',
-                  color: 'white',
-                }}
-              >
-                <option value="1">1 (Ganjil)</option>
-                <option value="2">2 (Genap)</option>
-              </select>
-            </div>
-            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
-              Isi ini untuk otomatis mengisi tahun ajaran jika di Excel kosong.
-            </p>
-          </div>
-
-          <div
-            {...getRootProps()}
-            style={{
-              border: '2px dashed var(--card-border)',
-              borderRadius: 'var(--radius)',
-              padding: '3rem',
-              textAlign: 'center',
-              cursor: 'pointer',
-              background: isDragActive ? 'rgba(59, 130, 246, 0.05)' : 'transparent',
-              transition: 'all 0.2s',
-              marginBottom: '1rem',
-            }}
-          >
-            <input {...getInputProps()} />
-            <FileSpreadsheet
-              size={48}
-              style={{ color: 'var(--text-muted)', marginBottom: '1rem' }}
-            />
-            {isDragActive ? (
-              <p style={{ color: 'var(--primary)', fontWeight: 600 }}>
-                Drop the Excel file here...
+              <p className="text-xs text-muted-foreground">
+                Isi ini untuk otomatis mengisi tahun ajaran jika di Excel kosong.
               </p>
-            ) : (
-              <div>
-                <p
-                  style={{ color: 'var(--text-primary)', fontWeight: 500, marginBottom: '0.5rem' }}
-                >
-                  Drag & drop dataset .xlsx here
-                </p>
-                <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-                  or click to select file
-                </p>
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginTop: '1rem' }}>
-                  Must contain sheets: praktikum, mata_kuliah, asprak, jadwal, asprak_praktikum
-                </p>
-              </div>
-            )}
+            </div>
 
-            {loading && <p style={{ marginTop: '1rem', color: 'var(--warning)' }}>Processing...</p>}
-          </div>
+            <div
+              {...getRootProps()}
+              className={cn(
+                'border-2 border-dashed rounded-lg p-12 text-center cursor-pointer transition-all',
+                isDragActive
+                  ? 'border-chart-2 bg-chart-2/5'
+                  : 'border-border bg-transparent hover:border-chart-2/50'
+              )}
+            >
+              <input {...getInputProps()} />
+              <FileSpreadsheet size={48} className="text-muted-foreground mb-4 mx-auto" />
+              {isDragActive ? (
+                <p className="text-chart-2 font-semibold">Drop the Excel file here...</p>
+              ) : (
+                <div className="space-y-2">
+                  <p className="font-medium">Drag & drop dataset .xlsx here</p>
+                  <p className="text-sm text-muted-foreground">or click to select file</p>
+                  <p className="text-xs text-muted-foreground mt-4">
+                    Must contain sheets: praktikum, mata_kuliah, asprak, jadwal, asprak_praktikum
+                  </p>
+                </div>
+              )}
 
-          {/* Download Template Button */}
-          <button
-            onClick={handleDownloadTemplate}
-            className="btn"
-            style={{
-              width: '100%',
-              background: 'rgba(16, 185, 129, 0.1)',
-              border: '1px solid var(--success)',
-              color: 'var(--success)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '0.5rem',
-            }}
-          >
-            <Download size={16} /> Download Template Excel
-          </button>
-          <p
-            style={{
-              marginTop: '0.5rem',
-              fontSize: '0.75rem',
-              color: 'var(--text-muted)',
-              textAlign: 'center',
-            }}
-          >
-            Template includes example rows. Reference files also available in app assets
-            (public/references).
-          </p>
-        </div>
+              {loading && <p className="mt-4 text-chart-4">Processing...</p>}
+            </div>
+
+            {/* Download Template Button */}
+            <Button
+              onClick={handleDownloadTemplate}
+              variant="outline"
+              className="w-full border-chart-4/50 text-chart-4 hover:bg-chart-4/10"
+            >
+              <Download size={16} />
+              Download Template Excel
+            </Button>
+            <p className="text-xs text-muted-foreground text-center">
+              Template includes example rows. Reference files also available in app assets
+              (public/references).
+            </p>
+          </CardContent>
+        </Card>
 
         {/* Danger Zone */}
-        <div className="card glass" style={{ borderColor: 'rgba(239, 68, 68, 0.3)' }}>
-          <div
-            style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}
-          >
-            <div
-              style={{
-                padding: '0.75rem',
-                borderRadius: '12px',
-                background: 'rgba(239, 68, 68, 0.1)',
-                color: 'var(--danger)',
-              }}
-            >
-              <Trash2 size={24} />
-            </div>
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 600, color: 'var(--danger)' }}>
+        <Card className="bg-card/80 backdrop-blur-sm shadow-md border-destructive/30">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-3 text-destructive">
+              <div className="p-3 rounded-xl bg-destructive/10">
+                <Trash2 size={24} />
+              </div>
               Danger Zone
-            </h3>
-          </div>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Tindakan ini tidak dapat dibatalkan. Pastikan Anda tahu apa yang Anda lakukan.
+            </p>
 
-          <p
-            style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', fontSize: '0.875rem' }}
-          >
-            Tindakan ini tidak dapat dibatalkan. Pastikan Anda tahu apa yang Anda lakukan.
-          </p>
-
-          <button
-            onClick={handleClear}
-            disabled={loading}
-            className="btn"
-            style={{
-              background: 'rgba(239, 68, 68, 0.1)',
-              color: 'var(--danger)',
-              border: '1px solid var(--danger)',
-              width: '100%',
-            }}
-          >
-            Clear All Database Content
-          </button>
-        </div>
+            <Button
+              onClick={handleClear}
+              disabled={loading}
+              variant="destructive"
+              className="w-full"
+            >
+              Clear All Database Content
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

@@ -6,8 +6,8 @@ import { Home, Users, Calendar, AlertTriangle, Settings, Database } from 'lucide
 import styles from './Sidebar.module.css';
 
 const navItems = [
-  { label: 'Dashboard', href: '/', icon: Home },
-  { label: 'Data Asprak', href: '/asprak', icon: Users },
+  { label: 'Overview', href: '/', icon: Home },
+  { label: 'Data Asisten Praktikum', href: '/asprak', icon: Users },
   { label: 'Jadwal Praktikum', href: '/jadwal', icon: Calendar },
   { label: 'Pelanggaran', href: '/pelanggaran', icon: AlertTriangle },
   { label: 'Database Manager', href: '/database', icon: Database },

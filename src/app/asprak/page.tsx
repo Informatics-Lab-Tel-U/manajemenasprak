@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { Download } from 'lucide-react';
+import { Download, Plus } from 'lucide-react';
 import { Asprak } from '@/types/database';
 import { useAsprak } from '@/hooks/useAsprak';
 import { usePraktikum } from '@/hooks/usePraktikum';
@@ -12,6 +12,7 @@ import AsprakTable from '@/components/asprak/AsprakTable';
 import AsprakAddModal from '@/components/asprak/AsprakAddModal';
 import AsprakDetailsModal from '@/components/asprak/AsprakDetailsModal';
 import { AsprakFormData } from '@/components/asprak/AsprakForm';
+import { Button } from '@/components/ui/button';
 
 interface AsprakWithAssignments extends Asprak {
   assignments?: AsprakAssignment[];
@@ -83,31 +84,22 @@ export default function AsprakPage() {
   return (
     <div className="container" style={{ position: 'relative' }}>
       {/* Header */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '2rem',
-        }}
-      >
+      <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="title-gradient" style={{ fontSize: '2rem', fontWeight: 'bold' }}>
-            Data Asprak
+            Data Asisten Praktikum
           </h1>
-          <p style={{ color: 'var(--text-secondary)' }}>Manage assistant pool</p>
+          <p className="text-muted-foreground">Manage assistant pool</p>
         </div>
-        <div style={{ display: 'flex', gap: '1rem' }}>
-          <button className="btn btn-primary" onClick={() => setShowAddModal(true)}>
-            + Input Manual
-          </button>
-          <button
-            className="btn"
-            style={{ border: '1px solid var(--card-border)' }}
-            onClick={() => alert('Export feature pending...')}
-          >
-            <Download size={18} /> Export Data
-          </button>
+        <div className="flex gap-3 items-center">
+          <Button onClick={() => setShowAddModal(true)}>
+            <Plus size={18} />
+            Input Manual
+          </Button>
+          <Button variant="outline" onClick={() => alert('Export feature pending...')}>
+            <Download size={18} />
+            Export Data
+          </Button>
         </div>
       </div>
 
@@ -130,6 +122,7 @@ export default function AsprakPage() {
           availablePraktikums={availablePraktikums}
           onSubmit={handleFormSubmit}
           onClose={() => setShowAddModal(false)}
+          open={showAddModal}
         />
       )}
 
@@ -139,6 +132,7 @@ export default function AsprakPage() {
           asprak={selectedAsprak}
           loading={loadingDetails}
           onClose={closeDetails}
+          open={!!selectedAsprak}
         />
       )}
     </div>

@@ -4,6 +4,14 @@ import { useState, useMemo } from 'react';
 import { Calendar as CalendarIcon, Clock, MapPin, Filter, X, User, Users } from 'lucide-react';
 import { Jadwal } from '@/types/database';
 import { useJadwal } from '@/hooks/useJadwal';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 type GroupedSchedule = {
   [sesi: number]: Jadwal[];
@@ -71,70 +79,43 @@ export default function JadwalPage() {
           <h1 className="title-gradient" style={{ fontSize: '2rem', fontWeight: 'bold' }}>
             Jadwal Praktikum
           </h1>
-          <p style={{ color: 'var(--text-secondary)' }}>Master Schedule</p>
+          <p className="text-muted-foreground">Kelola jadwal praktikum asisten praktikum</p>
         </div>
 
         <div style={{ display: 'flex', gap: '1rem' }}>
           {/* Term Selector */}
-          <div>
-            <select
-              value={selectedTerm}
-              onChange={(e) => setSelectedTerm(e.target.value)}
-              style={{
-                padding: '0.75rem 1rem',
-                borderRadius: 'var(--radius)',
-                background: 'var(--primary)', // Highlighted
-                color: 'white',
-                border: 'none',
-                outline: 'none',
-                cursor: 'pointer',
-                fontWeight: 600,
-              }}
-            >
-              {availableTerms.map((t) => (
-                <option key={t} value={t} style={{ color: 'black' }}>
-                  {t}
-                </option>
-              ))}
-            </select>
-          </div>
+          <Select value={selectedTerm} onValueChange={setSelectedTerm}>
+            <SelectTrigger className="w-[180px] font-medium">
+              <SelectValue placeholder="Select term" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                {availableTerms.map((t) => (
+                  <SelectItem key={t} value={t}>
+                    {t}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
 
           {/* Room Filter Dropdown */}
-          <div style={{ position: 'relative' }}>
-            <div
-              style={{
-                position: 'absolute',
-                left: '1rem',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                color: 'var(--text-muted)',
-                pointerEvents: 'none',
-              }}
-            >
-              <Filter size={16} />
-            </div>
-            <select
-              value={selectedRoom}
-              onChange={(e) => setSelectedRoom(e.target.value)}
-              style={{
-                padding: '0.75rem 1rem 0.75rem 2.5rem',
-                borderRadius: 'var(--radius)',
-                background: 'rgba(0,0,0,0.2)',
-                color: 'white',
-                border: '1px solid var(--card-border)',
-                outline: 'none',
-                cursor: 'pointer',
-                minWidth: '180px',
-              }}
-            >
-              <option value="All Rooms">All Rooms</option>
-              {uniqueRooms.map((r) => (
-                <option key={r} value={r}>
-                  {r}
-                </option>
-              ))}
-            </select>
-          </div>
+          <Select value={selectedRoom} onValueChange={setSelectedRoom}>
+            <SelectTrigger className="w-[180px]">
+              <Filter size={16} className="mr-2" />
+              <SelectValue placeholder="All Rooms" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectItem value="All Rooms">All Rooms</SelectItem>
+                {uniqueRooms.map((r) => (
+                  <SelectItem key={r} value={r}>
+                    {r}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -153,17 +134,11 @@ export default function JadwalPage() {
           <button
             key={day}
             onClick={() => setSelectedDay(day)}
-            style={{
-              background: selectedDay === day ? 'var(--primary)' : 'transparent',
-              color: selectedDay === day ? 'white' : 'var(--text-secondary)',
-              border: selectedDay === day ? 'none' : '1px solid rgba(255,255,255,0.1)',
-              borderRadius: '2rem',
-              padding: '0.5rem 1.5rem',
-              whiteSpace: 'nowrap',
-              cursor: 'pointer',
-              transition: 'all 0.2s',
-              fontWeight: 500,
-            }}
+            className={`px-6 py-2 rounded-full font-medium transition-all whitespace-nowrap ${
+              selectedDay === day
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-transparent text-muted-foreground border border-border hover:bg-accent hover:text-accent-foreground'
+            }`}
           >
             {day}
           </button>
@@ -171,11 +146,9 @@ export default function JadwalPage() {
       </div>
 
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
-          Loading schedule...
-        </div>
+        <div className="text-center py-12 text-muted-foreground">Loading schedule...</div>
       ) : filteredJadwal.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
+        <div className="text-center py-12 text-muted-foreground">
           <p>
             No schedule found for {selectedDay}{' '}
             {selectedRoom !== 'All Rooms' ? `in ${selectedRoom}` : ''}.
@@ -205,43 +178,15 @@ export default function JadwalPage() {
                     gap: '0.25rem',
                   }}
                 >
-                  <span
-                    style={{
-                      fontSize: '1.25rem',
-                      fontWeight: 'bold',
-                      color: 'var(--text-primary)',
-                    }}
-                  >
-                    {timeStart}
-                  </span>
-                  <span
-                    style={{
-                      fontSize: '0.875rem',
-                      color: 'var(--text-muted)',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.05em',
-                    }}
-                  >
+                  <span className="text-xl font-bold text-foreground">{timeStart}</span>
+                  <span className="text-sm text-muted-foreground uppercase tracking-wide">
                     Sesi {sesi}
                   </span>
                 </div>
 
                 {/* Timeline Line */}
-                <div
-                  style={{ position: 'relative', width: '2px', background: 'var(--card-border)' }}
-                >
-                  <div
-                    style={{
-                      position: 'absolute',
-                      top: '24px',
-                      left: '-5px',
-                      width: '12px',
-                      height: '12px',
-                      borderRadius: '50%',
-                      background: 'var(--primary)',
-                      boxShadow: '0 0 0 4px rgba(59, 130, 246, 0.2)',
-                    }}
-                  />
+                <div className="relative w-0.5 bg-border">
+                  <div className="absolute top-6 -left-1.5 w-3 h-3 rounded-full bg-primary shadow-[0_0_0_4px_hsl(var(--primary)/0.2)]" />
                 </div>
 
                 {/* Events Grid */}
@@ -257,15 +202,7 @@ export default function JadwalPage() {
                       <div
                         key={jadwal.id}
                         onClick={() => setSelectedJadwal(jadwal)}
-                        className="card glass"
-                        style={{
-                          padding: '1rem',
-                          cursor: 'pointer',
-                          borderLeft: '4px solid var(--secondary)',
-                          transition: 'transform 0.2s',
-                        }}
-                        onMouseEnter={(e) => (e.currentTarget.style.transform = 'translateY(-2px)')}
-                        onMouseLeave={(e) => (e.currentTarget.style.transform = 'translateY(0)')}
+                        className="bg-card/80 backdrop-blur-sm rounded-lg p-4 cursor-pointer border-l-4 border-l-primary transition-all hover:-translate-y-0.5 hover:shadow-lg shadow-md"
                       >
                         <div
                           style={{
@@ -274,17 +211,8 @@ export default function JadwalPage() {
                             marginBottom: '0.5rem',
                           }}
                         >
-                          <span style={{ fontWeight: 600, color: 'var(--secondary)' }}>
-                            {jadwal.kelas}
-                          </span>
-                          <span
-                            style={{
-                              fontSize: '0.75rem',
-                              background: 'rgba(255,255,255,0.1)',
-                              padding: '0.1rem 0.5rem',
-                              borderRadius: '4px',
-                            }}
-                          >
+                          <span className="font-semibold text-primary">{jadwal.kelas}</span>
+                          <span className="text-xs bg-secondary/50 text-secondary-foreground px-2 py-0.5 rounded">
                             {jadwal.ruangan}
                           </span>
                         </div>
@@ -300,25 +228,9 @@ export default function JadwalPage() {
                         >
                           {jadwal.mata_kuliah?.nama_lengkap}
                         </h4>
-                        <div
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.5rem',
-                            fontSize: '0.75rem',
-                            color: 'var(--text-muted)',
-                          }}
-                        >
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
                           <User size={14} />
-                          <span
-                            style={{
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap',
-                            }}
-                          >
-                            {jadwal.dosen || 'Dosen TBD'}
-                          </span>
+                          <span className="truncate">{jadwal.dosen || 'Dosen TBD'}</span>
                         </div>
                       </div>
                     ))}
@@ -347,7 +259,7 @@ export default function JadwalPage() {
           onClick={() => setSelectedJadwal(null)}
         >
           <div
-            className="card glass"
+            className="bg-card/95 backdrop-blur-md rounded-lg shadow-2xl"
             style={{ width: '100%', maxWidth: '500px', position: 'relative' }}
             onClick={(e) => e.stopPropagation()}
           >
