@@ -254,10 +254,3 @@ npx tsx scripts/test_fetch.ts
 ## 📄 License
 
 Private - Internal Use Only
-
----
-
-**Catatan:**
-
-- Asprak ARS bisa digunakan untuk periode berbeda (contoh: 2425-1, 2425-2)
-- Yang menjadi unique identifier adalah NIM dan Nama, bukan Kode
