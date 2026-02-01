@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import { Pelanggaran } from '@/types/database';
+import { CreatePelanggaranInput } from '@/types/api';
 import { logger } from '@/lib/logger';
 
 export async function getAllPelanggaran(): Promise<Pelanggaran[]> {
@@ -30,13 +31,6 @@ export async function getAllPelanggaran(): Promise<Pelanggaran[]> {
     return [];
   }
   return data as Pelanggaran[];
-}
-
-export interface CreatePelanggaranInput {
-  id_asprak: string;
-  id_jadwal: number;
-  jenis: string;
-  modul?: string;
 }
 
 export async function createPelanggaran(input: CreatePelanggaranInput): Promise<Pelanggaran> {
