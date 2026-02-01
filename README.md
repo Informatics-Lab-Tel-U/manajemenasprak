@@ -27,16 +27,34 @@ Sistem internal CASLAB/ASLAB dengan fokus utama:
 ```
 webapp/
 ├── src/
-│   ├── app/          # Next.js App Router pages
-│   ├── components/   # React components
-│   ├── types/        # TypeScript type definitions
-│   └── utils/        # Utility functions
-├── docs/             # Dokumentasi project
-│   ├── md/           # Markdown dokumentasi
-│   └── datasets/     # Sample data (CSV, Excel)
-├── scripts/          # Utility scripts (seeding, testing)
-├── public/           # Static assets
-└── db/               # Database related files
+│   ├── app/              # Next.js App Router (pages & API routes)
+│   │   ├── api/          # API endpoints
+│   │   ├── asprak/       # Asprak management page
+│   │   ├── jadwal/       # Scheduling page
+│   │   ├── database/     # Database management page
+│   │   ├── pelanggaran/  # Violation tracking page
+│   │   └── layout.tsx    # Root layout
+│   ├── components/       # React components
+│   │   ├── asprak/       # Asprak-specific components
+│   │   ├── layout/       # Layout components (Sidebar)
+│   │   └── ui/           # Reusable UI components
+│   ├── hooks/            # Custom React hooks
+│   ├── lib/              # Libraries & utilities
+│   │   └── fetchers/     # API client fetchers
+│   ├── services/         # Server-side services (Supabase)
+│   ├── types/            # TypeScript type definitions
+│   ├── utils/            # Utility functions
+│   └── constants/        # Application constants
+├── docs/                 # Project documentation
+│   ├── md/               # Markdown docs
+│   └── datasets/         # Sample data (CSV, Excel)
+├── scripts/              # Utility scripts (seeding, testing)
+├── public/               # Static assets
+│   └── references/       # Reference data
+├── .vscode/              # VS Code settings
+├── .prettierrc           # Prettier config
+├── .gitignore            # Git ignore rules
+└── package.json          # Dependencies & scripts
 ```
 
 ## 📚 Dokumentasi
