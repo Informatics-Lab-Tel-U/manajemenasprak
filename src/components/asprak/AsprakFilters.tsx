@@ -1,4 +1,6 @@
 import { Search } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface AsprakFiltersProps {
   searchQuery: string;
@@ -14,74 +16,31 @@ export default function AsprakFilters({
   onFilterChange,
 }: AsprakFiltersProps) {
   return (
-    <div
-      style={{
-        display: 'flex',
-        gap: '1rem',
-        paddingBottom: '1.5rem',
-        borderBottom: '1px solid var(--card-border)',
-        alignItems: 'center',
-      }}
-    >
-      {/* Search Input */}
-      <div style={{ position: 'relative', flex: 1 }}>
+    <div className="flex gap-4 pb-6 border-b border-border items-center">
+      <div className="relative flex-1">
         <Search
           size={18}
-          style={{
-            position: 'absolute',
-            left: '1rem',
-            top: '50%',
-            transform: 'translateY(-50%)',
-            color: 'var(--text-muted)',
-          }}
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
         />
-        <input
+        <Input
           type="text"
           placeholder="Search by Name, NIM, or Code..."
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
-          style={{
-            width: '100%',
-            padding: '0.75rem 1rem 0.75rem 2.75rem',
-            borderRadius: 'var(--radius)',
-            background: 'rgba(0,0,0,0.2)',
-            border: '1px solid var(--card-border)',
-            color: 'white',
-            outline: 'none',
-          }}
+          className="pl-10"
         />
       </div>
 
-      {/* Filter Buttons */}
-      <div
-        style={{
-          display: 'flex',
-          gap: '0.5rem',
-          background: 'rgba(0,0,0,0.2)',
-          padding: '0.25rem',
-          borderRadius: 'var(--radius)',
-          border: '1px solid var(--card-border)',
-        }}
+      <Tabs
+        value={filterStatus}
+        onValueChange={(val) => onFilterChange(val as 'active' | 'inactive' | 'all')}
       >
-        {(['active', 'inactive', 'all'] as const).map((status) => (
-          <button
-            key={status}
-            onClick={() => onFilterChange(status)}
-            style={{
-              padding: '0.5rem 1rem',
-              borderRadius: '0.5rem',
-              border: 'none',
-              background: filterStatus === status ? 'var(--primary)' : 'transparent',
-              color: filterStatus === status ? 'white' : 'var(--text-secondary)',
-              cursor: 'pointer',
-              fontSize: '0.875rem',
-              textTransform: 'capitalize',
-            }}
-          >
-            {status}
-          </button>
-        ))}
-      </div>
+        <TabsList>
+          <TabsTrigger value="active">Active</TabsTrigger>
+          <TabsTrigger value="inactive">Inactive</TabsTrigger>
+          <TabsTrigger value="all">All</TabsTrigger>
+        </TabsList>
+      </Tabs>
     </div>
   );
 }
