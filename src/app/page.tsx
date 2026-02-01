@@ -2,6 +2,9 @@ import { Users, BookOpen, Calendar, AlertTriangle } from 'lucide-react';
 import { Jadwal } from '@/types/database';
 import DashboardCharts from '@/components/DashboardCharts';
 import { StatCard } from '@/components/ui/StatCard';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { getStats } from '@/services/databaseService';
 import { getTodaySchedule } from '@/services/jadwalService';
 
@@ -13,23 +16,14 @@ export default async function Home() {
 
   return (
     <div className="container">
-      <header style={{ marginBottom: '2rem' }}>
-        <h1 className="title-gradient" style={{ fontSize: '2rem', fontWeight: 'bold' }}>
-          Dashboard Overview
-        </h1>
-        <p style={{ color: 'var(--text-secondary)' }}>
-          Welcome back, Admin. Here's what's happening today.
+      <header className="mb-8">
+        <h1 className="title-gradient text-4xl font-bold">Overview</h1>
+        <p className="text-muted-foreground mt-1">
+          Selamat datang di portal admin Manajemen Asisten Praktikum
         </p>
       </header>
 
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-          gap: '1.5rem',
-          marginBottom: '3rem',
-        }}
-      >
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
         <StatCard
           title="Total Asprak"
           value={stats.asprakCount}
@@ -62,78 +56,69 @@ export default async function Home() {
         />
       </div>
 
-      <div style={{ marginBottom: '3rem' }}>
+      <div className="mb-12">
         <DashboardCharts
           asprakByAngkatan={stats.asprakByAngkatan}
           jadwalByDay={stats.jadwalByDay}
         />
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.5rem' }}>
-        <div className="card glass">
-          <h3 style={{ fontSize: '1.25rem', marginBottom: '1.5rem', fontWeight: 600 }}>
-            Jadwal Praktikum Hari Ini
-          </h3>
-          <div className="table-container">
-            <table>
-              <thead>
-                <tr>
-                  <th>Jam</th>
-                  <th>Mata Kuliah</th>
-                  <th>Kelas</th>
-                  <th>Ruangan</th>
-                </tr>
-              </thead>
-              <tbody>
-                {todaySchedule.length === 0 ? (
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <Card className="lg:col-span-2 bg-card/80 backdrop-blur-sm shadow-md">
+          <CardHeader>
+            <h3 className="text-xl font-semibold">Jadwal Praktikum Hari Ini</h3>
+          </CardHeader>
+          <CardContent>
+            <div className="table-container">
+              <table>
+                <thead>
                   <tr>
-                    <td
-                      colSpan={4}
-                      style={{ textAlign: 'center', padding: '1rem', color: 'var(--text-muted)' }}
-                    >
-                      No schedule for today (
-                      {new Date().toLocaleDateString('id-ID', { weekday: 'long' })}).
-                    </td>
+                    <th>Jam</th>
+                    <th>Mata Kuliah</th>
+                    <th>Kelas</th>
+                    <th>Ruangan</th>
                   </tr>
-                ) : (
-                  todaySchedule.map((s) => (
-                    <tr key={s.id}>
-                      <td>{s.jam}</td>
-                      <td>{s.mata_kuliah?.nama_lengkap}</td>
-                      <td>{s.kelas}</td>
-                      <td>
-                        <span className="badge badge-blue">{s.ruangan || 'Online'}</span>
+                </thead>
+                <tbody>
+                  {todaySchedule.length === 0 ? (
+                    <tr>
+                      <td colSpan={4} className="text-center py-4 text-muted-foreground">
+                        No schedule for today (
+                        {new Date().toLocaleDateString('id-ID', { weekday: 'long' })}).
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
+                  ) : (
+                    todaySchedule.map((s) => (
+                      <tr key={s.id}>
+                        <td>{s.jam}</td>
+                        <td>{s.mata_kuliah?.nama_lengkap}</td>
+                        <td>{s.kelas}</td>
+                        <td>
+                          <Badge variant="secondary">{s.ruangan || 'Online'}</Badge>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
 
-        <div className="card glass">
-          <h3 style={{ fontSize: '1.25rem', marginBottom: '1.5rem', fontWeight: 600 }}>
-            Quick Actions
-          </h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <button className="btn btn-primary" style={{ width: '100%' }}>
-              + Input Pelanggaran
-            </button>
-            <button
-              className="btn"
-              style={{ background: 'rgba(255,255,255,0.1)', color: 'white', width: '100%' }}
-            >
+        <Card className="bg-card/80 backdrop-blur-sm shadow-md">
+          <CardHeader>
+            <h3 className="text-xl font-semibold">Quick Actions</h3>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-3">
+            <Button className="w-full">+ Input Pelanggaran</Button>
+            <Button variant="outline" className="w-full">
               View Schedule
-            </button>
-            <button
-              className="btn"
-              style={{ background: 'rgba(255,255,255,0.1)', color: 'white', width: '100%' }}
-            >
+            </Button>
+            <Button variant="outline" className="w-full">
               Manage Asprak Pool
-            </button>
-          </div>
-        </div>
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
