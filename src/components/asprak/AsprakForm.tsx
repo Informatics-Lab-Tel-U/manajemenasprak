@@ -1,5 +1,17 @@
 import { useState } from 'react';
 import { formatTerm } from '@/utils/term';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface AsprakFormProps {
   existingCodes: string[];
@@ -67,69 +79,38 @@ export default function AsprakForm({
 
   return (
     <form onSubmit={handleSubmit}>
-      <div style={{ display: 'grid', gap: '1rem' }}>
-        {/* Nama Lengkap */}
-        <div>
-          <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem' }}>
-            Nama Lengkap
-          </label>
-          <input
+      <div className="grid gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="nama_lengkap">Nama Lengkap</Label>
+          <Input
+            id="nama_lengkap"
             required
             type="text"
-            className="input-field"
             value={formData.nama_lengkap}
             onChange={(e) => setFormData({ ...formData, nama_lengkap: e.target.value })}
-            style={{
-              width: '100%',
-              padding: '0.75rem',
-              background: 'rgba(0,0,0,0.2)',
-              border: '1px solid var(--card-border)',
-              borderRadius: 'var(--radius)',
-              color: 'white',
-            }}
           />
         </div>
 
-        {/* NIM and Kode */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-          <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem' }}>
-              NIM
-            </label>
-            <input
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="nim">NIM</Label>
+            <Input
+              id="nim"
               required
               type="text"
-              className="input-field"
               value={formData.nim}
               onChange={(e) => setFormData({ ...formData, nim: e.target.value })}
-              style={{
-                width: '100%',
-                padding: '0.75rem',
-                background: 'rgba(0,0,0,0.2)',
-                border: '1px solid var(--card-border)',
-                borderRadius: 'var(--radius)',
-                color: 'white',
-              }}
             />
           </div>
-          <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem' }}>
-              Kode (3 Huruf)
-            </label>
-            <input
+          <div className="space-y-2">
+            <Label htmlFor="kode">Kode (3 Huruf)</Label>
+            <Input
+              id="kode"
               required
               type="text"
               maxLength={3}
               list="code-suggestions"
-              style={{
-                textTransform: 'uppercase',
-                width: '100%',
-                padding: '0.75rem',
-                background: 'rgba(0,0,0,0.2)',
-                border: '1px solid var(--card-border)',
-                borderRadius: 'var(--radius)',
-                color: 'white',
-              }}
+              className="uppercase"
               value={formData.kode}
               onChange={(e) => setFormData({ ...formData, kode: e.target.value.toUpperCase() })}
             />
@@ -141,147 +122,94 @@ export default function AsprakForm({
           </div>
         </div>
 
-        {/* Angkatan */}
-        <div>
-          <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem' }}>
-            Angkatan
-          </label>
-          <input
+        <div className="space-y-2">
+          <Label htmlFor="angkatan">Angkatan</Label>
+          <Input
+            id="angkatan"
             required
             type="number"
-            className="input-field"
             value={formData.angkatan}
             onChange={(e) => setFormData({ ...formData, angkatan: e.target.value })}
-            style={{
-              width: '100%',
-              padding: '0.75rem',
-              background: 'rgba(0,0,0,0.2)',
-              border: '1px solid var(--card-border)',
-              borderRadius: 'var(--radius)',
-              color: 'white',
-            }}
           />
         </div>
 
-        <hr style={{ borderColor: 'var(--card-border)', margin: '1rem 0' }} />
+        <hr className="border-border my-4" />
 
-        {/* Tahun Ajaran */}
-        <div style={{ marginBottom: '1rem' }}>
-          <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem' }}>
-            Tahun Ajaran Penugasan
-          </label>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <div style={{ position: 'relative', width: '80px' }}>
-              <input
-                required
-                type="number"
-                min="10"
-                max="99"
-                placeholder="YY"
-                value={termYear}
-                onChange={(e) => setTermYear(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  background: 'rgba(0,0,0,0.2)',
-                  border: '1px solid var(--card-border)',
-                  borderRadius: 'var(--radius)',
-                  color: 'white',
-                  textAlign: 'center',
-                }}
-              />
-            </div>
+        <div className="space-y-2">
+          <Label>Tahun Ajaran Penugasan</Label>
+          <div className="flex items-center gap-2">
+            <Input
+              required
+              type="number"
+              min="10"
+              max="99"
+              placeholder="YY"
+              value={termYear}
+              onChange={(e) => setTermYear(e.target.value)}
+              className="w-20 text-center"
+            />
 
-            <span style={{ color: 'var(--text-muted)' }}>/</span>
+            <span className="text-muted-foreground">/</span>
 
-            <div
-              style={{
-                width: '80px',
-                padding: '0.75rem',
-                background: 'rgba(255,255,255,0.05)',
-                borderRadius: 'var(--radius)',
-                color: 'var(--text-muted)',
-                textAlign: 'center',
-              }}
-            >
+            <div className="w-20 px-3 py-2 bg-muted/30 rounded-md text-muted-foreground text-center text-sm">
               {termYear ? parseInt(termYear) + 1 : 'YY'}
             </div>
 
-            <span style={{ color: 'var(--text-muted)' }}>-</span>
+            <span className="text-muted-foreground">-</span>
 
-            <select
-              value={termSem}
-              onChange={(e) => setTermSem(e.target.value as '1' | '2')}
-              style={{
-                flex: 1,
-                padding: '0.75rem',
-                background: 'rgba(0,0,0,0.2)',
-                border: '1px solid var(--card-border)',
-                borderRadius: 'var(--radius)',
-                color: 'white',
-              }}
-            >
-              <option value="1">1 (Ganjil)</option>
-              <option value="2">2 (Genap)</option>
-            </select>
+            <Select value={termSem} onValueChange={(val) => setTermSem(val as '1' | '2')}>
+              <SelectTrigger className="flex-1">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectItem value="1">1 (Ganjil)</SelectItem>
+                  <SelectItem value="2">2 (Genap)</SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
           </div>
-          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+          <p className="text-xs text-muted-foreground mt-1">
             Format: {termYear}
             {parseInt(termYear) + 1}-{termSem} (e.g. 2425-2)
           </p>
         </div>
 
-        {/* Praktikum Selection */}
-        <div>
-          <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem' }}>
-            Pilih Praktikum (Multi-select)
-          </label>
-          <div
-            style={{
-              maxHeight: '150px',
-              overflowY: 'auto',
-              border: '1px solid var(--card-border)',
-              borderRadius: 'var(--radius)',
-              padding: '0.5rem',
-            }}
-          >
+        <div className="space-y-2">
+          <Label>Pilih Praktikum (Multi-select)</Label>
+          <div className="max-h-[150px] overflow-y-auto border border-border rounded-md p-2 space-y-2">
             {availablePraktikums.map((p) => (
-              <label
-                key={p.id}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  padding: '0.25rem',
-                  cursor: 'pointer',
-                }}
-              >
-                <input
-                  type="checkbox"
+              <div key={p.id} className="flex items-center space-x-2">
+                <Checkbox
+                  id={p.id}
                   checked={selectedMkIds.includes(p.nama)}
-                  onChange={(e) => {
-                    if (e.target.checked) {
+                  onCheckedChange={(checked) => {
+                    if (checked) {
                       setSelectedMkIds([...selectedMkIds, p.nama]);
                     } else {
                       setSelectedMkIds(selectedMkIds.filter((id) => id !== p.nama));
                     }
                   }}
                 />
-                {p.nama}
-              </label>
+                <label
+                  htmlFor={p.id}
+                  className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                >
+                  {p.nama}
+                </label>
+              </div>
             ))}
           </div>
         </div>
       </div>
 
-      {/* Action Buttons */}
-      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '2rem' }}>
-        <button type="button" className="btn" onClick={onCancel}>
+      <div className="flex justify-end gap-3 mt-6">
+        <Button type="button" variant="outline" onClick={onCancel}>
           Cancel
-        </button>
-        <button type="submit" className="btn btn-primary" disabled={loading}>
+        </Button>
+        <Button type="submit" disabled={loading}>
           {loading ? 'Saving...' : 'Simpan Data'}
-        </button>
+        </Button>
       </div>
     </form>
   );

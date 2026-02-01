@@ -1,10 +1,13 @@
 import AsprakForm, { AsprakFormData } from './AsprakForm';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface AsprakAddModalProps {
   existingCodes: string[];
   availablePraktikums: { id: string; nama: string }[];
   onSubmit: (data: AsprakFormData) => Promise<void>;
   onClose: () => void;
+  open: boolean;
 }
 
 export default function AsprakAddModal({
@@ -12,41 +15,25 @@ export default function AsprakAddModal({
   availablePraktikums,
   onSubmit,
   onClose,
+  open,
 }: AsprakAddModalProps) {
   return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 100,
-        background: 'rgba(0,0,0,0.7)',
-        backdropFilter: 'blur(4px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '1rem',
-      }}
-    >
-      <div
-        className="card glass"
-        style={{
-          width: '100%',
-          maxWidth: '500px',
-          maxHeight: '90vh',
-          overflowY: 'auto',
-        }}
-      >
-        <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1.5rem' }}>
-          Input Manual Asprak
-        </h2>
-
-        <AsprakForm
-          existingCodes={existingCodes}
-          availablePraktikums={availablePraktikums}
-          onSubmit={onSubmit}
-          onCancel={onClose}
-        />
-      </div>
-    </div>
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="flex max-h-[min(700px,85vh)] flex-col gap-0 p-0 sm:max-w-lg">
+        <DialogHeader className="contents space-y-0 text-left">
+          <DialogTitle className="border-b px-6 py-4">Input Manual Asprak</DialogTitle>
+          <ScrollArea className="flex max-h-full flex-col overflow-hidden">
+            <div className="px-6 py-4">
+              <AsprakForm
+                existingCodes={existingCodes}
+                availablePraktikums={availablePraktikums}
+                onSubmit={onSubmit}
+                onCancel={onClose}
+              />
+            </div>
+          </ScrollArea>
+        </DialogHeader>
+      </DialogContent>
+    </Dialog>
   );
 }
