@@ -20,7 +20,8 @@ export async function getJadwalByTerm(term: string): Promise<Jadwal[]> {
         nama_lengkap,
         program_studi,
         praktikum:Praktikum!inner (
-          tahun_ajaran
+          tahun_ajaran,
+          nama
         )
       )
     `
