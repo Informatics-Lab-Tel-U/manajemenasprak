@@ -18,6 +18,10 @@ export type MataKuliah = {
   id_praktikum: string;
   nama_lengkap: string;
   program_studi: string;
+  praktikum?: {
+    nama: string;
+    tahun_ajaran: string;
+  };
 };
 
 export type Jadwal = {

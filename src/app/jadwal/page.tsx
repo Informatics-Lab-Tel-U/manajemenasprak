@@ -1,8 +1,6 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Calendar as CalendarIcon, Clock, MapPin, Filter, X, User, Users } from 'lucide-react';
-import { Jadwal } from '@/types/database';
 import { useJadwal } from '@/hooks/useJadwal';
 import {
   Select,
@@ -12,9 +10,28 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Filter, X, Clock, MapPin, User, Users, ChevronRight } from 'lucide-react';
+import { Jadwal } from '@/types/database';
 
-type GroupedSchedule = {
-  [sesi: number]: Jadwal[];
+// Helper to generate consistent colors for courses
+const getCourseColor = (name: string) => {
+  const colors = [
+    '#f87171', // red-400
+    '#fb923c', // orange-400
+    '#facc15', // yellow-400
+    '#4ade80', // green-400
+    '#22d3ee', // cyan-400
+    '#60a5fa', // blue-400
+    '#818cf8', // indigo-400
+    '#c084fc', // purple-400
+    '#f472b6', // pink-400
+    '#fb7185', // rose-400
+  ];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return colors[Math.abs(hash) % colors.length];
 };
 
 export default function JadwalPage() {
@@ -26,11 +43,10 @@ export default function JadwalPage() {
     loading,
   } = useJadwal();
 
-  const [selectedDay, setSelectedDay] = useState('SENIN');
-  const [selectedRoom, setSelectedRoom] = useState('All Rooms');
-
   const [selectedJadwal, setSelectedJadwal] = useState<Jadwal | null>(null);
+  const [showSessionId, setShowSessionId] = useState(false);
 
+  // 1. Get Unique Rooms (Sorted)
   const uniqueRooms = useMemo(() => {
     const rooms = new Set<string>();
     jadwalList.forEach((j) => {
@@ -39,309 +55,237 @@ export default function JadwalPage() {
     return Array.from(rooms).sort();
   }, [jadwalList]);
 
+  // 2. Structure Data
   const days = ['SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU'];
-
-  const filteredJadwal = useMemo(() => {
-    let list = jadwalList;
-    if (selectedDay !== 'ALL') {
-      list = list.filter((j) => j.hari === selectedDay);
-    }
-    if (selectedRoom !== 'All Rooms') {
-      list = list.filter((j) => j.ruangan === selectedRoom);
-    }
-    return list;
-  }, [jadwalList, selectedDay, selectedRoom]);
-
-  const groupedBySesi = useMemo(() => {
-    const groups: GroupedSchedule = {};
-    filteredJadwal.forEach((j) => {
-      if (!groups[j.sesi]) groups[j.sesi] = [];
-      groups[j.sesi].push(j);
+  
+  const uniqueSessions = useMemo(() => {
+    const map = new Map<number, string>();
+    jadwalList.forEach(j => {
+      if (j.sesi && j.jam) {
+        map.set(j.sesi, j.jam.substring(0, 5)); 
+      }
     });
-    return groups;
-  }, [filteredJadwal]);
+    return Array.from(map.entries())
+      .sort((a, b) => a[0] - b[0])
+      .map(([sesi, jam]) => ({ sesi, jam })); 
+  }, [jadwalList]);
 
-  const sessions = Object.keys(groupedBySesi)
-    .map(Number)
-    .sort((a, b) => a - b);
+  const scheduleMatrix = useMemo(() => {
+    const matrix: Record<string, Record<number, Record<string, Jadwal>>> = {};
+    jadwalList.forEach(j => {
+      if (!j.hari || !j.sesi || !j.ruangan) return;
+      if (!matrix[j.hari]) matrix[j.hari] = {};
+      if (!matrix[j.hari][j.sesi]) matrix[j.hari][j.sesi] = {};
+      matrix[j.hari][j.sesi][j.ruangan] = j;
+    });
+    return matrix;
+  }, [jadwalList]);
 
   return (
-    <div className="container" style={{ position: 'relative' }}>
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'end',
-          marginBottom: '2rem',
-        }}
-      >
+    <div className="container min-h-screen p-4 sm:p-8">
+      <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="title-gradient" style={{ fontSize: '2rem', fontWeight: 'bold' }}>
-            Jadwal Praktikum
-          </h1>
-          <p className="text-muted-foreground">Kelola jadwal praktikum asisten praktikum</p>
+          <h1 className="text-2xl font-bold title-gradient">Jadwal Praktikum</h1>
+          <p className="text-muted-foreground text-sm">Overview jadwal per ruangan</p>
         </div>
-
-        <div style={{ display: 'flex', gap: '1rem' }}>
-          {/* Term Selector */}
-          <Select value={selectedTerm} onValueChange={setSelectedTerm}>
-            <SelectTrigger className="w-[180px] font-medium">
-              <SelectValue placeholder="Select term" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                {availableTerms.map((t) => (
-                  <SelectItem key={t} value={t}>
-                    {t}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-
-          {/* Room Filter Dropdown */}
-          <Select value={selectedRoom} onValueChange={setSelectedRoom}>
-            <SelectTrigger className="w-[180px]">
-              <Filter size={16} className="mr-2" />
-              <SelectValue placeholder="All Rooms" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectItem value="All Rooms">All Rooms</SelectItem>
-                {uniqueRooms.map((r) => (
-                  <SelectItem key={r} value={r}>
-                    {r}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-        </div>
+        
+        <Select value={selectedTerm} onValueChange={setSelectedTerm}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Select term" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              {availableTerms.map((t) => (
+                <SelectItem key={t} value={t}>
+                  {t}
+                </SelectItem>
+              ))}
+            </SelectGroup>
+          </SelectContent>
+        </Select>
       </div>
 
-      {/* Day Tabs */}
-      <div
-        style={{
-          display: 'flex',
-          gap: '0.5rem',
-          marginBottom: '2rem',
-          overflowX: 'auto',
-          paddingBottom: '0.5rem',
-          borderBottom: '1px solid var(--card-border)',
-        }}
-      >
-        {days.map((day) => (
-          <button
-            key={day}
-            onClick={() => setSelectedDay(day)}
-            className={`px-6 py-2 rounded-full font-medium transition-all whitespace-nowrap ${
-              selectedDay === day
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-transparent text-muted-foreground border border-border hover:bg-accent hover:text-accent-foreground'
-            }`}
-          >
-            {day}
-          </button>
-        ))}
-      </div>
-
-      {loading ? (
-        <div className="text-center py-12 text-muted-foreground">Loading schedule...</div>
-      ) : filteredJadwal.length === 0 ? (
-        <div className="text-center py-12 text-muted-foreground">
-          <p>
-            No schedule found for {selectedDay}{' '}
-            {selectedRoom !== 'All Rooms' ? `in ${selectedRoom}` : ''}.
-          </p>
-        </div>
-      ) : (
-        <div
-          className="timeline-container"
-          style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}
-        >
-          {sessions.map((sesi) => {
-            const items = groupedBySesi[sesi] || [];
-            if (items.length === 0) return null;
-            const timeStart = items[0]?.jam?.substring(0, 5) || '00:00';
-
-            return (
-              <div key={sesi} style={{ display: 'flex', gap: '1.5rem' }}>
-                {/* Time Column */}
-                <div
-                  style={{
-                    minWidth: '80px',
-                    textAlign: 'right',
-                    paddingTop: '1rem',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'flex-end',
-                    gap: '0.25rem',
-                  }}
-                >
-                  <span className="text-xl font-bold text-foreground">{timeStart}</span>
-                  <span className="text-sm text-muted-foreground uppercase tracking-wide">
-                    Sesi {sesi}
-                  </span>
+      <div className="overflow-x-auto rounded-lg border border-border shadow-sm bg-card/50 backdrop-blur-sm min-h-[400px]">
+        {loading ? (
+           <div className="flex flex-col items-center justify-center h-[400px] gap-2 text-muted-foreground animate-pulse">
+             <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+             <span>Loading schedule data...</span>
+           </div>
+        ) : (
+        <table className="w-full border-collapse text-sm">
+          <thead>
+            <tr className="bg-muted/50 border-b border-border">
+              <th className="p-2 border-r border-border text-center font-bold min-w-[60px] text-xs uppercase text-muted-foreground">Hari</th>
+              <th 
+                className="p-2 border-r border-border text-center font-bold min-w-[60px] text-xs uppercase text-muted-foreground cursor-pointer hover:bg-muted/80 transition-colors select-none group"
+                onClick={() => setShowSessionId(!showSessionId)}
+                title="Click to toggle between Time and Session ID"
+              >
+                <div className="flex items-center justify-center gap-1">
+                   {showSessionId ? 'SESI' : 'JAM'}
+                   <ChevronRight size={12} className={`transition-transform ${showSessionId ? 'rotate-90' : ''}`} />
                 </div>
+              </th>
+              {uniqueRooms.map(room => (
+                <th key={room} className="p-2 border-r border-border text-center font-bold min-w-[120px] whitespace-nowrap text-xs">
+                  {room}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {days.map((day) => {
+              if (uniqueSessions.length === 0) return null;
 
-                {/* Timeline Line */}
-                <div className="relative w-0.5 bg-border">
-                  <div className="absolute top-6 -left-1.5 w-3 h-3 rounded-full bg-primary shadow-[0_0_0_4px_hsl(var(--primary)/0.2)]" />
-                </div>
-
-                {/* Events Grid */}
-                <div style={{ flex: 1, paddingBottom: '2rem' }}>
-                  <div
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-                      gap: '1rem',
-                    }}
-                  >
-                    {items.map((jadwal) => (
-                      <div
-                        key={jadwal.id}
-                        onClick={() => setSelectedJadwal(jadwal)}
-                        className="bg-card/80 backdrop-blur-sm rounded-lg p-4 cursor-pointer border-l-4 border-l-primary transition-all hover:-translate-y-0.5 hover:shadow-lg shadow-md"
+              return uniqueSessions.map((session, sessionIndex) => {
+                const isFirstRow = sessionIndex === 0;
+                
+                return (
+                  <tr key={`${day}-${session.sesi}`} className="hover:bg-muted/30 transition-colors border-b border-border/50">
+                    {isFirstRow && (
+                      <td 
+                        rowSpan={uniqueSessions.length} 
+                        className="p-2 border-r border-border border-b border-border text-center font-bold bg-muted/10 align-middle text-sm"
                       >
-                        <div
-                          style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            marginBottom: '0.5rem',
-                          }}
-                        >
-                          <span className="font-semibold text-primary">{jadwal.kelas}</span>
-                          <span className="text-xs bg-secondary/50 text-secondary-foreground px-2 py-0.5 rounded">
-                            {jadwal.ruangan}
-                          </span>
-                        </div>
-                        <h4
-                          style={{
-                            fontSize: '1rem',
-                            fontWeight: 600,
-                            marginBottom: '0.5rem',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
-                          {jadwal.mata_kuliah?.nama_lengkap}
-                        </h4>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <User size={14} />
-                          <span className="truncate">{jadwal.dosen || 'Dosen TBD'}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
+                        {day}
+                      </td>
+                    )}
+                    
+                    <td 
+                      className="p-2 border-r border-border text-center font-medium text-muted-foreground text-xs cursor-pointer hover:bg-muted/50"
+                      onClick={() => setShowSessionId(!showSessionId)}
+                    >
+                      {showSessionId ? session.sesi : session.jam}
+                    </td>
+                    
+                    {uniqueRooms.map(room => {
+                      const jadwal = scheduleMatrix[day]?.[session.sesi]?.[room];
+                      
+                      return (
+                        <td key={`${day}-${session.sesi}-${room}`} className="p-0 border-r border-border h-[60px] w-[120px] relative">
+                          {jadwal ? (
+                            <div 
+                              onClick={() => setSelectedJadwal(jadwal)}
+                              className="w-full h-full flex flex-col items-center justify-center p-1 cursor-pointer transition-all hover:brightness-110 overflow-hidden hover:scale-105 hover:z-10 hover:shadow-lg origin-center"
+                              style={{ backgroundColor: getCourseColor(jadwal.mata_kuliah?.nama_lengkap || '') }}
+                              title="Click for details"
+                            >
+                              <div className="text-center leading-tight">
+                                <div className="font-bold text-[10px] sm:text-xs text-white drop-shadow-md truncate w-full px-1">
+                                    {/* Use the name from Praktikum relation (short name) OR fallback to full name */}
+                                    {jadwal.mata_kuliah?.praktikum?.nama || jadwal.mata_kuliah?.nama_lengkap || 'Unknown'}
+                                </div>
+                                <div className="text-[9px] sm:text-[10px] text-white/90">
+                                    {jadwal.kelas}
+                                </div>
+                                <div className="text-[8px] sm:text-[9px] text-white/80 truncate px-1">
+                                    {(jadwal.dosen || '-').split(' ')[0]}
+                                </div>
+                              </div>
+                            </div>
+                          ) : (
+                             null
+                          )}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                );
+              });
+            })}
+          </tbody>
+        </table>
+        )}
+        
+        {!loading && uniqueRooms.length === 0 && (
+          <div className="flex flex-col items-center justify-center h-[300px] text-muted-foreground">
+             <Filter size={48} className="mb-4 opacity-20" />
+            <p>No schedule data found for this term.</p>
+          </div>
+        )}
+      </div>
 
       {/* Detail Modal */}
       {selectedJadwal && (
         <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 100,
-            background: 'rgba(0,0,0,0.6)',
-            backdropFilter: 'blur(4px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '1rem',
-          }}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-[2px] p-4 animate-in fade-in duration-200"
           onClick={() => setSelectedJadwal(null)}
         >
           <div
-            className="bg-card/95 backdrop-blur-md rounded-lg shadow-2xl"
-            style={{ width: '100%', maxWidth: '500px', position: 'relative' }}
+            className="bg-card w-full max-w-lg rounded-xl shadow-2xl border border-border/50 overflow-hidden animate-in zoom-in-95 duration-200"
             onClick={(e) => e.stopPropagation()}
           >
-            <button
-              onClick={() => setSelectedJadwal(null)}
-              style={{
-                position: 'absolute',
-                top: '1rem',
-                right: '1rem',
-                background: 'transparent',
-                border: 'none',
-                color: 'var(--text-muted)',
-                cursor: 'pointer',
-              }}
-            >
-              <X size={24} />
-            </button>
-
-            <div style={{ padding: '0.5rem' }}>
-              <span
-                className="badge badge-purple"
-                style={{ marginBottom: '1rem', display: 'inline-block' }}
+            {/* Header */}
+            <div className="relative p-6 pb-4 border-b border-border/50">
+               <button
+                onClick={() => setSelectedJadwal(null)}
+                className="absolute top-4 right-4 p-1 rounded-full hover:bg-muted transition-colors text-muted-foreground"
               >
-                {selectedJadwal.mata_kuliah?.program_studi}
-              </span>
-              <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
+                <X size={20} />
+              </button>
+              
+              <div className="flex flex-wrap gap-2 mb-3">
+                 <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
+                    {selectedJadwal.mata_kuliah?.program_studi || 'N/A'}
+                 </span>
+                 <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-secondary text-secondary-foreground">
+                    Sesi {selectedJadwal.sesi}
+                 </span>
+              </div>
+              
+              <h2 className="text-xl md:text-2xl font-bold leading-tight mb-1" style={{ color: getCourseColor(selectedJadwal.mata_kuliah?.nama_lengkap || '') }}>
                 {selectedJadwal.mata_kuliah?.nama_lengkap}
               </h2>
-              <p
-                style={{
-                  fontSize: '1.25rem',
-                  color: 'var(--primary)',
-                  fontWeight: 600,
-                  marginBottom: '2rem',
-                }}
-              >
-                {selectedJadwal.kelas}
+              <p className="text-lg font-medium text-foreground/80">
+                Kelas {selectedJadwal.kelas}
               </p>
-
-              <div
-                style={{
-                  display: 'grid',
-                  gap: '1rem',
-                  background: 'rgba(0,0,0,0.2)',
-                  padding: '1.5rem',
-                  borderRadius: 'var(--radius)',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                  <Clock className="text-blue-400" size={20} />
-                  <div>
-                    <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Waktu</p>
-                    <p style={{ fontWeight: 500 }}>
-                      {selectedJadwal.hari}, {selectedJadwal.jam} (Sesi {selectedJadwal.sesi})
-                    </p>
-                  </div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                  <MapPin className="text-green-400" size={20} />
-                  <div>
-                    <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Ruangan</p>
-                    <p style={{ fontWeight: 500 }}>{selectedJadwal.ruangan || 'Online'}</p>
-                  </div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                  <User className="text-yellow-400" size={20} />
-                  <div>
-                    <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Dosen</p>
-                    <p style={{ fontWeight: 500 }}>{selectedJadwal.dosen || '-'}</p>
-                  </div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                  <Users className="text-purple-400" size={20} />
-                  <div>
-                    <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                      Kebutuhan Asprak
-                    </p>
-                    <p style={{ fontWeight: 500 }}>{selectedJadwal.total_asprak} Orang</p>
-                  </div>
-                </div>
-              </div>
             </div>
+
+            {/* Body */}
+            <div className="p-6 space-y-4">
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/30">
+                    <Clock className="text-blue-500 mt-0.5" size={18} />
+                    <div>
+                      <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Waktu</p>
+                      <p className="text-sm font-semibold">{selectedJadwal.hari}, {selectedJadwal.jam}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/30">
+                    <MapPin className="text-emerald-500 mt-0.5" size={18} />
+                    <div>
+                      <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Ruangan</p>
+                      <p className="text-sm font-semibold">{selectedJadwal.ruangan}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/30">
+                    <User className="text-amber-500 mt-0.5" size={18} />
+                    <div>
+                      <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Dosen</p>
+                      <p className="text-sm font-semibold">{selectedJadwal.dosen || '-'}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/30">
+                    <Users className="text-violet-500 mt-0.5" size={18} />
+                    <div>
+                      <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Kebutuhan</p>
+                      <p className="text-sm font-semibold">{selectedJadwal.total_asprak} Asprak</p>
+                    </div>
+                  </div>
+               </div>
+            </div>
+            
+             <div className="p-4 bg-muted/20 border-t border-border/50 text-right">
+                <button 
+                  onClick={() => setSelectedJadwal(null)}
+                  className="px-4 py-2 rounded-lg bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 transition-colors"
+                >
+                  Tutup
+                </button>
+             </div>
           </div>
         </div>
       )}
