@@ -9,11 +9,49 @@ export interface DashboardStats {
   jadwalByDay: { name: string; count: number }[];
 }
 
-export async function getStats(): Promise<DashboardStats> {
+// get by
+export async function getStats(initialTerm?: string): Promise<DashboardStats> {
+  initialTerm = initialTerm || '2425-1';
   const [asprakRes, jadwalRes, pelanggaranRes, asprakRaw, jadwalRaw] = await Promise.all([
-    supabase.from('Asprak').select('*', { count: 'exact', head: true }),
-    supabase.from('Jadwal').select('*', { count: 'exact', head: true }),
-    supabase.from('Pelanggaran').select('*', { count: 'exact', head: true }),
+    supabase
+      .from('Asprak_Praktikum')
+      .select(
+        `*, 
+          praktikum:Praktikum!inner (
+              tahun_ajaran
+        )
+        `,
+        { count: 'exact', head: true }
+      )
+      .eq('praktikum.tahun_ajaran', initialTerm),
+    supabase
+      .from('Jadwal')
+      .select(
+        `*,
+        mata_kuliah:Mata_Kuliah!inner (
+          praktikum:Praktikum!inner (
+              tahun_ajaran
+          )
+      )
+        `,
+        { count: 'exact', head: true }
+      )
+      .eq('mata_kuliah.praktikum.tahun_ajaran', initialTerm),
+    supabase
+      .from('Pelanggaran')
+      .select(
+        `*,
+        jadwal:Jadwal!inner (
+          mata_kuliah:Mata_Kuliah!inner (
+            praktikum:Praktikum!inner (
+                tahun_ajaran
+            )
+        )
+      )
+        `,
+        { count: 'exact', head: true }
+      )
+      .eq('jadwal.mata_kuliah.praktikum.tahun_ajaran', initialTerm),
     supabase.from('Asprak').select('angkatan'),
     supabase.from('Jadwal').select('hari'),
   ]);

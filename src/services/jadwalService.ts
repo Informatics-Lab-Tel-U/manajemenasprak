@@ -3,7 +3,11 @@ import { Jadwal } from '@/types/database';
 import { logger } from '@/lib/logger';
 
 export async function getAvailableTerms(): Promise<string[]> {
-  const { data } = await supabase.from('Praktikum').select('tahun_ajaran');
+  const { data, error } = await supabase
+    .from('Praktikum')
+    .select('tahun_ajaran')
+    .order('tahun_ajaran', { ascending: false });
+
   if (!data) return [];
   return Array.from(new Set(data.map((p) => p.tahun_ajaran)))
     .sort()
