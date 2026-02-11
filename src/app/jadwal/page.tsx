@@ -16,16 +16,16 @@ import { Jadwal } from '@/types/database';
 // Helper to generate consistent colors for courses
 const getCourseColor = (name: string) => {
   const colors = [
-    '#ef4444', // red-500
-    '#f97316', // orange-500
-    '#eab308', // yellow-500
-    '#22c55e', // green-500
-    '#06b6d4', // cyan-500
-    '#3b82f6', // blue-500
-    '#6366f1', // indigo-500
-    '#a855f7', // purple-500
-    '#ec4899', // pink-500
-    '#f43f5e', // rose-500
+    '#dc3c3c', // red balanced
+    '#e05a1f', // orange balanced
+    '#c99a00', // yellow balanced
+    '#18a558', // green balanced
+    '#1098ad', // cyan balanced
+    '#3a5edb', // blue balanced
+    '#4b4fd6', // indigo balanced
+    '#8b3fd6', // purple balanced
+    '#d63384', // pink balanced
+    '#d7264f', // rose balanced
   ];
   let hash = 0;
   for (let i = 0; i < name.length; i++) {
