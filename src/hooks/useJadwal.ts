@@ -8,8 +8,29 @@ export function useJadwal(initialTerm?: string) {
   const [data, setData] = useState<Jadwal[]>([]);
   const [terms, setTerms] = useState<string[]>([]);
   const [selectedTerm, setSelectedTerm] = useState(initialTerm || '');
+  const [selectedModul, setSelectedModul] = useState('Default');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+
+  const moduls = [
+    'Default',
+    'Modul 1',
+    'Modul 2',
+    'Modul 3',
+    'Modul 4',
+    'Modul 5',
+    'Modul 6',
+    'Modul 7',
+    'Modul 8',
+    'Modul 9',
+    'Modul 10',
+    'Modul 11',
+    'Modul 12',
+    'Modul 13',
+    'Modul 14',
+    'Modul 15',
+    'Modul 16',
+  ];
 
   const fetchTerms = useCallback(async () => {
     const result = await jadwalFetcher.fetchAvailableTerms();
@@ -53,6 +74,9 @@ export function useJadwal(initialTerm?: string) {
     terms,
     selectedTerm,
     setSelectedTerm,
+    moduls,
+    selectedModul,
+    setSelectedModul,
     loading,
     error,
     refetch: fetchJadwal,
