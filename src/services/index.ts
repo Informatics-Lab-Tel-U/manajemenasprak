@@ -15,7 +15,15 @@
 // - pelanggaranService
 // - praktikumService
 
-export * from './asprakService';
+export {
+  getAllAsprak,
+  getExistingCodes,
+  getAvailableTerms as getAsprakAvailableTerms,
+  getAsprakAssignments,
+  upsertAsprak,
+  bulkUpsertAspraks,
+} from './asprakService';
+export type { UpsertAsprakInput, BulkUpsertRow, BulkUpsertResult } from './asprakService';
 export * from './databaseService';
 export * from './jadwalService';
 export * from './pelanggaranService';

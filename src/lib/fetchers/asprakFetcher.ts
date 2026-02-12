@@ -24,9 +24,10 @@ export interface AsprakAssignment {
   };
 }
 
-export async function fetchAllAsprak(): Promise<ServiceResult<Asprak[]>> {
+export async function fetchAllAsprak(term?: string): Promise<ServiceResult<Asprak[]>> {
   try {
-    const res = await fetch('/api/asprak');
+    const url = term ? `/api/asprak?term=${encodeURIComponent(term)}` : '/api/asprak';
+    const res = await fetch(url);
     const json = await res.json();
 
     if (!res.ok) {
@@ -96,6 +97,59 @@ export async function fetchExistingCodes(): Promise<ServiceResult<string[]>> {
     return { ok: true, data: json.codes || [] };
   } catch (e: any) {
     logger.error('Error fetching codes:', e);
+    return { ok: false, error: e.message };
+  }
+}
+
+export async function fetchAvailableTerms(): Promise<ServiceResult<string[]>> {
+  try {
+    const res = await fetch('/api/asprak?action=terms');
+    const json = await res.json();
+
+    if (!res.ok) {
+      return { ok: false, error: json.error };
+    }
+
+    return { ok: true, data: json.terms || [] };
+  } catch (e: any) {
+    logger.error('Error fetching terms:', e);
+    return { ok: false, error: e.message };
+  }
+}
+
+export interface BulkImportRow {
+  nim: string;
+  nama_lengkap: string;
+  kode: string;
+  angkatan: number;
+}
+
+export interface BulkImportResult {
+  inserted: number;
+  updated: number;
+  skipped: number;
+  errors: string[];
+}
+
+export async function bulkImportAspraks(
+  rows: BulkImportRow[]
+): Promise<ServiceResult<BulkImportResult>> {
+  try {
+    const res = await fetch('/api/asprak', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'bulk-import', rows }),
+    });
+
+    const json = await res.json();
+
+    if (!res.ok) {
+      return { ok: false, error: json.error };
+    }
+
+    return { ok: true, data: json.result };
+  } catch (e: any) {
+    logger.error('Error bulk importing aspraks:', e);
     return { ok: false, error: e.message };
   }
 }
