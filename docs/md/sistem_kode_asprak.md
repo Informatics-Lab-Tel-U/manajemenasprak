@@ -64,10 +64,12 @@
 
 ---
 
-### Nama 3 Kata
+### Nama 3 Kata atau Lebih (3+ Kata)
+> **Catatan:** Untuk nama dengan 4 kata atau lebih, sistem hanya mengambil **3 kata pertama** dan menerapkan aturan di bawah ini. Kata ke-4 dan seterusnya diabaikan dalam tahap aturan standar.
 
-1. **Aturan 3.1**: Huruf pertama dari ketiga kata
+1. **Aturan 3.1**: Huruf pertama dari 3 kata pertama
    - Contoh: `MUHAMMAD ABIYU ALGHIFARI` → `MAA`
+   - Contoh (4 Kata): `MUHAMMAD ABIYU ALGHIFARI PUTRA` → `MAA`
 
 2. **Aturan 3.2**: Huruf pertama kata-1 + dua huruf pertama kata-2
    - Contoh: `MUHAMMAD ABIYU ALGHIFARI` → `MAB`
@@ -87,65 +89,13 @@
 7. **Aturan 3.7**: Huruf pertama kata-1 + huruf pertama kata-2 + huruf terakhir kata-3
    - Contoh: `MUHAMMAD ABIYU ALGHIFARI` → `MAI`
 
-8. **Aturan 3.8**: Huruf pertama ketiga kata dengan huruf kedua kata-2
+8. **Aturan 3.8**: Huruf pertama ketiga kata dengan huruf kedua kata-2 (Correction: checks w1[0] + w2[1] + w3[0])
    - Contoh: `MUHAMMAD ABIYU ALGHIFARI` → `MBA`
 
-**Fallback 3 Kata**: Kombinatorik dari pool huruf ketiga kata
+**Fallback 3+ Kata**: Kombinatorik dari pool huruf 3 kata pertama
 - Pool prioritas dari setiap kata (posisi 1, 2, 3, terakhir)
-- `MUHAMMAD` → M, U, H, D
-- `ABIYU` → A, B, I, U
-- `ALGHIFARI` → A, L, G, I
-- Total pool: 12 huruf unik → C(12,3) = 220 kombinasi
+- Total pool huruf unik diambil dari 3 kata pertama.
 
----
-
-### Nama 4+ Kata (Universal Formula)
-
-**Aturan N.x untuk N kata (N ≥ 4):**
-
-1. **Aturan N.1**: Huruf pertama dari 3 kata pertama
-   - 4 kata: `SITI NUR AZIZAH PUTRI` → `SNA`
-   - 5 kata: `RADEN MAS ADIPATI SURYO PUTRO` → `RMA`
-   
-2. **Aturan N.2**: Huruf pertama kata-1, kata-2, kata-terakhir
-   - 4 kata: `SITI NUR AZIZAH PUTRI` → `SNP`
-   - 5 kata: `RADEN MAS ADIPATI SURYO PUTRO` → `RMP`
-
-3. **Aturan N.3**: Huruf pertama kata-1 + dua huruf pertama kata-2
-   - 4 kata: `SITI NUR AZIZAH PUTRI` → `SNU`
-   - 5 kata: `RADEN MAS ADIPATI SURYO PUTRO` → `RMA`
-
-4. **Aturan N.4**: Huruf pertama kata-1, kata-tengah, kata-terakhir
-   - 4 kata: `SITI NUR AZIZAH PUTRI` → `SAP` (tengah = Azizah)
-   - 5 kata: `RADEN MAS ADIPATI SURYO PUTRO` → `RAP` (tengah = Adipati)
-
-5. **Aturan N.5**: Dua huruf pertama kata-1 + huruf pertama kata-terakhir
-   - 4 kata: `SITI NUR AZIZAH PUTRI` → `SIP`
-   - 5 kata: `RADEN MAS ADIPATI SURYO PUTRO` → `RAP`
-
-6. **Aturan N.6**: Huruf pertama kata-1 + huruf pertama kata-2 + huruf kedua kata-terakhir
-   - 4 kata: `SITI NUR AZIZAH PUTRI` → `SNU`
-   - 5 kata: `RADEN MAS ADIPATI SURYO PUTRO` → `RMU`
-
-**Fallback N Kata (Universal)**: 
-Formula kombinatorik bertingkat dengan prioritas posisi
-
-```
-Pool Generation:
-1. Dari setiap kata, ambil huruf di posisi: 1, 2, 3, terakhir
-2. Gabungkan semua huruf ke dalam pool
-3. Prioritaskan huruf dari kata penting (kata-1, kata-2, kata-terakhir)
-4. Generate kombinasi C(pool_size, 3)
-
-Contoh: SITI NUR AZIZAH PUTRI (4 kata)
-- Kata-1 (SITI): S, I, T, I
-- Kata-2 (NUR): N, U, R
-- Kata-3 (AZIZAH): A, Z, I, H
-- Kata-4 (PUTRI): P, U, T, I
-
-Pool prioritas: [S, I, T, N, U, R, A, Z, P] = 9 huruf unik
-Kombinasi: C(9,3) = 84 kemungkinan
-```
 
 ---
 
