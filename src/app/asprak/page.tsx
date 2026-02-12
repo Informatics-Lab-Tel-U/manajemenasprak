@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Download, Plus, Upload } from 'lucide-react';
+import { toast } from 'sonner';
 import { Asprak } from '@/types/database';
 import { useAsprak } from '@/hooks/useAsprak';
 import { usePraktikum } from '@/hooks/usePraktikum';
@@ -82,7 +83,7 @@ function AsprakPageContent() {
       throw new Error(result.error);
     }
 
-    alert('Data saved successfully!');
+    toast.success('Data saved successfully!');
     setShowAddModal(false);
     fetchAsprak();
     refreshCodesAndNims();
@@ -103,7 +104,25 @@ function AsprakPageContent() {
     const data = result.data!;
     const message = `Import selesai!\n\n✅ Inserted: ${data.inserted}\n🔄 Updated: ${data.updated}${data.skipped > 0 ? `\n⚠️ Skipped: ${data.skipped}` : ''}${data.errors.length > 0 ? `\n\nErrors:\n${data.errors.join('\n')}` : ''}`;
 
-    alert(message);
+    toast.success('Import selesai!', {
+      description: (
+        <div className="mt-2 text-xs font-mono">
+          <p>✅ Inserted: <span className="font-bold">{data.inserted}</span></p>
+          <p>🔄 Updated: <span className="font-bold">{data.updated}</span></p>
+          {data.skipped > 0 && <p className="text-amber-500">⚠️ Skipped: {data.skipped}</p>}
+          {data.errors.length > 0 && (
+            <div className="mt-2 pt-2 border-t border-border">
+               <p className="text-red-500 font-semibold mb-1">Errors:</p>
+               <ul className="list-disc pl-4 space-y-1">
+                 {data.errors.slice(0, 3).map((err, i) => <li key={i}>{err}</li>)}
+                 {data.errors.length > 3 && <li>...and {data.errors.length - 3} more</li>}
+               </ul>
+            </div>
+          )}
+        </div>
+      ),
+      duration: 5000,
+    });
     setShowImportModal(false);
     fetchAsprak();
     refreshCodesAndNims();
