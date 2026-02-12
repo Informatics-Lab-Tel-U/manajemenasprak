@@ -47,13 +47,12 @@ export default function AsprakFilters({
           </SelectTrigger>
           <SelectContent>
             <SelectGroup>
+              <SelectItem value="all">All Terms</SelectItem>
               {terms.map((term) => (
                 <SelectItem key={term} value={term}>
                   {term}
                 </SelectItem>
               ))}
-              {/* Option to show all if needed, but per request we filter by term */}
-              {/* <SelectItem value="all">All Terms</SelectItem> */}
             </SelectGroup>
           </SelectContent>
         </Select>

@@ -35,7 +35,9 @@ export function useAsprak(initialTerm?: string) {
     setLoading(true);
     setError(null);
 
-    const result = await asprakFetcher.fetchAllAsprak(selectedTerm);
+    // If "all" is selected, pass undefined to fetch all
+    const termToFetch = selectedTerm === 'all' ? undefined : selectedTerm;
+    const result = await asprakFetcher.fetchAllAsprak(termToFetch);
 
     if (result.ok) {
       setData(result.data || []);

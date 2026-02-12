@@ -115,13 +115,9 @@ function rulesFor2Words(words: string[]): string[] {
   candidates.push(safeChar(w1, 0) + safeChar(w2, 0) + safeChar(w2, 1));
   // 2.2: first2(w1) + first(w2)
   candidates.push(safeChar(w1, 0) + safeChar(w1, 1) + safeChar(w2, 0));
-  // 2.3: first(w1) + first(w2) + second(w2)
-  candidates.push(safeChar(w1, 0) + safeChar(w2, 0) + safeChar(w2, 1));
-  // 2.4: first(w1) + second(w1) + first(w2)
-  candidates.push(safeChar(w1, 0) + safeChar(w1, 1) + safeChar(w2, 0));
-  // 2.5: first(w1) + first(w2) + last(w2)
+  // 2.3: first(w1) + first(w2) + last(w2)
   candidates.push(safeChar(w1, 0) + safeChar(w2, 0) + lastChar(w2));
-  // 2.6: first2(w1) + last(w2)
+  // 2.4: first2(w1) + last(w2)
   candidates.push(safeChar(w1, 0) + safeChar(w1, 1) + lastChar(w2));
 
   return candidates;
