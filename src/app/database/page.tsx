@@ -20,6 +20,15 @@ import {
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+
 export default function DatabasePage() {
   const [termYear, setTermYear] = useState('24');
   const [termSem, setTermSem] = useState<'1' | '2'>('2');
@@ -29,6 +38,11 @@ export default function DatabasePage() {
     type: 'success' | 'error' | 'info';
     message: string;
   } | null>(null);
+
+  // Modal state
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [confirmInput, setConfirmInput] = useState('');
+  const CONFIRMATION_PHRASE = 'HAPUS SEMUA';
 
   const onDrop = useCallback(
     async (acceptedFiles: File[]) => {
@@ -84,10 +98,15 @@ export default function DatabasePage() {
     maxFiles: 1,
   });
 
-  const handleClear = async () => {
-    if (!confirm('WARNING: Ini akan menghapus SEMUA data Jadwal, Asprak, Praktikum, dll. Yakin?'))
-      return;
+  const handleClearTrigger = () => {
+    setIsDeleteModalOpen(true);
+    setConfirmInput('');
+  };
 
+  const handleExecuteClear = async () => {
+    if (confirmInput !== CONFIRMATION_PHRASE) return;
+
+    setIsDeleteModalOpen(false);
     setLoading(true);
     setStatus({ type: 'info', message: 'Clearing database...' });
 
@@ -325,7 +344,7 @@ export default function DatabasePage() {
             </p>
 
             <Button
-              onClick={handleClear}
+              onClick={handleClearTrigger}
               disabled={loading}
               variant="destructive"
               className="w-full"
@@ -335,6 +354,51 @@ export default function DatabasePage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Confirmation Modal */}
+      <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-destructive flex items-center gap-2">
+              <Trash2 className="w-5 h-5" />
+              Hapus Semua Data?
+            </DialogTitle>
+            <DialogDescription>
+              Tindakan ini tidak dapat dibatalkan. Semua data jadwal, asprak, praktikum, dan
+              assignment akan dihapus permanen.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3 py-2">
+            <Label className="text-sm">
+              Ketik <span className="font-bold text-destructive">"{CONFIRMATION_PHRASE}"</span>{' '}
+              untuk konfirmasi:
+            </Label>
+            <Input
+              value={confirmInput}
+              onChange={(e) => setConfirmInput(e.target.value)}
+              placeholder={CONFIRMATION_PHRASE}
+              autoComplete="off"
+            />
+          </div>
+
+          <DialogFooter className="sm:justify-between gap-2">
+             <Button
+              variant="outline"
+              onClick={() => setIsDeleteModalOpen(false)}
+            >
+              Batal
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleExecuteClear}
+              disabled={confirmInput !== CONFIRMATION_PHRASE || loading}
+            >
+              Ya, Hapus Semua
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
