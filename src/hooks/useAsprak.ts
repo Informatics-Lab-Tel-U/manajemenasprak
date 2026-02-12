@@ -9,16 +9,33 @@ import { useState, useEffect, useCallback } from 'react';
 import { Asprak } from '@/types/database';
 import * as asprakFetcher from '@/lib/fetchers/asprakFetcher';
 
-export function useAsprak() {
+export function useAsprak(initialTerm?: string) {
   const [data, setData] = useState<Asprak[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [terms, setTerms] = useState<string[]>([]);
+  const [selectedTerm, setSelectedTerm] = useState(initialTerm || '');
+
+  const fetchTerms = useCallback(async () => {
+    const result = await asprakFetcher.fetchAvailableTerms();
+    if (result.ok && result.data) {
+      setTerms(result.data);
+      // Auto-select first term if none selected and not explicitly fetching all (empty string)
+      // Actually, if we want "All" to be an option, we might want to keep it empty.
+      // But user typically wants to see latest term.
+      if (result.data.length > 0 && !selectedTerm && initialTerm === undefined) {
+          // If no initial term provided, default to latest
+          setSelectedTerm(result.data[0]);
+      }
+    }
+  }, [selectedTerm, initialTerm]);
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
     setError(null);
 
-    const result = await asprakFetcher.fetchAllAsprak();
+    const result = await asprakFetcher.fetchAllAsprak(selectedTerm);
 
     if (result.ok) {
       setData(result.data || []);
@@ -27,7 +44,7 @@ export function useAsprak() {
     }
 
     setLoading(false);
-  }, []);
+  }, [selectedTerm]);
 
   const upsert = async (input: asprakFetcher.UpsertAsprakInput) => {
     const result = await asprakFetcher.upsertAsprak(input);
@@ -43,13 +60,22 @@ export function useAsprak() {
   };
 
   useEffect(() => {
+    fetchTerms();
+  }, [fetchTerms]);
+
+  useEffect(() => {
+    // Only fetch if selectedTerm is set OR if we are okay with empty term (fetching all)
+    // Here we fetch whenever selectedTerm changes.
     fetchAll();
-  }, [fetchAll]);
+  }, [fetchAll, selectedTerm]);
 
   return {
     data,
     loading,
     error,
+    terms,
+    selectedTerm,
+    setSelectedTerm,
     refetch: fetchAll,
     upsert,
     getAssignments,
