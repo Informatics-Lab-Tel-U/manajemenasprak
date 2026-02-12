@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 
 import {
@@ -38,6 +39,7 @@ export default function DatabasePage() {
     type: 'success' | 'error' | 'info';
     message: string;
   } | null>(null);
+  const [progress, setProgress] = useState(0);
 
   // Modal state
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -53,10 +55,21 @@ export default function DatabasePage() {
       const term = `${startY}${startY + 1}-${termSem}`;
 
       setLoading(true);
+      setProgress(0);
       setStatus({ type: 'info', message: `Processing ${file.name} for term: ${term}...` });
+
+      // Simulate progress since we don't have real upload progress from fetch
+      const interval = setInterval(() => {
+        setProgress((prev) => {
+          if (prev >= 90) return prev;
+          return prev + Math.floor(Math.random() * 10) + 5;
+        });
+      }, 500);
 
       try {
         const result = await importFetcher.uploadExcel(file, term);
+        clearInterval(interval);
+        setProgress(100);
 
         if (result.ok) {
           setStatus({
@@ -84,9 +97,14 @@ export default function DatabasePage() {
           setStatus({ type: 'error', message: result.error || 'Import failed' });
         }
       } catch (e: any) {
+        clearInterval(interval);
         setStatus({ type: 'error', message: e.message || 'Import failed' });
       } finally {
         setLoading(false);
+        // Reset progress after a delay if successful, or immediately?
+        // Let's keep it at 100 for a moment, but loading=false will hide it if we condition on loading.
+        // We might want to keep showing it for a second.
+        setTimeout(() => setProgress(0), 1000);
       }
     },
     [termYear, termSem]
@@ -309,7 +327,12 @@ export default function DatabasePage() {
                 </div>
               )}
 
-              {loading && <p className="mt-4 text-chart-4">Processing...</p>}
+              {loading && (
+                <div className="mt-4 space-y-2">
+                   <Progress value={progress} className="h-2 w-full" />
+                   <p className="text-sm text-center text-muted-foreground">{progress}% Uploading & Processing...</p>
+                </div>
+              )}
             </div>
 
             {/* Download Template Button */}
