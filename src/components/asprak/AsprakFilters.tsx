@@ -1,23 +1,32 @@
 import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface AsprakFiltersProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;
-  filterStatus: 'active' | 'inactive' | 'all';
-  onFilterChange: (status: 'active' | 'inactive' | 'all') => void;
+  terms: string[];
+  selectedTerm: string;
+  onTermChange: (term: string) => void;
 }
 
 export default function AsprakFilters({
   searchQuery,
   onSearchChange,
-  filterStatus,
-  onFilterChange,
+  terms,
+  selectedTerm,
+  onTermChange,
 }: AsprakFiltersProps) {
   return (
-    <div className="flex gap-4 pb-6 border-b border-border items-center">
-      <div className="relative flex-1">
+    <div className="flex flex-col sm:flex-row gap-4 pb-6 border-b border-border items-center">
+      <div className="relative flex-1 w-full">
         <Search
           size={18}
           className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
@@ -31,16 +40,24 @@ export default function AsprakFilters({
         />
       </div>
 
-      <Tabs
-        value={filterStatus}
-        onValueChange={(val) => onFilterChange(val as 'active' | 'inactive' | 'all')}
-      >
-        <TabsList>
-          <TabsTrigger value="active">Active</TabsTrigger>
-          <TabsTrigger value="inactive">Inactive</TabsTrigger>
-          <TabsTrigger value="all">All</TabsTrigger>
-        </TabsList>
-      </Tabs>
+      <div className="w-full sm:w-auto">
+        <Select value={selectedTerm} onValueChange={onTermChange}>
+          <SelectTrigger className="w-full sm:w-[180px]">
+            <SelectValue placeholder="Select term" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              {terms.map((term) => (
+                <SelectItem key={term} value={term}>
+                  {term}
+                </SelectItem>
+              ))}
+              {/* Option to show all if needed, but per request we filter by term */}
+              {/* <SelectItem value="all">All Terms</SelectItem> */}
+            </SelectGroup>
+          </SelectContent>
+        </Select>
+      </div>
     </div>
   );
 }

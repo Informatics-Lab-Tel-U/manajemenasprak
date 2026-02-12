@@ -11,13 +11,19 @@ export async function GET(req: Request) {
   try {
     const url = new URL(req.url);
     const action = url.searchParams.get('action');
+    const term = url.searchParams.get('term') || undefined;
 
     if (action === 'codes') {
       const codes = await asprakService.getExistingCodes();
       return NextResponse.json({ codes });
     }
 
-    const data = await asprakService.getAllAsprak();
+    if (action === 'terms') {
+      const terms = await asprakService.getAvailableTerms();
+      return NextResponse.json({ terms });
+    }
+
+    const data = await asprakService.getAllAsprak(term);
     return NextResponse.json({ data });
   } catch (e: any) {
     logger.error('GET /api/asprak error:', e);
@@ -38,6 +44,10 @@ export async function POST(req: Request) {
       case 'view': {
         const assignments = await asprakService.getAsprakAssignments(body.asprakId);
         return NextResponse.json({ assignments });
+      }
+      case 'bulk-import': {
+        const result = await asprakService.bulkUpsertAspraks(body.rows);
+        return NextResponse.json({ success: true, result });
       }
       default:
         return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
