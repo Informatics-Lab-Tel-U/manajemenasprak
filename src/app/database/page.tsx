@@ -18,7 +18,17 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
+
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 export default function DatabasePage() {
   const [termYear, setTermYear] = useState('24');
@@ -29,6 +39,12 @@ export default function DatabasePage() {
     type: 'success' | 'error' | 'info';
     message: string;
   } | null>(null);
+  const [progress, setProgress] = useState(0);
+
+  // Modal state
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [confirmInput, setConfirmInput] = useState('');
+  const CONFIRMATION_PHRASE = 'HAPUS SEMUA';
 
   const onDrop = useCallback(
     async (acceptedFiles: File[]) => {
@@ -39,10 +55,21 @@ export default function DatabasePage() {
       const term = `${startY}${startY + 1}-${termSem}`;
 
       setLoading(true);
+      setProgress(0);
       setStatus({ type: 'info', message: `Processing ${file.name} for term: ${term}...` });
+
+      // Simulate progress since we don't have real upload progress from fetch
+      const interval = setInterval(() => {
+        setProgress((prev) => {
+          if (prev >= 90) return prev;
+          return prev + Math.floor(Math.random() * 10) + 5;
+        });
+      }, 500);
 
       try {
         const result = await importFetcher.uploadExcel(file, term);
+        clearInterval(interval);
+        setProgress(100);
 
         if (result.ok) {
           setStatus({
@@ -70,9 +97,14 @@ export default function DatabasePage() {
           setStatus({ type: 'error', message: result.error || 'Import failed' });
         }
       } catch (e: any) {
+        clearInterval(interval);
         setStatus({ type: 'error', message: e.message || 'Import failed' });
       } finally {
         setLoading(false);
+        // Reset progress after a delay if successful, or immediately?
+        // Let's keep it at 100 for a moment, but loading=false will hide it if we condition on loading.
+        // We might want to keep showing it for a second.
+        setTimeout(() => setProgress(0), 1000);
       }
     },
     [termYear, termSem]
@@ -84,10 +116,15 @@ export default function DatabasePage() {
     maxFiles: 1,
   });
 
-  const handleClear = async () => {
-    if (!confirm('WARNING: Ini akan menghapus SEMUA data Jadwal, Asprak, Praktikum, dll. Yakin?'))
-      return;
+  const handleClearTrigger = () => {
+    setIsDeleteModalOpen(true);
+    setConfirmInput('');
+  };
 
+  const handleExecuteClear = async () => {
+    if (confirmInput !== CONFIRMATION_PHRASE) return;
+
+    setIsDeleteModalOpen(false);
     setLoading(true);
     setStatus({ type: 'info', message: 'Clearing database...' });
 
@@ -290,7 +327,12 @@ export default function DatabasePage() {
                 </div>
               )}
 
-              {loading && <p className="mt-4 text-chart-4">Processing...</p>}
+              {loading && (
+                <div className="mt-4 space-y-2">
+                   <Progress value={progress} className="h-2 w-full" />
+                   <p className="text-sm text-center text-muted-foreground">{progress}% Uploading & Processing...</p>
+                </div>
+              )}
             </div>
 
             {/* Download Template Button */}
@@ -325,7 +367,7 @@ export default function DatabasePage() {
             </p>
 
             <Button
-              onClick={handleClear}
+              onClick={handleClearTrigger}
               disabled={loading}
               variant="destructive"
               className="w-full"
@@ -335,6 +377,51 @@ export default function DatabasePage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Confirmation Modal */}
+      <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-destructive flex items-center gap-2">
+              <Trash2 className="w-5 h-5" />
+              Hapus Semua Data?
+            </DialogTitle>
+            <DialogDescription>
+              Tindakan ini tidak dapat dibatalkan. Semua data jadwal, asprak, praktikum, dan
+              assignment akan dihapus permanen.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3 py-2">
+            <Label className="text-sm">
+              Ketik <span className="font-bold text-destructive">"{CONFIRMATION_PHRASE}"</span>{' '}
+              untuk konfirmasi:
+            </Label>
+            <Input
+              value={confirmInput}
+              onChange={(e) => setConfirmInput(e.target.value)}
+              placeholder={CONFIRMATION_PHRASE}
+              autoComplete="off"
+            />
+          </div>
+
+          <DialogFooter className="sm:justify-between gap-2">
+             <Button
+              variant="outline"
+              onClick={() => setIsDeleteModalOpen(false)}
+            >
+              Batal
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleExecuteClear}
+              disabled={confirmInput !== CONFIRMATION_PHRASE || loading}
+            >
+              Ya, Hapus Semua
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

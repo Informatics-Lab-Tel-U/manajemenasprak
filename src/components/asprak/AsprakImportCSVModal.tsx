@@ -11,7 +11,7 @@
 
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
@@ -26,6 +26,7 @@ import { cn } from '@/lib/utils';
 import TermInput, { buildTermString } from './TermInput';
 import AsprakCSVPreview, { PreviewRow } from './AsprakCSVPreview';
 import { batchGenerateCodes } from '@/utils/asprakCodeGenerator';
+import { json } from 'stream/consumers';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -82,6 +83,7 @@ export default function AsprakImportCSVModal({
   const [previewRows, setPreviewRows] = useState<PreviewRow[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  
 
   // Derived
   const term = useMemo(() => buildTermString(termYear, termSem), [termYear, termSem]);
@@ -339,8 +341,9 @@ export default function AsprakImportCSVModal({
   // ─── Confirm Save ───────────────────────────────────────────────────────
 
   const handleConfirm = async () => {
-    const validRows = previewRows.filter((r) => r.status === 'ok' || r.status === 'warning');
-    if (validRows.length === 0) return;
+    const validRows = previewRows.filter((r) => r.status === 'ok');
+    const invalidRows = previewRows.filter((r) => r.status !== 'ok');
+    if (invalidRows.length > 0) return;
 
     setSaving(true);
     setError(null);

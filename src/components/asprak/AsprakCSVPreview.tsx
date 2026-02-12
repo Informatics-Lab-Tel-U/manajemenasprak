@@ -136,6 +136,9 @@ export default function AsprakCSVPreview({
                   Angkatan
                 </th>
                 <th className="px-3 py-2.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border">
+                  Rule
+                </th>
+                <th className="px-3 py-2.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border">
                   Status
                 </th>
               </tr>
@@ -203,6 +206,9 @@ export default function AsprakCSVPreview({
                   </td>
                   <td className={`px-3 py-2 text-center font-mono text-xs ${isDuplicate ? 'opacity-50' : ''}`}>
                     {row.angkatan}
+                  </td>
+                  <td className="px-3 py-2 text-xs text-muted-foreground font-mono truncate max-w-[150px]" title={row.codeRule}>
+                    {row.codeRule || '-'}
                   </td>
                   <td className="px-3 py-2">
                     {row.status === 'ok' && (
