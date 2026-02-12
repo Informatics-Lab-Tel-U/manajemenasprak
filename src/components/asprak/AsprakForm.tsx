@@ -208,7 +208,7 @@ export default function AsprakForm({
           Cancel
         </Button>
         <Button type="submit" disabled={loading}>
-          {loading ? 'Saving...' : 'Simpan Data'}
+          {loading ? 'Menyimpan...' : 'Simpan Data'}
         </Button>
       </div>
     </form>
