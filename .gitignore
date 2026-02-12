@@ -77,3 +77,6 @@ ehthumbs_vista.db
 *.tmp
 *.temp
 .cache
+
+# agents
+.agents
