@@ -1,4 +1,4 @@
-import { Praktikum } from '@/types/database';
+import { Praktikum, MataKuliah } from '@/types/database';
 import { ServiceResult } from '@/types/api';
 
 export async function fetchAllPraktikum(): Promise<ServiceResult<Praktikum[]>> {
@@ -38,6 +38,19 @@ export async function fetchOrCreatePraktikum(
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'get-or-create', nama, tahunAjaran }),
+    });
+    const result = await res.json();
+    return result;
+  } catch (error: any) {
+    return { ok: false, error: error.message };
+  }
+}
+
+export async function fetchMataKuliah(): Promise<ServiceResult<MataKuliah[]>> {
+  try {
+    const res = await fetch('/api/praktikum?action=mata-kuliah', {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
     });
     const result = await res.json();
     return result;

@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Jadwal } from '@/types/database';
+import { Jadwal, MataKuliah } from '@/types/database';
 import * as jadwalFetcher from '@/lib/fetchers/jadwalFetcher';
+import * as praktikumFetcher from '@/lib/fetchers/praktikumFetcher';
+import { CreateJadwalInput, UpdateJadwalInput } from '@/services/jadwalService';
 
 export function useJadwal(initialTerm?: string) {
   const [data, setData] = useState<Jadwal[]>([]);
@@ -11,6 +13,7 @@ export function useJadwal(initialTerm?: string) {
   const [selectedModul, setSelectedModul] = useState('Default');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const [mataKuliahList, setMataKuliahList] = useState<MataKuliah[]>([]);
 
   const moduls = [
     'Default',
@@ -42,6 +45,13 @@ export function useJadwal(initialTerm?: string) {
     }
   }, [selectedTerm]);
 
+  const fetchMataKuliah = useCallback(async () => {
+    const result = await praktikumFetcher.fetchMataKuliah();
+    if (result.ok && result.data) {
+      setMataKuliahList(result.data);
+    }
+  }, []);
+
   const fetchJadwal = useCallback(async () => {
     if (!selectedTerm) return;
 
@@ -61,9 +71,43 @@ export function useJadwal(initialTerm?: string) {
     }
   }, [selectedTerm]);
 
+  const addJadwal = async (input: CreateJadwalInput) => {
+    setLoading(true);
+    const result = await jadwalFetcher.createJadwal(input);
+    if (result.ok) {
+      await fetchJadwal();
+    } else {
+        setLoading(false);
+    }
+    return result;
+  };
+
+  const editJadwal = async (input: UpdateJadwalInput) => {
+    setLoading(true);
+    const result = await jadwalFetcher.updateJadwal(input);
+    if (result.ok) {
+      await fetchJadwal();
+    } else {
+        setLoading(false);
+    }
+    return result;
+  };
+
+  const removeJadwal = async (id: number) => {
+    setLoading(true);
+    const result = await jadwalFetcher.deleteJadwal(id);
+    if (result.ok) {
+      await fetchJadwal();
+    } else {
+        setLoading(false);
+    }
+    return result;
+  };
+
   useEffect(() => {
     fetchTerms();
-  }, [fetchTerms]);
+    fetchMataKuliah();
+  }, [fetchTerms, fetchMataKuliah]);
 
   useEffect(() => {
     if (selectedTerm) fetchJadwal();
@@ -80,6 +124,10 @@ export function useJadwal(initialTerm?: string) {
     loading,
     error,
     refetch: fetchJadwal,
+    mataKuliahList,
+    addJadwal,
+    editJadwal,
+    removeJadwal,
   };
 }
 

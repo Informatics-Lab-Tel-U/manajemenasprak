@@ -82,8 +82,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
                 if (hasSubmenu) {
                    return (
-                  <SidebarMenuItem key={item.label}>
-                    <Collapsible defaultOpen={isActive} className="group/collapsible" asChild>
+                    <Collapsible key={item.label} defaultOpen={isActive} className="group/collapsible" asChild>
                       <SidebarMenuItem>
                         <CollapsibleTrigger asChild>
                           <SidebarMenuButton tooltip={item.label} isActive={isActive}>
@@ -107,7 +106,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         </CollapsibleContent>
                       </SidebarMenuItem>
                     </Collapsible>
-                  </SidebarMenuItem>
                    )
                 }
 
