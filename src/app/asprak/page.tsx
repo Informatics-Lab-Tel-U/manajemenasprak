@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Download, Plus, Upload } from 'lucide-react';
 import { Asprak } from '@/types/database';
 import { useAsprak } from '@/hooks/useAsprak';
@@ -19,12 +20,17 @@ import AsprakImportCSVModal from '@/components/asprak/AsprakImportCSVModal';
 import AsprakDetailsModal from '@/components/asprak/AsprakDetailsModal';
 import { AsprakFormData } from '@/components/asprak/AsprakForm';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import AsprakGenerationRules from '@/components/asprak/AsprakGenerationRules';
 
 interface AsprakWithAssignments extends Asprak {
   assignments?: AsprakAssignment[];
 }
 
-export default function AsprakPage() {
+function AsprakPageContent() {
+  const searchParams = useSearchParams();
+  const activeTab = searchParams.get('tab') || 'data';
+  
   const {
     data: asprakList,
     loading,
@@ -131,6 +137,10 @@ export default function AsprakPage() {
     );
   }, [asprakList, searchQuery]);
 
+
+
+  // ... (rest of the hooks)
+
   return (
     <div className="container" style={{ position: 'relative' }}>
       {/* Header */}
@@ -157,18 +167,26 @@ export default function AsprakPage() {
         </div>
       </div>
 
-      {/* Filters and Table */}
-      <div className="card glass" style={{ marginBottom: '2rem' }}>
-        <AsprakFilters
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          terms={terms}
-          selectedTerm={selectedTerm}
-          onTermChange={setSelectedTerm}
-        />
+      <Tabs value={activeTab} className="w-full">
+        <TabsContent value="data">
+          {/* Filters and Table */}
+          <div className="card glass" style={{ marginBottom: '2rem' }}>
+            <AsprakFilters
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+              terms={terms}
+              selectedTerm={selectedTerm}
+              onTermChange={setSelectedTerm}
+            />
 
-        <AsprakTable data={filteredList} loading={loading} onViewDetails={handleView} />
-      </div>
+            <AsprakTable data={filteredList} loading={loading} onViewDetails={handleView} />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="rules">
+          <AsprakGenerationRules />
+        </TabsContent>
+      </Tabs>
 
       {/* Manual Add Modal */}
       {showAddModal && (
@@ -203,5 +221,13 @@ export default function AsprakPage() {
         />
       )}
     </div>
+  );
+}
+
+export default function AsprakPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <AsprakPageContent />
+    </Suspense>
   );
 }
