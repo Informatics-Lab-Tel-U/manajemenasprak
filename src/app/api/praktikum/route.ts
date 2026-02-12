@@ -17,6 +17,11 @@ export async function GET(req: Request) {
       return NextResponse.json({ ok: true, data: names });
     }
 
+    if (action === 'mata-kuliah') {
+      const mk = await praktikumService.getAllMataKuliah();
+      return NextResponse.json({ ok: true, data: mk });
+    }
+
     return NextResponse.json({ ok: false, error: 'Invalid action' }, { status: 400 });
   } catch (error: any) {
     logger.error('API Error in /api/praktikum:', error);
