@@ -10,8 +10,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Filter, X, Clock, MapPin, User, Users, ChevronRight } from 'lucide-react';
+import { Filter, X, Clock, MapPin, User, Users, ChevronRight, Plus } from 'lucide-react';
 import { Jadwal } from '@/types/database';
+import { JadwalModal } from '@/components/jadwal/JadwalModal';
+import { CreateJadwalInput, UpdateJadwalInput } from '@/services/jadwalService';
 
 const getCourseColor = (name: string) => {
   const colors = [
@@ -47,10 +49,39 @@ export default function JadwalPage() {
     selectedModul,
     setSelectedModul,
     loading,
+    mataKuliahList,
+    addJadwal,
+    editJadwal,
   } = useJadwal();
 
   const [selectedJadwal, setSelectedJadwal] = useState<Jadwal | null>(null);
   const [showSessionId, setShowSessionId] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalInitialData, setModalInitialData] = useState<Jadwal | null>(null);
+
+  const handleOpenAdd = () => {
+    setModalInitialData(null);
+    setIsModalOpen(true);
+  };
+
+  const handleOpenEdit = (jadwal: Jadwal) => {
+    setModalInitialData(jadwal);
+    setIsModalOpen(true);
+    setSelectedJadwal(null); // Close detail modal
+  };
+
+  const handleModalSubmit = async (input: CreateJadwalInput | UpdateJadwalInput) => {
+    let result;
+    if ('id' in input) {
+      result = await editJadwal(input as UpdateJadwalInput);
+    } else {
+      result = await addJadwal(input as CreateJadwalInput);
+    }
+
+    if (!result.ok) {
+        alert(`Failed: ${result.error}`);
+    }
+  };
 
   const jadwalList = useMemo(() => {
     return rawJadwalList.filter((j) => {
@@ -146,7 +177,14 @@ export default function JadwalPage() {
           </div>
         </div>
 
-        <div className="flex gap-3 w-full md:w-auto">
+        <div className="flex gap-3 w-full md:w-auto items-center">
+            <button
+                onClick={handleOpenAdd}
+                className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90 transition-colors"
+            >
+                <Plus size={16} />
+                Tambah Jadwal
+            </button>
           <Select value={selectedModul} onValueChange={setSelectedModul}>
             <SelectTrigger className="w-full md:w-[180px]">
               <SelectValue placeholder="Select modul" />
@@ -388,8 +426,11 @@ export default function JadwalPage() {
 
             <div className="p-4 bg-muted/20 border-t border-border/50 text-right">
               <div className="flex gap-2 justify-end">
-                <button className="px-4 py-2 rounded-lg border-2 border-primary text-primary font-medium text-sm hover:bg-primary/10 transition-colors">
-                  Ganti Jadwal
+                <button 
+                  onClick={() => handleOpenEdit(selectedJadwal)}
+                  className="px-4 py-2 rounded-lg border-2 border-primary text-primary font-medium text-sm hover:bg-primary/10 transition-colors"
+                >
+                  Edit Jadwal
                 </button>
 
                 <button
@@ -403,6 +444,15 @@ export default function JadwalPage() {
           </div>
         </div>
       )}
+
+      <JadwalModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSubmit={handleModalSubmit}
+        initialData={modalInitialData}
+        mataKuliahList={mataKuliahList}
+        isLoading={loading}
+      />
     </div>
   );
 }

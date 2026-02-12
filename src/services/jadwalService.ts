@@ -93,6 +93,43 @@ export async function createJadwal(input: CreateJadwalInput): Promise<Jadwal> {
   return data;
 }
 
+
+export interface UpdateJadwalInput {
+  id: number;
+  id_mk?: string;
+  kelas?: string;
+  hari?: string;
+  sesi?: number;
+  jam?: string;
+  ruangan?: string;
+  total_asprak?: number;
+  dosen?: string;
+}
+
+export async function updateJadwal(input: UpdateJadwalInput): Promise<Jadwal> {
+  const { id, ...updates } = input;
+  const { data, error } = await supabase
+    .from('Jadwal')
+    .update(updates)
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) {
+    logger.error('Error updating jadwal:', error);
+    throw new Error(`Failed to update Jadwal: ${error.message}`);
+  }
+  return data;
+}
+
+export async function deleteJadwal(id: number): Promise<void> {
+  const { error } = await supabase.from('Jadwal').delete().eq('id', id);
+  if (error) {
+    logger.error('Error deleting jadwal:', error);
+    throw new Error(`Failed to delete Jadwal: ${error.message}`);
+  }
+}
+
 export async function deleteJadwalByIds(ids: number[]): Promise<void> {
   if (ids.length === 0) return;
   const { error } = await supabase.from('Jadwal').delete().in('id', ids);
@@ -101,3 +138,4 @@ export async function deleteJadwalByIds(ids: number[]): Promise<void> {
     throw new Error(`Failed to delete: ${error.message}`);
   }
 }
+
