@@ -48,16 +48,10 @@
 2. **Aturan 2.2**: Dua huruf pertama kata-1 + huruf pertama kata-2
    - Contoh: `ANDI WIJAYA` → `ANW`
 
-3. **Aturan 2.3**: Huruf pertama kata-1 + huruf pertama kata-2 + huruf kedua kata-2
-   - Contoh: `ANDI WIJAYA` → `AWI`
-
-4. **Aturan 2.4**: Huruf pertama kata-1 + huruf kedua kata-1 + huruf pertama kata-2
-   - Contoh: `ANDI WIJAYA` → `ANW`
-
-5. **Aturan 2.5**: Huruf pertama kata-1 + huruf pertama kata-2 + huruf terakhir kata-2
+3. **Aturan 2.3**: Huruf pertama kata-1 + huruf pertama kata-2 + huruf terakhir kata-2
    - Contoh: `ANDI WIJAYA` → `AWA`
 
-6. **Aturan 2.6**: Dua huruf pertama kata-1 + huruf terakhir kata-2
+4. **Aturan 2.4**: Dua huruf pertama kata-1 + huruf terakhir kata-2
    - Contoh: `ANDI WIJAYA` → `ANA`
 
 **Fallback 2 Kata**: Kombinatorik dari pool huruf kedua kata
@@ -212,7 +206,7 @@ Filter prioritas:
 | Jumlah Kata | Aturan Standar | Pool Huruf (avg) | Kombinasi Fallback | Total Kemungkinan | Catatan |
 |-------------|----------------|------------------|--------------------|--------------------|---------|
 | 1 kata      | 4              | 5-8 huruf        | C(8,3) = 56        | ~60                | Risiko konflik tinggi untuk nama pendek |
-| 2 kata      | 6              | 10-15 huruf      | C(12,3) = 220      | ~225               | Cukup aman |
+| 2 kata      | 4              | 10-15 huruf      | C(12,3) = 220      | ~225               | Cukup aman |
 | 3 kata      | 8              | 15-20 huruf      | C(18,3) = 816      | ~825               | Sangat aman |
 | 4+ kata     | 6+             | 20-30 huruf      | C(25,3) = 2,300    | ~2,500+            | Hampir mustahil konflik |
 
