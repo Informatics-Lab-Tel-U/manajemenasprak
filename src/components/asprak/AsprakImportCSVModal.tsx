@@ -341,8 +341,9 @@ export default function AsprakImportCSVModal({
   // ─── Confirm Save ───────────────────────────────────────────────────────
 
   const handleConfirm = async () => {
-    const validRows = previewRows.filter((r) => r.status === 'ok' || r.status === 'warning');
-    if (validRows.length > 0) return;
+    const validRows = previewRows.filter((r) => r.status === 'ok');
+    if (validRows.length === 0) return;
+
     setSaving(true);
     setError(null);
 
