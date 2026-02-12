@@ -13,7 +13,6 @@ import {
 import { Filter, X, Clock, MapPin, User, Users, ChevronRight } from 'lucide-react';
 import { Jadwal } from '@/types/database';
 
-// Helper to generate consistent colors for courses
 const getCourseColor = (name: string) => {
   const colors = [
     '#dc3c3c', // red balanced
@@ -34,9 +33,13 @@ const getCourseColor = (name: string) => {
   return colors[Math.abs(hash) % colors.length];
 };
 
+const days = ['SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU'];
+
 export default function JadwalPage() {
+  const [programType, setProgramType] = useState<'REGULER' | 'PJJ'>('REGULER');
+
   const {
-    data: jadwalList,
+    data: rawJadwalList,
     terms: availableTerms,
     selectedTerm,
     setSelectedTerm,
@@ -49,28 +52,26 @@ export default function JadwalPage() {
   const [selectedJadwal, setSelectedJadwal] = useState<Jadwal | null>(null);
   const [showSessionId, setShowSessionId] = useState(false);
 
-  // 1. Get Unique Rooms (Sorted)
+  const jadwalList = useMemo(() => {
+    return rawJadwalList.filter((j) => {
+      const isPJJ =
+        j.mata_kuliah?.program_studi?.toUpperCase().includes('PJJ') ||
+        j.kelas?.toUpperCase().includes('PJJ');
+
+      if (programType === 'PJJ') {
+        return isPJJ;
+      } else {
+        return !isPJJ;
+      }
+    });
+  }, [rawJadwalList, programType]);
+
   const uniqueRooms = useMemo(() => {
     const rooms = new Set<string>();
     jadwalList.forEach((j) => {
       if (j.ruangan) rooms.add(j.ruangan);
     });
     return Array.from(rooms).sort();
-  }, [jadwalList]);
-
-  // 2. Structure Data
-  const days = ['SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU'];
-
-  const uniqueSessions = useMemo(() => {
-    const map = new Map<number, string>();
-    jadwalList.forEach((j) => {
-      if (j.sesi && j.jam) {
-        map.set(j.sesi, j.jam.substring(0, 5));
-      }
-    });
-    return Array.from(map.entries())
-      .sort((a, b) => a[0] - b[0])
-      .map(([sesi, jam]) => ({ sesi, jam }));
   }, [jadwalList]);
 
   const scheduleMatrix = useMemo(() => {
@@ -84,17 +85,70 @@ export default function JadwalPage() {
     return matrix;
   }, [jadwalList]);
 
+  const dailySessions = useMemo(() => {
+    const dayMap = new Map<string, { sesi: number; jam: string }[]>();
+
+    days.forEach((day) => {
+      const sessionsOnDay = jadwalList.filter((j) => j.hari === day);
+      if (sessionsOnDay.length === 0) return;
+
+      const sessionTimeMap = new Map<number, string>();
+      sessionsOnDay.forEach((j) => {
+        if (j.sesi && j.jam) {
+          const time = j.jam.substring(0, 5);
+          const existingTime = sessionTimeMap.get(j.sesi);
+          if (!existingTime || time < existingTime) {
+            sessionTimeMap.set(j.sesi, time);
+          }
+        }
+      });
+
+      const sortedSessions = Array.from(sessionTimeMap.entries())
+        .sort((a, b) => a[0] - b[0])
+        .map(([sesi, jam]) => ({ sesi, jam }));
+
+      dayMap.set(day, sortedSessions);
+    });
+
+    return dayMap;
+  }, [jadwalList]);
+
   return (
     <div className="container min-h-screen p-4 sm:p-8">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-bold title-gradient">Jadwal Praktikum</h1>
-          <p className="text-muted-foreground text-sm">Overview jadwal per ruangan</p>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+        <div className="flex items-center gap-4">
+          <div>
+            <h1 className="text-2xl font-bold title-gradient">Jadwal Praktikum</h1>
+            <p className="text-muted-foreground text-sm">Overview jadwal per ruangan</p>
+          </div>
+
+          <div className="bg-muted/50 p-1.5 rounded-lg flex items-center gap-1 border border-border/50">
+            <button
+              onClick={() => setProgramType('REGULER')}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                programType === 'REGULER'
+                  ? 'bg-background shadow-sm text-foreground'
+                  : 'text-muted-foreground hover:bg-background/50 hover:text-foreground'
+              }`}
+            >
+              Reguler
+            </button>
+            <button
+              onClick={() => setProgramType('PJJ')}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                programType === 'PJJ'
+                  ? 'bg-background shadow-sm text-foreground'
+                  : 'text-muted-foreground hover:bg-background/50 hover:text-foreground'
+              }`}
+            >
+              PJJ
+            </button>
+          </div>
         </div>
 
-        <div className="flex gap-5">
+        <div className="flex gap-3 w-full md:w-auto">
           <Select value={selectedModul} onValueChange={setSelectedModul}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-full md:w-[180px]">
               <SelectValue placeholder="Select modul" />
             </SelectTrigger>
             <SelectContent>
@@ -141,7 +195,7 @@ export default function JadwalPage() {
                 <th
                   className="p-2 border-r border-border text-center font-bold min-w-[60px] text-xs uppercase text-muted-foreground cursor-pointer hover:bg-muted/80 transition-colors select-none group"
                   onClick={() => setShowSessionId(!showSessionId)}
-                  title="Click to toggle between Time and Session ID"
+                  title="Click to toggle between Time/Session"
                 >
                   <div className="flex items-center justify-center gap-1">
                     {showSessionId ? 'SESI' : 'JAM'}
@@ -163,9 +217,10 @@ export default function JadwalPage() {
             </thead>
             <tbody>
               {days.map((day) => {
-                if (uniqueSessions.length === 0) return null;
+                const daySessions = dailySessions.get(day);
+                if (!daySessions || daySessions.length === 0) return null;
 
-                return uniqueSessions.map((session, sessionIndex) => {
+                return daySessions.map((session, sessionIndex) => {
                   const isFirstRow = sessionIndex === 0;
 
                   return (
@@ -175,7 +230,7 @@ export default function JadwalPage() {
                     >
                       {isFirstRow && (
                         <td
-                          rowSpan={uniqueSessions.length}
+                          rowSpan={daySessions.length}
                           className="p-2 border-r border-border border-b border-border text-center font-bold bg-muted/10 align-middle text-sm"
                         >
                           {day}
@@ -232,6 +287,8 @@ export default function JadwalPage() {
                 });
               })}
             </tbody>
+
+
           </table>
         )}
 
