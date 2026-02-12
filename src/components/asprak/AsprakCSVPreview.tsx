@@ -264,9 +264,15 @@ export default function AsprakCSVPreview({
               {totalError + totalDuplicateCSV} row(s) bermasalah akan di-skip saat import.
             </p>
           )}
-          <Button onClick={onConfirm} disabled={loading || (totalOk + totalWarning) === 0}>
+          <Button
+            onClick={onConfirm}
+            disabled={loading || (totalOk + totalWarning) === 0}
+            variant="default"
+          >
             <Save size={16} className="mr-1" />
-            {loading ? 'Menyimpan...' : `Simpan ${totalOk + totalWarning} Data`}
+            {loading
+              ? 'Menyimpan...'
+              : `Simpan ${totalOk + totalWarning} Data`}
           </Button>
         </div>
       </div>
