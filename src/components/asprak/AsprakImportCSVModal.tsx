@@ -182,7 +182,7 @@ export default function AsprakImportCSVModal({
 
               // Check if code generation failed
               if (generated.rule === 'FAILED' && !originalKode && status === 'ok') {
-                status = 'warning';
+                status = 'error';
                 statusMessage = 'Kode gagal di-generate — isi manual di kolom kode';
               }
 
@@ -279,12 +279,13 @@ export default function AsprakImportCSVModal({
           row.statusMessage = '';
         }
       } else if (uppercased.length > 0 && uppercased.length < 3) {
-        // Incomplete code
-        row.status = 'warning';
+        // Incomplete code -> ERROR
+        row.status = 'error';
         row.statusMessage = 'Kode harus 3 huruf';
       } else if (uppercased.length === 0) {
-        row.status = 'warning';
-        row.statusMessage = 'Kode gagal di-generate — isi manual di kolom kode';
+        // Empty code -> ERROR
+        row.status = 'error';
+        row.statusMessage = 'Kode tidak boleh kosong';
       }
 
       updated[rowIndex] = row;
@@ -341,9 +342,12 @@ export default function AsprakImportCSVModal({
   // ─── Confirm Save ───────────────────────────────────────────────────────
 
   const handleConfirm = async () => {
-    const validRows = previewRows.filter((r) => r.status === 'ok');
-    const invalidRows = previewRows.filter((r) => r.status !== 'ok');
-    if (invalidRows.length > 0) return;
+    // Include both OK and Warning rows
+    const validRows = previewRows.filter((r) => r.status === 'ok' || r.status === 'warning');
+    const invalidRows = previewRows.filter((r) => r.status === 'error' || r.status === 'duplicate-csv');
+    
+    // Only block if all rows are invalid
+    if (validRows.length === 0 && invalidRows.length > 0) return;
 
     setSaving(true);
     setError(null);

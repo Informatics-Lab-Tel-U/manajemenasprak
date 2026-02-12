@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google';
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/layout/AppSidebar';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { Toaster } from '@/components/ui/sonner';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -44,6 +45,7 @@ export default function RootLayout({
               <ThemeToggle />
             </header>
             <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-6">{children}</main>
+            <Toaster />
           </SidebarInset>
         </SidebarProvider>
       </body>
