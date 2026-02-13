@@ -37,7 +37,7 @@ function sanitizeName(name: string): string {
 }
 
 /** Split sanitized name into words */
-function getWords(name: string): string[] {
+export function getWords(name: string): string[] {
   return sanitizeName(name).split(' ').filter(Boolean);
 }
 
@@ -91,7 +91,7 @@ function uniqueChars(str: string): string[] {
 
 // ─── Standard Rules per Word Count ───────────────────────────────────────────
 
-function rulesFor1Word(words: string[]): string[] {
+export function rulesFor1Word(words: string[]): string[] {
   const w = words[0];
   const candidates: string[] = [];
 
@@ -107,7 +107,7 @@ function rulesFor1Word(words: string[]): string[] {
   return candidates;
 }
 
-function rulesFor2Words(words: string[]): string[] {
+export function rulesFor2Words(words: string[]): string[] {
   const [w1, w2] = words;
   const candidates: string[] = [];
 
@@ -123,7 +123,7 @@ function rulesFor2Words(words: string[]): string[] {
   return candidates;
 }
 
-function rulesFor3Words(words: string[]): string[] {
+export function rulesFor3Words(words: string[]): string[] {
   const [w1, w2, w3] = words;
   const candidates: string[] = [];
 
@@ -175,7 +175,7 @@ function rulesForNWords(words: string[]): string[] {
 function getStrategicPool(words: string[]): string[] {
   const pool: string[] = [];
   for (const word of words) {
-    pool.push(safeChar(word, 0));
+    if (word.length > 0) pool.push(safeChar(word, 0));
     if (word.length > 1) pool.push(safeChar(word, 1));
     if (word.length > 2) pool.push(midChar(word));
     if (word.length > 1) pool.push(lastChar(word));
@@ -183,10 +183,36 @@ function getStrategicPool(words: string[]): string[] {
   return uniqueChars(pool.join(''));
 }
 
+export function generateStrategicCandidates(words: string[]): string[] {
+  const strategicPool = getStrategicPool(words);
+  const strategicCombos = combinations3(strategicPool);
+
+  // Prioritize combos starting with first letter of name
+  const firstLetter = safeChar(words[0], 0);
+  const prioritized = [
+    ...strategicCombos.filter((c) => c[0] === firstLetter),
+    ...strategicCombos.filter((c) => c[0] !== firstLetter),
+  ];
+  return prioritized;
+}
+
 // ─── Fallback: Full Combinatorics ────────────────────────────────────────────
 
 function getFullPool(name: string): string[] {
   return uniqueChars(sanitizeName(name).replace(/\s/g, ''));
+}
+
+export function generateFullCandidates(namaLengkap: string): string[] {
+  const words = getWords(namaLengkap);
+  const firstLetter = safeChar(words[0], 0);
+  const fullPool = getFullPool(namaLengkap);
+  const fullCombos = combinations3(fullPool);
+
+  const fullPrioritized = [
+    ...fullCombos.filter((c) => c[0] === firstLetter),
+    ...fullCombos.filter((c) => c[0] !== firstLetter),
+  ];
+  return fullPrioritized;
 }
 
 // ─── Main Generator ─────────────────────────────────────────────────────────
@@ -219,8 +245,7 @@ export function generateAsprakCode(
   let standardCandidates: string[] = [];
   if (n === 1) standardCandidates = rulesFor1Word(words);
   else if (n === 2) standardCandidates = rulesFor2Words(words);
-  else if (n === 3) standardCandidates = rulesFor3Words(words);
-  else standardCandidates = rulesForNWords(words);
+  else standardCandidates = rulesFor3Words(words);
 
   for (let i = 0; i < standardCandidates.length; i++) {
     const code = standardCandidates[i].toUpperCase();
@@ -231,17 +256,8 @@ export function generateAsprakCode(
 
   // ── Phase 2: Strategic Fallback ──────────────────────────────────────────
 
-  const strategicPool = getStrategicPool(words);
-  const strategicCombos = combinations3(strategicPool);
-
-  // Prioritize combos starting with first letter of name
-  const firstLetter = safeChar(words[0], 0);
-  const prioritized = [
-    ...strategicCombos.filter((c) => c[0] === firstLetter),
-    ...strategicCombos.filter((c) => c[0] !== firstLetter),
-  ];
-
-  for (const code of prioritized) {
+  const strategicCandidates = generateStrategicCandidates(words);
+  for (const code of strategicCandidates) {
     if (isValidCode(code) && !usedCodes.has(code)) {
       return { code, rule: 'Fallback L1 (Strategic)' };
     }
@@ -249,15 +265,8 @@ export function generateAsprakCode(
 
   // ── Phase 3: Full Combinatorics ──────────────────────────────────────────
 
-  const fullPool = getFullPool(namaLengkap);
-  const fullCombos = combinations3(fullPool);
-
-  const fullPrioritized = [
-    ...fullCombos.filter((c) => c[0] === firstLetter),
-    ...fullCombos.filter((c) => c[0] !== firstLetter),
-  ];
-
-  for (const code of fullPrioritized) {
+  const fullCandidates = generateFullCandidates(namaLengkap);
+  for (const code of fullCandidates) {
     if (isValidCode(code) && !usedCodes.has(code)) {
       return { code, rule: 'Fallback L2 (Full)' };
     }
