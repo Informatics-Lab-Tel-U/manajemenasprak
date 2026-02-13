@@ -14,6 +14,7 @@ export function useJadwal(initialTerm?: string) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [mataKuliahList, setMataKuliahList] = useState<MataKuliah[]>([]);
+  const [jadwalPengganti, setJadwalPengganti] = useState<any[]>([]);
 
   const moduls = [
     'Default',
@@ -31,8 +32,6 @@ export function useJadwal(initialTerm?: string) {
     'Modul 12',
     'Modul 13',
     'Modul 14',
-    'Modul 15',
-    'Modul 16',
   ];
 
   const fetchTerms = useCallback(async () => {
@@ -64,12 +63,24 @@ export function useJadwal(initialTerm?: string) {
       } else {
         setError(new Error(result.error || 'Failed to fetch jadwal'));
       }
+
+      // Fetch Jadwal Pengganti if a module is selected
+      if (selectedModul !== 'Default') {
+          const modulNum = parseInt(selectedModul.replace('Modul ', ''));
+          const penggantiResult = await jadwalFetcher.fetchJadwalPengganti(modulNum);
+          if (penggantiResult.ok && penggantiResult.data) {
+              setJadwalPengganti(penggantiResult.data);
+          }
+      } else {
+          setJadwalPengganti([]);
+      }
+
     } catch (e) {
       setError(e as Error);
     } finally {
       setLoading(false);
     }
-  }, [selectedTerm]);
+  }, [selectedTerm, selectedModul]);
 
   const addJadwal = async (input: CreateJadwalInput) => {
     setLoading(true);
@@ -91,6 +102,17 @@ export function useJadwal(initialTerm?: string) {
         setLoading(false);
     }
     return result;
+  };
+
+  const upsertPengganti = async (input: any) => {
+      setLoading(true);
+      const result = await jadwalFetcher.upsertJadwalPengganti(input);
+      if (result.ok) {
+        await fetchJadwal();
+      } else {
+          setLoading(false);
+      }
+      return result;
   };
 
   const removeJadwal = async (id: number) => {
@@ -115,6 +137,7 @@ export function useJadwal(initialTerm?: string) {
 
   return {
     data,
+    jadwalPengganti,
     terms,
     selectedTerm,
     setSelectedTerm,
@@ -127,6 +150,7 @@ export function useJadwal(initialTerm?: string) {
     mataKuliahList,
     addJadwal,
     editJadwal,
+    upsertPengganti,
     removeJadwal,
   };
 }

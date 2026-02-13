@@ -24,6 +24,12 @@ export async function GET(req: Request) {
       return NextResponse.json({ ok: true, data: jadwal });
     }
 
+    if (action === 'pengganti') {
+        const modul = parseInt(searchParams.get('modul') || '0');
+        const jadwal = await jadwalService.getJadwalPengganti(modul);
+        return NextResponse.json({ ok: true, data: jadwal });
+    }
+
     return NextResponse.json(
       { ok: false, error: 'Invalid action or missing parameters' },
       { status: 400 }
@@ -38,7 +44,15 @@ export async function GET(req: Request) {
 }
 export async function POST(req: Request) {
   try {
+    const { searchParams } = new URL(req.url);
+    const action = searchParams.get('action');
     const body = await req.json();
+
+    if (action === 'upsert-pengganti') {
+        const result = await jadwalService.upsertJadwalPengganti(body);
+        return NextResponse.json({ ok: true, data: result });
+    }
+
     const jadwal = await jadwalService.createJadwal(body);
     return NextResponse.json({ ok: true, data: jadwal });
   } catch (error: any) {
