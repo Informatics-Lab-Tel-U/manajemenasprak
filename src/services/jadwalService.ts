@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import { Jadwal } from '@/types/database';
+import { Jadwal, JadwalPengganti } from '@/types/database';
 import { logger } from '@/lib/logger';
 
 export async function getAvailableTerms(): Promise<string[]> {
@@ -84,7 +84,9 @@ export interface CreateJadwalInput {
 }
 
 export async function createJadwal(input: CreateJadwalInput): Promise<Jadwal> {
-  const { data, error } = await supabase.from('Jadwal').insert(input).select().single();
+  const { id_mk, kelas, hari, sesi, jam, ruangan, total_asprak, dosen } = input;
+  const cleanInput = { id_mk, kelas, hari, sesi, jam, ruangan, total_asprak, dosen };
+  const { data, error } = await supabase.from('Jadwal').insert(cleanInput).select().single();
 
   if (error) {
     logger.error('Error creating jadwal:', error);
@@ -107,7 +109,18 @@ export interface UpdateJadwalInput {
 }
 
 export async function updateJadwal(input: UpdateJadwalInput): Promise<Jadwal> {
-  const { id, ...updates } = input;
+  const { id, id_mk, kelas, hari, sesi, jam, ruangan, total_asprak, dosen } = input;
+  
+  const updates: Record<string, any> = {};
+  if (id_mk !== undefined) updates.id_mk = id_mk;
+  if (kelas !== undefined) updates.kelas = kelas;
+  if (hari !== undefined) updates.hari = hari;
+  if (sesi !== undefined) updates.sesi = sesi;
+  if (jam !== undefined) updates.jam = jam;
+  if (ruangan !== undefined) updates.ruangan = ruangan;
+  if (total_asprak !== undefined) updates.total_asprak = total_asprak;
+  if (dosen !== undefined) updates.dosen = dosen;
+
   const { data, error } = await supabase
     .from('Jadwal')
     .update(updates)
@@ -139,3 +152,66 @@ export async function deleteJadwalByIds(ids: number[]): Promise<void> {
   }
 }
 
+
+export interface CreateJadwalPenggantiInput {
+  id_jadwal: number;
+  modul: number;
+  tanggal: string;
+  hari: string;
+  sesi: number;
+  jam: string;
+  ruangan: string;
+}
+
+export async function getJadwalPengganti(modul: number): Promise<JadwalPengganti[]> {
+  if (modul <= 0) return [];
+  
+  const { data, error } = await supabase
+    .from('Jadwal_Pengganti')
+    .select('*')
+    .eq('modul', modul);
+
+  if (error) {
+    logger.error('Error fetching jadwal pengganti:', error);
+    return [];
+  }
+  return data as JadwalPengganti[];
+}
+
+export async function upsertJadwalPengganti(input: CreateJadwalPenggantiInput): Promise<JadwalPengganti> {
+  const { id_jadwal, modul, tanggal, hari, sesi, jam, ruangan } = input;
+  
+  if (!tanggal) {
+      throw new Error('Tanggal wajib diisi untuk jadwal pengganti');
+  }
+
+  const cleanInput = { id_jadwal, modul, tanggal, hari, sesi, jam, ruangan };
+
+  const { data: existing } = await supabase
+    .from('Jadwal_Pengganti')
+    .select('id')
+    .eq('id_jadwal', id_jadwal)
+    .eq('modul', modul)
+    .maybeSingle();
+
+  let query = supabase.from('Jadwal_Pengganti');
+  
+  if (existing) {
+    const { data, error } = await query
+      .update(cleanInput)
+      .eq('id', existing.id)
+      .select()
+      .single();
+      
+    if (error) throw new Error(`Failed to update Jadwal Pengganti: ${error.message}`);
+    return data;
+  } else {
+    const { data, error } = await query
+      .insert(cleanInput)
+      .select()
+      .single();
+
+    if (error) throw new Error(`Failed to create Jadwal Pengganti: ${error.message}`);
+    return data;
+  }
+}
