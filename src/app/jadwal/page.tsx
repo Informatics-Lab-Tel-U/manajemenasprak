@@ -13,7 +13,9 @@ import {
 import { Filter, X, Clock, MapPin, User, Users, ChevronRight, Plus } from 'lucide-react';
 import { Jadwal } from '@/types/database';
 import { JadwalModal } from '@/components/jadwal/JadwalModal';
-import { CreateJadwalInput, UpdateJadwalInput } from '@/services/jadwalService';
+import { CreateJadwalInput, UpdateJadwalInput, CreateJadwalPenggantiInput } from '@/services/jadwalService';
+import { DAYS, STATIC_SESSIONS } from '@/constants';
+import { toast } from 'sonner';
 
 const getCourseColor = (name: string) => {
   const colors = [
@@ -35,13 +37,14 @@ const getCourseColor = (name: string) => {
   return colors[Math.abs(hash) % colors.length];
 };
 
-const days = ['SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU'];
+
 
 export default function JadwalPage() {
   const [programType, setProgramType] = useState<'REGULER' | 'PJJ'>('REGULER');
 
   const {
     data: rawJadwalList,
+    jadwalPengganti,
     terms: availableTerms,
     selectedTerm,
     setSelectedTerm,
@@ -52,6 +55,7 @@ export default function JadwalPage() {
     mataKuliahList,
     addJadwal,
     editJadwal,
+    upsertPengganti,
   } = useJadwal();
 
   const [selectedJadwal, setSelectedJadwal] = useState<Jadwal | null>(null);
@@ -70,21 +74,80 @@ export default function JadwalPage() {
     setSelectedJadwal(null); // Close detail modal
   };
 
-  const handleModalSubmit = async (input: CreateJadwalInput | UpdateJadwalInput) => {
-    let result;
-    if ('id' in input) {
-      result = await editJadwal(input as UpdateJadwalInput);
+  const handleModalSubmit = async (input: CreateJadwalInput | UpdateJadwalInput | CreateJadwalPenggantiInput) => {
+    const { hari, sesi, ruangan, id_jadwal, id } = input as any;
+    const currentId = selectedModul !== 'Default' ? id_jadwal : id;
+
+    // Check for scheduling conflicts
+    let conflict: Jadwal | undefined;
+    
+    if (selectedModul === 'Default') {
+        conflict = rawJadwalList.find(j => 
+            j.id !== currentId && 
+            j.hari === hari && 
+            j.sesi === Number(sesi) && 
+            j.ruangan === ruangan
+        );
     } else {
-      result = await addJadwal(input as CreateJadwalInput);
+        // Create effective schedule list merging base and substitutes
+        const effectiveJadwal = rawJadwalList.map(j => {
+            const substitute = jadwalPengganti.find(jp => jp.id_jadwal === j.id);
+            return substitute ? { ...j, ...substitute } : j;
+        });
+
+        conflict = effectiveJadwal.find(j => 
+            j.id !== currentId &&
+            j.hari === hari &&
+            j.sesi === Number(sesi) &&
+            j.ruangan === ruangan
+        );
     }
 
+    if (conflict) {
+        const conflictName = conflict.mata_kuliah?.nama_lengkap || 'Unknown Course';
+        const conflictClass = conflict.kelas || 'Unknown Class';
+        toast.error(`Gagal: Jadwal bentrok dengan mata kuliah "${conflictName}" (${conflictClass}) di ${ruangan}, ${hari} Sesi ${sesi}.`);
+        return;
+    }
+
+    // Process submission
+    const result = selectedModul !== 'Default' 
+        ? await upsertPengganti(input)
+        : ('id' in input && !('modul' in input) 
+            ? await editJadwal(input as UpdateJadwalInput) 
+            : await addJadwal(input as CreateJadwalInput));
+
     if (!result.ok) {
-        alert(`Failed: ${result.error}`);
+        toast.error(`Gagal: ${result.error}`);
+    } else {
+        toast.success('Jadwal berhasil disimpan');
     }
   };
 
   const jadwalList = useMemo(() => {
-    return rawJadwalList.filter((j) => {
+    let combinedJadwal = rawJadwalList;
+
+    // Merge logic: If Modul is selected, override default jadwal with substitute
+    if (selectedModul !== 'Default' && jadwalPengganti.length > 0) {
+        combinedJadwal = rawJadwalList.map(j => {
+            const substitute = jadwalPengganti.find(jp => jp.id_jadwal === j.id);
+            if (substitute) {
+                return {
+                    ...j,
+                    ruangan: substitute.ruangan,
+                    jam: substitute.jam,
+                    hari: substitute.hari,
+                    sesi: substitute.sesi,
+                    tanggal: substitute.tanggal, // Map substitute date
+                    // Substitute doesn't override mata kuliah, kelas, etc. based on requirements, usually just time/room
+                    // But if it changes day/session, it moves in the matrix
+                };
+            }
+            return j;
+        });
+    }
+
+    return combinedJadwal.filter((j) => {
       const isPJJ =
         j.mata_kuliah?.program_studi?.toUpperCase().includes('PJJ') ||
         j.kelas?.toUpperCase().includes('PJJ');
@@ -95,7 +158,7 @@ export default function JadwalPage() {
         return !isPJJ;
       }
     });
-  }, [rawJadwalList, programType]);
+  }, [rawJadwalList, jadwalPengganti, selectedModul, programType]);
 
   const uniqueRooms = useMemo(() => {
     const rooms = new Set<string>();
@@ -116,33 +179,7 @@ export default function JadwalPage() {
     return matrix;
   }, [jadwalList]);
 
-  const dailySessions = useMemo(() => {
-    const dayMap = new Map<string, { sesi: number; jam: string }[]>();
 
-    days.forEach((day) => {
-      const sessionsOnDay = jadwalList.filter((j) => j.hari === day);
-      if (sessionsOnDay.length === 0) return;
-
-      const sessionTimeMap = new Map<number, string>();
-      sessionsOnDay.forEach((j) => {
-        if (j.sesi && j.jam) {
-          const time = j.jam.substring(0, 5);
-          const existingTime = sessionTimeMap.get(j.sesi);
-          if (!existingTime || time < existingTime) {
-            sessionTimeMap.set(j.sesi, time);
-          }
-        }
-      });
-
-      const sortedSessions = Array.from(sessionTimeMap.entries())
-        .sort((a, b) => a[0] - b[0])
-        .map(([sesi, jam]) => ({ sesi, jam }));
-
-      dayMap.set(day, sortedSessions);
-    });
-
-    return dayMap;
-  }, [jadwalList]);
 
   return (
     <div className="container min-h-screen p-4 sm:p-8">
@@ -254,9 +291,9 @@ export default function JadwalPage() {
               </tr>
             </thead>
             <tbody>
-              {days.map((day) => {
-                const daySessions = dailySessions.get(day);
-                if (!daySessions || daySessions.length === 0) return null;
+              {DAYS.map((day) => {
+                const daySessions = STATIC_SESSIONS[day] || [];
+                if (daySessions.length === 0) return null;
 
                 return daySessions.map((session, sessionIndex) => {
                   const isFirstRow = sessionIndex === 0;
@@ -452,6 +489,7 @@ export default function JadwalPage() {
         initialData={modalInitialData}
         mataKuliahList={mataKuliahList}
         isLoading={loading}
+        selectedModul={selectedModul}
       />
     </div>
   );

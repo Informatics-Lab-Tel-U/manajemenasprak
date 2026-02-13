@@ -22,6 +22,7 @@ import AsprakDetailsModal from '@/components/asprak/AsprakDetailsModal';
 import { AsprakFormData } from '@/components/asprak/AsprakForm';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
 import AsprakGenerationRules from '@/components/asprak/AsprakGenerationRules';
 
 interface AsprakWithAssignments extends Asprak {
@@ -179,7 +180,7 @@ function AsprakPageContent() {
             <Upload size={18} />
             Import CSV
           </Button>
-          <Button variant="outline" onClick={() => alert('Export feature pending...')}>
+          <Button variant="outline" onClick={() => toast.info('Fitur Export akan segera hadir')}>
             <Download size={18} />
             Export Data
           </Button>
