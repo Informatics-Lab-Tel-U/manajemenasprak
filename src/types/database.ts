@@ -24,6 +24,18 @@ export type MataKuliah = {
   };
 };
 
+export type JadwalPengganti = {
+  id: string;
+  id_jadwal: number;
+  modul: number;
+  tanggal: string;
+  hari: string;
+  sesi: number;
+  jam: string;
+  ruangan: string;
+  created_at: string;
+};
+
 export type Jadwal = {
   id: number;
   id_mk: number;
@@ -35,6 +47,8 @@ export type Jadwal = {
   total_asprak: number;
   dosen?: string;
   mata_kuliah?: MataKuliah;
+  jadwal_pengganti?: JadwalPengganti[];
+  tanggal?: string;
 };
 
 export type Pelanggaran = {
