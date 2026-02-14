@@ -25,6 +25,34 @@ export interface AsprakAssignment {
   };
 }
 
+export interface AsprakPlottingData extends Asprak {
+    assignments: {
+        id: string; // Praktikum ID
+        nama: string;
+        tahun_ajaran: string;
+    }[];
+}
+
+export async function fetchPlottingData(term?: string): Promise<ServiceResult<AsprakPlottingData[]>> {
+  try {
+    const url = new URL('/api/asprak', window.location.origin);
+    url.searchParams.append('action', 'plotting');
+    if (term) url.searchParams.append('term', term);
+    
+    const res = await fetch(url.toString());
+    const json = await res.json();
+
+    if (!res.ok) {
+      return { ok: false, error: json.error };
+    }
+
+    return { ok: true, data: json.data };
+  } catch (e: any) {
+    logger.error('Error fetching plotting data:', e);
+    return { ok: false, error: e.message };
+  }
+}
+
 export async function fetchAllAsprak(term?: string): Promise<ServiceResult<Asprak[]>> {
   try {
     const url = term ? `/api/asprak?term=${encodeURIComponent(term)}` : '/api/asprak';
