@@ -158,72 +158,29 @@ function AsprakPageContent() {
   // ─── Edit & Delete ────────────────────────────────────────────────────────
   
   const handleEditAsprak = async (asprak: Asprak) => {
-    // We need to fetch current assignments first to populate checkboxes
     setLoadingDetails(true);
     const result = await getAssignments(asprak.id);
     
-    // Filter assignments to only those in the CURRENT SELECTED TERM
-    // If no term selected ("All"), maybe we should picking the latest one? 
-    // Requirement says: "nge fetch term yang ada... kalau gaada gausah ditampilkan"
-    // So we need a valid selectedTerm context for the edit modal usually.
-    // If selectedTerm is empty (All), let's default to the latest available term from 'terms' list
-    
-    const targetTerm = selectedTerm || terms[0]; // Fallback to latest if 'All'
-    
-    if (!targetTerm) {
-        toast.error("Tidak ada term yang tersedia untuk di-edit.");
-        setLoadingDetails(false);
-        return;
-    }
-    
-    const currentAssignmentIds = result
-        .filter(a => a.praktikum.tahun_ajaran === targetTerm)
-        .map(a => a.praktikum.nama); // Note: AsprakAssignment returns praktikum names as IDs basically in previous logic? 
-        // Wait, fetcher returns { id, praktikum: { nama, tahun_ajaran } }
-        // We need ID of praktikum actually.
-        // Let's check fetcher again. 
-        // getAssignments returns AsprakAssignment[].
-        // AsprakAssignment interface: { id: number, praktikum: { nama: string, tahun_ajaran: string } }
-        // The fetcher: fetchAsprakAssignments calls /api/asprak action=view.
-        // The service: getAsprakAssignments selects: id, praktikum (nama, tahun_ajaran). 
-        // WAIT, it DOES NOT select praktikum ID. We need praktikum ID to match properly with checkboxes in EditModal.
-        
-        // Let's check getAsprakAssignments in service. 
-        // It selects: id, praktikum:Praktikum(nama, tahun_ajaran).
-        // It should also select praktikum(id).
-        
-        // I will fix the service query in a separate step or assume I can match by name. 
-        // The EditModal uses ID.
-        // UsePraktikum hook returns { id, nama }. 
-        // So I should match by Name maybe? Or fix service to return ID.
-        // Let's assume for now we use NAME as identifiers if ID is missing or fix service.
-        // Actually best practice is ID.
-        // But previously usePraktikum hook returns {id, nama} where id might be name?
-        // usePraktikum -> fetchUniquePraktikumNames -> returns { id: name, nama: name } in service! 
-        // So 'id' IS 'nama'.
-        
-    const currentAssignmentNames = result
-        .filter(a => a.praktikum.tahun_ajaran === targetTerm)
-        .map(a => a.praktikum.nama);
+    // Map to IDs directly, getting all assignments across all terms
+    const currentAssignmentIds = result.map(a => a.praktikum.id);
         
     setEditTarget({
         asprak,
-        assignments: currentAssignmentNames
+        assignments: currentAssignmentIds
     });
     setLoadingDetails(false);
     setShowEditModal(true);
   };
   
   const handleSaveEdit = async (praktikumIds: string[]) => {
-      // praktikumIds are names basically given previous service logic
       if (!editTarget) return;
       
-      const targetTerm = selectedTerm || terms[0];
-      const result = await updateAssignments(editTarget.asprak.id, targetTerm, praktikumIds);
+      // Use 'all' to indicate global update
+      const result = await updateAssignments(editTarget.asprak.id, 'all', praktikumIds);
       
       if (result.ok) {
           toast.success("Penugasan berhasil diperbarui");
-          fetchAsprak(); // Refresh list to update View details if needed
+          fetchAsprak(); // Refresh list
       } else {
           toast.error(`Gagal memperbarui: ${result.error}`);
       }
