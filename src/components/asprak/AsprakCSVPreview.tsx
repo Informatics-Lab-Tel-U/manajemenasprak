@@ -11,6 +11,7 @@ import { useState } from 'react';
 import { CheckCircle, AlertTriangle, Sparkles, ArrowLeft, Save, Copy, FileCheck, CopyX, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 
 export interface PreviewRow {
   nama_lengkap: string;
@@ -25,6 +26,7 @@ export interface PreviewRow {
   originalKode: string;
   originalCodeRule: string;
   originalCodeSource: 'csv' | 'generated';
+  selected: boolean;
 }
 
 interface AsprakCSVPreviewProps {
@@ -33,6 +35,8 @@ interface AsprakCSVPreviewProps {
   onConfirm: () => void;
   onBack: () => void;
   onCodeEdit: (rowIndex: number, newCode: string) => void;
+  onToggleSelect: (rowIndex: number) => void;
+  onToggleAll: (checked: boolean) => void;
   loading: boolean;
 }
 
@@ -42,6 +46,8 @@ export default function AsprakCSVPreview({
   onConfirm,
   onBack,
   onCodeEdit,
+  onToggleSelect,
+  onToggleAll,
   loading,
 }: AsprakCSVPreviewProps) {
   const totalOk = rows.filter((r) => r.status === 'ok').length;
@@ -53,6 +59,12 @@ export default function AsprakCSVPreview({
   const totalGenerated = rows.filter((r) => r.codeSource === 'generated' && r.status === 'ok').length;
   const totalManualEdit = rows.filter((r) => r.codeRule === 'Manual edit' && (r.status === 'ok' || r.status === 'warning')).length;
   const totalFromCSV = rows.filter((r) => r.codeSource === 'csv' && r.codeRule !== 'Manual edit' && r.status === 'ok').length;
+  
+  // Count selectable rows (OK or Warning)
+  const selectableRows = rows.filter(r => r.status === 'ok' || r.status === 'warning');
+  const selectedCount = selectableRows.filter(r => r.selected).length;
+  const allSelected = selectableRows.length > 0 && selectedCount === selectableRows.length;
+  const isIndeterminate = selectedCount > 0 && selectedCount < selectableRows.length;
 
   return (
     <div className="space-y-4">
@@ -63,6 +75,9 @@ export default function AsprakCSVPreview({
         </Badge>
         <Badge variant="outline" className="text-sm px-3 py-1">
           Total: <span className="font-bold ml-1">{rows.length}</span>
+        </Badge>
+        <Badge variant={selectedCount > 0 ? "default" : "outline"} className="text-sm px-3 py-1 transition-colors">
+          Dipilih: <span className="font-bold ml-1">{selectedCount}</span>
         </Badge>
         {totalOk > 0 && (
           <Badge className="bg-emerald-500/10 text-emerald-500 border-emerald-500/30 text-sm px-3 py-1">
@@ -120,6 +135,13 @@ export default function AsprakCSVPreview({
           <table className="w-full text-sm border-collapse">
             <thead className="bg-muted/50 sticky top-0 z-10">
               <tr>
+                <th className="px-3 py-2.5 text-center border-b border-border w-[40px]">
+                  <Checkbox 
+                    checked={allSelected ? true : isIndeterminate ? "indeterminate" : false}
+                    onCheckedChange={(checked) => onToggleAll(!!checked)}
+                    disabled={selectableRows.length === 0}
+                  />
+                </th>
                 <th className="px-3 py-2.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border w-10">
                   #
                 </th>
@@ -148,18 +170,29 @@ export default function AsprakCSVPreview({
                 const isDuplicateDB = row.status === 'error' && row.statusMessage?.includes('Duplikat');
                 const isDuplicateCSV = row.status === 'duplicate-csv';
                 const isDuplicate = isDuplicateDB || isDuplicateCSV;
+                const isDisabled = row.status === 'error' || row.status === 'duplicate-csv';
+                
                 return (
                 <tr
                   key={idx}
                   className={`
                     border-b border-border/50 transition-colors
-                    ${isDuplicateDB ? 'bg-red-500/8' : ''}
-                    ${isDuplicateCSV ? 'bg-orange-500/8' : ''}
+                    ${isDuplicateDB ? 'bg-red-500/10' : ''}
+                    ${isDuplicateCSV ? 'bg-orange-500/10' : ''}
                     ${row.status === 'error' && !isDuplicate ? 'bg-red-500/5' : ''}
                     ${row.status === 'warning' ? 'bg-amber-500/5' : ''}
-                    hover:bg-muted/30
+                    ${!isDisabled && row.selected ? 'bg-muted/40' : ''}
+                    hover:bg-muted/60
                   `}
                 >
+                  <td className="px-3 py-2 text-center">
+                    <Checkbox 
+                      checked={row.selected}
+                      onCheckedChange={() => onToggleSelect(idx)}
+                      disabled={isDisabled}
+                      className={isDisabled ? "opacity-50 cursor-not-allowed" : ""}
+                    />
+                  </td>
                   <td className="px-3 py-2 text-muted-foreground font-mono text-xs">
                     {idx + 1}
                   </td>
@@ -266,13 +299,13 @@ export default function AsprakCSVPreview({
           )}
           <Button
             onClick={onConfirm}
-            disabled={loading || (totalOk + totalWarning) === 0}
+            disabled={loading || selectedCount === 0}
             variant="default"
           >
             <Save size={16} className="mr-1" />
             {loading
               ? 'Menyimpan...'
-              : `Simpan ${totalOk + totalWarning} Data`}
+              : `Simpan ${selectedCount} Data Terpilih`}
           </Button>
         </div>
       </div>
