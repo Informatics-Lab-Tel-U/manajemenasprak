@@ -22,6 +22,11 @@ export function usePraktikum() {
     return result.ok && result.data ? result.data : null;
   };
 
+  const getPraktikumByTerm = async (term: string): Promise<Praktikum[]> => {
+    const result = await praktikumFetcher.fetchPraktikumByTerm(term);
+    return result.ok && result.data ? result.data : [];
+  };
+
   useEffect(() => {
     fetchPraktikumNames();
   }, [fetchPraktikumNames]);
@@ -31,5 +36,6 @@ export function usePraktikum() {
     loading,
     refetch: fetchPraktikumNames,
     getOrCreate,
+    getPraktikumByTerm,
   };
 }

@@ -23,6 +23,20 @@ export async function getUniquePraktikumNames(): Promise<{ id: string; nama: str
   return unique;
 }
 
+export async function getPraktikumByTerm(term: string): Promise<Praktikum[]> {
+  const { data, error } = await supabase
+    .from('Praktikum')
+    .select('*')
+    .eq('tahun_ajaran', term)
+    .order('nama');
+
+  if (error) {
+    logger.error(`Error fetching praktikum for term ${term}:`, error);
+    return [];
+  }
+  return data as Praktikum[];
+}
+
 export async function getOrCreatePraktikum(nama: string, tahunAjaran: string): Promise<Praktikum> {
   const { data: existing } = await supabase
     .from('Praktikum')
