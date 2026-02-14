@@ -20,7 +20,9 @@ export async function GET(req: Request) {
 
     if (action === 'today') {
       const limit = parseInt(searchParams.get('limit') || '5');
-      const jadwal = await jadwalService.getTodaySchedule(limit);
+      const term = searchParams.get('term');
+      // Pass the term (or undefined) to the service
+      const jadwal = await jadwalService.getTodaySchedule(limit, term || undefined);
       return NextResponse.json({ ok: true, data: jadwal });
     }
 
