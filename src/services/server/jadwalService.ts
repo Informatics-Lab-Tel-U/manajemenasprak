@@ -17,6 +17,10 @@ export async function getTodaySchedule(limit: number = 5, term?: string): Promis
 
   const dayIndo = dayMap[today] || today;
 
+  if(dayIndo === 'MINGGU') {
+    return [];
+  }
+
   let query = supabase
     .from('Jadwal')
     .select(
@@ -45,14 +49,7 @@ export async function getTodaySchedule(limit: number = 5, term?: string): Promis
   const { data, error } = await query;
 
   if (error) {
-    console.error('Error fetching today schedule (DETAILS):', {
-      message: error.message,
-      code: error.code,
-      details: error.details,
-      hint: error.hint,
-      fullError: error,
-      keys: Object.keys(error || {})
-    });
+    console.error('Error fetching today schedule:', error);
     return [];
   }
 
