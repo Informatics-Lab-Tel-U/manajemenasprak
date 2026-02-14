@@ -213,6 +213,7 @@ export default function AsprakImportCSVModal({
                 originalKode: displayKode,
                 originalCodeRule: finalRule,
                 originalCodeSource: codeSource,
+                selected: status === 'ok' || status === 'warning',
               });
             }
 
@@ -229,6 +230,33 @@ export default function AsprakImportCSVModal({
     },
     [existingCodes, existingNims]
   );
+
+  // ─── Selection Handlers ────────────────────────────────────────────────
+
+  const handleToggleSelect = useCallback((rowIndex: number) => {
+    setPreviewRows((prev) => {
+      const updated = [...prev];
+      const row = { ...updated[rowIndex] };
+      // Only toggle if not disabled
+      if (row.status !== 'error' && row.status !== 'duplicate-csv') {
+        row.selected = !row.selected;
+        updated[rowIndex] = row;
+      }
+      return updated;
+    });
+  }, []);
+
+  const handleToggleAll = useCallback((checked: boolean) => {
+    setPreviewRows((prev) => {
+      return prev.map((row) => {
+        // Only modify selectable rows
+        if (row.status !== 'error' && row.status !== 'duplicate-csv') {
+          return { ...row, selected: checked };
+        }
+        return row;
+      });
+    });
+  }, []);
 
   // ─── Inline Code Edit ─────────────────────────────────────────────────
 
@@ -278,14 +306,27 @@ export default function AsprakImportCSVModal({
           row.status = 'ok';
           row.statusMessage = '';
         }
+        
+        // Auto-select if valid and was previously invalid/not selected? 
+        // Or just ensure it's selectable. Let's auto-select if it becomes OK/Warning.
+        if (row.status === 'ok' || row.status === 'warning') {
+          // You might choose to not auto-select if the user explicitly unchecked it, 
+          // but here we assume if they fix it, they want it.
+           if (!row.selected) row.selected = true;
+        } else {
+           row.selected = false;
+        }
+
       } else if (uppercased.length > 0 && uppercased.length < 3) {
         // Incomplete code -> ERROR
         row.status = 'error';
         row.statusMessage = 'Kode harus 3 huruf';
+        row.selected = false;
       } else if (uppercased.length === 0) {
         // Empty code -> ERROR
         row.status = 'error';
         row.statusMessage = 'Kode tidak boleh kosong';
+        row.selected = false;
       }
 
       updated[rowIndex] = row;
@@ -342,19 +383,17 @@ export default function AsprakImportCSVModal({
   // ─── Confirm Save ───────────────────────────────────────────────────────
 
   const handleConfirm = async () => {
-    // Include both OK and Warning rows
-    const validRows = previewRows.filter((r) => r.status === 'ok' || r.status === 'warning');
-    const invalidRows = previewRows.filter((r) => r.status === 'error' || r.status === 'duplicate-csv');
+    // Only import SELECTED rows
+    const selectedRows = previewRows.filter((r) => r.selected && (r.status === 'ok' || r.status === 'warning'));
     
-    // Only block if all rows are invalid
-    if (validRows.length === 0 && invalidRows.length > 0) return;
+    if (selectedRows.length === 0) return;
 
     setSaving(true);
     setError(null);
 
     try {
       await onImport(
-        validRows.map((r) => ({
+        selectedRows.map((r) => ({
           nim: r.nim,
           nama_lengkap: r.nama_lengkap,
           kode: r.kode,
@@ -537,6 +576,8 @@ export default function AsprakImportCSVModal({
                   onConfirm={handleConfirm}
                   onBack={handleBack}
                   onCodeEdit={handleCodeEdit}
+                  onToggleSelect={handleToggleSelect}
+                  onToggleAll={handleToggleAll}
                   loading={saving}
                 />
               )}
