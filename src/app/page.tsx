@@ -1,23 +1,24 @@
-import { Users, BookOpen, Calendar, AlertTriangle } from 'lucide-react';
-import { Jadwal } from '@/types/database';
-import DashboardCharts from '@/components/DashboardCharts';
-import { StatCard } from '@/components/ui/StatCard';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { getStats } from '@/services/databaseService';
-import { getTodaySchedule } from '@/services/jadwalService';
+import { getStats } from '@/services/server/databaseService';
+import { getTodaySchedule, fetchAvailableTerms } from '@/services/server/jadwalService';
 import DashboardClient from '@/components/DashboardClient';
-import * as jadwalFetcher from '@/lib/fetchers/jadwalFetcher';
-import { useDashboard } from '@/hooks/useDashboard';
 
 export const revalidate = 0;
 
 export default async function Home() {
+  // Fetch initial data on server
+  const [initialStats, initialSchedule, initialTerms] = await Promise.all([
+    getStats(), // You might want to pass a default term if logic requires, but service handles default
+    getTodaySchedule(100), // Get all for today
+    fetchAvailableTerms(),
+  ]);
 
   return (
     <div className="container">
-      <DashboardClient />
+      <DashboardClient 
+        initialStats={initialStats}
+        initialSchedule={initialSchedule}
+        initialTerms={initialTerms}
+      />
     </div>
   );
 }
