@@ -41,7 +41,7 @@ export async function getJadwalByTerm(term: string): Promise<Jadwal[]> {
   return data as Jadwal[];
 }
 
-export async function getTodaySchedule(limit: number = 5): Promise<Jadwal[]> {
+export async function getTodaySchedule(limit: number = 5, term?: string): Promise<Jadwal[]> {
   const dayIndex = new Date().getDay();
   const weekdays = ['SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU'];
 
@@ -51,19 +51,30 @@ export async function getTodaySchedule(limit: number = 5): Promise<Jadwal[]> {
 
   const today = weekdays[dayIndex - 1];
 
-  const { data, error } = await supabase
+  let query = supabase
     .from('Jadwal')
     .select(
       `
       *,
-      mata_kuliah:Mata_Kuliah (
-        nama_lengkap
+      mata_kuliah:Mata_Kuliah!inner (
+        nama_lengkap,
+        program_studi,
+        praktikum:Praktikum!inner (
+          tahun_ajaran,
+          nama
+        )
       )
     `
     )
     .eq('hari', today)
     .order('jam', { ascending: true })
     .limit(limit);
+
+  if (term) {
+    query = query.eq('mata_kuliah.praktikum.tahun_ajaran', term);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     logger.error('Error fetching today schedule:', error);

@@ -30,9 +30,16 @@ export async function fetchJadwalByTerm(term: string): Promise<ServiceResult<Jad
   }
 }
 
-export async function fetchTodaySchedule(limit: number = 5): Promise<ServiceResult<Jadwal[]>> {
+export async function fetchTodaySchedule(limit: number = 5, term?: string): Promise<ServiceResult<Jadwal[]>> {
   try {
-    const res = await fetch(`/api/jadwal?action=today&limit=${limit}`, {
+    const url = new URL('/api/jadwal', window.location.origin);
+    url.searchParams.append('action', 'today');
+    url.searchParams.append('limit', limit.toString());
+    if (term) {
+      url.searchParams.append('term', term);
+    }
+
+    const res = await fetch(url.toString(), {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
       cache: 'no-store',

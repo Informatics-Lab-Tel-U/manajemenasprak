@@ -81,7 +81,7 @@ export default function DashboardClient() {
         </div>
       </header>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
         <StatCard
           title="Total Asprak"
           value={loading ? '...' : stats.asprakCount}
@@ -119,64 +119,9 @@ export default function DashboardClient() {
         <DashboardCharts
           asprakByAngkatan={stats.asprakByAngkatan}
           jadwalByDay={stats.jadwalByDay}
+          todaySchedule={todaySchedule}
+          selectedTerm={selectedTerm}
         />
-      </div>
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-2 bg-card/80 backdrop-blur-sm shadow-md">
-          <CardHeader>
-            <h3 className="text-xl font-semibold">Jadwal Praktikum Hari Ini</h3>
-          </CardHeader>
-          <CardContent>
-            <div className="table-container">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Jam</th>
-                    <th>Mata Kuliah</th>
-                    <th>Kelas</th>
-                    <th>Ruangan</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {todaySchedule.length === 0 ? (
-                    <tr>
-                      <td colSpan={4} className="text-center py-4 text-muted-foreground">
-                        No schedule for today (
-                        {new Date().toLocaleDateString('id-ID', { weekday: 'long' })}).
-                      </td>
-                    </tr>
-                  ) : (
-                    todaySchedule.map((s) => (
-                      <tr key={s.id}>
-                        <td>{s.jam}</td>
-                        <td>{s.mata_kuliah?.nama_lengkap}</td>
-                        <td>{s.kelas}</td>
-                        <td>
-                          <Badge variant="secondary">{s.ruangan || 'Online'}</Badge>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-card/80 backdrop-blur-sm shadow-md">
-          <CardHeader>
-            <h3 className="text-xl font-semibold">Quick Actions</h3>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-3">
-            <Button className="w-full">+ Input Pelanggaran</Button>
-            <Button variant="outline" className="w-full">
-              View Schedule
-            </Button>
-            <Button variant="outline" className="w-full">
-              Manage Asprak Pool
-            </Button>
-          </CardContent>
-        </Card>
       </div>
     </>
   );
