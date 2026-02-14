@@ -13,45 +13,33 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { SelectGroup } from '@radix-ui/react-select';
 import { DashboardStats } from '@/services/databaseService';
+import { Jadwal } from '@/types/database';
 import { useDashboard } from '@/hooks/useDashboard';
 import { Button } from './ui/button';
 import { Card, CardHeader, CardContent } from './ui/card';
-import { SelectGroup } from '@radix-ui/react-select';
 
-export default function DashboardClient() {
-  const [stats, setStats] = useState<DashboardStats>({
-    asprakCount: 0,
-    jadwalCount: 0,
-    pelanggaranCount: 0,
-    asprakByAngkatan: [],
-    jadwalByDay: [],
-  });
-  const [loading, setLoading] = useState(false);
+interface DashboardClientProps {
+  initialStats: DashboardStats;
+  initialSchedule: Jadwal[];
+  initialTerms: string[];
+}
 
-  const { terms, selectedTerm, setSelectedTerm, todaySchedule } = useDashboard();
-
-  const fetchStats = async (term: string) => {
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/stats?term=${encodeURIComponent(term)}`);
-      const data = await res.json();
-      if (data.ok) {
-        console.log('Fetched stats:', data.data);
-        setStats(data.data);
-      }
-    } catch (error) {
-      console.error('Failed to fetch stats:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (selectedTerm) {
-      fetchStats(selectedTerm);
-    }
-  }, [selectedTerm]);
+export default function DashboardClient({
+  initialStats,
+  initialSchedule,
+  initialTerms,
+}: DashboardClientProps) {
+  const {
+    terms,
+    selectedTerm,
+    setSelectedTerm,
+    stats,
+    todaySchedule,
+    loading,
+    error,
+  } = useDashboard(initialTerms, initialStats, initialSchedule);
 
   return (
     <>

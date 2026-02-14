@@ -1,52 +1,72 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Jadwal } from '@/types/database';
 import * as jadwalFetcher from '@/lib/fetchers/jadwalFetcher';
-import { getTodaySchedule } from '@/services';
+import { getStats, DashboardStats } from '@/services/databaseService';
 
-export function useDashboard(initialTerm?: string) {
-  const [terms, setTerms] = useState<string[]>([]);
-  const [todaySchedule, setTodaySchedule] = useState<Jadwal[]>([]);
-  const [selectedTerm, setSelectedTerm] = useState(initialTerm || '');
-  const [loading, setLoading] = useState(true);
+export interface UseDashboardResult {
+  terms: string[];
+  selectedTerm: string;
+  setSelectedTerm: (term: string) => void;
+  stats: DashboardStats;
+  todaySchedule: Jadwal[];
+  loading: boolean;
+  error: Error | null;
+}
+
+export function useDashboard(
+  initialTerms: string[],
+  initialStats: DashboardStats,
+  initialSchedule: Jadwal[]
+): UseDashboardResult {
+  const [terms, setTerms] = useState<string[]>(initialTerms);
+  const [todaySchedule, setTodaySchedule] = useState<Jadwal[]>(initialSchedule);
+  const [selectedTerm, setSelectedTerm] = useState(initialTerms[0] || '2425-1');
+  const [stats, setStats] = useState<DashboardStats>(initialStats);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
-  const fetchTerms = useCallback(async () => {
-    const result = await jadwalFetcher.fetchAvailableTerms();
-    if (result.ok && result.data) {
-      setTerms(result.data);
-      if (result.data.length > 0 && !selectedTerm) {
-        setSelectedTerm(result.data[0]);
+  const fetchDashboardData = useCallback(async () => {
+    if (!selectedTerm) return;
+    
+    setLoading(true);
+    try {
+      const [statsResult, scheduleResult] = await Promise.all([
+        getStats(selectedTerm),
+        jadwalFetcher.fetchTodaySchedule(100, selectedTerm),
+      ]);
+
+      setStats(statsResult);
+      if (scheduleResult.ok && scheduleResult.data) {
+        setTodaySchedule(scheduleResult.data);
       }
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err);
+      } else {
+        setError(new Error('An unknown error occurred'));
+      }
+    } finally {
+      setLoading(false);
     }
   }, [selectedTerm]);
 
-  const fetchTodaySchedule = useCallback(async () => {
-    // Only fetch if we have a selected term, or if we want to fetch default (no term) initially
-    // But requirement says consisten when dropdown changes.
-    // Increased limit to 100 to ensure we get the full schedule for the matrix visualization
-    const result = await jadwalFetcher.fetchTodaySchedule(100, selectedTerm);
-    if (!result) {
-      setError(new Error('Failed to fetch today schedule'));
-    }
-    if (result.ok && result.data) {
-      setTodaySchedule(result.data);
-    }
-  }, [selectedTerm]);
+  const isFirstRun = useRef(true);
 
   useEffect(() => {
-    fetchTerms();
-  }, [fetchTerms]);
-
-  useEffect(() => {
-    fetchTodaySchedule();
-  }, [fetchTodaySchedule]);
+    if (isFirstRun.current) {
+      isFirstRun.current = false;
+      return;
+    }
+    fetchDashboardData();
+  }, [fetchDashboardData]);
 
   return {
     terms,
     selectedTerm,
     setSelectedTerm,
+    stats,
     todaySchedule,
     loading,
     error,
