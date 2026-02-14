@@ -43,6 +43,86 @@ export async function getAllAsprak(term?: string): Promise<Asprak[]> {
   })) as Asprak[];
 }
 
+export interface AsprakWithMap extends Asprak {
+    assignments: {
+        id: string; // Praktikum ID
+        nama: string;
+        tahun_ajaran: string;
+    }[];
+}
+
+export async function getAspraksWithAssignments(term?: string): Promise<AsprakWithMap[]> {
+  // We want ALL aspraks, and their assignments.
+  // If term is filtered, we ONLY want assignments from that term?
+  // OR we only want Aspraks active in that term?
+  // Usually "Plotting" view for Term X should show:
+  // Aspraks who have assignments in Term X, AND only show those assignments.
+  // OR show ALL aspraks, but only assignments for Term X.
+  
+  // Strategy: Fetch all Aspraks, and Left Join Assignments.
+  // If term is specified, filter the nested join?
+  
+  // Supabase syntax for nested filter:
+  // .select('*, Asprak_Praktikum(Praktikum!inner(*))') ... .eq('Asprak_Praktikum.Praktikum.tahun_ajaran', term)
+  
+  let query = supabase
+    .from('Asprak')
+    .select(`
+        *,
+        Asprak_Praktikum (
+            Praktikum (
+                id,
+                nama,
+                tahun_ajaran
+            )
+        )
+    `)
+    .order('nim', { ascending: true });
+
+  const { data, error } = await query;
+
+  if (error) {
+    logger.error('Error fetching plotting data:', error);
+    throw new Error(`Failed to fetch plotting data: ${error.message}`);
+  }
+
+  // Transform and filter in memory if needed (supa nested filter is tricky with left join logic sometimes)
+  // If we assume dataset is reasonable size (hundreds), memory filter is strictly safer/easier for "show all aspraks but filter columns".
+  
+  const result: AsprakWithMap[] = (data || []).map((item: any) => {
+      const allAssignments = (item.Asprak_Praktikum || [])
+        .map((ap: any) => ap.Praktikum)
+        .filter((p: any) => !!p); // Filter nulls if any
+      
+      // If term is specified, only include assignments from that term
+      const filteredAssignments = term && term !== 'all' 
+          ? allAssignments.filter((p: any) => p.tahun_ajaran === term)
+          : allAssignments;
+
+      return {
+          id: item.id,
+          nama_lengkap: item.nama_lengkap,
+          nim: item.nim,
+          kode: item.kode,
+          angkatan: item.angkatan,
+          created_at: item.created_at,
+          assignments: filteredAssignments
+      };
+  });
+  
+  // If term is specified, should we hide Aspraks with 0 assignments in that term?
+  // "Plotting" usually implies "Who is teaching?". If they aren't teaching, maybe hide them?
+  // Or maybe "List of all potential aspraks" and show what they teach?
+  // Let's hide them if they have 0 assignments in the selected term (to remove clutter).
+  // Unless term is 'all'.
+  
+  if (term && term !== 'all') {
+      return result.filter(r => r.assignments.length > 0);
+  }
+
+  return result;
+}
+
 export async function deleteAsprak(id: string): Promise<void> {
   const { error } = await supabase.from('Asprak').delete().eq('id', id);
   if (error) {
