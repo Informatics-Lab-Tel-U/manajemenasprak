@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Download, Plus, Upload } from 'lucide-react';
+import { Download, Plus, Upload, Pencil, Trash, X, Lock } from 'lucide-react';
 import { toast } from 'sonner';
 import { Asprak } from '@/types/database';
 import { useAsprak } from '@/hooks/useAsprak';
@@ -12,6 +12,7 @@ import {
   fetchAllAsprak,
   AsprakAssignment,
   bulkImportAspraks,
+  updateAssignments,
 } from '@/lib/fetchers/asprakFetcher';
 import { ExistingAsprakInfo } from '@/components/asprak/AsprakImportCSVModal';
 import AsprakFilters from '@/components/asprak/AsprakFilters';
@@ -19,11 +20,13 @@ import AsprakTable from '@/components/asprak/AsprakTable';
 import AsprakAddModal from '@/components/asprak/AsprakAddModal';
 import AsprakImportCSVModal from '@/components/asprak/AsprakImportCSVModal';
 import AsprakDetailsModal from '@/components/asprak/AsprakDetailsModal';
+import AsprakEditModal from '@/components/asprak/AsprakEditModal';
 import { AsprakFormData } from '@/components/asprak/AsprakForm';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 import AsprakGenerationRules from '@/components/asprak/AsprakGenerationRules';
+import AsprakDeleteDialog from '@/components/asprak/AsprakDeleteDialog';
 
 interface AsprakWithAssignments extends Asprak {
   assignments?: AsprakAssignment[];
@@ -38,6 +41,7 @@ function AsprakPageContent() {
     loading,
     refetch: fetchAsprak,
     upsert,
+    deleteAsprak,
     getAssignments,
     terms,
     selectedTerm,
@@ -53,6 +57,15 @@ function AsprakPageContent() {
   const [loadingDetails, setLoadingDetails] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  
+  // Edit State
+  // Edit State
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editTarget, setEditTarget] = useState<{ asprak: Asprak, assignments: string[] } | null>(null);
+
+  // Delete State
+  const [deleteTarget, setDeleteTarget] = useState<Asprak | null>(null);
 
   // Fetch existing codes + all NIMs for conflict detection and code generation
   const refreshCodesAndNims = async () => {
@@ -141,6 +154,97 @@ function AsprakPageContent() {
   };
 
   const closeDetails = () => setSelectedAsprak(null);
+  
+  // ─── Edit & Delete ────────────────────────────────────────────────────────
+  
+  const handleEditAsprak = async (asprak: Asprak) => {
+    // We need to fetch current assignments first to populate checkboxes
+    setLoadingDetails(true);
+    const result = await getAssignments(asprak.id);
+    
+    // Filter assignments to only those in the CURRENT SELECTED TERM
+    // If no term selected ("All"), maybe we should picking the latest one? 
+    // Requirement says: "nge fetch term yang ada... kalau gaada gausah ditampilkan"
+    // So we need a valid selectedTerm context for the edit modal usually.
+    // If selectedTerm is empty (All), let's default to the latest available term from 'terms' list
+    
+    const targetTerm = selectedTerm || terms[0]; // Fallback to latest if 'All'
+    
+    if (!targetTerm) {
+        toast.error("Tidak ada term yang tersedia untuk di-edit.");
+        setLoadingDetails(false);
+        return;
+    }
+    
+    const currentAssignmentIds = result
+        .filter(a => a.praktikum.tahun_ajaran === targetTerm)
+        .map(a => a.praktikum.nama); // Note: AsprakAssignment returns praktikum names as IDs basically in previous logic? 
+        // Wait, fetcher returns { id, praktikum: { nama, tahun_ajaran } }
+        // We need ID of praktikum actually.
+        // Let's check fetcher again. 
+        // getAssignments returns AsprakAssignment[].
+        // AsprakAssignment interface: { id: number, praktikum: { nama: string, tahun_ajaran: string } }
+        // The fetcher: fetchAsprakAssignments calls /api/asprak action=view.
+        // The service: getAsprakAssignments selects: id, praktikum (nama, tahun_ajaran). 
+        // WAIT, it DOES NOT select praktikum ID. We need praktikum ID to match properly with checkboxes in EditModal.
+        
+        // Let's check getAsprakAssignments in service. 
+        // It selects: id, praktikum:Praktikum(nama, tahun_ajaran).
+        // It should also select praktikum(id).
+        
+        // I will fix the service query in a separate step or assume I can match by name. 
+        // The EditModal uses ID.
+        // UsePraktikum hook returns { id, nama }. 
+        // So I should match by Name maybe? Or fix service to return ID.
+        // Let's assume for now we use NAME as identifiers if ID is missing or fix service.
+        // Actually best practice is ID.
+        // But previously usePraktikum hook returns {id, nama} where id might be name?
+        // usePraktikum -> fetchUniquePraktikumNames -> returns { id: name, nama: name } in service! 
+        // So 'id' IS 'nama'.
+        
+    const currentAssignmentNames = result
+        .filter(a => a.praktikum.tahun_ajaran === targetTerm)
+        .map(a => a.praktikum.nama);
+        
+    setEditTarget({
+        asprak,
+        assignments: currentAssignmentNames
+    });
+    setLoadingDetails(false);
+    setShowEditModal(true);
+  };
+  
+  const handleSaveEdit = async (praktikumIds: string[]) => {
+      // praktikumIds are names basically given previous service logic
+      if (!editTarget) return;
+      
+      const targetTerm = selectedTerm || terms[0];
+      const result = await updateAssignments(editTarget.asprak.id, targetTerm, praktikumIds);
+      
+      if (result.ok) {
+          toast.success("Penugasan berhasil diperbarui");
+          fetchAsprak(); // Refresh list to update View details if needed
+      } else {
+          toast.error(`Gagal memperbarui: ${result.error}`);
+      }
+  };
+
+  const handleDeleteClick = (asprak: Asprak) => {
+      setDeleteTarget(asprak);
+  };
+  
+  const handleConfirmDelete = async () => {
+     if (!deleteTarget) return;
+     
+     const result = await deleteAsprak(deleteTarget.id);
+     if (result.ok) {
+       toast.success(`Deleted ${deleteTarget.nama_lengkap}`);
+       refreshCodesAndNims();
+     } else {
+       toast.error(`Failed to delete: ${result.error}`);
+     }
+     setDeleteTarget(null);
+  };
 
   // ─── Filter ──────────────────────────────────────────────────────────────
 
@@ -184,6 +288,15 @@ function AsprakPageContent() {
             <Download size={18} />
             Export Data
           </Button>
+          <Button
+            variant={isEditMode ? "secondary" : "ghost"}
+            size="icon"
+            onClick={() => setIsEditMode(!isEditMode)}
+            className={isEditMode ? "bg-amber-100 text-amber-600 hover:bg-amber-200" : "text-muted-foreground"}
+            title={isEditMode ? "Exit Edit Mode" : "Enable Edit Mode"}
+          >
+            {isEditMode ? <X size={20} /> : <Pencil size={20} />}
+          </Button>
         </div>
       </div>
 
@@ -199,7 +312,14 @@ function AsprakPageContent() {
               onTermChange={setSelectedTerm}
             />
 
-            <AsprakTable data={filteredList} loading={loading} onViewDetails={handleView} />
+            <AsprakTable 
+              data={filteredList} 
+              loading={loading} 
+              onViewDetails={handleView}
+              isEditMode={isEditMode}
+              onEdit={handleEditAsprak}
+              onDelete={handleDeleteClick}
+            />
           </div>
         </TabsContent>
 
@@ -240,6 +360,26 @@ function AsprakPageContent() {
           open={!!selectedAsprak}
         />
       )}
+
+      {/* Edit Modal */}
+      {showEditModal && editTarget && (
+        <AsprakEditModal
+          asprak={editTarget.asprak}
+          term={selectedTerm || terms[0]}
+          assignments={editTarget.assignments}
+          onSave={handleSaveEdit}
+          onClose={() => setShowEditModal(false)}
+          open={showEditModal}
+        />
+      )}
+      
+      {/* Delete Dialog */}
+      <AsprakDeleteDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        onConfirm={handleConfirmDelete}
+        name={deleteTarget?.nama_lengkap || ''}
+      />
     </div>
   );
 }

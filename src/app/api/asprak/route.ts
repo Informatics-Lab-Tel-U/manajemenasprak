@@ -49,6 +49,11 @@ export async function POST(req: Request) {
         const result = await asprakService.bulkUpsertAspraks(body.rows);
         return NextResponse.json({ success: true, result });
       }
+      case 'update-assignments': {
+        const { asprakId, term, praktikumIds } = body;
+        await asprakService.updateAsprakAssignments(asprakId, term, praktikumIds);
+        return NextResponse.json({ success: true });
+      }
       default:
         return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
     }
@@ -56,5 +61,22 @@ export async function POST(req: Request) {
     logger.error('POST /api/asprak error:', e);
     const status = e.message.includes('conflict') ? 409 : 500;
     return NextResponse.json({ error: e.message }, { status });
+  }
+}
+
+export async function DELETE(req: Request) {
+  try {
+    const body = await req.json();
+    const { id } = body;
+
+    if (!id) {
+      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
+    }
+
+    await asprakService.deleteAsprak(id);
+    return NextResponse.json({ success: true });
+  } catch (e: any) {
+    logger.error('DELETE /api/asprak error:', e);
+    return NextResponse.json({ error: e.message }, { status: 500 });
   }
 }

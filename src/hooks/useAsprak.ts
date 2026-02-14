@@ -61,6 +61,14 @@ export function useAsprak(initialTerm?: string) {
     return result.ok ? result.data || [] : [];
   };
 
+  const deleteAsprak = async (id: number | string) => {
+    const result = await asprakFetcher.deleteAsprak(id);
+    if (result.ok) {
+      await fetchAll();
+    }
+    return result;
+  };
+
   useEffect(() => {
     fetchTerms();
   }, [fetchTerms]);
@@ -81,5 +89,6 @@ export function useAsprak(initialTerm?: string) {
     refetch: fetchAll,
     upsert,
     getAssignments,
+    deleteAsprak,
   };
 }

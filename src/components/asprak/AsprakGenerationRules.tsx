@@ -147,12 +147,12 @@ export default function AsprakGenerationRules() {
               <TableBody>
                 <TableRow>
                   <TableCell className="font-mono text-xs">2.1</TableCell>
-                  <TableCell>Huruf 1(K1) + Huruf 1,2(K2)</TableCell>
+                  <TableCell>Huruf 1,2(K1) + Huruf 1(K2)</TableCell>
                   <TableCell className="font-mono font-bold">{codes2[0] || 'N/A'}</TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell className="font-mono text-xs">2.2</TableCell>
-                  <TableCell>Huruf 1,2(K1) + Huruf 1(K2)</TableCell>
+                  <TableCell>Huruf 1(K1) + Huruf 1,2(K2)</TableCell>
                   <TableCell className="font-mono font-bold">{codes2[1] || 'N/A'}</TableCell>
                 </TableRow>
                 <TableRow>
