@@ -22,8 +22,8 @@ export async function GET(req: Request) {
       return NextResponse.json({ ok: true, data: mk });
     }
 
-    if (action === 'by-term' && searchParams.get('term')) {
-        const term = searchParams.get('term')!;
+    if (action === 'by-term') {
+        const term = searchParams.get('term') || undefined;
         const data = await praktikumService.getPraktikumByTerm(term);
         return NextResponse.json({ ok: true, data });
     }
@@ -46,6 +46,11 @@ export async function POST(req: Request) {
     if (action === 'get-or-create' && nama && tahunAjaran) {
       const praktikum = await praktikumService.getOrCreatePraktikum(nama, tahunAjaran);
       return NextResponse.json({ ok: true, data: praktikum });
+    }
+
+    if (action === 'bulk-import' && body.rows) {
+      const result = await praktikumService.bulkUpsertPraktikum(body.rows);
+      return NextResponse.json({ ok: true, data: result });
     }
 
     return NextResponse.json(
