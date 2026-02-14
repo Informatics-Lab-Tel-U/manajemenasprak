@@ -58,3 +58,16 @@ export async function fetchMataKuliah(): Promise<ServiceResult<MataKuliah[]>> {
     return { ok: false, error: error.message };
   }
 }
+
+export async function fetchPraktikumByTerm(term: string): Promise<ServiceResult<Praktikum[]>> {
+  try {
+    const res = await fetch(`/api/praktikum?action=by-term&term=${encodeURIComponent(term)}`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const result = await res.json();
+    return result;
+  } catch (error: any) {
+    return { ok: false, error: error.message };
+  }
+}

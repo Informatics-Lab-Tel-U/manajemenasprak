@@ -62,6 +62,51 @@ export async function upsertAsprak(input: UpsertAsprakInput): Promise<ServiceRes
   }
 }
 
+export async function updateAssignments(
+  asprakId: number | string,
+  term: string,
+  praktikumIds: string[]
+): Promise<ServiceResult<void>> {
+  try {
+    const res = await fetch('/api/asprak', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'update-assignments', asprakId, term, praktikumIds }),
+    });
+
+    const json = await res.json();
+
+    if (!res.ok) {
+        return { ok: false, error: json.error };
+    }
+    return { ok: true, data: undefined };
+  } catch (e: any) {
+    logger.error('Error updating assignments:', e);
+    return { ok: false, error: e.message };
+  }
+}
+
+export async function deleteAsprak(id: number | string): Promise<ServiceResult<void>> {
+  try {
+    const res = await fetch('/api/asprak', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id }),
+    });
+
+    const json = await res.json();
+
+    if (!res.ok) {
+      return { ok: false, error: json.error };
+    }
+
+    return { ok: true, data: undefined };
+  } catch (e: any) {
+    logger.error('Error deleting asprak:', e);
+    return { ok: false, error: e.message };
+  }
+}
+
 export async function fetchAsprakAssignments(
   asprakId: number | string
 ): Promise<ServiceResult<AsprakAssignment[]>> {

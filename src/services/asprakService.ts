@@ -33,7 +33,7 @@ export async function getAllAsprak(term?: string): Promise<Asprak[]> {
   
   // Clean up the result to match Asprak type (remove the joined tables)
   // We can just cast it, but explicit mapping is safer if we want to be strict
-  return data.map((item: any) => ({
+  return (data || []).map((item: any) => ({
     id: item.id,
     nama_lengkap: item.nama_lengkap,
     nim: item.nim,
@@ -41,6 +41,14 @@ export async function getAllAsprak(term?: string): Promise<Asprak[]> {
     angkatan: item.angkatan,
     created_at: item.created_at,
   })) as Asprak[];
+}
+
+export async function deleteAsprak(id: string): Promise<void> {
+  const { error } = await supabase.from('Asprak').delete().eq('id', id);
+  if (error) {
+    logger.error(`Error deleting asprak ${id}:`, error);
+    throw new Error(`Failed to delete asprak: ${error.message}`);
+  }
 }
 
 export async function getExistingCodes(): Promise<string[]> {
@@ -267,4 +275,67 @@ export async function bulkUpsertAspraks(rows: BulkUpsertRow[]): Promise<BulkUpse
   }
 
   return result;
+}
+
+export async function updateAsprakAssignments(
+  asprakId: number | string,
+  term: string,
+  praktikumIds: string[]
+): Promise<void> {
+
+  // 1. Get all praktikum IDs for this term
+  const { data: termPraktikums } = await supabase
+    .from('Praktikum')
+    .select('id')
+    .eq('tahun_ajaran', term);
+    
+  if (!termPraktikums) return;
+
+  const validTermPraktikumIds = new Set(termPraktikums.map(p => p.id));
+
+  // 2. Get existing assignments for this asprak
+  const { data: existingAll } = await supabase
+    .from('Asprak_Praktikum')
+    .select('id, id_praktikum')
+    .eq('id_asprak', asprakId);
+    
+  const validExisting = existingAll || [];
+
+  // Filter: only those that belong to the relevant term
+  const existingInTerm = validExisting.filter(a => validTermPraktikumIds.has(a.id_praktikum));
+
+  // Determine what to delete (in existing but not in new list)
+  const newSet = new Set(praktikumIds);
+  const toDelete = existingInTerm
+    .filter(a => !newSet.has(a.id_praktikum))
+    .map(a => a.id);
+
+  // Determine what to insert (in new list but not in existing)
+  const existingTermPids = new Set(existingInTerm.map(a => a.id_praktikum));
+  const toInsert = praktikumIds.filter(pid => !existingTermPids.has(pid));
+
+  if (toDelete.length > 0) {
+    const { error: delError } = await supabase
+      .from('Asprak_Praktikum')
+      .delete()
+      .in('id', toDelete);
+    if (delError) {
+        throw new Error(`Delete failed: ${delError.message}`);
+    }
+  }
+
+  if (toInsert.length > 0) {
+    const rows = toInsert.map(pid => ({
+        id_asprak: asprakId,
+        id_praktikum: pid
+    }));
+    
+    const { error: insError } = await supabase
+      .from('Asprak_Praktikum')
+      .insert(rows);
+
+    if (insError) {
+        throw new Error(`Insert failed: ${insError.message}`);
+    }
+  }
 }
