@@ -10,8 +10,14 @@ import { logger } from '@/lib/logger';
 export async function GET(req: Request) {
   try {
     const url = new URL(req.url);
-    const action = url.searchParams.get('action');
-    const term = url.searchParams.get('term') || undefined;
+    const params = url.searchParams;
+    const action = params.get('action');
+    const term = params.get('term') || undefined;
+
+    if (action === 'plotting') {
+      const data = await asprakService.getAspraksWithAssignments(term);
+      return NextResponse.json({ data });
+    }
 
     if (action === 'codes') {
       const codes = await asprakService.getExistingCodes();
