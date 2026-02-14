@@ -23,7 +23,10 @@ export function useDashboard(initialTerm?: string) {
   }, [selectedTerm]);
 
   const fetchTodaySchedule = useCallback(async () => {
-    const result = await jadwalFetcher.fetchTodaySchedule(5);
+    // Only fetch if we have a selected term, or if we want to fetch default (no term) initially
+    // But requirement says consisten when dropdown changes.
+    // Increased limit to 100 to ensure we get the full schedule for the matrix visualization
+    const result = await jadwalFetcher.fetchTodaySchedule(100, selectedTerm);
     if (!result) {
       setError(new Error('Failed to fetch today schedule'));
     }
