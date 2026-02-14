@@ -2,6 +2,10 @@ import { supabase } from './supabase';
 import { Praktikum, MataKuliah } from '@/types/database';
 import { logger } from '@/lib/logger';
 
+export interface PraktikumWithStats extends Praktikum {
+  asprak_count: number;
+}
+
 export async function getAllPraktikum(): Promise<Praktikum[]> {
   const { data, error } = await supabase.from('Praktikum').select('*').order('nama');
 
@@ -23,18 +27,28 @@ export async function getUniquePraktikumNames(): Promise<{ id: string; nama: str
   return unique;
 }
 
-export async function getPraktikumByTerm(term: string): Promise<Praktikum[]> {
-  const { data, error } = await supabase
+export async function getPraktikumByTerm(term?: string): Promise<PraktikumWithStats[]> {
+  let query = supabase
     .from('Praktikum')
-    .select('*')
-    .eq('tahun_ajaran', term)
+    .select('*, Asprak_Praktikum(count)')
     .order('nama');
+
+  if (term && term !== 'all') {
+    query = query.eq('tahun_ajaran', term);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     logger.error(`Error fetching praktikum for term ${term}:`, error);
     return [];
   }
-  return data as Praktikum[];
+  
+  // Transform data to flatten count
+  return (data || []).map((item: any) => ({
+    ...item,
+    asprak_count: item.Asprak_Praktikum?.[0]?.count || 0
+  })) as PraktikumWithStats[];
 }
 
 export async function getOrCreatePraktikum(nama: string, tahunAjaran: string): Promise<Praktikum> {
@@ -100,4 +114,42 @@ export async function deleteMataKuliahByIds(ids: string[]): Promise<void> {
 export async function deleteAsprakPraktikumByIds(ids: number[]): Promise<void> {
   if (ids.length === 0) return;
   await supabase.from('Asprak_Praktikum').delete().in('id', ids);
+}
+
+export interface BulkImportPraktikumResult {
+  inserted: number;
+  skipped: number;
+  errors: string[];
+}
+
+export async function bulkUpsertPraktikum(rows: { nama: string; tahun_ajaran: string }[]): Promise<BulkImportPraktikumResult> {
+  const result: BulkImportPraktikumResult = { inserted: 0, skipped: 0, errors: [] };
+
+  for (const row of rows) {
+    try {
+      const { data: existing } = await supabase
+        .from('Praktikum')
+        .select('id')
+        .eq('nama', row.nama)
+        .eq('tahun_ajaran', row.tahun_ajaran)
+        .maybeSingle();
+
+      if (existing) {
+        result.skipped++;
+      } else {
+        const { error } = await supabase
+          .from('Praktikum')
+          .insert({ nama: row.nama, tahun_ajaran: row.tahun_ajaran });
+        
+        if (error) {
+           result.errors.push(`Failed to insert ${row.nama}: ${error.message}`);
+        } else {
+           result.inserted++;
+        }
+      }
+    } catch (e: any) {
+      result.errors.push(`Error processing ${row.nama}: ${e.message}`);
+    }
+  }
+  return result;
 }

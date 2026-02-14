@@ -3,7 +3,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Users, Calendar, AlertTriangle, Database } from 'lucide-react';
+import { Home, Users, Calendar, AlertTriangle, Database, BookOpen } from 'lucide-react';
 
 import {
   Sidebar,
@@ -42,6 +42,7 @@ const navItems: NavItem[] = [
       { label: 'Aturan Generasi', href: '/asprak?tab=rules' },
     ]
   },
+  { label: 'Data Praktikum', href: '/praktikum', icon: BookOpen }, // Added this
   { label: 'Jadwal Praktikum', href: '/jadwal', icon: Calendar },
   { label: 'Pelanggaran', href: '/pelanggaran', icon: AlertTriangle },
   { label: 'Database Manager', href: '/database', icon: Database },
