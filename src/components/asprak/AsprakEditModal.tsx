@@ -1,17 +1,15 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Asprak } from '@/types/database';
+import { Asprak, Praktikum } from '@/types/database';
 import { usePraktikum } from '@/hooks/usePraktikum';
-import { Praktikum } from '@/types/database';
 
 interface AsprakEditModalProps {
   asprak: Asprak;
-  term: string; // The term being edited (e.g. "2425-2")
+  term: string; // The term being edited or 'all'
   assignments: string[]; // List of praktikum IDs currently assigned
   onSave: (praktikumIds: string[]) => Promise<void>;
   onClose: () => void;
@@ -32,15 +30,15 @@ export default function AsprakEditModal({
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (open && term) {
-      // Load available praktikum for this term
-      getPraktikumByTerm(term).then((data) => {
+    if (open) {
+      // Always fetch ALL praktikums to allow cross-term editing
+      getPraktikumByTerm('all').then((data) => {
         setAvailablePraktikums(data);
       });
       // Initialize selection
       setSelectedPraktikumIds(assignments);
     }
-  }, [open, term, assignments]);
+  }, [open, getPraktikumByTerm, assignments]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -57,14 +55,27 @@ export default function AsprakEditModal({
     }
   };
 
+  // Group praktikums by term
+  const groupedPraktikums = useMemo(() => {
+      const groups: Record<string, Praktikum[]> = {};
+      availablePraktikums.forEach((p) => {
+          if (!groups[p.tahun_ajaran]) {
+              groups[p.tahun_ajaran] = [];
+          }
+          groups[p.tahun_ajaran].push(p);
+      });
+      // Sort terms descending (latest first)
+      return Object.entries(groups).sort((a, b) => b[0].localeCompare(a[0]));
+  }, [availablePraktikums]);
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-lg max-h-[85vh] flex flex-col p-0 gap-0">
+        <DialogHeader className="px-6 py-4 border-b">
           <DialogTitle>Edit Penugasan Asisten</DialogTitle>
         </DialogHeader>
 
-        <div className="grid gap-4 py-4">
+        <div className="px-6 py-4 grid gap-4 shrink-0">
           <div className="grid grid-cols-2 gap-4">
              <div>
                 <Label className="text-muted-foreground text-xs">NIM</Label>
@@ -79,43 +90,48 @@ export default function AsprakEditModal({
             <Label className="text-muted-foreground text-xs">Nama Lengkap</Label>
             <div className="font-medium">{asprak.nama_lengkap}</div>
           </div>
+        </div>
 
-          <div className="border-t pt-4 mt-2">
-            <Label className="mb-3 block">
-              Praktikum Term <span className="font-bold text-primary">{term}</span>
-            </Label>
-            
+        <div className="px-6 py-2 flex-1 overflow-y-auto min-h-0 border-t">
             {loadingPraktikum ? (
-                 <div className="text-sm text-muted-foreground">Loading praktikum...</div>
+                 <div className="text-sm text-muted-foreground py-4">Loading praktikum...</div>
             ) : availablePraktikums.length === 0 ? (
-                <div className="text-sm text-muted-foreground italic bg-muted/30 p-3 rounded">
-                    Tidak ada data praktikum untuk term ini.
+                <div className="text-sm text-muted-foreground italic bg-muted/30 p-3 rounded my-2">
+                    Tidak ada data praktikum.
                 </div>
             ) : (
-                <div className="space-y-3 max-h-[300px] overflow-y-auto border rounded-md p-3">
-                  {availablePraktikums.map((p) => (
-                    <div key={p.id} className="flex items-start space-x-2">
-                      <Checkbox 
-                        id={p.id} 
-                        checked={selectedPraktikumIds.includes(p.id)}
-                        onCheckedChange={(c) => handleToggle(p.id, !!c)}
-                      />
-                      <div className="grid gap-1.5 leading-none">
-                        <label
-                          htmlFor={p.id}
-                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                        >
-                          {p.nama}
-                        </label>
+                <div className="space-y-6 pt-2 pb-4">
+                  {groupedPraktikums.map(([termKey, praktikums]) => (
+                      <div key={termKey} className="space-y-2">
+                          <h4 className="text-sm font-semibold text-muted-foreground bg-muted/40 px-2 py-1 rounded">
+                              Term {termKey}
+                          </h4>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pl-2">
+                              {praktikums.map((p) => (
+                                <div key={p.id} className="flex items-start space-x-2 border p-2 rounded hover:bg-muted/10 transition-colors">
+                                  <Checkbox 
+                                    id={p.id} 
+                                    checked={selectedPraktikumIds.includes(p.id)}
+                                    onCheckedChange={(c) => handleToggle(p.id, !!c)}
+                                  />
+                                  <div className="grid gap-1.5 leading-none pt-0.5">
+                                    <label
+                                      htmlFor={p.id}
+                                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                                    >
+                                      {p.nama}
+                                    </label>
+                                  </div>
+                                </div>
+                              ))}
+                          </div>
                       </div>
-                    </div>
                   ))}
                 </div>
             )}
-          </div>
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="px-6 py-4 border-t mt-auto">
           <Button variant="outline" onClick={onClose} disabled={saving}>Cancel</Button>
           <Button onClick={handleSave} disabled={saving}>
             {saving ? 'Saving...' : 'Save Changes'}

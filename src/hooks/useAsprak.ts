@@ -15,19 +15,12 @@ export function useAsprak(initialTerm?: string) {
   const [error, setError] = useState<string | null>(null);
 
   const [terms, setTerms] = useState<string[]>([]);
-  const [selectedTerm, setSelectedTerm] = useState(initialTerm || '');
+  const [selectedTerm, setSelectedTerm] = useState(initialTerm || 'all');
 
   const fetchTerms = useCallback(async () => {
     const result = await asprakFetcher.fetchAvailableTerms();
     if (result.ok && result.data) {
       setTerms(result.data);
-      // Auto-select first term if none selected and not explicitly fetching all (empty string)
-      // Actually, if we want "All" to be an option, we might want to keep it empty.
-      // But user typically wants to see latest term.
-      if (result.data.length > 0 && !selectedTerm && initialTerm === undefined) {
-          // If no initial term provided, default to latest
-          setSelectedTerm(result.data[0]);
-      }
     }
   }, [selectedTerm, initialTerm]);
 

@@ -19,6 +19,7 @@ export interface UpsertAsprakInput {
 export interface AsprakAssignment {
   id: number;
   praktikum: {
+    id: string;
     nama: string;
     tahun_ajaran: string;
   };
