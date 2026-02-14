@@ -42,11 +42,11 @@
 
 ### Nama 2 Kata
 
-1. **Aturan 2.1**: Huruf pertama kata-1 + dua huruf pertama kata-2
-   - Contoh: `ANDI WIJAYA` → `AWI`
-
-2. **Aturan 2.2**: Dua huruf pertama kata-1 + huruf pertama kata-2
+1. **Aturan 2.1**: Dua huruf pertama kata-1 + huruf pertama kata-2
    - Contoh: `ANDI WIJAYA` → `ANW`
+
+2. **Aturan 2.2**: Huruf pertama kata-1 + dua huruf pertama kata-2
+   - Contoh: `ANDI WIJAYA` → `AWI`
 
 3. **Aturan 2.3**: Huruf pertama kata-1 + huruf pertama kata-2 + huruf terakhir kata-2
    - Contoh: `ANDI WIJAYA` → `AWA`

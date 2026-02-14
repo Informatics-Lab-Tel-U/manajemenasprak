@@ -22,6 +22,12 @@ export async function GET(req: Request) {
       return NextResponse.json({ ok: true, data: mk });
     }
 
+    if (action === 'by-term' && searchParams.get('term')) {
+        const term = searchParams.get('term')!;
+        const data = await praktikumService.getPraktikumByTerm(term);
+        return NextResponse.json({ ok: true, data });
+    }
+
     return NextResponse.json({ ok: false, error: 'Invalid action' }, { status: 400 });
   } catch (error: any) {
     logger.error('API Error in /api/praktikum:', error);

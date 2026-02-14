@@ -111,10 +111,10 @@ export function rulesFor2Words(words: string[]): string[] {
   const [w1, w2] = words;
   const candidates: string[] = [];
 
-  // 2.1: first(w1) + first2(w2)
-  candidates.push(safeChar(w1, 0) + safeChar(w2, 0) + safeChar(w2, 1));
-  // 2.2: first2(w1) + first(w2)
+  // 2.1: first2(w1) + first(w2)
   candidates.push(safeChar(w1, 0) + safeChar(w1, 1) + safeChar(w2, 0));
+  // 2.2: first(w1) + first2(w2)
+  candidates.push(safeChar(w1, 0) + safeChar(w2, 0) + safeChar(w2, 1));
   // 2.3: first(w1) + first(w2) + last(w2)
   candidates.push(safeChar(w1, 0) + safeChar(w2, 0) + lastChar(w2));
   // 2.4: first2(w1) + last(w2)
