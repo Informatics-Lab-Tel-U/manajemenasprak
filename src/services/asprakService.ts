@@ -7,6 +7,30 @@ import { supabase } from './supabase';
 import { Asprak } from '@/types/database';
 import { logger } from '@/lib/logger';
 import { checkCodeConflict, generateConflictErrorMessage } from '@/utils/conflict';
+import { generateAsprakCode } from '@/utils/asprakCodeGenerator';
+
+export async function checkNimExists(nim: string): Promise<boolean> {
+  const { data } = await supabase
+    .from('Asprak')
+    .select('id')
+    .eq('nim', nim)
+    .maybeSingle();
+  return !!data;
+}
+
+export async function generateUniqueCode(nama: string): Promise<{ code: string; rule: string }> {
+  // Fetch ALL existing codes to ensure uniqueness
+  const existingCodes = await getExistingCodes();
+  const usedCodesSet = new Set(existingCodes);
+
+  try {
+    const result = generateAsprakCode(nama, usedCodesSet);
+    return result;
+  } catch (error: any) {
+    // If generation fails, return empty
+    return { code: '', rule: 'Manual Input Required' };
+  }
+}
 
 export async function getAllAsprak(term?: string): Promise<Asprak[]> {
   let query;
@@ -32,7 +56,6 @@ export async function getAllAsprak(term?: string): Promise<Asprak[]> {
   }
   
   // Clean up the result to match Asprak type (remove the joined tables)
-  // We can just cast it, but explicit mapping is safer if we want to be strict
   return (data || []).map((item: any) => ({
     id: item.id,
     nama_lengkap: item.nama_lengkap,
@@ -52,19 +75,6 @@ export interface AsprakWithMap extends Asprak {
 }
 
 export async function getAspraksWithAssignments(term?: string): Promise<AsprakWithMap[]> {
-  // We want ALL aspraks, and their assignments.
-  // If term is filtered, we ONLY want assignments from that term?
-  // OR we only want Aspraks active in that term?
-  // Usually "Plotting" view for Term X should show:
-  // Aspraks who have assignments in Term X, AND only show those assignments.
-  // OR show ALL aspraks, but only assignments for Term X.
-  
-  // Strategy: Fetch all Aspraks, and Left Join Assignments.
-  // If term is specified, filter the nested join?
-  
-  // Supabase syntax for nested filter:
-  // .select('*, Asprak_Praktikum(Praktikum!inner(*))') ... .eq('Asprak_Praktikum.Praktikum.tahun_ajaran', term)
-  
   let query = supabase
     .from('Asprak')
     .select(`
@@ -86,15 +96,11 @@ export async function getAspraksWithAssignments(term?: string): Promise<AsprakWi
     throw new Error(`Failed to fetch plotting data: ${error.message}`);
   }
 
-  // Transform and filter in memory if needed (supa nested filter is tricky with left join logic sometimes)
-  // If we assume dataset is reasonable size (hundreds), memory filter is strictly safer/easier for "show all aspraks but filter columns".
-  
   const result: AsprakWithMap[] = (data || []).map((item: any) => {
       const allAssignments = (item.Asprak_Praktikum || [])
         .map((ap: any) => ap.Praktikum)
         .filter((p: any) => !!p); // Filter nulls if any
       
-      // If term is specified, only include assignments from that term
       const filteredAssignments = term && term !== 'all' 
           ? allAssignments.filter((p: any) => p.tahun_ajaran === term)
           : allAssignments;
@@ -109,12 +115,6 @@ export async function getAspraksWithAssignments(term?: string): Promise<AsprakWi
           assignments: filteredAssignments
       };
   });
-  
-  // If term is specified, should we hide Aspraks with 0 assignments in that term?
-  // "Plotting" usually implies "Who is teaching?". If they aren't teaching, maybe hide them?
-  // Or maybe "List of all potential aspraks" and show what they teach?
-  // Let's hide them if they have 0 assignments in the selected term (to remove clutter).
-  // Unless term is 'all'.
   
   if (term && term !== 'all') {
       return result.filter(r => r.assignments.length > 0);
@@ -176,8 +176,10 @@ export interface UpsertAsprakInput {
   nama_lengkap: string;
   kode: string;
   angkatan: number;
-  term: string;
-  praktikumNames: string[];
+  assignments: {
+      term: string;
+      praktikumNames: string[];
+  }[];
 }
 
 export async function upsertAsprak(input: UpsertAsprakInput): Promise<string> {
@@ -239,52 +241,48 @@ export async function upsertAsprak(input: UpsertAsprakInput): Promise<string> {
     asprakId = newUser.id;
   }
 
-  for (const mkName of input.praktikumNames) {
-    let praktikumId = '';
-    const { data: pExist } = await supabase
-      .from('Praktikum')
-      .select('id')
-      .eq('nama', mkName)
-      .eq('tahun_ajaran', input.term)
-      .maybeSingle();
+  // Iterate over assignment blocks
+  for (const assignment of input.assignments) {
+      for (const mkName of assignment.praktikumNames) {
+        let praktikumId = '';
+        const { data: pExist } = await supabase
+          .from('Praktikum')
+          .select('id')
+          .eq('nama', mkName)
+          .eq('tahun_ajaran', assignment.term)
+          .maybeSingle();
 
-    if (pExist) {
-      praktikumId = pExist.id;
-    } else {
-      const { data: pNew, error: pError } = await supabase
-        .from('Praktikum')
-        .insert({ nama: mkName, tahun_ajaran: input.term })
-        .select()
-        .single();
-      if (pError) throw pError;
-      praktikumId = pNew.id;
-    }
+        if (pExist) {
+          praktikumId = pExist.id;
+        } else {
+          const { data: pNew, error: pError } = await supabase
+            .from('Praktikum')
+            .insert({ nama: mkName, tahun_ajaran: assignment.term })
+            .select()
+            .single();
+          if (pError) throw pError;
+          praktikumId = pNew.id;
+        }
 
-    const { data: linkExist } = await supabase
-      .from('Asprak_Praktikum')
-      .select('id')
-      .eq('id_asprak', asprakId)
-      .eq('id_praktikum', praktikumId)
-      .maybeSingle();
+        const { data: linkExist } = await supabase
+          .from('Asprak_Praktikum')
+          .select('id')
+          .eq('id_asprak', asprakId)
+          .eq('id_praktikum', praktikumId)
+          .maybeSingle();
 
-    if (!linkExist) {
-      await supabase.from('Asprak_Praktikum').insert({
-        id_asprak: asprakId,
-        id_praktikum: praktikumId,
-      });
-    }
+        if (!linkExist) {
+          await supabase.from('Asprak_Praktikum').insert({
+            id_asprak: asprakId,
+            id_praktikum: praktikumId,
+          });
+        }
+      }
   }
 
   return asprakId;
 }
 
-/**
- * Bulk upsert multiple aspraks (used by CSV import).
- * Only inserts/updates Asprak records — does NOT create Praktikum links.
- *
- * @param rows - Array of { nim, nama_lengkap, kode, angkatan }
- * @returns Summary with count of inserted, updated, and skipped rows
- */
 export interface BulkUpsertRow {
   nim: string;
   nama_lengkap: string;

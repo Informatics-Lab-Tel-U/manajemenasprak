@@ -13,6 +13,7 @@ import {
   AsprakAssignment,
   bulkImportAspraks,
   updateAssignments,
+  UpsertAsprakInput,
 } from '@/lib/fetchers/asprakFetcher';
 import { ExistingAsprakInfo } from '@/components/asprak/AsprakImportCSVModal';
 import AsprakFilters from '@/components/asprak/AsprakFilters';
@@ -21,7 +22,6 @@ import AsprakAddModal from '@/components/asprak/AsprakAddModal';
 import AsprakImportCSVModal from '@/components/asprak/AsprakImportCSVModal';
 import AsprakDetailsModal from '@/components/asprak/AsprakDetailsModal';
 import AsprakEditModal from '@/components/asprak/AsprakEditModal';
-import { AsprakFormData } from '@/components/asprak/AsprakForm';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -90,7 +90,7 @@ function AsprakPageContent() {
 
   // ─── Manual Add ─────────────────────────────────────────────────────────
 
-  const handleFormSubmit = async (data: AsprakFormData) => {
+  const handleFormSubmit = async (data: UpsertAsprakInput) => {
     const result = await upsert(data);
 
     if (!result.ok) {
@@ -288,8 +288,6 @@ function AsprakPageContent() {
       {/* Manual Add Modal */}
       {showAddModal && (
         <AsprakAddModal
-          existingCodes={existingCodes}
-          availablePraktikums={availablePraktikums}
           onSubmit={handleFormSubmit}
           onClose={() => setShowAddModal(false)}
           open={showAddModal}

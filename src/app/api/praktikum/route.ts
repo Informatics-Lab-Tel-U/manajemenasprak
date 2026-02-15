@@ -28,6 +28,13 @@ export async function GET(req: Request) {
         return NextResponse.json({ ok: true, data });
     }
 
+    if (action === 'details') {
+        const id = searchParams.get('id');
+        if (!id) return NextResponse.json({ ok: false, error: 'Missing id param' }, { status: 400 });
+        const data = await praktikumService.getPraktikumDetails(id);
+        return NextResponse.json({ ok: true, data });
+    }
+
     return NextResponse.json({ ok: false, error: 'Invalid action' }, { status: 400 });
   } catch (error: any) {
     logger.error('API Error in /api/praktikum:', error);

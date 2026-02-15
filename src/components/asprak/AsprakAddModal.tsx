@@ -1,18 +1,15 @@
-import AsprakForm, { AsprakFormData } from './AsprakForm';
+import AsprakForm from './AsprakForm';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { UpsertAsprakInput } from '@/lib/fetchers/asprakFetcher';
 
 interface AsprakAddModalProps {
-  existingCodes: string[];
-  availablePraktikums: { id: string; nama: string }[];
-  onSubmit: (data: AsprakFormData) => Promise<void>;
+  onSubmit: (data: UpsertAsprakInput) => Promise<void>;
   onClose: () => void;
   open: boolean;
 }
 
 export default function AsprakAddModal({
-  existingCodes,
-  availablePraktikums,
   onSubmit,
   onClose,
   open,
@@ -25,8 +22,6 @@ export default function AsprakAddModal({
           <ScrollArea className="flex max-h-full flex-col overflow-hidden">
             <div className="px-6 py-4">
               <AsprakForm
-                existingCodes={existingCodes}
-                availablePraktikums={availablePraktikums}
                 onSubmit={onSubmit}
                 onCancel={onClose}
               />

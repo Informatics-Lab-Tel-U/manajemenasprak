@@ -60,6 +60,14 @@ export async function POST(req: Request) {
         await asprakService.updateAsprakAssignments(asprakId, term, praktikumIds);
         return NextResponse.json({ success: true });
       }
+      case 'check-nim': {
+          const exists = await asprakService.checkNimExists(body.nim);
+          return NextResponse.json({ exists });
+      }
+      case 'generate-code': {
+          const result = await asprakService.generateUniqueCode(body.name);
+          return NextResponse.json(result);
+      }
       default:
         return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
     }
