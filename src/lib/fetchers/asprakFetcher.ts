@@ -12,8 +12,10 @@ export interface UpsertAsprakInput {
   nama_lengkap: string;
   kode: string;
   angkatan: number;
-  term: string;
-  praktikumNames: string[];
+  assignments: {
+      term: string;
+      praktikumNames: string[];
+  }[];
 }
 
 export interface AsprakAssignment {
@@ -224,6 +226,38 @@ export async function bulkImportAspraks(
     return { ok: true, data: json.result };
   } catch (e: any) {
     logger.error('Error bulk importing aspraks:', e);
+    return { ok: false, error: e.message };
+  }
+}
+
+// ... existing code ...
+
+export async function checkNim(nim: string): Promise<ServiceResult<boolean>> {
+  try {
+    const res = await fetch('/api/asprak', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'check-nim', nim }),
+    });
+    const json = await res.json();
+    if (!res.ok) return { ok: false, error: json.error };
+    return { ok: true, data: json.exists };
+  } catch (e: any) {
+    return { ok: false, error: e.message };
+  }
+}
+
+export async function generateCode(name: string): Promise<ServiceResult<{ code: string; rule: string }>> {
+  try {
+    const res = await fetch('/api/asprak', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'generate-code', name }),
+    });
+    const json = await res.json();
+    if (!res.ok) return { ok: false, error: json.error };
+    return { ok: true, data: json };
+  } catch (e: any) {
     return { ok: false, error: e.message };
   }
 }
