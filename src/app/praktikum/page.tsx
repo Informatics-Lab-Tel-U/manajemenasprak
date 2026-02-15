@@ -6,20 +6,19 @@ import { Download, Plus, Upload, BookOpen } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { usePraktikum } from '@/hooks/usePraktikum';
-import { useAsprak } from '@/hooks/useAsprak'; // Borrowing terms from Asprak hook
+import { useAsprak } from '@/hooks/useAsprak'; 
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-// Existing components we can reuse or need to abstract?
-// AsprakFilters is reusable if we pass props.
 import AsprakFilters from '@/components/asprak/AsprakFilters'; 
 import PraktikumList from '@/components/praktikum/PraktikumList';
 import PraktikumImportModal from '@/components/praktikum/PraktikumImportModal';
 import PraktikumManualModal from '@/components/praktikum/PraktikumManualModal';
+import PraktikumDetailsModal from '@/components/praktikum/PraktikumDetailsModal';
 import { PraktikumWithStats } from '@/services/praktikumService';
 
 function PraktikumPageContent() {
-  const { terms, selectedTerm, setSelectedTerm } = useAsprak(); // Reuse term logic
+  const { terms, selectedTerm, setSelectedTerm } = useAsprak(); 
   const { getPraktikumByTerm, bulkImport, getOrCreate, loading: praktikumLoading } = usePraktikum();
 
   const [praktikumList, setPraktikumList] = useState<PraktikumWithStats[]>([]);
@@ -27,13 +26,10 @@ function PraktikumPageContent() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showImportModal, setShowImportModal] = useState(false);
   const [showManualModal, setShowManualModal] = useState(false);
+  const [selectedPraktikum, setSelectedPraktikum] = useState<PraktikumWithStats | null>(null);
 
-  // Fetch praktikums when term changes
   useEffect(() => {
     async function fetchPraktikums() {
-      // If selectedTerm is not set yet, wait.
-      // But useAsprak might set it to '' initially.
-      // If it is 'all', getPraktikumByTerm handles it.
       if (selectedTerm === undefined) return;
       
       setLoadingList(true);
@@ -44,7 +40,6 @@ function PraktikumPageContent() {
     fetchPraktikums();
   }, [selectedTerm, getPraktikumByTerm]);
 
-  // Filter logic
   const filteredList = useMemo(() => {
     if (!searchQuery) return praktikumList;
     const lowerQ = searchQuery.toLowerCase();
@@ -68,11 +63,6 @@ function PraktikumPageContent() {
   };
 
   const handleManualAdd = async (nama: string, tahunAjaran: string) => {
-      // We assume validation is done in modal or we do it here.
-      // Modal does validation via onCheckExists.
-      // Here we actually perform the creation.
-      // Since manual modal calls onConfirm, we just need to save.
-      // getOrCreate creates if not exists.
       try {
           const result = await getOrCreate(nama, tahunAjaran);
           if (result) {
@@ -94,27 +84,7 @@ function PraktikumPageContent() {
       }
   };
   
-  // Checking function for manual modal
-  // We can reuse getOrCreate logic but we just want to check, not create yet?
-  // Actually getOrCreate fetches the existing one if it exists.
-  // We can use it to check.
-  // Ideally we should have a 'checkExists' API but for now we can use the list if loaded, 
-  // OR fetch specific one.
-  // Since we don't have a dedicated check API, and getOrCreate creates if not found... that's not good for just "checking".
-  // However, I updated getPraktikumByTerm to handle 'all'. 
-  // Maybe I can fetch specific praktikum by name and term?
-  // I don't have that exposed in hook yet explicitly as "check".
-  // BUT, I can filter the current list IF we are in the same term.
-  // If we are adding for a DIFFERENT term than selected, checking current list is insufficient.
-  // 
-  // Let's rely on `bulkImport`'s logic which is "insert if not exists".
-  // But for manual modal, we want to give feedback "Already exists".
-  // Let's add a `checkPraktikum` function to hook?
-  // Or just use `getPraktikumByTerm(term)` and see if name exists. 
-  // That fetches ALL for that term. Might be heavy but safe enough.
-  
   const checkExists = async (nama: string, tahunAjaran: string) => {
-      // Fetch all for that term and check.
       const data = await getPraktikumByTerm(tahunAjaran);
       return data.some(p => p.nama === nama);
   };
@@ -155,9 +125,7 @@ function PraktikumPageContent() {
             <PraktikumList 
                 praktikums={filteredList} 
                 loading={loadingList} 
-                onSelect={(p) => {
-                    toast.info(`Praktikum: ${p.nama}, Total Asprak: ${p.asprak_count}`);
-                }} 
+                onSelect={(p) => setSelectedPraktikum(p)} 
             />
          </div>
       </div>
@@ -167,16 +135,7 @@ function PraktikumPageContent() {
             open={showImportModal}
             onClose={() => setShowImportModal(false)}
             onImport={handleImport}
-            existingPraktikums={praktikumList} // This is just for displayed term. Ideally passed full list or removed.
-            // Actually, for CSV, we might want to check against DB during preview?
-            // The modal uses this prop for "local" check.
-            // If we want "global" check, we'd need to fetch more.
-            // For now, let's keep it checking against current list if terms match. 
-            // Better: update modal to check DB?
-            // The prompt said: "validasi lagi apakah dia sudah ada di database atau belum".
-            // Since bulkUpsert skips duplicates, it effectively validates.
-            // But for UI feedback "Sudah ada", we are using this prop.
-            // Let's stick to current list for now, improving it requires fetch inside modal.
+            existingPraktikums={praktikumList} 
         />
       )}
 
@@ -187,6 +146,14 @@ function PraktikumPageContent() {
             onConfirm={handleManualAdd}
             onCheckExists={checkExists}
           />
+      )}
+
+      {selectedPraktikum && (
+        <PraktikumDetailsModal
+          praktikum={selectedPraktikum}
+          open={!!selectedPraktikum}
+          onClose={() => setSelectedPraktikum(null)}
+        />
       )}
     </div>
   );

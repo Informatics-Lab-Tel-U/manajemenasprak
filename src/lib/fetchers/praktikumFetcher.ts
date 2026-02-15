@@ -1,10 +1,23 @@
 import { Praktikum, MataKuliah } from '@/types/database';
 import { ServiceResult } from '@/types/api';
-import { PraktikumWithStats } from '@/services/praktikumService';
+import { PraktikumWithStats, PraktikumDetails } from '@/services/praktikumService';
 
 export async function fetchAllPraktikum(): Promise<ServiceResult<Praktikum[]>> {
   try {
     const res = await fetch('/api/praktikum?action=all', {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const result = await res.json();
+    return result;
+  } catch (error: any) {
+    return { ok: false, error: error.message };
+  }
+}
+
+export async function fetchPraktikumDetails(id: string): Promise<ServiceResult<PraktikumDetails>> {
+  try {
+    const res = await fetch(`/api/praktikum?action=details&id=${id}`, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
     });
