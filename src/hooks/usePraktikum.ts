@@ -36,6 +36,11 @@ export function usePraktikum() {
     fetchPraktikumNames();
   }, [fetchPraktikumNames]);
 
+  const getDetails = useCallback(async (id: string) => {
+    const result = await praktikumFetcher.fetchPraktikumDetails(id);
+    return result.ok && result.data ? result.data : null;
+  }, []);
+
   return {
     praktikumNames,
     loading,
@@ -43,5 +48,6 @@ export function usePraktikum() {
     getOrCreate,
     getPraktikumByTerm,
     bulkImport,
+    getDetails,
   };
 }

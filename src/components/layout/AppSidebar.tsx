@@ -1,10 +1,10 @@
 'use client';
 
 import * as React from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Home, Users, Calendar, AlertTriangle, Database, BookOpen, Network } from 'lucide-react';
-
 import {
   Sidebar,
   SidebarContent,
@@ -33,6 +33,7 @@ type NavItem = {
 
 const navItems: NavItem[] = [
   { label: 'Overview', href: '/', icon: Home },
+  { label: 'Data Praktikum', href: '/praktikum', icon: BookOpen },
   { 
     label: 'Data Asisten Praktikum', 
     href: '#', // Parent item doesn't navigate if it has children, handled by collapsible
@@ -43,7 +44,6 @@ const navItems: NavItem[] = [
       { label: 'Aturan Generasi', href: '/asprak?tab=rules' },
     ]
   },
-  { label: 'Data Praktikum', href: '/praktikum', icon: BookOpen },
   { label: 'Jadwal Praktikum', href: '/jadwal', icon: Calendar },
   { label: 'Pelanggaran', href: '/pelanggaran', icon: AlertTriangle },
   { label: 'Database Manager', href: '/database', icon: Database },
@@ -59,11 +59,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
               <Link href="/">
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                  <span className="text-sm font-bold">CL</span>
+                <div className="flex aspect-square size-8 items-center justify-center rounded-lg text-sidebar-primary-foreground">
+                   <div className="relative h-8 w-8 overflow-hidden rounded-md">
+                      <Image src="/iflab.png" alt="Logo" fill className="object-contain" />
+                   </div>
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">CASLAB</span>
+                  <span className="truncate font-semibold">Informatics Lab</span>
                   <span className="truncate text-xs">Admin Portal</span>
                 </div>
               </Link>

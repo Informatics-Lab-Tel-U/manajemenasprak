@@ -6,6 +6,18 @@ export interface PraktikumWithStats extends Praktikum {
   asprak_count: number;
 }
 
+export interface PraktikumDetails {
+  total_kelas: number;
+  classes: {
+    kelas: string;
+    jadwal: {
+      hari: string;
+      jam: string;
+      ruangan: string;
+    }[];
+  }[];
+}
+
 export async function getAllPraktikum(): Promise<Praktikum[]> {
   const { data, error } = await supabase.from('Praktikum').select('*').order('nama');
 
@@ -49,6 +61,48 @@ export async function getPraktikumByTerm(term?: string): Promise<PraktikumWithSt
     ...item,
     asprak_count: item.Asprak_Praktikum?.[0]?.count || 0
   })) as PraktikumWithStats[];
+}
+
+export async function getPraktikumDetails(praktikumId: string): Promise<PraktikumDetails> {
+  // Query Mata_Kuliah related to praktikumId
+  const { data: mks, error: mkError } = await supabase
+    .from('Mata_Kuliah')
+    .select('id')
+    .eq('id_praktikum', praktikumId);
+    
+  if (mkError || !mks || mks.length === 0) {
+      return { total_kelas: 0, classes: [] };
+  }
+  
+  const mkIds = mks.map(m => m.id);
+  
+  // Query Jadwal related to mkIds
+  const { data: jadwals, error: jadwalError } = await supabase
+    .from('Jadwal')
+    .select('kelas, hari, jam, ruangan')
+    .in('id_mk', mkIds)
+    .order('kelas');
+    
+  if (jadwalError || !jadwals) {
+      return { total_kelas: 0, classes: [] };
+  }
+  
+  // Group by Kelas
+  const grouped: Record<string, any[]> = {};
+  jadwals.forEach(j => {
+      if (!grouped[j.kelas]) grouped[j.kelas] = [];
+      grouped[j.kelas].push({ hari: j.hari, jam: j.jam, ruangan: j.ruangan });
+  });
+  
+  const classes = Object.keys(grouped).map(kelas => ({
+      kelas,
+      jadwal: grouped[kelas]
+  }));
+  
+  return {
+      total_kelas: classes.length,
+      classes
+  };
 }
 
 export async function getOrCreatePraktikum(nama: string, tahunAjaran: string): Promise<Praktikum> {
