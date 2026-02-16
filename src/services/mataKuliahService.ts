@@ -1,0 +1,120 @@
+import { supabase } from './supabase';
+import { MataKuliah } from '@/types/database';
+import { logger } from '@/lib/logger';
+
+export interface MataKuliahWithPraktikum extends MataKuliah {
+  praktikum: {
+    id: string;
+    nama: string;
+    tahun_ajaran: string;
+  };
+}
+
+export type MataKuliahGrouped = {
+  mk_singkat: string; // From Praktikum.nama
+  praktikum_id: string;
+  items: MataKuliahWithPraktikum[];
+};
+
+export async function getMataKuliahByTerm(term: string): Promise<MataKuliahGrouped[]> {
+  let query = supabase
+    .from('Mata_Kuliah')
+    .select(`
+      *,
+      praktikum:Praktikum!inner (
+        id,
+        nama,
+        tahun_ajaran
+      )
+    `);
+
+  if (term && term !== 'all') {
+    query = query.eq('praktikum.tahun_ajaran', term);
+  }
+
+  const { data, error } = await query.order('nama_lengkap');
+
+  if (error) {
+    logger.error('Error fetching mata kuliah for term ' + term + ':', error);
+    return [];
+  }
+
+  const rawData = data as unknown as MataKuliahWithPraktikum[];
+
+  // Group by Praktikum Name (mk_singkat)
+  const groupedMap: Record<string, MataKuliahGrouped> = {};
+
+  rawData.forEach(mk => {
+    const mkSingkat = mk.praktikum.nama;
+    if (!groupedMap[mkSingkat]) {
+      groupedMap[mkSingkat] = {
+        mk_singkat: mkSingkat,
+        praktikum_id: mk.praktikum.id,
+        items: []
+      };
+    }
+    groupedMap[mkSingkat].items.push(mk);
+  });
+
+  // Convert to array and sort by mk_singkat
+  return Object.values(groupedMap).sort((a, b) => a.mk_singkat.localeCompare(b.mk_singkat));
+}
+
+export interface CreateMataKuliahPayload {
+  id_praktikum: string;
+  nama_lengkap: string;
+  program_studi: string;
+  dosen_koor: string;
+}
+
+export async function createMataKuliah(payload: CreateMataKuliahPayload): Promise<MataKuliah | null> {
+  const { data, error } = await supabase
+    .from('Mata_Kuliah')
+    .insert(payload)
+    .select()
+    .single();
+
+  if (error) {
+    logger.error('Error creating mata kuliah:', error);
+    throw error;
+  }
+
+  return data;
+}
+
+export interface BulkImportMataKuliahResult {
+  inserted: number;
+  errors: string[];
+}
+
+export async function bulkCreateMataKuliah(payloads: CreateMataKuliahPayload[]): Promise<BulkImportMataKuliahResult> {
+  const result: BulkImportMataKuliahResult = { inserted: 0, errors: [] };
+
+  // Insert sequentially to handle errors individually (safer) or bulk if confident
+  // Using sequential for better error reporting per row
+  for (const p of payloads) {
+    const { error } = await supabase.from('Mata_Kuliah').insert(p);
+    if (error) {
+      result.errors.push(`Failed to insert ${p.nama_lengkap} (${p.program_studi}): ${error.message}`);
+    } else {
+      result.inserted++;
+    }
+  }
+
+  return result;
+}
+
+export async function checkMataKuliahExists(praktikumId: string, programStudi: string): Promise<boolean> {
+  const { count, error } = await supabase
+    .from('Mata_Kuliah')
+    .select('*', { count: 'exact', head: true })
+    .eq('id_praktikum', praktikumId)
+    .eq('program_studi', programStudi);
+  
+  if (error) {
+    console.error(error);
+    return false;
+  }
+  
+  return (count || 0) > 0;
+}
