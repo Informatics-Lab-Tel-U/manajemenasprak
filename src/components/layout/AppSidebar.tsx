@@ -34,6 +34,7 @@ type NavItem = {
 const navItems: NavItem[] = [
   { label: 'Overview', href: '/', icon: Home },
   { label: 'Data Praktikum', href: '/praktikum', icon: BookOpen },
+  { label: 'Mata Kuliah', href: '/mata-kuliah', icon: BookOpen },
   { 
     label: 'Data Asisten Praktikum', 
     href: '#', // Parent item doesn't navigate if it has children, handled by collapsible

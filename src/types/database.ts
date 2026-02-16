@@ -18,6 +18,7 @@ export type MataKuliah = {
   id_praktikum: string;
   nama_lengkap: string;
   program_studi: string;
+  dosen_koor?: string;
   praktikum?: {
     nama: string;
     tahun_ajaran: string;
