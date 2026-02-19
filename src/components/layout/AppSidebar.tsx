@@ -4,7 +4,7 @@ import * as React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Users, Calendar, AlertTriangle, Database, BookOpen, Network } from 'lucide-react';
+import { Home, Users, Calendar, AlertTriangle, Database, BookOpen, Network, HelpCircle, Settings } from 'lucide-react';
 import {
   Sidebar,
   SidebarContent,
@@ -47,7 +47,7 @@ const navItems: NavItem[] = [
   },
   { label: 'Jadwal Praktikum', href: '/jadwal', icon: Calendar },
   { label: 'Pelanggaran', href: '/pelanggaran', icon: AlertTriangle },
-  { label: 'Database Manager', href: '/database', icon: Database },
+  { label: 'Panduan Sistem', href: '/panduan', icon: HelpCircle },
 ];
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
@@ -129,6 +129,19 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+
+      <SidebarFooter>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild>
+              <Link href="/database">
+                <Settings />
+                <span>Pengaturan</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
 
       <SidebarRail />
     </Sidebar>
