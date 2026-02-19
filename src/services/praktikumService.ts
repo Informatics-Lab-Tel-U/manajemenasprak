@@ -129,7 +129,10 @@ export async function getOrCreatePraktikum(nama: string, tahunAjaran: string): P
 }
 
 export async function getAllMataKuliah(): Promise<MataKuliah[]> {
-  const { data, error } = await supabase.from('Mata_Kuliah').select('*').order('nama_lengkap');
+  const { data, error } = await supabase
+    .from('Mata_Kuliah')
+    .select('*, praktikum:Praktikum(nama, tahun_ajaran)')
+    .order('nama_lengkap');
 
   if (error) {
     logger.error('Error fetching mata kuliah:', error);

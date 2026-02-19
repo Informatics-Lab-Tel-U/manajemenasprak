@@ -41,6 +41,26 @@ export async function getJadwalByTerm(term: string): Promise<Jadwal[]> {
   return data as Jadwal[];
 }
 
+export async function getScheduleForValidation(term: string) {
+  const { data, error } = await supabase
+    .from('Jadwal')
+    .select(`
+      id, id_mk, kelas, hari, sesi, jam, ruangan,
+      mata_kuliah:Mata_Kuliah!inner (
+        praktikum:Praktikum!inner (
+          tahun_ajaran
+        )
+      )
+    `)
+    .eq('mata_kuliah.praktikum.tahun_ajaran', term);
+
+  if (error) {
+    logger.error('Error fetching schedule for validation:', error);
+    return [];
+  }
+  return data;
+}
+
 export async function getTodaySchedule(limit: number = 5, term?: string): Promise<Jadwal[]> {
   const dayIndex = new Date().getDay();
   const weekdays = ['SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU'];
@@ -104,6 +124,19 @@ export async function createJadwal(input: CreateJadwalInput): Promise<Jadwal> {
     throw new Error(`Failed to create Jadwal: ${error.message}`);
   }
   return data;
+}
+
+export async function bulkCreateJadwal(inputs: CreateJadwalInput[]): Promise<{ inserted: number; errors: string[] }> {
+  if (inputs.length === 0) return { inserted: 0, errors: [] };
+
+  const { data, error } = await supabase.from('Jadwal').insert(inputs).select();
+
+  if (error) {
+    logger.error('Error bulk creating jadwal:', error);
+    throw new Error(`Failed to bulk create Jadwal: ${error.message}`);
+  }
+
+  return { inserted: data?.length || 0, errors: [] };
 }
 
 

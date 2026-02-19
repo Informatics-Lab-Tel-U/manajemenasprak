@@ -10,10 +10,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Filter, X, Clock, MapPin, User, Users, ChevronRight, Plus } from 'lucide-react';
+import { Filter, X, Clock, MapPin, User, Users, ChevronRight, Plus, Upload } from 'lucide-react';
 import { Jadwal } from '@/types/database';
 import { JadwalModal } from '@/components/jadwal/JadwalModal';
+import JadwalImportCSVModal from '@/components/jadwal/JadwalImportCSVModal';
 import { CreateJadwalInput, UpdateJadwalInput, CreateJadwalPenggantiInput } from '@/services/jadwalService';
+import * as jadwalFetcher from '@/lib/fetchers/jadwalFetcher';
 import { DAYS, STATIC_SESSIONS } from '@/constants';
 import { toast } from 'sonner';
 
@@ -43,6 +45,7 @@ export default function JadwalPage() {
   const [selectedJadwal, setSelectedJadwal] = useState<Jadwal | null>(null);
   const [showSessionId, setShowSessionId] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [modalInitialData, setModalInitialData] = useState<Jadwal | null>(null);
 
   const handleOpenAdd = () => {
@@ -106,6 +109,16 @@ export default function JadwalPage() {
     }
   };
 
+  const handleImportCSV = async (rows: CreateJadwalInput[]) => {
+    const result = await jadwalFetcher.bulkImportJadwal(rows);
+    if (result.ok) {
+        toast.success(`Berhasil import ${result.data?.inserted} jadwal`);
+        window.location.reload(); // Simple reload to refresh data
+    } else {
+        toast.error(`Gagal import: ${result.error}`);
+    }
+  };
+
   const jadwalList = useMemo(() => {
     let combinedJadwal = rawJadwalList;
 
@@ -161,6 +174,13 @@ export default function JadwalPage() {
     return matrix;
   }, [jadwalList]);
 
+  const visibleDays = useMemo(() => {
+    if (programType === 'PJJ') {
+      return ['SABTU'];
+    }
+    return DAYS;
+  }, [programType]);
+
 
 
   return (
@@ -197,6 +217,13 @@ export default function JadwalPage() {
         </div>
 
         <div className="flex gap-3 w-full md:w-auto items-center">
+            <button
+                onClick={() => setIsImportModalOpen(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-md text-sm font-medium hover:bg-secondary/90 transition-colors"
+            >
+                <Upload size={16} />
+                Import CSV
+            </button>
             <button
                 onClick={handleOpenAdd}
                 className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90 transition-colors"
@@ -273,7 +300,7 @@ export default function JadwalPage() {
               </tr>
             </thead>
             <tbody>
-              {DAYS.map((day) => {
+              {visibleDays.map((day) => {
                 const daySessions = STATIC_SESSIONS[day] || [];
                 if (daySessions.length === 0) return null;
 
@@ -472,6 +499,14 @@ export default function JadwalPage() {
         mataKuliahList={mataKuliahList}
         isLoading={loading}
         selectedModul={selectedModul}
+      />
+
+      <JadwalImportCSVModal
+        open={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        onImport={handleImportCSV}
+        mataKuliahList={mataKuliahList}
+        term={selectedTerm}
       />
     </div>
   );
