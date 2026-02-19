@@ -29,7 +29,7 @@ export function useDashboard(
 
   const fetchDashboardData = useCallback(async () => {
     if (!selectedTerm) return;
-    
+
     setLoading(true);
     try {
       const [statsResult, scheduleResult] = await Promise.all([

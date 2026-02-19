@@ -26,6 +26,13 @@ export async function GET(req: Request) {
       return NextResponse.json({ ok: true, data: jadwal });
     }
 
+    if (action === 'validation') {
+        const term = searchParams.get('term');
+        if (!term) return NextResponse.json({ ok: false, error: 'Missing term param' }, { status: 400 });
+        const result = await jadwalService.getScheduleForValidation(term);
+        return NextResponse.json({ ok: true, data: result });
+    }
+
     if (action === 'pengganti') {
         const modul = parseInt(searchParams.get('modul') || '0');
         const jadwal = await jadwalService.getJadwalPengganti(modul);
@@ -52,6 +59,11 @@ export async function POST(req: Request) {
 
     if (action === 'upsert-pengganti') {
         const result = await jadwalService.upsertJadwalPengganti(body);
+        return NextResponse.json({ ok: true, data: result });
+    }
+
+    if (action === 'bulk-import') {
+        const result = await jadwalService.bulkCreateJadwal(body);
         return NextResponse.json({ ok: true, data: result });
     }
 
