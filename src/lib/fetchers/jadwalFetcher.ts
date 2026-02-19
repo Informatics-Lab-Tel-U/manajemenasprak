@@ -65,6 +65,30 @@ export async function createJadwal(input: CreateJadwalInput): Promise<ServiceRes
   }
 }
 
+export async function fetchScheduleForValidation(term: string): Promise<ServiceResult<any[]>> {
+  try {
+    const res = await fetch(`/api/jadwal?action=validation&term=${encodeURIComponent(term)}`);
+    const result = await res.json();
+    return result;
+  } catch (error: any) {
+    return { ok: false, error: error.message };
+  }
+}
+
+export async function bulkImportJadwal(inputs: CreateJadwalInput[]): Promise<ServiceResult<{ inserted: number; errors: string[] }>> {
+  try {
+    const res = await fetch('/api/jadwal?action=bulk-import', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(inputs),
+    });
+    const result = await res.json();
+    return result;
+  } catch (error: any) {
+    return { ok: false, error: error.message };
+  }
+}
+
 export async function updateJadwal(input: UpdateJadwalInput): Promise<ServiceResult<Jadwal>> {
   try {
     const res = await fetch('/api/jadwal', {

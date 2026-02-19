@@ -234,7 +234,7 @@ export default function DatabasePage() {
     <div className="container">
       <header className="mb-8">
         <h1 className="title-gradient text-4xl font-bold">
-          Database Manager{' '}
+          Pengaturan{' '}
           <span className="text-base opacity-60 font-normal">(Developer Mode)</span>
         </h1>
         <p className="text-muted-foreground mt-1">Manage imports and cleanup</p>
