@@ -10,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
 import { Filter, X, Clock, MapPin, User, Users, ChevronRight, Plus, Upload } from 'lucide-react';
 import { Jadwal } from '@/types/database';
 import { JadwalModal } from '@/components/jadwal/JadwalModal';
@@ -193,44 +194,47 @@ export default function JadwalPage() {
           </div>
 
           <div className="bg-muted/50 p-1.5 rounded-lg flex items-center gap-1 border border-border/50">
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => setProgramType('REGULER')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+              className={`rounded-md text-sm font-medium transition-all ${
                 programType === 'REGULER'
-                  ? 'bg-background shadow-sm text-foreground'
+                  ? 'bg-background shadow-sm text-foreground hover:bg-background'
                   : 'text-muted-foreground hover:bg-background/50 hover:text-foreground'
               }`}
             >
               Reguler
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => setProgramType('PJJ')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+              className={`rounded-md text-sm font-medium transition-all ${
                 programType === 'PJJ'
-                  ? 'bg-background shadow-sm text-foreground'
+                  ? 'bg-background shadow-sm text-foreground hover:bg-background'
                   : 'text-muted-foreground hover:bg-background/50 hover:text-foreground'
               }`}
             >
               PJJ
-            </button>
+            </Button>
           </div>
         </div>
 
         <div className="flex gap-3 w-full md:w-auto items-center">
-            <button
-                onClick={() => setIsImportModalOpen(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-md text-sm font-medium hover:bg-secondary/90 transition-colors"
-            >
-                <Upload size={16} />
-                Import CSV
-            </button>
-            <button
+            <Button
+                variant="outline"
                 onClick={handleOpenAdd}
-                className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90 transition-colors"
             >
-                <Plus size={16} />
+                <Plus size={18} className="mr-2" />
                 Tambah Jadwal
-            </button>
+            </Button>
+            <Button
+                onClick={() => setIsImportModalOpen(true)}
+            >
+                <Upload size={18} className="mr-2" />
+                Import CSV
+            </Button>
           <Select value={selectedModul} onValueChange={setSelectedModul}>
             <SelectTrigger className="w-full md:w-[180px]">
               <SelectValue placeholder="Select modul" />
@@ -396,12 +400,14 @@ export default function JadwalPage() {
           >
             {/* Header */}
             <div className="relative p-6 pb-4 border-b border-border/50">
-              <button
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={() => setSelectedJadwal(null)}
-                className="absolute top-4 right-4 p-1 rounded-full hover:bg-muted transition-colors text-muted-foreground"
+                className="absolute top-4 right-4 rounded-full hover:bg-muted text-muted-foreground"
               >
                 <X size={20} />
-              </button>
+              </Button>
 
               <div className="flex flex-wrap gap-2 mb-3">
                 <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
@@ -472,19 +478,19 @@ export default function JadwalPage() {
 
             <div className="p-4 bg-muted/20 border-t border-border/50 text-right">
               <div className="flex gap-2 justify-end">
-                <button 
+                <Button 
+                  variant="outline"
                   onClick={() => handleOpenEdit(selectedJadwal)}
-                  className="px-4 py-2 rounded-lg border-2 border-primary text-primary font-medium text-sm hover:bg-primary/10 transition-colors"
+                  className="border-primary text-primary hover:bg-primary/10"
                 >
                   Edit Jadwal
-                </button>
+                </Button>
 
-                <button
+                <Button
                   onClick={() => setSelectedJadwal(null)}
-                  className="px-4 py-2 rounded-lg bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 transition-colors"
                 >
                   Tutup
-                </button>
+                </Button>
               </div>
             </div>
           </div>
