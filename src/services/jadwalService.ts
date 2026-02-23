@@ -207,9 +207,31 @@ export interface CreateJadwalPenggantiInput {
   ruangan: string;
 }
 
+export async function getAllJadwal(): Promise<Jadwal[]> {
+  const { data, error } = await supabase
+    .from('Jadwal')
+    .select(
+      `
+      *,
+      mata_kuliah:Mata_Kuliah (
+        nama_lengkap,
+        program_studi
+      )
+      `
+    )
+    .order('hari', { ascending: true })
+    .order('jam', { ascending: true });
+
+  if (error) {
+    logger.error('Error fetching all jadwal:', error);
+    return [];
+  }
+  return data as Jadwal[];
+}
+
 export async function getJadwalPengganti(modul: number): Promise<JadwalPengganti[]> {
   if (modul <= 0) return [];
-  
+
   const { data, error } = await supabase
     .from('Jadwal_Pengganti')
     .select('*')

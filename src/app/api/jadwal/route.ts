@@ -39,10 +39,9 @@ export async function GET(req: Request) {
         return NextResponse.json({ ok: true, data: jadwal });
     }
 
-    return NextResponse.json(
-      { ok: false, error: 'Invalid action or missing parameters' },
-      { status: 400 }
-    );
+    // Default action: get all jadwal
+    const jadwal = await jadwalService.getAllJadwal();
+    return NextResponse.json({ ok: true, data: jadwal });
   } catch (error: any) {
     logger.error('API Error in /api/jadwal:', error);
     return NextResponse.json(

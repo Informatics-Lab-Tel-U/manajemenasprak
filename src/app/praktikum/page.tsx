@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useMemo, useEffect, Suspense } from 'react';
@@ -6,11 +5,11 @@ import { Download, Plus, Upload, BookOpen } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { usePraktikum } from '@/hooks/usePraktikum';
-import { useAsprak } from '@/hooks/useAsprak'; 
+import { useAsprak } from '@/hooks/useAsprak';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-import AsprakFilters from '@/components/asprak/AsprakFilters'; 
+import AsprakFilters from '@/components/asprak/AsprakFilters';
 import PraktikumList from '@/components/praktikum/PraktikumList';
 import PraktikumImportModal from '@/components/praktikum/PraktikumImportModal';
 import PraktikumManualModal from '@/components/praktikum/PraktikumManualModal';
@@ -18,7 +17,7 @@ import PraktikumDetailsModal from '@/components/praktikum/PraktikumDetailsModal'
 import { PraktikumWithStats } from '@/services/praktikumService';
 
 function PraktikumPageContent() {
-  const { terms, selectedTerm, setSelectedTerm } = useAsprak(); 
+  const { terms, selectedTerm, setSelectedTerm } = useAsprak();
   const { getPraktikumByTerm, bulkImport, getOrCreate, loading: praktikumLoading } = usePraktikum();
 
   const [praktikumList, setPraktikumList] = useState<PraktikumWithStats[]>([]);
@@ -31,7 +30,7 @@ function PraktikumPageContent() {
   useEffect(() => {
     async function fetchPraktikums() {
       if (selectedTerm === undefined) return;
-      
+
       setLoadingList(true);
       const data = await getPraktikumByTerm(selectedTerm);
       setPraktikumList(data);
@@ -43,50 +42,50 @@ function PraktikumPageContent() {
   const filteredList = useMemo(() => {
     if (!searchQuery) return praktikumList;
     const lowerQ = searchQuery.toLowerCase();
-    return praktikumList.filter(p => p.nama.toLowerCase().includes(lowerQ));
+    return praktikumList.filter((p) => p.nama.toLowerCase().includes(lowerQ));
   }, [praktikumList, searchQuery]);
 
   const handleImport = async (rows: { nama: string; tahun_ajaran: string }[]) => {
-      const result = await bulkImport(rows);
-      if (result.ok && result.data) {
-          const { inserted, skipped, errors } = result.data;
-          toast.success(`Import selesai! Inserted: ${inserted}, Skipped: ${skipped}`);
-          if (errors.length > 0) {
-              toast.error(`Errors occurred: ${errors.length} errors. Check console.`);
-              console.error(errors);
-          }
-          setShowImportModal(false);
-          refreshList();
-      } else {
-          toast.error(`Import failed: ${result.error}`);
+    const result = await bulkImport(rows);
+    if (result.ok && result.data) {
+      const { inserted, skipped, errors } = result.data;
+      toast.success(`Import selesai! Inserted: ${inserted}, Skipped: ${skipped}`);
+      if (errors.length > 0) {
+        toast.error(`Errors occurred: ${errors.length} errors. Check console.`);
+        console.error(errors);
       }
+      setShowImportModal(false);
+      refreshList();
+    } else {
+      toast.error(`Import failed: ${result.error}`);
+    }
   };
 
   const handleManualAdd = async (nama: string, tahunAjaran: string) => {
-      try {
-          const result = await getOrCreate(nama, tahunAjaran);
-          if (result) {
-              toast.success(`Berhasil menambahkan praktikum ${nama}`);
-              setShowManualModal(false);
-              refreshList();
-          } else {
-              toast.error('Gagal menambahkan praktikum.');
-          }
-      } catch (e: any) {
-          toast.error(`Error: ${e.message}`);
+    try {
+      const result = await getOrCreate(nama, tahunAjaran);
+      if (result) {
+        toast.success(`Berhasil menambahkan praktikum ${nama}`);
+        setShowManualModal(false);
+        refreshList();
+      } else {
+        toast.error('Gagal menambahkan praktikum.');
       }
+    } catch (e: any) {
+      toast.error(`Error: ${e.message}`);
+    }
   };
 
   const refreshList = async () => {
-      if (selectedTerm) {
-         const data = await getPraktikumByTerm(selectedTerm);
-         setPraktikumList(data);
-      }
+    if (selectedTerm) {
+      const data = await getPraktikumByTerm(selectedTerm);
+      setPraktikumList(data);
+    }
   };
-  
+
   const checkExists = async (nama: string, tahunAjaran: string) => {
-      const data = await getPraktikumByTerm(tahunAjaran);
-      return data.some(p => p.nama === nama);
+    const data = await getPraktikumByTerm(tahunAjaran);
+    return data.some((p) => p.nama === nama);
   };
 
   return (
@@ -111,41 +110,41 @@ function PraktikumPageContent() {
         </div>
       </div>
 
-      <div className="card glass mb-8">
-         <AsprakFilters
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-            terms={terms}
-            selectedTerm={selectedTerm}
-            onTermChange={setSelectedTerm}
-            hideSearch={true} 
-         />
-         
-         <div className="mt-6">
-            <PraktikumList 
-                praktikums={filteredList} 
-                loading={loadingList} 
-                onSelect={(p) => setSelectedPraktikum(p)} 
-            />
-         </div>
+      <div className="mb-8">
+        <AsprakFilters
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          terms={terms}
+          selectedTerm={selectedTerm}
+          onTermChange={setSelectedTerm}
+          hideSearch={true}
+        />
+
+        <div className="mt-6">
+          <PraktikumList
+            praktikums={filteredList}
+            loading={loadingList}
+            onSelect={(p) => setSelectedPraktikum(p)}
+          />
+        </div>
       </div>
 
       {showImportModal && (
         <PraktikumImportModal
-            open={showImportModal}
-            onClose={() => setShowImportModal(false)}
-            onImport={handleImport}
-            existingPraktikums={praktikumList} 
+          open={showImportModal}
+          onClose={() => setShowImportModal(false)}
+          onImport={handleImport}
+          existingPraktikums={praktikumList}
         />
       )}
 
       {showManualModal && (
-          <PraktikumManualModal
-            open={showManualModal}
-            onClose={() => setShowManualModal(false)}
-            onConfirm={handleManualAdd}
-            onCheckExists={checkExists}
-          />
+        <PraktikumManualModal
+          open={showManualModal}
+          onClose={() => setShowManualModal(false)}
+          onConfirm={handleManualAdd}
+          onCheckExists={checkExists}
+        />
       )}
 
       {selectedPraktikum && (
