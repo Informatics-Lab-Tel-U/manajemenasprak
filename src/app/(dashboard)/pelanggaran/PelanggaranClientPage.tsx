@@ -1,6 +1,9 @@
+'use client';
+
+import { useState } from 'react';
 import { AlertTriangle, Plus } from 'lucide-react';
 import { Pelanggaran } from '@/types/database';
-import { getAllPelanggaran } from '@/services/pelanggaranService';
+import { createPelanggaran } from '@/lib/fetchers/pelanggaranFetcher';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -12,11 +15,36 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { toast } from 'sonner';
+import PelanggaranAddModal from '@/components/pelanggaran/PelanggaranAddModal';
 
-export const revalidate = 0;
+interface PelanggaranClientPageProps {
+  violations: Pelanggaran[];
+}
 
-export default async function PelanggaranPage() {
-  const violations = await getAllPelanggaran();
+export default function PelanggaranClientPage({ violations }: PelanggaranClientPageProps) {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleAddViolation = async (data: any) => {
+    setIsSubmitting(true);
+    try {
+      const result = await createPelanggaran(data);
+
+      if (result.ok) {
+        toast.success('Pelanggaran berhasil dicatat!');
+        setIsModalOpen(false);
+        // In a real app, you would refresh the data here
+        // For now, we'll just show a success message
+      } else {
+        toast.error(result.error || 'Gagal mencatat pelanggaran');
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Terjadi kesalahan saat mencatat pelanggaran');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="container">
@@ -25,7 +53,7 @@ export default async function PelanggaranPage() {
           <h1 className="title-gradient text-4xl font-bold">Pelanggaran</h1>
           <p className="text-muted-foreground mt-1">Log Indisipliner Asprak</p>
         </div>
-        <Button>
+        <Button onClick={() => setIsModalOpen(true)}>
           <Plus size={18} />
           Catat Pelanggaran
         </Button>
@@ -91,6 +119,13 @@ export default async function PelanggaranPage() {
           </div>
         </CardContent>
       </Card>
+
+      <PelanggaranAddModal
+        open={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSubmit={handleAddViolation}
+        isLoading={isSubmitting}
+      />
     </div>
   );
 }

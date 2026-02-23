@@ -4,7 +4,19 @@ import * as React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Users, Calendar, AlertTriangle, Database, BookOpen, Network, HelpCircle, Settings } from 'lucide-react';
+import {
+  Home,
+  Users,
+  Calendar,
+  AlertTriangle,
+  Database,
+  BookOpen,
+  Network,
+  HelpCircle,
+  Settings,
+  Notebook,
+  Logs,
+} from 'lucide-react';
 import {
   Sidebar,
   SidebarContent,
@@ -23,6 +35,7 @@ import {
 } from '@/components/ui/sidebar';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 import { ChevronRight } from 'lucide-react';
+import { AccountSwitcher } from '../sidebar/AccountSwitcher';
 
 type NavItem = {
   label: string;
@@ -35,20 +48,28 @@ const navItems: NavItem[] = [
   { label: 'Overview', href: '/', icon: Home },
   { label: 'Data Praktikum', href: '/praktikum', icon: BookOpen },
   { label: 'Mata Kuliah', href: '/mata-kuliah', icon: BookOpen },
-  { 
-    label: 'Data Asisten Praktikum', 
+  {
+    label: 'Data Asisten Praktikum',
     href: '#', // Parent item doesn't navigate if it has children, handled by collapsible
     icon: Users,
     items: [
       { label: 'Data Asprak', href: '/asprak?tab=data' },
       { label: 'Plotting Asprak', href: '/plotting' },
       { label: 'Aturan Generasi', href: '/asprak?tab=rules' },
-    ]
+    ],
   },
   { label: 'Jadwal Praktikum', href: '/jadwal', icon: Calendar },
   { label: 'Pelanggaran', href: '/pelanggaran', icon: AlertTriangle },
+  { label: 'Manajemen Akun', href: '/manajemen-akun', icon: Notebook },
+  { label: 'Logs', href: '/logs', icon: Logs },
   { label: 'Panduan Sistem', href: '/panduan', icon: HelpCircle },
+  { label: 'Pengaturan', href: '/pengaturan', icon: Settings },
 ];
+
+const accounts = ['Gus Alung', 'Support', 'License'];
+const defaultAccount = 'Gus Alung';
+const defaultEmail = 'alung@g.com';
+const emails = ['alung@g.com', 'support@iflab.com', 'license@iflab.com'];
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
@@ -60,10 +81,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
               <Link href="/">
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg text-sidebar-primary-foreground">
-                   <div className="relative h-8 w-8 overflow-hidden rounded-md">
-                      <Image src="/iflab.png" alt="Logo" fill className="object-contain" />
-                   </div>
+                <div className="flex aspect-square bg-white p-0.5 size-10 items-center justify-center rounded-lg text-sidebar-primary-foreground">
+                  <div className="relative w-full h-full overflow-hidden rounded-md">
+                    <Image src="/iflab.png" alt="Logo" fill className="object-contain" />
+                  </div>
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-semibold">Informatics Lab</span>
@@ -82,12 +103,18 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarMenu>
               {navItems.map((item) => {
                 const Icon = item.icon;
-                const isActive = pathname === item.href || (item.items?.some(sub => pathname === sub.href));
+                const isActive =
+                  pathname === item.href || item.items?.some((sub) => pathname === sub.href);
                 const hasSubmenu = item.items && item.items.length > 0;
 
                 if (hasSubmenu) {
-                   return (
-                    <Collapsible key={item.label} defaultOpen={isActive} className="group/collapsible" asChild>
+                  return (
+                    <Collapsible
+                      key={item.label}
+                      defaultOpen={isActive}
+                      className="group/collapsible"
+                      asChild
+                    >
                       <SidebarMenuItem>
                         <CollapsibleTrigger asChild>
                           <SidebarMenuButton tooltip={item.label} isActive={isActive}>
@@ -111,7 +138,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         </CollapsibleContent>
                       </SidebarMenuItem>
                     </Collapsible>
-                   )
+                  );
                 }
 
                 return (
@@ -134,10 +161,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild>
-              <Link href="/database">
-                <Settings />
-                <span>Pengaturan</span>
-              </Link>
+              <AccountSwitcher
+                accounts={accounts}
+                emails={emails}
+                defaultAccount={defaultAccount}
+                defaultEmail={defaultEmail}
+              />
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
