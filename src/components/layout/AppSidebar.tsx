@@ -14,6 +14,8 @@ import {
   Network,
   HelpCircle,
   Settings,
+  Notebook,
+  Logs,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -58,6 +60,8 @@ const navItems: NavItem[] = [
   },
   { label: 'Jadwal Praktikum', href: '/jadwal', icon: Calendar },
   { label: 'Pelanggaran', href: '/pelanggaran', icon: AlertTriangle },
+  { label: 'Manajemen Akun', href: '/manajemen-akun', icon: Notebook },
+  { label: 'Logs', href: '/logs', icon: Logs },
   { label: 'Panduan Sistem', href: '/panduan', icon: HelpCircle },
   { label: 'Pengaturan', href: '/pengaturan', icon: Settings },
 ];
