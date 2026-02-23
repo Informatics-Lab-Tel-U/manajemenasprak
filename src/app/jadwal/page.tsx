@@ -15,14 +15,16 @@ import { Filter, X, Clock, MapPin, User, Users, ChevronRight, Plus, Upload } fro
 import { Jadwal } from '@/types/database';
 import { JadwalModal } from '@/components/jadwal/JadwalModal';
 import JadwalImportCSVModal from '@/components/jadwal/JadwalImportCSVModal';
-import { CreateJadwalInput, UpdateJadwalInput, CreateJadwalPenggantiInput } from '@/services/jadwalService';
+import {
+  CreateJadwalInput,
+  UpdateJadwalInput,
+  CreateJadwalPenggantiInput,
+} from '@/services/jadwalService';
 import * as jadwalFetcher from '@/lib/fetchers/jadwalFetcher';
 import { DAYS, STATIC_SESSIONS } from '@/constants';
 import { toast } from 'sonner';
 
 import { getCourseColor } from '@/utils/colorUtils';
-
-
 
 export default function JadwalPage() {
   const [programType, setProgramType] = useState<'REGULER' | 'PJJ'>('REGULER');
@@ -60,63 +62,64 @@ export default function JadwalPage() {
     setSelectedJadwal(null); // Close detail modal
   };
 
-  const handleModalSubmit = async (input: CreateJadwalInput | UpdateJadwalInput | CreateJadwalPenggantiInput) => {
+  const handleModalSubmit = async (
+    input: CreateJadwalInput | UpdateJadwalInput | CreateJadwalPenggantiInput
+  ) => {
     const { hari, sesi, ruangan, id_jadwal, id } = input as any;
     const currentId = selectedModul !== 'Default' ? id_jadwal : id;
 
     // Check for scheduling conflicts
     let conflict: Jadwal | undefined;
-    
-    if (selectedModul === 'Default') {
-        conflict = rawJadwalList.find(j => 
-            j.id !== currentId && 
-            j.hari === hari && 
-            j.sesi === Number(sesi) && 
-            j.ruangan === ruangan
-        );
-    } else {
-        // Create effective schedule list merging base and substitutes
-        const effectiveJadwal = rawJadwalList.map(j => {
-            const substitute = jadwalPengganti.find(jp => jp.id_jadwal === j.id);
-            return substitute ? { ...j, ...substitute } : j;
-        });
 
-        conflict = effectiveJadwal.find(j => 
-            j.id !== currentId &&
-            j.hari === hari &&
-            j.sesi === Number(sesi) &&
-            j.ruangan === ruangan
-        );
+    if (selectedModul === 'Default') {
+      conflict = rawJadwalList.find(
+        (j) =>
+          j.id !== currentId && j.hari === hari && j.sesi === Number(sesi) && j.ruangan === ruangan
+      );
+    } else {
+      // Create effective schedule list merging base and substitutes
+      const effectiveJadwal = rawJadwalList.map((j) => {
+        const substitute = jadwalPengganti.find((jp) => jp.id_jadwal === j.id);
+        return substitute ? { ...j, ...substitute } : j;
+      });
+
+      conflict = effectiveJadwal.find(
+        (j) =>
+          j.id !== currentId && j.hari === hari && j.sesi === Number(sesi) && j.ruangan === ruangan
+      );
     }
 
     if (conflict) {
-        const conflictName = conflict.mata_kuliah?.nama_lengkap || 'Unknown Course';
-        const conflictClass = conflict.kelas || 'Unknown Class';
-        toast.error(`Gagal: Jadwal bentrok dengan mata kuliah "${conflictName}" (${conflictClass}) di ${ruangan}, ${hari} Sesi ${sesi}.`);
-        return;
+      const conflictName = conflict.mata_kuliah?.nama_lengkap || 'Unknown Course';
+      const conflictClass = conflict.kelas || 'Unknown Class';
+      toast.error(
+        `Gagal: Jadwal bentrok dengan mata kuliah "${conflictName}" (${conflictClass}) di ${ruangan}, ${hari} Sesi ${sesi}.`
+      );
+      return;
     }
 
     // Process submission
-    const result = selectedModul !== 'Default' 
+    const result =
+      selectedModul !== 'Default'
         ? await upsertPengganti(input)
-        : ('id' in input && !('modul' in input) 
-            ? await editJadwal(input as UpdateJadwalInput) 
-            : await addJadwal(input as CreateJadwalInput));
+        : 'id' in input && !('modul' in input)
+          ? await editJadwal(input as UpdateJadwalInput)
+          : await addJadwal(input as CreateJadwalInput);
 
     if (!result.ok) {
-        toast.error(`Gagal: ${result.error}`);
+      toast.error(`Gagal: ${result.error}`);
     } else {
-        toast.success('Jadwal berhasil disimpan');
+      toast.success('Jadwal berhasil disimpan');
     }
   };
 
   const handleImportCSV = async (rows: CreateJadwalInput[]) => {
     const result = await jadwalFetcher.bulkImportJadwal(rows);
     if (result.ok) {
-        toast.success(`Berhasil import ${result.data?.inserted} jadwal`);
-        window.location.reload(); // Simple reload to refresh data
+      toast.success(`Berhasil import ${result.data?.inserted} jadwal`);
+      window.location.reload(); // Simple reload to refresh data
     } else {
-        toast.error(`Gagal import: ${result.error}`);
+      toast.error(`Gagal import: ${result.error}`);
     }
   };
 
@@ -125,22 +128,22 @@ export default function JadwalPage() {
 
     // Merge logic: If Modul is selected, override default jadwal with substitute
     if (selectedModul !== 'Default' && jadwalPengganti.length > 0) {
-        combinedJadwal = rawJadwalList.map(j => {
-            const substitute = jadwalPengganti.find(jp => jp.id_jadwal === j.id);
-            if (substitute) {
-                return {
-                    ...j,
-                    ruangan: substitute.ruangan,
-                    jam: substitute.jam,
-                    hari: substitute.hari,
-                    sesi: substitute.sesi,
-                    tanggal: substitute.tanggal, // Map substitute date
-                    // Substitute doesn't override mata kuliah, kelas, etc. based on requirements, usually just time/room
-                    // But if it changes day/session, it moves in the matrix
-                };
-            }
-            return j;
-        });
+      combinedJadwal = rawJadwalList.map((j) => {
+        const substitute = jadwalPengganti.find((jp) => jp.id_jadwal === j.id);
+        if (substitute) {
+          return {
+            ...j,
+            ruangan: substitute.ruangan,
+            jam: substitute.jam,
+            hari: substitute.hari,
+            sesi: substitute.sesi,
+            tanggal: substitute.tanggal, // Map substitute date
+            // Substitute doesn't override mata kuliah, kelas, etc. based on requirements, usually just time/room
+            // But if it changes day/session, it moves in the matrix
+          };
+        }
+        return j;
+      });
     }
 
     return combinedJadwal.filter((j) => {
@@ -182,8 +185,6 @@ export default function JadwalPage() {
     return DAYS;
   }, [programType]);
 
-
-
   return (
     <div className="container min-h-screen p-4 sm:p-8">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
@@ -222,19 +223,14 @@ export default function JadwalPage() {
         </div>
 
         <div className="flex gap-3 w-full md:w-auto items-center">
-            <Button
-                variant="outline"
-                onClick={handleOpenAdd}
-            >
-                <Plus size={18} className="mr-2" />
-                Tambah Jadwal
-            </Button>
-            <Button
-                onClick={() => setIsImportModalOpen(true)}
-            >
-                <Upload size={18} className="mr-2" />
-                Import CSV
-            </Button>
+          <Button variant="outline" onClick={handleOpenAdd}>
+            <Plus size={18} className="mr-2" />
+            Tambah Jadwal
+          </Button>
+          <Button onClick={() => setIsImportModalOpen(true)}>
+            <Upload size={18} className="mr-2" />
+            Import CSV
+          </Button>
           <Select value={selectedModul} onValueChange={setSelectedModul}>
             <SelectTrigger className="w-full md:w-[180px]">
               <SelectValue placeholder="Select modul" />
@@ -268,12 +264,14 @@ export default function JadwalPage() {
       </div>
 
       <div className="overflow-x-auto rounded-lg border border-border shadow-sm bg-card/50 backdrop-blur-sm min-h-[400px]">
-        {loading ? (
+        {loading && (
           <div className="flex flex-col items-center justify-center h-[400px] gap-2 text-muted-foreground animate-pulse">
             <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
             <span>Loading schedule data...</span>
           </div>
-        ) : (
+        )}
+
+        {!loading && uniqueRooms.length > 0 && (
           <table className="w-full border-collapse text-sm">
             <thead>
               <tr className="bg-muted/50 border-b border-border">
@@ -375,8 +373,6 @@ export default function JadwalPage() {
                 });
               })}
             </tbody>
-
-
           </table>
         )}
 
@@ -478,7 +474,7 @@ export default function JadwalPage() {
 
             <div className="p-4 bg-muted/20 border-t border-border/50 text-right">
               <div className="flex gap-2 justify-end">
-                <Button 
+                <Button
                   variant="outline"
                   onClick={() => handleOpenEdit(selectedJadwal)}
                   className="border-primary text-primary hover:bg-primary/10"
@@ -486,11 +482,7 @@ export default function JadwalPage() {
                   Edit Jadwal
                 </Button>
 
-                <Button
-                  onClick={() => setSelectedJadwal(null)}
-                >
-                  Tutup
-                </Button>
+                <Button onClick={() => setSelectedJadwal(null)}>Tutup</Button>
               </div>
             </div>
           </div>

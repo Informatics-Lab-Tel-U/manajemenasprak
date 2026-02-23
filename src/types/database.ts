@@ -69,4 +69,5 @@ export type CreatePelanggaranInput = {
   id_jadwal: number;
   jenis: string;
   modul?: string;
+  keterangan?: string;
 };
