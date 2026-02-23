@@ -115,6 +115,20 @@ export async function deleteJadwal(id: number): Promise<ServiceResult<null>> {
   }
 }
 
+export async function fetchJadwal(): Promise<ServiceResult<Jadwal[]>> {
+  try {
+    const res = await fetch('/api/jadwal', {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      cache: 'no-store',
+    });
+    const result = await res.json();
+    return result;
+  } catch (error: any) {
+    return { ok: false, error: error.message };
+  }
+}
+
 export async function fetchJadwalPengganti(modul: number): Promise<ServiceResult<JadwalPengganti[]>> {
   try {
     const res = await fetch(`/api/jadwal?action=pengganti&modul=${modul}`, {

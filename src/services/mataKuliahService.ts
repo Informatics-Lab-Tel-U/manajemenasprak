@@ -16,10 +16,8 @@ export type MataKuliahGrouped = {
   items: MataKuliahWithPraktikum[];
 };
 
-export async function getMataKuliahByTerm(term: string): Promise<MataKuliahGrouped[]> {
-  let query = supabase
-    .from('Mata_Kuliah')
-    .select(`
+export async function getMataKuliahByTerm(term: string | null): Promise<MataKuliahGrouped[]> {
+  let query = supabase.from('Mata_Kuliah').select(`
       *,
       praktikum:Praktikum!inner (
         id,
@@ -44,13 +42,13 @@ export async function getMataKuliahByTerm(term: string): Promise<MataKuliahGroup
   // Group by Praktikum Name (mk_singkat)
   const groupedMap: Record<string, MataKuliahGrouped> = {};
 
-  rawData.forEach(mk => {
+  rawData.forEach((mk) => {
     const mkSingkat = mk.praktikum.nama;
     if (!groupedMap[mkSingkat]) {
       groupedMap[mkSingkat] = {
         mk_singkat: mkSingkat,
         praktikum_id: mk.praktikum.id,
-        items: []
+        items: [],
       };
     }
     groupedMap[mkSingkat].items.push(mk);
@@ -67,12 +65,10 @@ export interface CreateMataKuliahPayload {
   dosen_koor: string;
 }
 
-export async function createMataKuliah(payload: CreateMataKuliahPayload): Promise<MataKuliah | null> {
-  const { data, error } = await supabase
-    .from('Mata_Kuliah')
-    .insert(payload)
-    .select()
-    .single();
+export async function createMataKuliah(
+  payload: CreateMataKuliahPayload
+): Promise<MataKuliah | null> {
+  const { data, error } = await supabase.from('Mata_Kuliah').insert(payload).select().single();
 
   if (error) {
     logger.error('Error creating mata kuliah:', error);
@@ -87,7 +83,9 @@ export interface BulkImportMataKuliahResult {
   errors: string[];
 }
 
-export async function bulkCreateMataKuliah(payloads: CreateMataKuliahPayload[]): Promise<BulkImportMataKuliahResult> {
+export async function bulkCreateMataKuliah(
+  payloads: CreateMataKuliahPayload[]
+): Promise<BulkImportMataKuliahResult> {
   const result: BulkImportMataKuliahResult = { inserted: 0, errors: [] };
 
   // Insert sequentially to handle errors individually (safer) or bulk if confident
@@ -95,7 +93,9 @@ export async function bulkCreateMataKuliah(payloads: CreateMataKuliahPayload[]):
   for (const p of payloads) {
     const { error } = await supabase.from('Mata_Kuliah').insert(p);
     if (error) {
-      result.errors.push(`Failed to insert ${p.nama_lengkap} (${p.program_studi}): ${error.message}`);
+      result.errors.push(
+        `Failed to insert ${p.nama_lengkap} (${p.program_studi}): ${error.message}`
+      );
     } else {
       result.inserted++;
     }
@@ -104,17 +104,20 @@ export async function bulkCreateMataKuliah(payloads: CreateMataKuliahPayload[]):
   return result;
 }
 
-export async function checkMataKuliahExists(praktikumId: string, programStudi: string): Promise<boolean> {
+export async function checkMataKuliahExists(
+  praktikumId: string,
+  programStudi: string
+): Promise<boolean> {
   const { count, error } = await supabase
     .from('Mata_Kuliah')
     .select('*', { count: 'exact', head: true })
     .eq('id_praktikum', praktikumId)
     .eq('program_studi', programStudi);
-  
+
   if (error) {
     console.error(error);
     return false;
   }
-  
+
   return (count || 0) > 0;
 }

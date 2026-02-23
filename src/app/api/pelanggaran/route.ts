@@ -18,7 +18,7 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { id_asprak, id_jadwal, jenis, modul } = body;
+    const { id_asprak, id_jadwal, jenis, modul, keterangan } = body;
 
     if (!id_asprak || !id_jadwal || !jenis) {
       return NextResponse.json(
@@ -32,6 +32,7 @@ export async function POST(req: Request) {
       id_jadwal,
       jenis,
       modul,
+      keterangan,
     });
 
     return NextResponse.json({ ok: true, data: pelanggaran });
