@@ -1,6 +1,6 @@
 import { Praktikum, MataKuliah } from '@/types/database';
 import { ServiceResult } from '@/types/api';
-import { PraktikumWithStats, PraktikumDetails } from '@/services/praktikumService';
+import type { PraktikumWithStats, PraktikumDetails } from '@/services/praktikumService';
 
 export async function fetchAllPraktikum(): Promise<ServiceResult<Praktikum[]>> {
   try {
@@ -73,7 +73,9 @@ export async function fetchMataKuliah(): Promise<ServiceResult<MataKuliah[]>> {
   }
 }
 
-export async function fetchPraktikumByTerm(term: string): Promise<ServiceResult<PraktikumWithStats[]>> {
+export async function fetchPraktikumByTerm(
+  term: string
+): Promise<ServiceResult<PraktikumWithStats[]>> {
   try {
     const res = await fetch(`/api/praktikum?action=by-term&term=${encodeURIComponent(term)}`, {
       method: 'GET',
@@ -92,7 +94,9 @@ interface BulkImportResult {
   errors: string[];
 }
 
-export async function bulkImportPraktikum(rows: { nama: string; tahun_ajaran: string }[]): Promise<ServiceResult<BulkImportResult>> {
+export async function bulkImportPraktikum(
+  rows: { nama: string; tahun_ajaran: string }[]
+): Promise<ServiceResult<BulkImportResult>> {
   try {
     const res = await fetch('/api/praktikum', {
       method: 'POST',

@@ -1,5 +1,5 @@
-import { Pelanggaran, CreatePelanggaranInput } from '@/types/database';
-import { ServiceResult } from '@/types/api';
+import type { Pelanggaran } from '@/types/database';
+import type { ServiceResult, CreatePelanggaranInput } from '@/types/api';
 
 export async function fetchAllPelanggaran(): Promise<ServiceResult<Pelanggaran[]>> {
   try {

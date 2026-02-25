@@ -2,23 +2,27 @@
  * Shared API types for consistent response handling across the application
  */
 
-/**
- * Standard API response format
- * Used by all fetchers to provide consistent error handling
- */
 export interface ServiceResult<T> {
   ok: boolean;
   data?: T;
   error?: string;
 }
 
-/**
- * Input type for creating a new Pelanggaran record
- */
 export interface CreatePelanggaranInput {
   id_asprak: string;
-  id_jadwal: number;
+  id_jadwal: string;
+  modul: number;
   jenis: string;
-  modul?: string;
-  keterangan?: string;
+}
+
+export interface CreatePenggunaInput {
+  email: string;
+  password: string;
+  nama_lengkap: string;
+  role: 'ADMIN' | 'ASLAB' | 'ASPRAK_KOOR';
+}
+
+export interface UpdatePenggunaInput {
+  nama_lengkap?: string;
+  role?: 'ADMIN' | 'ASLAB' | 'ASPRAK_KOOR';
 }

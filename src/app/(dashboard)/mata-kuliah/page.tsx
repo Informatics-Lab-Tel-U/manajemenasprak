@@ -77,7 +77,7 @@ function MataKuliahPageContent() {
   };
 
   // Client-side filtering
-  const filteredData = groupedData.filter(group => {
+  const filteredData = (Array.isArray(groupedData) ? groupedData : []).filter(group => {
       if (!searchQuery) return true;
       const q = searchQuery.toLowerCase();
       // Match group name or any item name/prodi

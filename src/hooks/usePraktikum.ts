@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import * as praktikumFetcher from '@/lib/fetchers/praktikumFetcher';
 import { Praktikum } from '@/types/database';
-import { PraktikumWithStats } from '@/services/praktikumService';
+import type { PraktikumWithStats } from '@/services/praktikumService';
 
 export function usePraktikum() {
   const [praktikumNames, setPraktikumNames] = useState<{ id: string; nama: string }[]>([]);
@@ -18,10 +18,13 @@ export function usePraktikum() {
     setLoading(false);
   }, []);
 
-  const getOrCreate = useCallback(async (nama: string, tahunAjaran: string): Promise<Praktikum | null> => {
-    const result = await praktikumFetcher.fetchOrCreatePraktikum(nama, tahunAjaran);
-    return result.ok && result.data ? result.data : null;
-  }, []);
+  const getOrCreate = useCallback(
+    async (nama: string, tahunAjaran: string): Promise<Praktikum | null> => {
+      const result = await praktikumFetcher.fetchOrCreatePraktikum(nama, tahunAjaran);
+      return result.ok && result.data ? result.data : null;
+    },
+    []
+  );
 
   const getPraktikumByTerm = useCallback(async (term: string): Promise<PraktikumWithStats[]> => {
     const result = await praktikumFetcher.fetchPraktikumByTerm(term);

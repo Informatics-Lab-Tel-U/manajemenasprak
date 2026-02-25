@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import * as XLSX from 'xlsx';
-import { supabase } from '@/services/supabase';
+import { createClient } from '@/lib/supabase/server';
 import { logger } from '@/lib/logger';
 import {
   checkCodeConflict,
@@ -9,6 +9,7 @@ import {
 } from '@/utils/conflict';
 
 export async function POST(req: Request) {
+  const supabase = await createClient();
   try {
     const formData = await req.formData();
     const file = formData.get('file') as File;
@@ -61,7 +62,7 @@ export async function POST(req: Request) {
         if (!ta) throw new Error(`Tahun Ajaran missing for ${name}`);
 
         const { data: existing } = await supabase
-          .from('Praktikum')
+          .from('praktikum')
           .select('id')
           .eq('nama', name)
           .eq('tahun_ajaran', ta)
@@ -70,7 +71,7 @@ export async function POST(req: Request) {
           praktikumMap.set(name, existing.id);
         } else {
           const { data: inserted, error } = await supabase
-            .from('Praktikum')
+            .from('praktikum')
             .insert({ nama: name, tahun_ajaran: ta })
             .select('id')
             .single();
@@ -86,7 +87,7 @@ export async function POST(req: Request) {
         if (!pId) continue;
 
         const { data: existing } = await supabase
-          .from('Mata_Kuliah')
+          .from('mata_kuliah')
           .select('id')
           .eq('id_praktikum', pId)
           .eq('program_studi', row.program_studi)
@@ -96,7 +97,7 @@ export async function POST(req: Request) {
           mkMap.set(`${row.mk_singkat}|${row.program_studi}`, existing.id);
         } else {
           const { data: inserted, error } = await supabase
-            .from('Mata_Kuliah')
+            .from('mata_kuliah')
             .insert({
               id_praktikum: pId,
               nama_lengkap: row.nama_lengkap,
@@ -118,7 +119,7 @@ export async function POST(req: Request) {
         if (angkatan < 100) angkatan += 2000;
 
         const { data: existingCodeOwner } = await supabase
-          .from('Asprak')
+          .from('asprak')
           .select('*')
           .eq('kode', row.kode)
           .maybeSingle();
@@ -134,14 +135,14 @@ export async function POST(req: Request) {
         }
 
         const { data: existingUser } = await supabase
-          .from('Asprak')
+          .from('asprak')
           .select('id')
           .eq('nim', row.nim)
           .maybeSingle();
 
         if (existingUser) {
           await supabase
-            .from('Asprak')
+            .from('asprak')
             .update({
               kode: row.kode,
               angkatan: angkatan,
@@ -153,7 +154,7 @@ export async function POST(req: Request) {
           if (existingCodeOwner && existingCodeOwner.nim !== row.nim.toString()) {
             const expiredCode = generateExpiredCode(existingCodeOwner.kode, existingCodeOwner.id);
             await supabase
-              .from('Asprak')
+              .from('asprak')
               .update({
                 kode: expiredCode,
               })
@@ -161,7 +162,7 @@ export async function POST(req: Request) {
           }
 
           const { data: inserted, error } = await supabase
-            .from('Asprak')
+            .from('asprak')
             .insert({
               nim: row.nim,
               nama_lengkap: row.nama_lengkap,
@@ -182,14 +183,14 @@ export async function POST(req: Request) {
         const pId = praktikumMap.get(row.mk_singkat);
         if (aId && pId) {
           const { data: existing } = await supabase
-            .from('Asprak_Praktikum')
+            .from('asprak_praktikum')
             .select('id')
             .eq('id_asprak', aId)
             .eq('id_praktikum', pId)
             .maybeSingle();
           if (!existing) {
             const { data: inserted, error } = await supabase
-              .from('Asprak_Praktikum')
+              .from('asprak_praktikum')
               .insert({ id_asprak: aId, id_praktikum: pId })
               .select('id')
               .single();
@@ -213,7 +214,7 @@ export async function POST(req: Request) {
           if (ruangan?.includes('&')) ruangan = ruangan.split('&')[0].trim();
 
           const { data: inserted, error } = await supabase
-            .from('Jadwal')
+            .from('jadwal')
             .insert({
               id_mk: mkId,
               kelas: row.kelas,
@@ -239,15 +240,15 @@ export async function POST(req: Request) {
       logger.error('Import failed, rolling back...', e);
 
       if (insertedJadwalIds.length > 0)
-        await supabase.from('Jadwal').delete().in('id', insertedJadwalIds);
+        await supabase.from('jadwal').delete().in('id', insertedJadwalIds);
       if (insertedPivotIds.length > 0)
-        await supabase.from('Asprak_Praktikum').delete().in('id', insertedPivotIds);
+        await supabase.from('asprak_praktikum').delete().in('id', insertedPivotIds);
       if (insertedAsprakIds.length > 0)
-        await supabase.from('Asprak').delete().in('id', insertedAsprakIds);
+        await supabase.from('asprak').delete().in('id', insertedAsprakIds);
       if (insertedMkIds.length > 0)
-        await supabase.from('Mata_Kuliah').delete().in('id', insertedMkIds);
+        await supabase.from('mata_kuliah').delete().in('id', insertedMkIds);
       if (insertedPraktikumIds.length > 0)
-        await supabase.from('Praktikum').delete().in('id', insertedPraktikumIds);
+        await supabase.from('praktikum').delete().in('id', insertedPraktikumIds);
 
       return NextResponse.json({ error: e.message }, { status: 500 });
     }

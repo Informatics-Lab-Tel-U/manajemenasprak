@@ -1,26 +1,28 @@
-/**
- * Asprak Service (Server-only)
- * Direct Supabase access - DO NOT use in client components
- */
-
-import { supabase } from './supabase';
+import 'server-only';
+import { SupabaseClient } from '@supabase/supabase-js';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { Asprak } from '@/types/database';
 import { logger } from '@/lib/logger';
 import { checkCodeConflict, generateConflictErrorMessage } from '@/utils/conflict';
 import { generateAsprakCode } from '@/utils/asprakCodeGenerator';
 
-export async function checkNimExists(nim: string): Promise<boolean> {
+// Admin Supabase client (bypasses RLS). This service is only used from API routes/server.
+const globalAdmin = createAdminClient();
+
+export async function checkNimExists(nim: string, supabaseClient?: SupabaseClient): Promise<boolean> {
+  const supabase = supabaseClient || globalAdmin;
   const { data } = await supabase
-    .from('Asprak')
+    .from('asprak')
     .select('id')
     .eq('nim', nim)
     .maybeSingle();
   return !!data;
 }
 
-export async function generateUniqueCode(nama: string): Promise<{ code: string; rule: string }> {
+export async function generateUniqueCode(nama: string, supabaseClient?: SupabaseClient): Promise<{ code: string; rule: string }> {
+  const supabase = supabaseClient || globalAdmin;
   // Fetch ALL existing codes to ensure uniqueness
-  const existingCodes = await getExistingCodes();
+  const existingCodes = await getExistingCodes(supabase);
   const usedCodesSet = new Set(existingCodes);
 
   try {
@@ -32,20 +34,21 @@ export async function generateUniqueCode(nama: string): Promise<{ code: string; 
   }
 }
 
-export async function getAllAsprak(term?: string): Promise<Asprak[]> {
+export async function getAllAsprak(term?: string, supabaseClient?: SupabaseClient): Promise<Asprak[]> {
+  const supabase = supabaseClient || globalAdmin;
   let query;
 
   if (term) {
     // If term is provided, filter by term using inner join
     // This returns Aspraks who have at least one assignment in the specified term
     query = supabase
-      .from('Asprak')
-      .select('*, Asprak_Praktikum!inner(Praktikum!inner(tahun_ajaran))')
-      .eq('Asprak_Praktikum.Praktikum.tahun_ajaran', term)
+      .from('asprak')
+      .select('*, asprak_praktikum!inner(praktikum!inner(tahun_ajaran))')
+      .eq('asprak_praktikum.praktikum.tahun_ajaran', term)
       .order('nim', { ascending: true });
   } else {
     // Default: fetch all
-    query = supabase.from('Asprak').select('*').order('nim', { ascending: true });
+    query = supabase.from('asprak').select('*').order('nim', { ascending: true });
   }
 
   const { data, error } = await query;
@@ -74,13 +77,14 @@ export interface AsprakWithMap extends Asprak {
     }[];
 }
 
-export async function getAspraksWithAssignments(term?: string): Promise<AsprakWithMap[]> {
+export async function getAspraksWithAssignments(term?: string, supabaseClient?: SupabaseClient): Promise<AsprakWithMap[]> {
+  const supabase = supabaseClient || globalAdmin;
   let query = supabase
-    .from('Asprak')
+    .from('asprak')
     .select(`
         *,
-        Asprak_Praktikum (
-            Praktikum (
+        asprak_praktikum (
+            praktikum (
                 id,
                 nama,
                 tahun_ajaran
@@ -97,8 +101,8 @@ export async function getAspraksWithAssignments(term?: string): Promise<AsprakWi
   }
 
   const result: AsprakWithMap[] = (data || []).map((item: any) => {
-      const allAssignments = (item.Asprak_Praktikum || [])
-        .map((ap: any) => ap.Praktikum)
+      const allAssignments = (item.asprak_praktikum || [])
+        .map((ap: any) => ap.praktikum)
         .filter((p: any) => !!p); // Filter nulls if any
       
       const filteredAssignments = term && term !== 'all' 
@@ -112,6 +116,7 @@ export async function getAspraksWithAssignments(term?: string): Promise<AsprakWi
           kode: item.kode,
           angkatan: item.angkatan,
           created_at: item.created_at,
+          updated_at: item.updated_at,
           assignments: filteredAssignments
       };
   });
@@ -123,23 +128,26 @@ export async function getAspraksWithAssignments(term?: string): Promise<AsprakWi
   return result;
 }
 
-export async function deleteAsprak(id: string): Promise<void> {
-  const { error } = await supabase.from('Asprak').delete().eq('id', id);
+export async function deleteAsprak(id: string, supabaseClient?: SupabaseClient): Promise<void> {
+  const supabase = supabaseClient || globalAdmin;
+  const { error } = await supabase.from('asprak').delete().eq('id', id);
   if (error) {
     logger.error(`Error deleting asprak ${id}:`, error);
     throw new Error(`Failed to delete asprak: ${error.message}`);
   }
 }
 
-export async function getExistingCodes(): Promise<string[]> {
-  const { data } = await supabase.from('Asprak').select('kode');
+export async function getExistingCodes(supabaseClient?: SupabaseClient): Promise<string[]> {
+  const supabase = supabaseClient || globalAdmin;
+  const { data } = await supabase.from('asprak').select('kode');
   if (!data) return [];
   return Array.from(new Set(data.map((d) => d.kode))).sort();
 }
 
-export async function getAvailableTerms(): Promise<string[]> {
+export async function getAvailableTerms(supabaseClient?: SupabaseClient): Promise<string[]> {
+  const supabase = supabaseClient || globalAdmin;
   const { data } = await supabase
-    .from('Praktikum')
+    .from('praktikum')
     .select('tahun_ajaran')
     .order('tahun_ajaran', { ascending: false });
 
@@ -149,13 +157,14 @@ export async function getAvailableTerms(): Promise<string[]> {
     .reverse();
 }
 
-export async function getAsprakAssignments(asprakId: number | string) {
+export async function getAsprakAssignments(asprakId: number | string, supabaseClient?: SupabaseClient) {
+  const supabase = supabaseClient || globalAdmin;
   const { data, error } = await supabase
-    .from('Asprak_Praktikum')
+    .from('asprak_praktikum')
     .select(
       `
             id,
-            praktikum:Praktikum (
+            praktikum:praktikum (
                 id,
                 nama,
                 tahun_ajaran
@@ -182,12 +191,13 @@ export interface UpsertAsprakInput {
   }[];
 }
 
-export async function upsertAsprak(input: UpsertAsprakInput): Promise<string> {
+export async function upsertAsprak(input: UpsertAsprakInput, supabaseClient?: SupabaseClient): Promise<string> {
+  const supabase = supabaseClient || globalAdmin;
   let angkatan = input.angkatan;
   if (angkatan < 100) angkatan += 2000;
 
   const { data: codeOwner } = await supabase
-    .from('Asprak')
+    .from('asprak')
     .select('*')
     .eq('kode', input.kode)
     .maybeSingle();
@@ -199,14 +209,14 @@ export async function upsertAsprak(input: UpsertAsprakInput): Promise<string> {
 
   let asprakId = '';
   const { data: existingUser } = await supabase
-    .from('Asprak')
+    .from('asprak')
     .select('id')
     .eq('nim', input.nim)
     .maybeSingle();
 
   if (existingUser) {
     const { error: upError } = await supabase
-      .from('Asprak')
+      .from('asprak')
       .update({
         nama_lengkap: input.nama_lengkap,
         kode: input.kode,
@@ -219,7 +229,7 @@ export async function upsertAsprak(input: UpsertAsprakInput): Promise<string> {
   } else {
     if (codeOwner && codeOwner.nim !== input.nim) {
       await supabase
-        .from('Asprak')
+        .from('asprak')
         .update({
           kode: `${codeOwner.kode}_EXPIRED_${codeOwner.id.substring(0, 4)}`,
         })
@@ -227,7 +237,7 @@ export async function upsertAsprak(input: UpsertAsprakInput): Promise<string> {
     }
 
     const { data: newUser, error: inError } = await supabase
-      .from('Asprak')
+      .from('asprak')
       .insert({
         nim: input.nim,
         nama_lengkap: input.nama_lengkap,
@@ -246,7 +256,7 @@ export async function upsertAsprak(input: UpsertAsprakInput): Promise<string> {
       for (const mkName of assignment.praktikumNames) {
         let praktikumId = '';
         const { data: pExist } = await supabase
-          .from('Praktikum')
+          .from('praktikum')
           .select('id')
           .eq('nama', mkName)
           .eq('tahun_ajaran', assignment.term)
@@ -256,7 +266,7 @@ export async function upsertAsprak(input: UpsertAsprakInput): Promise<string> {
           praktikumId = pExist.id;
         } else {
           const { data: pNew, error: pError } = await supabase
-            .from('Praktikum')
+            .from('praktikum')
             .insert({ nama: mkName, tahun_ajaran: assignment.term })
             .select()
             .single();
@@ -265,14 +275,14 @@ export async function upsertAsprak(input: UpsertAsprakInput): Promise<string> {
         }
 
         const { data: linkExist } = await supabase
-          .from('Asprak_Praktikum')
+          .from('asprak_praktikum')
           .select('id')
           .eq('id_asprak', asprakId)
           .eq('id_praktikum', praktikumId)
           .maybeSingle();
 
         if (!linkExist) {
-          await supabase.from('Asprak_Praktikum').insert({
+          await supabase.from('asprak_praktikum').insert({
             id_asprak: asprakId,
             id_praktikum: praktikumId,
           });
@@ -297,7 +307,8 @@ export interface BulkUpsertResult {
   errors: string[];
 }
 
-export async function bulkUpsertAspraks(rows: BulkUpsertRow[]): Promise<BulkUpsertResult> {
+export async function bulkUpsertAspraks(rows: BulkUpsertRow[], supabaseClient?: SupabaseClient): Promise<BulkUpsertResult> {
+  const supabase = supabaseClient || globalAdmin;
   const result: BulkUpsertResult = { inserted: 0, updated: 0, skipped: 0, errors: [] };
 
   for (const row of rows) {
@@ -307,7 +318,7 @@ export async function bulkUpsertAspraks(rows: BulkUpsertRow[]): Promise<BulkUpse
 
       // Check if asprak already exists by NIM
       const { data: existing } = await supabase
-        .from('Asprak')
+        .from('asprak')
         .select('id, kode')
         .eq('nim', row.nim)
         .maybeSingle();
@@ -315,7 +326,7 @@ export async function bulkUpsertAspraks(rows: BulkUpsertRow[]): Promise<BulkUpse
       if (existing) {
         // Update existing asprak
         const { error: upError } = await supabase
-          .from('Asprak')
+          .from('asprak')
           .update({
             nama_lengkap: row.nama_lengkap,
             kode: row.kode,
@@ -332,7 +343,7 @@ export async function bulkUpsertAspraks(rows: BulkUpsertRow[]): Promise<BulkUpse
       } else {
         // Insert new asprak
         const { error: inError } = await supabase
-          .from('Asprak')
+          .from('asprak')
           .insert({
             nim: row.nim,
             nama_lengkap: row.nama_lengkap,
@@ -359,11 +370,13 @@ export async function bulkUpsertAspraks(rows: BulkUpsertRow[]): Promise<BulkUpse
 export async function updateAsprakAssignments(
   asprakId: number | string,
   term: string,
-  praktikumIds: string[]
+  praktikumIds: string[],
+  supabaseClient?: SupabaseClient
 ): Promise<void> {
+  const supabase = supabaseClient || globalAdmin;
   // Get ALL existing assignments first
   const { data: existingAll } = await supabase
-    .from('Asprak_Praktikum')
+    .from('asprak_praktikum')
     .select('id, id_praktikum')
     .eq('id_asprak', asprakId);
 
@@ -373,7 +386,7 @@ export async function updateAsprakAssignments(
   // Filter scope if term is specific
   if (term && term !== 'all') {
     const { data: termPraktikums } = await supabase
-      .from('Praktikum')
+      .from('praktikum')
       .select('id')
       .eq('tahun_ajaran', term);
 
@@ -396,7 +409,7 @@ export async function updateAsprakAssignments(
 
   if (toDelete.length > 0) {
     const { error: delError } = await supabase
-      .from('Asprak_Praktikum')
+      .from('asprak_praktikum')
       .delete()
       .in('id', toDelete);
     if (delError) {
@@ -411,7 +424,7 @@ export async function updateAsprakAssignments(
     }));
 
     const { error: insError } = await supabase
-      .from('Asprak_Praktikum')
+      .from('asprak_praktikum')
       .insert(rows);
 
     if (insError) {
