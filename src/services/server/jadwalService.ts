@@ -22,14 +22,14 @@ export async function getTodaySchedule(limit: number = 5, term?: string): Promis
   }
 
   let query = supabase
-    .from('Jadwal')
+    .from('jadwal')
     .select(
       `
       *,
-      mata_kuliah:Mata_Kuliah!inner (
+      mata_kuliah:mata_kuliah!inner (
         nama_lengkap,
         program_studi,
-        praktikum:Praktikum!inner (
+        praktikum:praktikum!inner (
           tahun_ajaran,
           nama
         )
@@ -59,7 +59,7 @@ export async function getTodaySchedule(limit: number = 5, term?: string): Promis
 export async function fetchAvailableTerms(): Promise<string[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
-    .from('Praktikum')
+    .from('praktikum')
     .select('tahun_ajaran')
     .order('tahun_ajaran', { ascending: false });
 

@@ -1,6 +1,9 @@
-import { supabase } from './supabase';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { Praktikum, MataKuliah } from '@/types/database';
 import { logger } from '@/lib/logger';
+
+// Admin Supabase client (bypasses RLS). This service is only used from API routes/server.
+const supabase = createAdminClient();
 
 export interface PraktikumWithStats extends Praktikum {
   asprak_count: number;
@@ -19,7 +22,7 @@ export interface PraktikumDetails {
 }
 
 export async function getAllPraktikum(): Promise<Praktikum[]> {
-  const { data, error } = await supabase.from('Praktikum').select('*').order('nama');
+  const { data, error } = await supabase.from('praktikum').select('*').order('nama');
 
   if (error) {
     logger.error('Error fetching praktikum:', error);
@@ -29,7 +32,7 @@ export async function getAllPraktikum(): Promise<Praktikum[]> {
 }
 
 export async function getUniquePraktikumNames(): Promise<{ id: string; nama: string }[]> {
-  const { data } = await supabase.from('Praktikum').select('id, nama, tahun_ajaran').order('nama');
+  const { data } = await supabase.from('praktikum').select('id, nama, tahun_ajaran').order('nama');
   if (!data) return [];
 
   const unique = Array.from(new Set(data.map((p) => p.nama))).map((name) => ({
@@ -41,8 +44,8 @@ export async function getUniquePraktikumNames(): Promise<{ id: string; nama: str
 
 export async function getPraktikumByTerm(term?: string): Promise<PraktikumWithStats[]> {
   let query = supabase
-    .from('Praktikum')
-    .select('*, Asprak_Praktikum(count)')
+    .from('praktikum')
+    .select('*, asprak_praktikum(count)')
     .order('nama');
 
   if (term && term !== 'all') {
@@ -59,14 +62,14 @@ export async function getPraktikumByTerm(term?: string): Promise<PraktikumWithSt
   // Transform data to flatten count
   return (data || []).map((item: any) => ({
     ...item,
-    asprak_count: item.Asprak_Praktikum?.[0]?.count || 0
+    asprak_count: item.asprak_praktikum?.[0]?.count || 0
   })) as PraktikumWithStats[];
 }
 
 export async function getPraktikumDetails(praktikumId: string): Promise<PraktikumDetails> {
   // Query Mata_Kuliah related to praktikumId
   const { data: mks, error: mkError } = await supabase
-    .from('Mata_Kuliah')
+    .from('mata_kuliah')
     .select('id')
     .eq('id_praktikum', praktikumId);
     
@@ -78,7 +81,7 @@ export async function getPraktikumDetails(praktikumId: string): Promise<Praktiku
   
   // Query Jadwal related to mkIds
   const { data: jadwals, error: jadwalError } = await supabase
-    .from('Jadwal')
+    .from('jadwal')
     .select('kelas, hari, jam, ruangan')
     .in('id_mk', mkIds)
     .order('kelas');
@@ -107,7 +110,7 @@ export async function getPraktikumDetails(praktikumId: string): Promise<Praktiku
 
 export async function getOrCreatePraktikum(nama: string, tahunAjaran: string): Promise<Praktikum> {
   const { data: existing } = await supabase
-    .from('Praktikum')
+    .from('praktikum')
     .select('*')
     .eq('nama', nama)
     .eq('tahun_ajaran', tahunAjaran)
@@ -116,7 +119,7 @@ export async function getOrCreatePraktikum(nama: string, tahunAjaran: string): P
   if (existing) return existing;
 
   const { data, error } = await supabase
-    .from('Praktikum')
+    .from('praktikum')
     .insert({ nama, tahun_ajaran: tahunAjaran })
     .select()
     .single();
@@ -130,8 +133,8 @@ export async function getOrCreatePraktikum(nama: string, tahunAjaran: string): P
 
 export async function getAllMataKuliah(): Promise<MataKuliah[]> {
   const { data, error } = await supabase
-    .from('Mata_Kuliah')
-    .select('*, praktikum:Praktikum(nama, tahun_ajaran)')
+    .from('mata_kuliah')
+    .select('*, praktikum:praktikum(nama, tahun_ajaran)')
     .order('nama_lengkap');
 
   if (error) {
@@ -149,7 +152,7 @@ export interface CreateMataKuliahInput {
 }
 
 export async function createMataKuliah(input: CreateMataKuliahInput): Promise<MataKuliah> {
-  const { data, error } = await supabase.from('Mata_Kuliah').insert(input).select().single();
+  const { data, error } = await supabase.from('mata_kuliah').insert(input).select().single();
 
   if (error) {
     logger.error('Error creating mata kuliah:', error);
@@ -160,17 +163,17 @@ export async function createMataKuliah(input: CreateMataKuliahInput): Promise<Ma
 
 export async function deletePraktikumByIds(ids: string[]): Promise<void> {
   if (ids.length === 0) return;
-  await supabase.from('Praktikum').delete().in('id', ids);
+  await supabase.from('praktikum').delete().in('id', ids);
 }
 
 export async function deleteMataKuliahByIds(ids: string[]): Promise<void> {
   if (ids.length === 0) return;
-  await supabase.from('Mata_Kuliah').delete().in('id', ids);
+  await supabase.from('mata_kuliah').delete().in('id', ids);
 }
 
 export async function deleteAsprakPraktikumByIds(ids: number[]): Promise<void> {
   if (ids.length === 0) return;
-  await supabase.from('Asprak_Praktikum').delete().in('id', ids);
+  await supabase.from('asprak_praktikum').delete().in('id', ids);
 }
 
 export interface BulkImportPraktikumResult {
@@ -185,7 +188,7 @@ export async function bulkUpsertPraktikum(rows: { nama: string; tahun_ajaran: st
   for (const row of rows) {
     try {
       const { data: existing } = await supabase
-        .from('Praktikum')
+        .from('praktikum')
         .select('id')
         .eq('nama', row.nama)
         .eq('tahun_ajaran', row.tahun_ajaran)
@@ -195,7 +198,7 @@ export async function bulkUpsertPraktikum(rows: { nama: string; tahun_ajaran: st
         result.skipped++;
       } else {
         const { error } = await supabase
-          .from('Praktikum')
+          .from('praktikum')
           .insert({ nama: row.nama, tahun_ajaran: row.tahun_ajaran });
         
         if (error) {

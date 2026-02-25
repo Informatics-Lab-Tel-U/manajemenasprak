@@ -9,13 +9,13 @@ import {
   Users,
   Calendar,
   AlertTriangle,
-  Database,
   BookOpen,
-  Network,
   HelpCircle,
   Settings,
   Notebook,
   Logs,
+  Database,
+  Network,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -36,43 +36,66 @@ import {
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 import { ChevronRight } from 'lucide-react';
 import { AccountSwitcher } from '../sidebar/AccountSwitcher';
+import type { Role } from '@/config/rbac';
+import { hasAccess } from '@/config/rbac';
+
+type NavSubItem = {
+  label: string;
+  href: string;
+};
 
 type NavItem = {
   label: string;
   href: string;
-  icon: any;
-  items?: { label: string; href: string }[];
+  icon: React.ElementType;
+  /** If provided, the item expands into sub-items */
+  items?: NavSubItem[];
 };
 
-const navItems: NavItem[] = [
+/**
+ * All possible nav items. Visibility is controlled by `hasAccess()` from rbac.ts.
+ * Add new items here — no need to touch the sidebar render logic.
+ */
+const ALL_NAV_ITEMS: NavItem[] = [
   { label: 'Overview', href: '/', icon: Home },
   { label: 'Data Praktikum', href: '/praktikum', icon: BookOpen },
   { label: 'Mata Kuliah', href: '/mata-kuliah', icon: BookOpen },
   {
     label: 'Data Asisten Praktikum',
-    href: '#', // Parent item doesn't navigate if it has children, handled by collapsible
+    href: '#',
     icon: Users,
     items: [
-      { label: 'Data Asprak', href: '/asprak?tab=data' },
+      { label: 'Data Asprak', href: '/asprak' },
       { label: 'Plotting Asprak', href: '/plotting' },
-      { label: 'Aturan Generasi', href: '/asprak?tab=rules' },
     ],
   },
   { label: 'Jadwal Praktikum', href: '/jadwal', icon: Calendar },
   { label: 'Pelanggaran', href: '/pelanggaran', icon: AlertTriangle },
   { label: 'Manajemen Akun', href: '/manajemen-akun', icon: Notebook },
-  { label: 'Logs', href: '/logs', icon: Logs },
+  { label: 'Data & Database', href: '/database', icon: Database },
+  { label: 'Audit Logs', href: '/audit-logs', icon: Logs },
   { label: 'Panduan Sistem', href: '/panduan', icon: HelpCircle },
   { label: 'Pengaturan', href: '/pengaturan', icon: Settings },
 ];
 
-const accounts = ['Gus Alung', 'Support', 'License'];
-const defaultAccount = 'Gus Alung';
-const defaultEmail = 'alung@g.com';
-const emails = ['alung@g.com', 'support@iflab.com', 'license@iflab.com'];
+type AppSidebarProps = React.ComponentProps<typeof Sidebar> & {
+  user: {
+    nama: string;
+    email: string;
+    role: Role;
+  };
+};
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+export function AppSidebar({ user, ...props }: AppSidebarProps) {
   const pathname = usePathname();
+
+  const visibleNavItems = ALL_NAV_ITEMS.filter((item) => {
+    if (item.items) {
+      // Show parent if any sub-item is accessible
+      return item.items.some((sub) => hasAccess(user.role, sub.href));
+    }
+    return hasAccess(user.role, item.href);
+  });
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -88,7 +111,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-semibold">Informatics Lab</span>
-                  <span className="truncate text-xs">Admin Portal</span>
+                  <span className="truncate text-xs text-muted-foreground">
+                    {user.role === 'ADMIN' ? 'Admin Portal' : user.role === 'ASLAB' ? 'Aslab Portal' : 'Koor Portal'}
+                  </span>
                 </div>
               </Link>
             </SidebarMenuButton>
@@ -101,13 +126,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarGroupLabel>Menu</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navItems.map((item) => {
+              {visibleNavItems.map((item) => {
                 const Icon = item.icon;
                 const isActive =
-                  pathname === item.href || item.items?.some((sub) => pathname === sub.href);
+                  pathname === item.href ||
+                  item.items?.some((sub) => pathname.startsWith(sub.href));
                 const hasSubmenu = item.items && item.items.length > 0;
 
                 if (hasSubmenu) {
+                  const visibleSubItems = item.items!.filter((sub) =>
+                    hasAccess(user.role, sub.href)
+                  );
                   return (
                     <Collapsible
                       key={item.label}
@@ -125,9 +154,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         </CollapsibleTrigger>
                         <CollapsibleContent>
                           <SidebarMenuSub>
-                            {item.items?.map((subItem) => (
-                              <SidebarMenuSubItem key={subItem.label}>
-                                <SidebarMenuSubButton asChild isActive={pathname === subItem.href}>
+                            {visibleSubItems.map((subItem) => (
+                              <SidebarMenuSubItem key={subItem.href}>
+                                <SidebarMenuSubButton
+                                  asChild
+                                  isActive={pathname.startsWith(subItem.href)}
+                                >
                                   <Link href={subItem.href}>
                                     <span>{subItem.label}</span>
                                   </Link>
@@ -143,7 +175,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
                 return (
                   <SidebarMenuItem key={item.href}>
-                    <SidebarMenuButton asChild isActive={isActive}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={pathname === item.href || pathname.startsWith(item.href + '/')}
+                      tooltip={item.label}
+                    >
                       <Link href={item.href}>
                         <Icon />
                         <span>{item.label}</span>
@@ -158,18 +194,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarContent>
 
       <SidebarFooter>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild>
-              <AccountSwitcher
-                accounts={accounts}
-                emails={emails}
-                defaultAccount={defaultAccount}
-                defaultEmail={defaultEmail}
-              />
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+        <AccountSwitcher nama={user.nama} email={user.email} role={user.role} />
       </SidebarFooter>
 
       <SidebarRail />

@@ -18,7 +18,7 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { id_asprak, id_jadwal, jenis, modul, keterangan } = body;
+    const { id_asprak, id_jadwal, jenis, modul } = body;
 
     if (!id_asprak || !id_jadwal || !jenis) {
       return NextResponse.json(
@@ -32,7 +32,6 @@ export async function POST(req: Request) {
       id_jadwal,
       jenis,
       modul,
-      keterangan,
     });
 
     return NextResponse.json({ ok: true, data: pelanggaran });
@@ -54,7 +53,7 @@ export async function DELETE(req: Request) {
       return NextResponse.json({ ok: false, error: 'Missing id parameter' }, { status: 400 });
     }
 
-    await pelanggaranService.deletePelanggaran(parseInt(id));
+    await pelanggaranService.deletePelanggaran(id);
     return NextResponse.json({ ok: true });
   } catch (error: any) {
     logger.error('API Error in /api/pelanggaran DELETE:', error);

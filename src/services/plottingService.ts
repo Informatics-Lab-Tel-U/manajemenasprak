@@ -1,5 +1,4 @@
-
-import { supabase } from './supabase';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { logger } from '@/lib/logger';
 
 export interface PlottingItem {
@@ -22,6 +21,9 @@ export interface PlottingListResult {
   total: number;
 }
 
+// Admin Supabase client (bypasses RLS). This service is only used from API routes/server.
+const supabase = createAdminClient();
+
 export async function getPlottingList(
   page: number,
   limit: number,
@@ -32,13 +34,13 @@ export async function getPlottingList(
   const to = from + limit - 1;
 
   let query = supabase
-    .from('Asprak_Praktikum')
+    .from('asprak_praktikum')
     .select(`
       id,
-      asprak:Asprak!inner (
+      asprak:asprak!inner (
         id, kode, nama_lengkap, nim
       ),
-      praktikum:Praktikum!inner (
+      praktikum:praktikum!inner (
         id, nama, tahun_ajaran
       )
     `, { count: 'exact' });
@@ -101,7 +103,7 @@ export async function validatePlottingImport(
   // Aspraks: We need to map code -> ID(s).
   
   const { data: allAspraks } = await supabase
-    .from('Asprak')
+    .from('asprak')
     .select('id, kode, nama_lengkap, nim, angkatan');
     
   const asprakMap = new Map<string, typeof allAspraks>();
@@ -113,7 +115,7 @@ export async function validatePlottingImport(
 
   // Praktikums: Map name -> ID for the SPECIFIED term.
   const { data: termPraktikums } = await supabase
-    .from('Praktikum')
+    .from('praktikum')
     .select('id, nama')
     .eq('tahun_ajaran', term);
     
@@ -199,7 +201,7 @@ export async function savePlotting(assignments: { asprak_id: string; praktikum_i
     // For large batches, select existing is expensive.
     
     const { error } = await supabase
-        .from('Asprak_Praktikum')
+        .from('asprak_praktikum')
         .upsert(dbRows, { onConflict: 'id_asprak, id_praktikum', ignoreDuplicates: true });
         
     if (error) {
@@ -209,6 +211,6 @@ export async function savePlotting(assignments: { asprak_id: string; praktikum_i
 }
 
 export async function deletePlotting(id: number) {
-    const { error } = await supabase.from('Asprak_Praktikum').delete().eq('id', id);
+    const { error } = await supabase.from('asprak_praktikum').delete().eq('id', id);
     if (error) throw new Error(error.message);
 }

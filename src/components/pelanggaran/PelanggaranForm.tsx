@@ -1,6 +1,7 @@
+'use client';
+
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
   Select,
@@ -11,8 +12,7 @@ import {
 } from '@/components/ui/select';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-
-import { Asprak, Jadwal } from '@/types/database';
+import type { Asprak, Jadwal } from '@/types/database';
 import { fetchAllAsprak } from '@/lib/fetchers/asprakFetcher';
 import { fetchJadwal } from '@/lib/fetchers/jadwalFetcher';
 
@@ -27,32 +27,13 @@ const VIOLATION_TYPES = [
   'Tidak Hadir',
   'Tidak Siap Mengajar',
   'Berperilaku Tidak Pantas',
-  'Lainnya'
-];
-
-const MODUL_OPTIONS = [
-  'Modul 1',
-  'Modul 2',
-  'Modul 3',
-  'Modul 4',
-  'Modul 5',
-  'Modul 6',
-  'Modul 7',
-  'Modul 8',
-  'Modul 9',
-  'Modul 10',
-  'Modul 11',
-  'Modul 12',
-  'Modul 13',
-  'Modul 14',
-  'Modul 15',
-  'Modul 16',
+  'Lainnya',
 ];
 
 export default function PelanggaranForm({
   onSubmit,
   onCancel,
-  isLoading = false
+  isLoading = false,
 }: PelanggaranFormProps) {
   const [asprakList, setAsprakList] = useState<Asprak[]>([]);
   const [jadwalList, setJadwalList] = useState<Jadwal[]>([]);
@@ -61,33 +42,24 @@ export default function PelanggaranForm({
   const [idAsprak, setIdAsprak] = useState('');
   const [idJadwal, setIdJadwal] = useState('');
   const [jenis, setJenis] = useState('');
-  const [modul, setModul] = useState('');
-  const [keterangan, setKeterangan] = useState('');
+  const [modul, setModul] = useState<number | null>(null);
 
-  // Load initial data
   useEffect(() => {
     async function loadData() {
       setLoadingData(true);
       try {
         const [asprakRes, jadwalRes] = await Promise.all([
           fetchAllAsprak(),
-          fetchJadwal()
+          fetchJadwal(),
         ]);
-
-        if (asprakRes.ok && asprakRes.data) {
-          setAsprakList(asprakRes.data);
-        }
-
-        if (jadwalRes.ok && jadwalRes.data) {
-          setJadwalList(jadwalRes.data);
-        }
-      } catch (error) {
+        if (asprakRes.ok && asprakRes.data) setAsprakList(asprakRes.data);
+        if (jadwalRes.ok && jadwalRes.data) setJadwalList(jadwalRes.data);
+      } catch {
         toast.error('Gagal memuat data awal');
       } finally {
         setLoadingData(false);
       }
     }
-
     loadData();
   }, []);
 
@@ -101,41 +73,21 @@ export default function PelanggaranForm({
 
     const formData = {
       id_asprak: idAsprak,
-      id_jadwal: parseInt(idJadwal),
+      id_jadwal: idJadwal,
       jenis,
-      ...(modul && { modul }),
-      ...(keterangan && { keterangan })
+      ...(modul !== null && { modul }),
     };
 
     await onSubmit(formData);
   };
 
-  // Get asprak name for display
-  const getAsprakName = (asprakId: string) => {
-    const asprak = asprakList.find(a => a.id === asprakId);
-    return asprak ? `${asprak.nama_lengkap} (${asprak.kode})` : '';
-  };
-
-  // Get jadwal info for display
-  const getJadwalInfo = (jadwalId: string) => {
-    const jadwal = jadwalList.find(j => j.id === parseInt(jadwalId));
-    if (!jadwal) return '';
-
-    const mkName = jadwal.mata_kuliah?.nama_lengkap || 'Unknown MK';
-    return `${mkName} - ${jadwal.hari}, ${jadwal.jam} (Kelas ${jadwal.kelas})`;
-  };
-
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-3">
-        {/* Asprak Selection */}
+        {/* Asprak */}
         <div className="space-y-1.5">
           <Label htmlFor="asprak">Asprak *</Label>
-          <Select
-            value={idAsprak}
-            onValueChange={setIdAsprak}
-            disabled={loadingData}
-          >
+          <Select value={idAsprak} onValueChange={setIdAsprak} disabled={loadingData}>
             <SelectTrigger className="h-9 w-full">
               <SelectValue placeholder="Pilih Asprak" />
             </SelectTrigger>
@@ -149,23 +101,19 @@ export default function PelanggaranForm({
           </Select>
         </div>
 
-        {/* Jadwal Selection */}
+        {/* Jadwal */}
         <div className="space-y-1.5">
           <Label htmlFor="jadwal">Jadwal *</Label>
-          <Select
-            value={idJadwal}
-            onValueChange={setIdJadwal}
-            disabled={loadingData}
-          >
+          <Select value={idJadwal} onValueChange={setIdJadwal} disabled={loadingData}>
             <SelectTrigger className="h-9 w-full">
               <SelectValue placeholder="Pilih Jadwal" />
             </SelectTrigger>
             <SelectContent>
               {jadwalList.map((jadwal) => {
-                const mkName = jadwal.mata_kuliah?.nama_lengkap || 'Unknown MK';
+                const mkName = jadwal.mata_kuliah?.nama_lengkap ?? 'Unknown MK';
                 return (
-                  <SelectItem key={jadwal.id} value={jadwal.id.toString()}>
-                    {mkName} - {jadwal.hari}, {jadwal.jam} (Kelas {jadwal.kelas})
+                  <SelectItem key={jadwal.id} value={jadwal.id}>
+                    {mkName} — {jadwal.hari}, {jadwal.jam} (Kelas {jadwal.kelas})
                   </SelectItem>
                 );
               })}
@@ -176,10 +124,7 @@ export default function PelanggaranForm({
         {/* Jenis Pelanggaran */}
         <div className="space-y-1.5">
           <Label htmlFor="jenis">Jenis Pelanggaran *</Label>
-          <Select
-            value={jenis}
-            onValueChange={setJenis}
-          >
+          <Select value={jenis} onValueChange={setJenis}>
             <SelectTrigger className="h-9 w-full">
               <SelectValue placeholder="Pilih Jenis Pelanggaran" />
             </SelectTrigger>
@@ -193,37 +138,25 @@ export default function PelanggaranForm({
           </Select>
         </div>
 
-        {/* Modul - value="" di Root menampilkan placeholder; SelectItem tidak boleh value="" */}
+        {/* Modul */}
         <div className="space-y-1.5">
           <Label htmlFor="modul">Modul</Label>
           <Select
-            value={modul === '' ? '' : modul}
-            onValueChange={setModul}
+            value={modul !== null ? String(modul) : ''}
+            onValueChange={(v) => setModul(parseInt(v))}
             disabled={loadingData}
           >
             <SelectTrigger className="h-9 w-full" id="modul">
               <SelectValue placeholder="Pilih Modul (opsional)" />
             </SelectTrigger>
             <SelectContent>
-              {MODUL_OPTIONS.map((m) => (
-                <SelectItem key={m} value={m}>
-                  {m}
+              {Array.from({ length: 16 }, (_, i) => (
+                <SelectItem key={i + 1} value={String(i + 1)}>
+                  Modul {i + 1}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
-        </div>
-
-        {/* Keterangan */}
-        <div className="space-y-1.5">
-          <Label htmlFor="keterangan">Keterangan</Label>
-          <Input
-            id="keterangan"
-            value={keterangan}
-            onChange={(e) => setKeterangan(e.target.value)}
-            placeholder="Detail tambahan tentang pelanggaran..."
-            className="w-full"
-          />
         </div>
       </div>
 
@@ -236,7 +169,7 @@ export default function PelanggaranForm({
           className="h-8"
           disabled={isLoading}
         >
-          Cancel
+          Batal
         </Button>
         <Button
           type="submit"
