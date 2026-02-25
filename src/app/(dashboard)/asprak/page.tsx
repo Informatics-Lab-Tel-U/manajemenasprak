@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Download, Plus, Upload, Pencil, Trash, X, Lock } from 'lucide-react';
+import { Download, Plus, Upload, Pencil, ChevronDown, Users, GitFork, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { Asprak } from '@/types/database';
 import { useAsprak } from '@/hooks/useAsprak';
@@ -22,8 +22,17 @@ import AsprakAddModal from '@/components/asprak/AsprakAddModal';
 import AsprakImportCSVModal from '@/components/asprak/AsprakImportCSVModal';
 import AsprakDetailsModal from '@/components/asprak/AsprakDetailsModal';
 import AsprakEditModal from '@/components/asprak/AsprakEditModal';
+import PlottingImportModal from '@/components/plotting/PlottingImportModal';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
+} from '@/components/ui/dropdown-menu';
 
 import AsprakGenerationRules from '@/components/asprak/AsprakGenerationRules';
 import AsprakDeleteDialog from '@/components/asprak/AsprakDeleteDialog';
@@ -57,6 +66,7 @@ function AsprakPageContent() {
   const [loadingDetails, setLoadingDetails] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
+  const [showPlottingImportModal, setShowPlottingImportModal] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   
   // Edit State
@@ -237,10 +247,30 @@ function AsprakPageContent() {
             <Plus size={18} />
             Input Manual
           </Button>
-          <Button onClick={() => setShowImportModal(true)}>
-            <Upload size={18} />
-            Import CSV
-          </Button>
+
+          {/* Import Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button>
+                <Upload size={18} />
+                Import CSV
+                <ChevronDown size={14} className="ml-1 opacity-70" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-52">
+              <DropdownMenuLabel className="text-xs text-muted-foreground font-normal">Pilih jenis import</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => setShowImportModal(true)}>
+                <Users size={15} className="mr-2 text-blue-500" />
+                Import Data Asprak
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setShowPlottingImportModal(true)}>
+                <GitFork size={15} className="mr-2 text-violet-500" />
+                Import Penugasan
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           <Button variant="outline" onClick={() => toast.info('Fitur Export akan segera hadir')}>
             <Download size={18} />
             Export Data
@@ -294,7 +324,7 @@ function AsprakPageContent() {
         />
       )}
 
-      {/* CSV Import Modal */}
+      {/* CSV Import Modal — Data Asprak */}
       {showImportModal && (
         <AsprakImportCSVModal
           existingCodes={existingCodes}
@@ -305,6 +335,14 @@ function AsprakPageContent() {
           open={showImportModal}
         />
       )}
+
+      {/* CSV Import Modal — Penugasan (Plotting) */}
+      <PlottingImportModal
+        open={showPlottingImportModal}
+        onOpenChange={setShowPlottingImportModal}
+        onSuccess={() => { /* plotting tidak ditampilkan di page ini, cukup toast */ }}
+        terms={terms}
+      />
 
       {/* Details Modal */}
       {selectedAsprak && (

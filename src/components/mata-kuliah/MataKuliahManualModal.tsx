@@ -16,7 +16,6 @@ import {
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import { Plus } from 'lucide-react';
 import TermInput, { buildTermString } from '@/components/asprak/TermInput';
@@ -45,7 +44,6 @@ export default function MataKuliahManualModal({
   const [newMkSingkat, setNewMkSingkat] = useState('');
   const [namaLengkap, setNamaLengkap] = useState('');
   const [prodiBase, setProdiBase] = useState('IF');
-  const [isPJJ, setIsPJJ] = useState(false);
   const [dosenKoor, setDosenKoor] = useState('');
   
   const [loading, setLoading] = useState(false);
@@ -98,7 +96,6 @@ export default function MataKuliahManualModal({
       setNewMkSingkat('');
       setNamaLengkap('');
       setProdiBase('IF');
-      setIsPJJ(false);
       setDosenKoor('');
     }
   }, [open, initialYear, initialSem]);
@@ -115,7 +112,7 @@ export default function MataKuliahManualModal({
       if (!namaLengkap.trim()) throw new Error('Nama Lengkap wajib diisi');
       if (dosenKoor.length !== 3) throw new Error('Kode Dosen harus 3 karakter');
 
-      const program_studi = isPJJ ? `${prodiBase}-PJJ` : prodiBase;
+      const program_studi = prodiBase;
       const mk_singkat = !isNew
         ? localValidPraktikums.find(p => p.id === selectedPraktikumId)?.nama 
         : newMkSingkat.toUpperCase().trim();
@@ -205,30 +202,19 @@ export default function MataKuliahManualModal({
             />
           </div>
 
-          {/* Prodi & PJJ */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <Label>Program Studi</Label>
-              <Select value={prodiBase} onValueChange={setProdiBase}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {['IF', 'IT', 'SE', 'DS'].map(p => (
-                    <SelectItem key={p} value={p}>{p}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="flex items-center pt-6 space-x-2">
-               <Checkbox 
-                 id="pjj" 
-                 checked={isPJJ} 
-                 onCheckedChange={(c) => setIsPJJ(!!c)} 
-               />
-               <Label htmlFor="pjj" className="cursor-pointer">Kelas PJJ?</Label>
-            </div>
+          {/* Prodi */}
+          <div className="space-y-1">
+            <Label>Program Studi</Label>
+            <Select value={prodiBase} onValueChange={setProdiBase}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {['IF', 'IF-PJJ', 'IT', 'SE', 'DS'].map(p => (
+                  <SelectItem key={p} value={p}>{p}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Dosen Koor */}
