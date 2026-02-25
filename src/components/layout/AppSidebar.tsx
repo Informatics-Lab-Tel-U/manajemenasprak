@@ -54,7 +54,6 @@ const navItems: NavItem[] = [
     icon: Users,
     items: [
       { label: 'Data Asprak', href: '/asprak?tab=data' },
-      { label: 'Plotting Asprak', href: '/plotting' },
       { label: 'Aturan Generasi', href: '/asprak?tab=rules' },
     ],
   },
