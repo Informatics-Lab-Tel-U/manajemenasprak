@@ -40,7 +40,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import PelanggaranAddModal from '@/components/pelanggaran/PelanggaranAddModal';
-import { createPelanggaran, finalizePelanggaranByMataKuliah } from '@/services/pelanggaranService';
 import type { Pelanggaran, AsprakKoordinator } from '@/types/database';
 import type { Role } from '@/config/rbac';
 
@@ -159,7 +158,14 @@ export default function PelanggaranClientPage({ violations, role, koorAssignment
   async function handleAddViolation(data: any) {
     setIsSubmitting(true);
     try {
-      await createPelanggaran(data);
+      const resp = await fetch('/api/pelanggaran', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      const res = await resp.json();
+      if (!res.ok) throw new Error(res.error || 'Gagal mencatat pelanggaran');
+
       toast.success('Pelanggaran berhasil dicatat!');
       setIsAddOpen(false);
       router.refresh();
@@ -174,9 +180,19 @@ export default function PelanggaranClientPage({ violations, role, koorAssignment
     if (!finalizeTarget) return;
     setIsFinalizing(true);
     try {
-      await finalizePelanggaranByMataKuliah(finalizeTarget.id_mata_kuliah);
+      const resp = await fetch('/api/pelanggaran', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          action: 'finalize', 
+          id_mk: finalizeTarget.id_mata_kuliah 
+        }),
+      });
+      const res = await resp.json();
+      if (!res.ok) throw new Error(res.error || 'Gagal memfinalisasi pelanggaran');
+
       toast.success(
-        `Pelanggaran untuk ${finalizeTarget.mata_kuliah?.nama_lengkap ?? 'matkul'} berhasil difinalisasi.`
+        `Pelanggaran for ${finalizeTarget.mata_kuliah?.nama_lengkap ?? 'matkul'} successfully finalized.`
       );
       router.refresh();
     } catch (err: any) {

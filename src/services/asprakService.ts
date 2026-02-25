@@ -1,3 +1,5 @@
+import 'server-only';
+import { SupabaseClient } from '@supabase/supabase-js';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { Asprak } from '@/types/database';
 import { logger } from '@/lib/logger';
@@ -5,9 +7,10 @@ import { checkCodeConflict, generateConflictErrorMessage } from '@/utils/conflic
 import { generateAsprakCode } from '@/utils/asprakCodeGenerator';
 
 // Admin Supabase client (bypasses RLS). This service is only used from API routes/server.
-const supabase = createAdminClient();
+const globalAdmin = createAdminClient();
 
-export async function checkNimExists(nim: string): Promise<boolean> {
+export async function checkNimExists(nim: string, supabaseClient?: SupabaseClient): Promise<boolean> {
+  const supabase = supabaseClient || globalAdmin;
   const { data } = await supabase
     .from('asprak')
     .select('id')
@@ -16,9 +19,10 @@ export async function checkNimExists(nim: string): Promise<boolean> {
   return !!data;
 }
 
-export async function generateUniqueCode(nama: string): Promise<{ code: string; rule: string }> {
+export async function generateUniqueCode(nama: string, supabaseClient?: SupabaseClient): Promise<{ code: string; rule: string }> {
+  const supabase = supabaseClient || globalAdmin;
   // Fetch ALL existing codes to ensure uniqueness
-  const existingCodes = await getExistingCodes();
+  const existingCodes = await getExistingCodes(supabase);
   const usedCodesSet = new Set(existingCodes);
 
   try {
@@ -30,7 +34,8 @@ export async function generateUniqueCode(nama: string): Promise<{ code: string; 
   }
 }
 
-export async function getAllAsprak(term?: string): Promise<Asprak[]> {
+export async function getAllAsprak(term?: string, supabaseClient?: SupabaseClient): Promise<Asprak[]> {
+  const supabase = supabaseClient || globalAdmin;
   let query;
 
   if (term) {
@@ -72,7 +77,8 @@ export interface AsprakWithMap extends Asprak {
     }[];
 }
 
-export async function getAspraksWithAssignments(term?: string): Promise<AsprakWithMap[]> {
+export async function getAspraksWithAssignments(term?: string, supabaseClient?: SupabaseClient): Promise<AsprakWithMap[]> {
+  const supabase = supabaseClient || globalAdmin;
   let query = supabase
     .from('asprak')
     .select(`
@@ -122,7 +128,8 @@ export async function getAspraksWithAssignments(term?: string): Promise<AsprakWi
   return result;
 }
 
-export async function deleteAsprak(id: string): Promise<void> {
+export async function deleteAsprak(id: string, supabaseClient?: SupabaseClient): Promise<void> {
+  const supabase = supabaseClient || globalAdmin;
   const { error } = await supabase.from('asprak').delete().eq('id', id);
   if (error) {
     logger.error(`Error deleting asprak ${id}:`, error);
@@ -130,13 +137,15 @@ export async function deleteAsprak(id: string): Promise<void> {
   }
 }
 
-export async function getExistingCodes(): Promise<string[]> {
+export async function getExistingCodes(supabaseClient?: SupabaseClient): Promise<string[]> {
+  const supabase = supabaseClient || globalAdmin;
   const { data } = await supabase.from('asprak').select('kode');
   if (!data) return [];
   return Array.from(new Set(data.map((d) => d.kode))).sort();
 }
 
-export async function getAvailableTerms(): Promise<string[]> {
+export async function getAvailableTerms(supabaseClient?: SupabaseClient): Promise<string[]> {
+  const supabase = supabaseClient || globalAdmin;
   const { data } = await supabase
     .from('praktikum')
     .select('tahun_ajaran')
@@ -148,7 +157,8 @@ export async function getAvailableTerms(): Promise<string[]> {
     .reverse();
 }
 
-export async function getAsprakAssignments(asprakId: number | string) {
+export async function getAsprakAssignments(asprakId: number | string, supabaseClient?: SupabaseClient) {
+  const supabase = supabaseClient || globalAdmin;
   const { data, error } = await supabase
     .from('asprak_praktikum')
     .select(
@@ -181,7 +191,8 @@ export interface UpsertAsprakInput {
   }[];
 }
 
-export async function upsertAsprak(input: UpsertAsprakInput): Promise<string> {
+export async function upsertAsprak(input: UpsertAsprakInput, supabaseClient?: SupabaseClient): Promise<string> {
+  const supabase = supabaseClient || globalAdmin;
   let angkatan = input.angkatan;
   if (angkatan < 100) angkatan += 2000;
 
@@ -296,7 +307,8 @@ export interface BulkUpsertResult {
   errors: string[];
 }
 
-export async function bulkUpsertAspraks(rows: BulkUpsertRow[]): Promise<BulkUpsertResult> {
+export async function bulkUpsertAspraks(rows: BulkUpsertRow[], supabaseClient?: SupabaseClient): Promise<BulkUpsertResult> {
+  const supabase = supabaseClient || globalAdmin;
   const result: BulkUpsertResult = { inserted: 0, updated: 0, skipped: 0, errors: [] };
 
   for (const row of rows) {
@@ -358,8 +370,10 @@ export async function bulkUpsertAspraks(rows: BulkUpsertRow[]): Promise<BulkUpse
 export async function updateAsprakAssignments(
   asprakId: number | string,
   term: string,
-  praktikumIds: string[]
+  praktikumIds: string[],
+  supabaseClient?: SupabaseClient
 ): Promise<void> {
+  const supabase = supabaseClient || globalAdmin;
   // Get ALL existing assignments first
   const { data: existingAll } = await supabase
     .from('asprak_praktikum')

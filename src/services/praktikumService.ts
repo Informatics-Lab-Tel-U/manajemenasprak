@@ -1,9 +1,11 @@
+import 'server-only';
+import { SupabaseClient } from '@supabase/supabase-js';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { Praktikum, MataKuliah } from '@/types/database';
 import { logger } from '@/lib/logger';
 
 // Admin Supabase client (bypasses RLS). This service is only used from API routes/server.
-const supabase = createAdminClient();
+const globalAdmin = createAdminClient();
 
 export interface PraktikumWithStats extends Praktikum {
   asprak_count: number;
@@ -21,7 +23,8 @@ export interface PraktikumDetails {
   }[];
 }
 
-export async function getAllPraktikum(): Promise<Praktikum[]> {
+export async function getAllPraktikum(supabaseClient?: SupabaseClient): Promise<Praktikum[]> {
+  const supabase = supabaseClient || globalAdmin;
   const { data, error } = await supabase.from('praktikum').select('*').order('nama');
 
   if (error) {
@@ -31,7 +34,8 @@ export async function getAllPraktikum(): Promise<Praktikum[]> {
   return data as Praktikum[];
 }
 
-export async function getUniquePraktikumNames(): Promise<{ id: string; nama: string }[]> {
+export async function getUniquePraktikumNames(supabaseClient?: SupabaseClient): Promise<{ id: string; nama: string }[]> {
+  const supabase = supabaseClient || globalAdmin;
   const { data } = await supabase.from('praktikum').select('id, nama, tahun_ajaran').order('nama');
   if (!data) return [];
 
@@ -42,7 +46,8 @@ export async function getUniquePraktikumNames(): Promise<{ id: string; nama: str
   return unique;
 }
 
-export async function getPraktikumByTerm(term?: string): Promise<PraktikumWithStats[]> {
+export async function getPraktikumByTerm(term?: string, supabaseClient?: SupabaseClient): Promise<PraktikumWithStats[]> {
+  const supabase = supabaseClient || globalAdmin;
   let query = supabase
     .from('praktikum')
     .select('*, asprak_praktikum(count)')
@@ -66,7 +71,8 @@ export async function getPraktikumByTerm(term?: string): Promise<PraktikumWithSt
   })) as PraktikumWithStats[];
 }
 
-export async function getPraktikumDetails(praktikumId: string): Promise<PraktikumDetails> {
+export async function getPraktikumDetails(praktikumId: string, supabaseClient?: SupabaseClient): Promise<PraktikumDetails> {
+  const supabase = supabaseClient || globalAdmin;
   // Query Mata_Kuliah related to praktikumId
   const { data: mks, error: mkError } = await supabase
     .from('mata_kuliah')
@@ -108,7 +114,8 @@ export async function getPraktikumDetails(praktikumId: string): Promise<Praktiku
   };
 }
 
-export async function getOrCreatePraktikum(nama: string, tahunAjaran: string): Promise<Praktikum> {
+export async function getOrCreatePraktikum(nama: string, tahunAjaran: string, supabaseClient?: SupabaseClient): Promise<Praktikum> {
+  const supabase = supabaseClient || globalAdmin;
   const { data: existing } = await supabase
     .from('praktikum')
     .select('*')
@@ -131,7 +138,8 @@ export async function getOrCreatePraktikum(nama: string, tahunAjaran: string): P
   return data;
 }
 
-export async function getAllMataKuliah(): Promise<MataKuliah[]> {
+export async function getAllMataKuliah(supabaseClient?: SupabaseClient): Promise<MataKuliah[]> {
+  const supabase = supabaseClient || globalAdmin;
   const { data, error } = await supabase
     .from('mata_kuliah')
     .select('*, praktikum:praktikum(nama, tahun_ajaran)')
@@ -151,7 +159,8 @@ export interface CreateMataKuliahInput {
   dosen_koor?: string;
 }
 
-export async function createMataKuliah(input: CreateMataKuliahInput): Promise<MataKuliah> {
+export async function createMataKuliah(input: CreateMataKuliahInput, supabaseClient?: SupabaseClient): Promise<MataKuliah> {
+  const supabase = supabaseClient || globalAdmin;
   const { data, error } = await supabase.from('mata_kuliah').insert(input).select().single();
 
   if (error) {
@@ -161,17 +170,20 @@ export async function createMataKuliah(input: CreateMataKuliahInput): Promise<Ma
   return data;
 }
 
-export async function deletePraktikumByIds(ids: string[]): Promise<void> {
+export async function deletePraktikumByIds(ids: string[], supabaseClient?: SupabaseClient): Promise<void> {
+  const supabase = supabaseClient || globalAdmin;
   if (ids.length === 0) return;
   await supabase.from('praktikum').delete().in('id', ids);
 }
 
-export async function deleteMataKuliahByIds(ids: string[]): Promise<void> {
+export async function deleteMataKuliahByIds(ids: string[], supabaseClient?: SupabaseClient): Promise<void> {
+  const supabase = supabaseClient || globalAdmin;
   if (ids.length === 0) return;
   await supabase.from('mata_kuliah').delete().in('id', ids);
 }
 
-export async function deleteAsprakPraktikumByIds(ids: number[]): Promise<void> {
+export async function deleteAsprakPraktikumByIds(ids: number[], supabaseClient?: SupabaseClient): Promise<void> {
+  const supabase = supabaseClient || globalAdmin;
   if (ids.length === 0) return;
   await supabase.from('asprak_praktikum').delete().in('id', ids);
 }
@@ -182,7 +194,8 @@ export interface BulkImportPraktikumResult {
   errors: string[];
 }
 
-export async function bulkUpsertPraktikum(rows: { nama: string; tahun_ajaran: string }[]): Promise<BulkImportPraktikumResult> {
+export async function bulkUpsertPraktikum(rows: { nama: string; tahun_ajaran: string }[], supabaseClient?: SupabaseClient): Promise<BulkImportPraktikumResult> {
+  const supabase = supabaseClient || globalAdmin;
   const result: BulkImportPraktikumResult = { inserted: 0, skipped: 0, errors: [] };
 
   for (const row of rows) {

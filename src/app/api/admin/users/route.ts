@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { requireRole } from '@/lib/auth';
 import type { CreatePenggunaInput, UpdatePenggunaInput } from '@/types/api';
@@ -70,7 +71,9 @@ export async function POST(request: NextRequest) {
 
     // The trigger handle_new_user auto-creates a Pengguna row with default role ASPRAK_KOOR.
     // Override the role with the one specified.
-    const { error: updateError } = await admin
+    // Use regular client for the update to ensure audit log attribution
+    const supabase = await createClient();
+    const { error: updateError } = await supabase
       .from('pengguna')
       .update({ nama_lengkap, role })
       .eq('id', newUser.user.id);

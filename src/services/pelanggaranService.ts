@@ -1,7 +1,11 @@
-import { createClient } from '@/lib/supabase/client';
+import 'server-only';
+import { SupabaseClient } from '@supabase/supabase-js';
+import { createAdminClient } from '@/lib/supabase/admin';
 import type { Pelanggaran } from '@/types/database';
 import type { CreatePelanggaranInput } from '@/types/api';
 import { logger } from '@/lib/logger';
+
+const globalAdmin = createAdminClient();
 
 const PELANGGARAN_SELECT = `
   *,
@@ -26,8 +30,8 @@ const PELANGGARAN_SELECT = `
  * Fetch all pelanggaran (ADMIN / ASLAB — server-side via separate server service).
  * For the browser client (used in fetchers), scoped by RLS automatically.
  */
-export async function getAllPelanggaran(): Promise<Pelanggaran[]> {
-  const supabase = createClient();
+export async function getAllPelanggaran(supabaseClient?: SupabaseClient): Promise<Pelanggaran[]> {
+  const supabase = supabaseClient || globalAdmin;
   const { data, error } = await supabase
     .from('pelanggaran')
     .select(PELANGGARAN_SELECT)
@@ -44,8 +48,8 @@ export async function getAllPelanggaran(): Promise<Pelanggaran[]> {
  * Fetch pelanggaran scoped to the mata kuliah coordinated by a given user.
  * Used for ASPRAK_KOOR role — RLS enforces the actual restriction on Supabase side.
  */
-export async function getPelanggaranByKoor(): Promise<Pelanggaran[]> {
-  const supabase = createClient();
+export async function getPelanggaranByKoor(supabaseClient?: SupabaseClient): Promise<Pelanggaran[]> {
+  const supabase = supabaseClient || globalAdmin;
   const { data, error } = await supabase
     .from('pelanggaran')
     .select(PELANGGARAN_SELECT)
@@ -61,8 +65,8 @@ export async function getPelanggaranByKoor(): Promise<Pelanggaran[]> {
 /**
  * Fetch pelanggaran for a specific mata kuliah.
  */
-export async function getPelanggaranByMataKuliah(idMk: string): Promise<Pelanggaran[]> {
-  const supabase = createClient();
+export async function getPelanggaranByMataKuliah(idMk: string, supabaseClient?: SupabaseClient): Promise<Pelanggaran[]> {
+  const supabase = supabaseClient || globalAdmin;
   const { data, error } = await supabase
     .from('pelanggaran')
     .select(PELANGGARAN_SELECT)
@@ -79,8 +83,8 @@ export async function getPelanggaranByMataKuliah(idMk: string): Promise<Pelangga
 /**
  * Create a new pelanggaran record.
  */
-export async function createPelanggaran(input: CreatePelanggaranInput): Promise<Pelanggaran> {
-  const supabase = createClient();
+export async function createPelanggaran(input: CreatePelanggaranInput, supabaseClient?: SupabaseClient): Promise<Pelanggaran> {
+  const supabase = supabaseClient || globalAdmin;
   const { data, error } = await supabase
     .from('pelanggaran')
     .insert(input)
@@ -99,8 +103,8 @@ export async function createPelanggaran(input: CreatePelanggaranInput): Promise<
  * Sets is_final = true for all non-final records in that mata kuliah.
  * Once finalized, records become read-only (enforced by RLS UPDATE policy).
  */
-export async function finalizePelanggaranByMataKuliah(idMk: string): Promise<void> {
-  const supabase = createClient();
+export async function finalizePelanggaranByMataKuliah(idMk: string, supabaseClient?: SupabaseClient): Promise<void> {
+  const supabase = supabaseClient || globalAdmin;
 
   // Get all jadwal IDs for this mata kuliah
   const { data: jadwals, error: jadwalError } = await supabase
@@ -131,8 +135,8 @@ export async function finalizePelanggaranByMataKuliah(idMk: string): Promise<voi
 /**
  * Delete a pelanggaran record (only non-final, enforced by RLS).
  */
-export async function deletePelanggaran(id: string): Promise<void> {
-  const supabase = createClient();
+export async function deletePelanggaran(id: string, supabaseClient?: SupabaseClient): Promise<void> {
+  const supabase = supabaseClient || globalAdmin;
   const { error } = await supabase.from('pelanggaran').delete().eq('id', id);
 
   if (error) {
