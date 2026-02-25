@@ -1,7 +1,7 @@
 import PelanggaranForm from './PelanggaranForm';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { CreatePelanggaranInput } from '@/types/database';
+import type { CreatePelanggaranInput } from '@/types/api';
 
 interface PelanggaranAddModalProps {
   onSubmit: (data: CreatePelanggaranInput) => Promise<void>;

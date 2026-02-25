@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Jadwal, MataKuliah } from '@/types/database';
 import * as jadwalFetcher from '@/lib/fetchers/jadwalFetcher';
 import * as praktikumFetcher from '@/lib/fetchers/praktikumFetcher';
-import { CreateJadwalInput, UpdateJadwalInput } from '@/services/jadwalService';
+import type { CreateJadwalInput, UpdateJadwalInput } from '@/services/jadwalService';
 
 export function useJadwal(initialTerm?: string) {
   const [data, setData] = useState<Jadwal[]>([]);
@@ -66,15 +66,14 @@ export function useJadwal(initialTerm?: string) {
 
       // Fetch Jadwal Pengganti if a module is selected
       if (selectedModul !== 'Default') {
-          const modulNum = parseInt(selectedModul.replace('Modul ', ''));
-          const penggantiResult = await jadwalFetcher.fetchJadwalPengganti(modulNum);
-          if (penggantiResult.ok && penggantiResult.data) {
-              setJadwalPengganti(penggantiResult.data);
-          }
+        const modulNum = parseInt(selectedModul.replace('Modul ', ''));
+        const penggantiResult = await jadwalFetcher.fetchJadwalPengganti(modulNum);
+        if (penggantiResult.ok && penggantiResult.data) {
+          setJadwalPengganti(penggantiResult.data);
+        }
       } else {
-          setJadwalPengganti([]);
+        setJadwalPengganti([]);
       }
-
     } catch (e) {
       setError(e as Error);
     } finally {
@@ -88,7 +87,7 @@ export function useJadwal(initialTerm?: string) {
     if (result.ok) {
       await fetchJadwal();
     } else {
-        setLoading(false);
+      setLoading(false);
     }
     return result;
   };
@@ -99,20 +98,20 @@ export function useJadwal(initialTerm?: string) {
     if (result.ok) {
       await fetchJadwal();
     } else {
-        setLoading(false);
+      setLoading(false);
     }
     return result;
   };
 
   const upsertPengganti = async (input: any) => {
-      setLoading(true);
-      const result = await jadwalFetcher.upsertJadwalPengganti(input);
-      if (result.ok) {
-        await fetchJadwal();
-      } else {
-          setLoading(false);
-      }
-      return result;
+    setLoading(true);
+    const result = await jadwalFetcher.upsertJadwalPengganti(input);
+    if (result.ok) {
+      await fetchJadwal();
+    } else {
+      setLoading(false);
+    }
+    return result;
   };
 
   const removeJadwal = async (id: number) => {
@@ -121,7 +120,7 @@ export function useJadwal(initialTerm?: string) {
     if (result.ok) {
       await fetchJadwal();
     } else {
-        setLoading(false);
+      setLoading(false);
     }
     return result;
   };

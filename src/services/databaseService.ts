@@ -1,5 +1,9 @@
-import { supabase } from './supabase';
+import 'server-only';
+import { SupabaseClient } from '@supabase/supabase-js';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { logger } from '@/lib/logger';
+
+const globalAdmin = createAdminClient();
 
 export interface DashboardStats {
   asprakCount: number;
@@ -9,15 +13,15 @@ export interface DashboardStats {
   jadwalByDay: { name: string; count: number }[];
 }
 
-// get by
-export async function getStats(initialTerm?: string): Promise<DashboardStats> {
+export async function getStats(initialTerm?: string, supabaseClient?: SupabaseClient): Promise<DashboardStats> {
+  const supabase = supabaseClient || globalAdmin;
   initialTerm = initialTerm || '2425-1';
   const [asprakRes, jadwalRes, pelanggaranRes, asprakRaw, jadwalRaw] = await Promise.all([
     supabase
-      .from('Asprak_Praktikum')
+      .from('asprak_praktikum')
       .select(
         `*, 
-          praktikum:Praktikum!inner (
+          praktikum:praktikum!inner (
               tahun_ajaran
         )
         `,
@@ -25,11 +29,11 @@ export async function getStats(initialTerm?: string): Promise<DashboardStats> {
       )
       .eq('praktikum.tahun_ajaran', initialTerm),
     supabase
-      .from('Jadwal')
+      .from('jadwal')
       .select(
         `*,
-        mata_kuliah:Mata_Kuliah!inner (
-          praktikum:Praktikum!inner (
+        mata_kuliah:mata_kuliah!inner (
+          praktikum:praktikum!inner (
               tahun_ajaran
           )
       )
@@ -38,12 +42,12 @@ export async function getStats(initialTerm?: string): Promise<DashboardStats> {
       )
       .eq('mata_kuliah.praktikum.tahun_ajaran', initialTerm),
     supabase
-      .from('Pelanggaran')
+      .from('pelanggaran')
       .select(
         `*,
-        jadwal:Jadwal!inner (
-          mata_kuliah:Mata_Kuliah!inner (
-            praktikum:Praktikum!inner (
+        jadwal:jadwal!inner (
+          mata_kuliah:mata_kuliah!inner (
+            praktikum:praktikum!inner (
                 tahun_ajaran
             )
         )
@@ -52,8 +56,8 @@ export async function getStats(initialTerm?: string): Promise<DashboardStats> {
         { count: 'exact', head: true }
       )
       .eq('jadwal.mata_kuliah.praktikum.tahun_ajaran', initialTerm),
-    supabase.from('Asprak').select('angkatan'),
-    supabase.from('Jadwal').select('hari'),
+    supabase.from('asprak').select('angkatan'),
+    supabase.from('jadwal').select('hari'),
   ]);
 
   const asprakMap: Record<string, number> = {};
@@ -80,17 +84,18 @@ export async function getStats(initialTerm?: string): Promise<DashboardStats> {
   };
 }
 
-export async function clearAllData() {
+export async function clearAllData(supabaseClient?: SupabaseClient) {
+  const supabase = supabaseClient || globalAdmin;
   logger.info('Clearing all database data...');
 
   const tables = [
-    'Pelanggaran',
-    'Jadwal_Pengganti',
-    'Asprak_Praktikum',
-    'Jadwal',
-    'Mata_Kuliah',
-    'Asprak',
-    'Praktikum',
+    'pelanggaran',
+    'jadwal_pengganti',
+    'asprak_praktikum',
+    'jadwal',
+    'mata_kuliah',
+    'asprak',
+    'praktikum',
   ];
 
   for (const table of tables) {

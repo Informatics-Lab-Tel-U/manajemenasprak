@@ -1,5 +1,6 @@
-
-import { supabase } from './supabase';
+import 'server-only';
+import { SupabaseClient } from '@supabase/supabase-js';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { logger } from '@/lib/logger';
 
 export interface PlottingItem {
@@ -22,23 +23,28 @@ export interface PlottingListResult {
   total: number;
 }
 
+// Admin Supabase client (bypasses RLS). This service is only used from API routes/server.
+const globalAdmin = createAdminClient();
+
 export async function getPlottingList(
   page: number,
   limit: number,
   term?: string,
-  praktikumId?: string
+  praktikumId?: string,
+  supabaseClient?: SupabaseClient
 ): Promise<PlottingListResult> {
+  const supabase = supabaseClient || globalAdmin;
   const from = (page - 1) * limit;
   const to = from + limit - 1;
 
   let query = supabase
-    .from('Asprak_Praktikum')
+    .from('asprak_praktikum')
     .select(`
       id,
-      asprak:Asprak!inner (
+      asprak:asprak!inner (
         id, kode, nama_lengkap, nim
       ),
-      praktikum:Praktikum!inner (
+      praktikum:praktikum!inner (
         id, nama, tahun_ajaran
       )
     `, { count: 'exact' });
@@ -93,15 +99,17 @@ export interface ValidationResult {
 
 export async function validatePlottingImport(
   rows: ValidatePlottingRow[],
-  term: string
+  term: string,
+  supabaseClient?: SupabaseClient
 ): Promise<ValidationResult> {
+  const supabase = supabaseClient || globalAdmin;
   
   // 1. Fetch ALL Aspraks and Praktikums for lookup to minimize queries
   // Or fetch in batches. If rows are huge (1000+), fetching all codes might be better.
   // Aspraks: We need to map code -> ID(s).
   
   const { data: allAspraks } = await supabase
-    .from('Asprak')
+    .from('asprak')
     .select('id, kode, nama_lengkap, nim, angkatan');
     
   const asprakMap = new Map<string, typeof allAspraks>();
@@ -113,7 +121,7 @@ export async function validatePlottingImport(
 
   // Praktikums: Map name -> ID for the SPECIFIED term.
   const { data: termPraktikums } = await supabase
-    .from('Praktikum')
+    .from('praktikum')
     .select('id, nama')
     .eq('tahun_ajaran', term);
     
@@ -174,7 +182,8 @@ export async function validatePlottingImport(
   return result;
 }
 
-export async function savePlotting(assignments: { asprak_id: string; praktikum_id: string }[]) {
+export async function savePlotting(assignments: { asprak_id: string; praktikum_id: string }[], supabaseClient?: SupabaseClient) {
+    const supabase = supabaseClient || globalAdmin;
     // Insert ignoring duplicates? Or fail?
     // Supabase insert has `ignoreDuplicates` option but mostly for primary keys.
     // If unique constraint on (asprak_id, praktikum_id) exists, we catch error or ignore.
@@ -199,7 +208,7 @@ export async function savePlotting(assignments: { asprak_id: string; praktikum_i
     // For large batches, select existing is expensive.
     
     const { error } = await supabase
-        .from('Asprak_Praktikum')
+        .from('asprak_praktikum')
         .upsert(dbRows, { onConflict: 'id_asprak, id_praktikum', ignoreDuplicates: true });
         
     if (error) {
@@ -208,7 +217,8 @@ export async function savePlotting(assignments: { asprak_id: string; praktikum_i
     }
 }
 
-export async function deletePlotting(id: number) {
-    const { error } = await supabase.from('Asprak_Praktikum').delete().eq('id', id);
+export async function deletePlotting(id: number, supabaseClient?: SupabaseClient) {
+    const supabase = supabaseClient || globalAdmin;
+    const { error } = await supabase.from('asprak_praktikum').delete().eq('id', id);
     if (error) throw new Error(error.message);
 }

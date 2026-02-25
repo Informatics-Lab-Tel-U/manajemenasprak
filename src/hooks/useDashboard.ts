@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Jadwal } from '@/types/database';
 import * as jadwalFetcher from '@/lib/fetchers/jadwalFetcher';
-import { getStats, DashboardStats } from '@/services/databaseService';
+import type { DashboardStats } from '@/services/databaseService';
 
 export interface UseDashboardResult {
   terms: string[];
@@ -32,14 +32,22 @@ export function useDashboard(
 
     setLoading(true);
     try {
-      const [statsResult, scheduleResult] = await Promise.all([
-        getStats(selectedTerm),
+      const [scheduleResult, statsRes] = await Promise.all([
         jadwalFetcher.fetchTodaySchedule(100, selectedTerm),
+        fetch(`/api/stats?term=${encodeURIComponent(selectedTerm)}`),
       ]);
 
-      setStats(statsResult);
       if (scheduleResult.ok && scheduleResult.data) {
         setTodaySchedule(scheduleResult.data);
+      }
+
+      try {
+        const statsJson = await statsRes.json();
+        if (statsJson?.ok && statsJson.data) {
+          setStats(statsJson.data as DashboardStats);
+        }
+      } catch (e) {
+        // ignore parse errors; stats remain unchanged
       }
     } catch (err: unknown) {
       if (err instanceof Error) {

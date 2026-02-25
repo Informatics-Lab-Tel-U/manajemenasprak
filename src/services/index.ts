@@ -1,30 +1,9 @@
 /**
  * Services layer for external API/database interactions
  *
- * This directory should contain:
- * - Database queries and mutations
- * - External API integrations
- * - Business logic that interacts with data sources
+ * IMPORTANT: Services are intended for server-side use only.
+ * Do not import these in client components.
+ * Import from specific service files directly in server components or API routes.
  */
 
-// Services are intended for server-side use only
-// Import services directly from their files:
-// - asprakService
-// - databaseService
-// - jadwalService
-// - pelanggaranService
-// - praktikumService
-
-export {
-  getAllAsprak,
-  getExistingCodes,
-  getAvailableTerms as getAsprakAvailableTerms,
-  getAsprakAssignments,
-  upsertAsprak,
-  bulkUpsertAspraks,
-} from './asprakService';
-export type { UpsertAsprakInput, BulkUpsertRow, BulkUpsertResult } from './asprakService';
-export * from './databaseService';
-export * from './jadwalService';
-export * from './pelanggaranService';
-export * from './praktikumService';
+export {};

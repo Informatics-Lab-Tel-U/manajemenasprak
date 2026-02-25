@@ -2,15 +2,24 @@ import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/s
 import { AppSidebar } from '@/components/layout/AppSidebar';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { Toaster } from '@/components/ui/sonner';
+import { requireAuth } from '@/lib/auth';
 
-export default function DashboardLayout({
+export default async function DashboardLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const authUser = await requireAuth();
+
   return (
     <SidebarProvider>
-      <AppSidebar />
+      <AppSidebar
+        user={{
+          nama: authUser.pengguna.nama_lengkap,
+          email: authUser.email,
+          role: authUser.pengguna.role,
+        }}
+      />
       <SidebarInset>
         <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b px-4 bg-background">
           <SidebarTrigger className="-ml-1" />

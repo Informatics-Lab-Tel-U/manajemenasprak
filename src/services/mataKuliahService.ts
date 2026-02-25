@@ -1,6 +1,11 @@
-import { supabase } from './supabase';
+import 'server-only';
+import { SupabaseClient } from '@supabase/supabase-js';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { MataKuliah } from '@/types/database';
 import { logger } from '@/lib/logger';
+
+// Admin Supabase client (bypasses RLS). This service is only used from API routes/server.
+const globalAdmin = createAdminClient();
 
 export interface MataKuliahWithPraktikum extends MataKuliah {
   praktikum: {
@@ -16,10 +21,11 @@ export type MataKuliahGrouped = {
   items: MataKuliahWithPraktikum[];
 };
 
-export async function getMataKuliahByTerm(term: string | null): Promise<MataKuliahGrouped[]> {
-  let query = supabase.from('Mata_Kuliah').select(`
+export async function getMataKuliahByTerm(term: string | null, supabaseClient?: SupabaseClient): Promise<MataKuliahGrouped[]> {
+  const supabase = supabaseClient || globalAdmin;
+  let query = supabase.from('mata_kuliah').select(`
       *,
-      praktikum:Praktikum!inner (
+      praktikum:praktikum!inner (
         id,
         nama,
         tahun_ajaran
@@ -66,9 +72,11 @@ export interface CreateMataKuliahPayload {
 }
 
 export async function createMataKuliah(
-  payload: CreateMataKuliahPayload
+  payload: CreateMataKuliahPayload,
+  supabaseClient?: SupabaseClient
 ): Promise<MataKuliah | null> {
-  const { data, error } = await supabase.from('Mata_Kuliah').insert(payload).select().single();
+  const supabase = supabaseClient || globalAdmin;
+  const { data, error } = await supabase.from('mata_kuliah').insert(payload).select().single();
 
   if (error) {
     logger.error('Error creating mata kuliah:', error);
@@ -84,14 +92,16 @@ export interface BulkImportMataKuliahResult {
 }
 
 export async function bulkCreateMataKuliah(
-  payloads: CreateMataKuliahPayload[]
+  payloads: CreateMataKuliahPayload[],
+  supabaseClient?: SupabaseClient
 ): Promise<BulkImportMataKuliahResult> {
+  const supabase = supabaseClient || globalAdmin;
   const result: BulkImportMataKuliahResult = { inserted: 0, errors: [] };
 
   // Insert sequentially to handle errors individually (safer) or bulk if confident
   // Using sequential for better error reporting per row
   for (const p of payloads) {
-    const { error } = await supabase.from('Mata_Kuliah').insert(p);
+    const { error } = await supabase.from('mata_kuliah').insert(p);
     if (error) {
       result.errors.push(
         `Failed to insert ${p.nama_lengkap} (${p.program_studi}): ${error.message}`
@@ -106,10 +116,12 @@ export async function bulkCreateMataKuliah(
 
 export async function checkMataKuliahExists(
   praktikumId: string,
-  programStudi: string
+  programStudi: string,
+  supabaseClient?: SupabaseClient
 ): Promise<boolean> {
+  const supabase = supabaseClient || globalAdmin;
   const { count, error } = await supabase
-    .from('Mata_Kuliah')
+    .from('mata_kuliah')
     .select('*', { count: 'exact', head: true })
     .eq('id_praktikum', praktikumId)
     .eq('program_studi', programStudi);

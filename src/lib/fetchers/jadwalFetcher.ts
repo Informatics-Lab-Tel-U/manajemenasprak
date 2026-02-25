@@ -1,5 +1,9 @@
 import { Jadwal, JadwalPengganti } from '@/types/database';
-import { CreateJadwalInput, UpdateJadwalInput, CreateJadwalPenggantiInput } from '@/services/jadwalService';
+import type {
+  CreateJadwalInput,
+  UpdateJadwalInput,
+  CreateJadwalPenggantiInput,
+} from '@/services/jadwalService';
 import { ServiceResult } from '@/types/api';
 
 export async function fetchAvailableTerms(): Promise<ServiceResult<string[]>> {
@@ -30,7 +34,10 @@ export async function fetchJadwalByTerm(term: string): Promise<ServiceResult<Jad
   }
 }
 
-export async function fetchTodaySchedule(limit: number = 5, term?: string): Promise<ServiceResult<Jadwal[]>> {
+export async function fetchTodaySchedule(
+  limit: number = 5,
+  term?: string
+): Promise<ServiceResult<Jadwal[]>> {
   try {
     const url = new URL('/api/jadwal', window.location.origin);
     url.searchParams.append('action', 'today');
@@ -75,7 +82,9 @@ export async function fetchScheduleForValidation(term: string): Promise<ServiceR
   }
 }
 
-export async function bulkImportJadwal(inputs: CreateJadwalInput[]): Promise<ServiceResult<{ inserted: number; errors: string[] }>> {
+export async function bulkImportJadwal(
+  inputs: CreateJadwalInput[]
+): Promise<ServiceResult<{ inserted: number; errors: string[] }>> {
   try {
     const res = await fetch('/api/jadwal?action=bulk-import', {
       method: 'POST',
@@ -129,7 +138,9 @@ export async function fetchJadwal(): Promise<ServiceResult<Jadwal[]>> {
   }
 }
 
-export async function fetchJadwalPengganti(modul: number): Promise<ServiceResult<JadwalPengganti[]>> {
+export async function fetchJadwalPengganti(
+  modul: number
+): Promise<ServiceResult<JadwalPengganti[]>> {
   try {
     const res = await fetch(`/api/jadwal?action=pengganti&modul=${modul}`, {
       method: 'GET',
@@ -143,7 +154,9 @@ export async function fetchJadwalPengganti(modul: number): Promise<ServiceResult
   }
 }
 
-export async function upsertJadwalPengganti(input: CreateJadwalPenggantiInput): Promise<ServiceResult<JadwalPengganti>> {
+export async function upsertJadwalPengganti(
+  input: CreateJadwalPenggantiInput
+): Promise<ServiceResult<JadwalPengganti>> {
   try {
     const res = await fetch('/api/jadwal?action=upsert-pengganti', {
       method: 'POST',
