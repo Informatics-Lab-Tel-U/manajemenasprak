@@ -1,9 +1,11 @@
+import 'server-only';
+import { SupabaseClient } from '@supabase/supabase-js';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { MataKuliah } from '@/types/database';
 import { logger } from '@/lib/logger';
 
 // Admin Supabase client (bypasses RLS). This service is only used from API routes/server.
-const supabase = createAdminClient();
+const globalAdmin = createAdminClient();
 
 export interface MataKuliahWithPraktikum extends MataKuliah {
   praktikum: {
@@ -19,7 +21,8 @@ export type MataKuliahGrouped = {
   items: MataKuliahWithPraktikum[];
 };
 
-export async function getMataKuliahByTerm(term: string | null): Promise<MataKuliahGrouped[]> {
+export async function getMataKuliahByTerm(term: string | null, supabaseClient?: SupabaseClient): Promise<MataKuliahGrouped[]> {
+  const supabase = supabaseClient || globalAdmin;
   let query = supabase.from('mata_kuliah').select(`
       *,
       praktikum:praktikum!inner (
@@ -69,8 +72,10 @@ export interface CreateMataKuliahPayload {
 }
 
 export async function createMataKuliah(
-  payload: CreateMataKuliahPayload
+  payload: CreateMataKuliahPayload,
+  supabaseClient?: SupabaseClient
 ): Promise<MataKuliah | null> {
+  const supabase = supabaseClient || globalAdmin;
   const { data, error } = await supabase.from('mata_kuliah').insert(payload).select().single();
 
   if (error) {
@@ -87,8 +92,10 @@ export interface BulkImportMataKuliahResult {
 }
 
 export async function bulkCreateMataKuliah(
-  payloads: CreateMataKuliahPayload[]
+  payloads: CreateMataKuliahPayload[],
+  supabaseClient?: SupabaseClient
 ): Promise<BulkImportMataKuliahResult> {
+  const supabase = supabaseClient || globalAdmin;
   const result: BulkImportMataKuliahResult = { inserted: 0, errors: [] };
 
   // Insert sequentially to handle errors individually (safer) or bulk if confident
@@ -109,8 +116,10 @@ export async function bulkCreateMataKuliah(
 
 export async function checkMataKuliahExists(
   praktikumId: string,
-  programStudi: string
+  programStudi: string,
+  supabaseClient?: SupabaseClient
 ): Promise<boolean> {
+  const supabase = supabaseClient || globalAdmin;
   const { count, error } = await supabase
     .from('mata_kuliah')
     .select('*', { count: 'exact', head: true })

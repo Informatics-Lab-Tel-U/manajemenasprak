@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { requireRole } from '@/lib/auth';
 import type { UpdatePenggunaInput } from '@/types/api';
@@ -18,9 +19,8 @@ export async function PATCH(
     const { id } = await params;
     const body: UpdatePenggunaInput = await request.json();
 
-    const admin = createAdminClient();
-
-    const { error } = await admin
+    const supabase = await createClient();
+    const { error } = await supabase
       .from('pengguna')
       .update(body)
       .eq('id', id);

@@ -1,10 +1,13 @@
+import 'server-only';
+import { SupabaseClient } from '@supabase/supabase-js';
 import { createAdminClient } from '@/lib/supabase/admin';
 // Use server-side admin client to ensure API routes can access data when RLS is enabled
-const supabase = createAdminClient();
+const globalAdmin = createAdminClient();
 import { Jadwal, JadwalPengganti } from '@/types/database';
 import { logger } from '@/lib/logger';
 
-export async function getAvailableTerms(): Promise<string[]> {
+export async function getAvailableTerms(supabaseClient?: SupabaseClient): Promise<string[]> {
+  const supabase = supabaseClient || globalAdmin;
   const { data, error } = await supabase
     .from('praktikum')
     .select('tahun_ajaran')
@@ -16,7 +19,8 @@ export async function getAvailableTerms(): Promise<string[]> {
     .reverse();
 }
 
-export async function getJadwalByTerm(term: string): Promise<Jadwal[]> {
+export async function getJadwalByTerm(term: string, supabaseClient?: SupabaseClient): Promise<Jadwal[]> {
+  const supabase = supabaseClient || globalAdmin;
   const { data, error } = await supabase
     .from('jadwal')
     .select(
@@ -43,7 +47,8 @@ export async function getJadwalByTerm(term: string): Promise<Jadwal[]> {
   return data as Jadwal[];
 }
 
-export async function getScheduleForValidation(term: string) {
+export async function getScheduleForValidation(term: string, supabaseClient?: SupabaseClient) {
+  const supabase = supabaseClient || globalAdmin;
   const { data, error } = await supabase
     .from('jadwal')
     .select(
@@ -65,7 +70,8 @@ export async function getScheduleForValidation(term: string) {
   return data;
 }
 
-export async function getTodaySchedule(limit: number = 5, term?: string): Promise<Jadwal[]> {
+export async function getTodaySchedule(limit: number = 5, term?: string, supabaseClient?: SupabaseClient): Promise<Jadwal[]> {
+  const supabase = supabaseClient || globalAdmin;
   const dayIndex = new Date().getDay();
   const weekdays = ['SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU'];
 
@@ -118,7 +124,8 @@ export interface CreateJadwalInput {
   dosen?: string;
 }
 
-export async function createJadwal(input: CreateJadwalInput): Promise<Jadwal> {
+export async function createJadwal(input: CreateJadwalInput, supabaseClient?: SupabaseClient): Promise<Jadwal> {
+  const supabase = supabaseClient || globalAdmin;
   const { id_mk, kelas, hari, sesi, jam, ruangan, total_asprak, dosen } = input;
   const cleanInput = { id_mk, kelas, hari, sesi, jam, ruangan, total_asprak, dosen };
   const { data, error } = await supabase.from('jadwal').insert(cleanInput).select().single();
@@ -131,8 +138,10 @@ export async function createJadwal(input: CreateJadwalInput): Promise<Jadwal> {
 }
 
 export async function bulkCreateJadwal(
-  inputs: CreateJadwalInput[]
+  inputs: CreateJadwalInput[],
+  supabaseClient?: SupabaseClient
 ): Promise<{ inserted: number; errors: string[] }> {
+  const supabase = supabaseClient || globalAdmin;
   if (inputs.length === 0) return { inserted: 0, errors: [] };
 
   const { data, error } = await supabase.from('jadwal').insert(inputs).select();
@@ -157,7 +166,8 @@ export interface UpdateJadwalInput {
   dosen?: string;
 }
 
-export async function updateJadwal(input: UpdateJadwalInput): Promise<Jadwal> {
+export async function updateJadwal(input: UpdateJadwalInput, supabaseClient?: SupabaseClient): Promise<Jadwal> {
+  const supabase = supabaseClient || globalAdmin;
   const { id, id_mk, kelas, hari, sesi, jam, ruangan, total_asprak, dosen } = input;
 
   const updates: Record<string, any> = {};
@@ -184,7 +194,8 @@ export async function updateJadwal(input: UpdateJadwalInput): Promise<Jadwal> {
   return data;
 }
 
-export async function deleteJadwal(id: number): Promise<void> {
+export async function deleteJadwal(id: number, supabaseClient?: SupabaseClient): Promise<void> {
+  const supabase = supabaseClient || globalAdmin;
   const { error } = await supabase.from('jadwal').delete().eq('id', id);
   if (error) {
     logger.error('Error deleting jadwal:', error);
@@ -192,7 +203,8 @@ export async function deleteJadwal(id: number): Promise<void> {
   }
 }
 
-export async function deleteJadwalByIds(ids: number[]): Promise<void> {
+export async function deleteJadwalByIds(ids: number[], supabaseClient?: SupabaseClient): Promise<void> {
+  const supabase = supabaseClient || globalAdmin;
   if (ids.length === 0) return;
   const { error } = await supabase.from('jadwal').delete().in('id', ids);
   if (error) {
@@ -211,7 +223,8 @@ export interface CreateJadwalPenggantiInput {
   ruangan: string;
 }
 
-export async function getAllJadwal(): Promise<Jadwal[]> {
+export async function getAllJadwal(supabaseClient?: SupabaseClient): Promise<Jadwal[]> {
+  const supabase = supabaseClient || globalAdmin;
   const { data, error } = await supabase
     .from('jadwal')
     .select(
@@ -233,7 +246,8 @@ export async function getAllJadwal(): Promise<Jadwal[]> {
   return data as Jadwal[];
 }
 
-export async function getJadwalPengganti(modul: number): Promise<JadwalPengganti[]> {
+export async function getJadwalPengganti(modul: number, supabaseClient?: SupabaseClient): Promise<JadwalPengganti[]> {
+  const supabase = supabaseClient || globalAdmin;
   if (modul <= 0) return [];
 
   const { data, error } = await supabase.from('jadwal_pengganti').select('*').eq('modul', modul);
@@ -246,8 +260,10 @@ export async function getJadwalPengganti(modul: number): Promise<JadwalPengganti
 }
 
 export async function upsertJadwalPengganti(
-  input: CreateJadwalPenggantiInput
+  input: CreateJadwalPenggantiInput,
+  supabaseClient?: SupabaseClient
 ): Promise<JadwalPengganti> {
+  const supabase = supabaseClient || globalAdmin;
   const { id_jadwal, modul, tanggal, hari, sesi, jam, ruangan } = input;
 
   if (!tanggal) {

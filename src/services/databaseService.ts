@@ -1,7 +1,9 @@
+import 'server-only';
+import { SupabaseClient } from '@supabase/supabase-js';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { logger } from '@/lib/logger';
 
-const supabase = createAdminClient();
+const globalAdmin = createAdminClient();
 
 export interface DashboardStats {
   asprakCount: number;
@@ -11,7 +13,8 @@ export interface DashboardStats {
   jadwalByDay: { name: string; count: number }[];
 }
 
-export async function getStats(initialTerm?: string): Promise<DashboardStats> {
+export async function getStats(initialTerm?: string, supabaseClient?: SupabaseClient): Promise<DashboardStats> {
+  const supabase = supabaseClient || globalAdmin;
   initialTerm = initialTerm || '2425-1';
   const [asprakRes, jadwalRes, pelanggaranRes, asprakRaw, jadwalRaw] = await Promise.all([
     supabase
@@ -81,7 +84,8 @@ export async function getStats(initialTerm?: string): Promise<DashboardStats> {
   };
 }
 
-export async function clearAllData() {
+export async function clearAllData(supabaseClient?: SupabaseClient) {
+  const supabase = supabaseClient || globalAdmin;
   logger.info('Clearing all database data...');
 
   const tables = [

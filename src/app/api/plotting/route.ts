@@ -1,10 +1,11 @@
-
 import { NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
 import * as plottingService from '@/services/plottingService';
 import { logger } from '@/lib/logger';
 
 export async function GET(req: Request) {
   try {
+    const supabase = await createClient();
     const url = new URL(req.url);
     const term = url.searchParams.get('term') || undefined;
     const page = parseInt(url.searchParams.get('page') || '1');
@@ -38,18 +39,19 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
+    const supabase = await createClient();
     const body = await req.json();
     const { action } = body;
 
     if (action === 'validate-import') {
         const { rows, term } = body; // rows: { kode_asprak, mk_singkat }[]
-        const result = await plottingService.validatePlottingImport(rows, term);
+        const result = await plottingService.validatePlottingImport(rows, term, supabase);
         return NextResponse.json(result);
     }
     
     if (action === 'save-plotting') {
         const { assignments } = body; // { asprak_id, praktikum_id }[]
-        await plottingService.savePlotting(assignments);
+        await plottingService.savePlotting(assignments, supabase);
         return NextResponse.json({ success: true });
     }
 

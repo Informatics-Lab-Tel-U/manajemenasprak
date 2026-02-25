@@ -1,37 +1,39 @@
 import { NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
 import * as praktikumService from '@/services/praktikumService';
 import { logger } from '@/lib/logger';
 
 export async function GET(req: Request) {
   try {
+    const supabase = await createClient();
     const { searchParams } = new URL(req.url);
     const action = searchParams.get('action');
 
     if (action === 'all') {
-      const praktikum = await praktikumService.getAllPraktikum();
+      const praktikum = await praktikumService.getAllPraktikum(supabase);
       return NextResponse.json({ ok: true, data: praktikum });
     }
 
     if (action === 'names') {
-      const names = await praktikumService.getUniquePraktikumNames();
+      const names = await praktikumService.getUniquePraktikumNames(supabase);
       return NextResponse.json({ ok: true, data: names });
     }
 
     if (action === 'mata-kuliah') {
-      const mk = await praktikumService.getAllMataKuliah();
+      const mk = await praktikumService.getAllMataKuliah(supabase);
       return NextResponse.json({ ok: true, data: mk });
     }
 
     if (action === 'by-term') {
         const term = searchParams.get('term') || undefined;
-        const data = await praktikumService.getPraktikumByTerm(term);
+        const data = await praktikumService.getPraktikumByTerm(term, supabase);
         return NextResponse.json({ ok: true, data });
     }
 
     if (action === 'details') {
         const id = searchParams.get('id');
         if (!id) return NextResponse.json({ ok: false, error: 'Missing id param' }, { status: 400 });
-        const data = await praktikumService.getPraktikumDetails(id);
+        const data = await praktikumService.getPraktikumDetails(id, supabase);
         return NextResponse.json({ ok: true, data });
     }
 
@@ -47,16 +49,17 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
+    const supabase = await createClient();
     const body = await req.json();
     const { action, nama, tahunAjaran } = body;
 
     if (action === 'get-or-create' && nama && tahunAjaran) {
-      const praktikum = await praktikumService.getOrCreatePraktikum(nama, tahunAjaran);
+      const praktikum = await praktikumService.getOrCreatePraktikum(nama, tahunAjaran, supabase);
       return NextResponse.json({ ok: true, data: praktikum });
     }
 
     if (action === 'bulk-import' && body.rows) {
-      const result = await praktikumService.bulkUpsertPraktikum(body.rows);
+      const result = await praktikumService.bulkUpsertPraktikum(body.rows, supabase);
       return NextResponse.json({ ok: true, data: result });
     }
 
