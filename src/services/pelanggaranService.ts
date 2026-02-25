@@ -1,53 +1,142 @@
-import { supabase } from './supabase';
-import { Pelanggaran } from '@/types/database';
-import { CreatePelanggaranInput } from '@/types/api';
+import { createClient } from '@/lib/supabase/client';
+import type { Pelanggaran } from '@/types/database';
+import type { CreatePelanggaranInput } from '@/types/api';
 import { logger } from '@/lib/logger';
 
-export async function getAllPelanggaran(): Promise<Pelanggaran[]> {
-  const { data, error } = await supabase
-    .from('Pelanggaran')
-    .select(
-      `
-      *,
-      asprak:Asprak (
-        nama_lengkap,
-        nim,
-        kode
-      ),
-      jadwal:Jadwal (
-        hari,
-        jam,
-        kelas,
-        mata_kuliah:Mata_Kuliah (
-          nama_lengkap
-        )
-      )
-    `
+const PELANGGARAN_SELECT = `
+  *,
+  asprak:asprak (
+    nama_lengkap,
+    nim,
+    kode
+  ),
+  jadwal:jadwal (
+    hari,
+    jam,
+    kelas,
+    mata_kuliah:mata_kuliah (
+      id,
+      nama_lengkap,
+      program_studi
     )
+  )
+`;
+
+/**
+ * Fetch all pelanggaran (ADMIN / ASLAB — server-side via separate server service).
+ * For the browser client (used in fetchers), scoped by RLS automatically.
+ */
+export async function getAllPelanggaran(): Promise<Pelanggaran[]> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from('pelanggaran')
+    .select(PELANGGARAN_SELECT)
     .order('created_at', { ascending: false });
 
   if (error) {
-    logger.error('Error fetching pelanggaran:', error);
+    logger.error('Error fetching all pelanggaran:', error);
     return [];
   }
   return data as Pelanggaran[];
 }
 
+/**
+ * Fetch pelanggaran scoped to the mata kuliah coordinated by a given user.
+ * Used for ASPRAK_KOOR role — RLS enforces the actual restriction on Supabase side.
+ */
+export async function getPelanggaranByKoor(): Promise<Pelanggaran[]> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from('pelanggaran')
+    .select(PELANGGARAN_SELECT)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    logger.error('Error fetching pelanggaran by koor:', error);
+    return [];
+  }
+  return data as Pelanggaran[];
+}
+
+/**
+ * Fetch pelanggaran for a specific mata kuliah.
+ */
+export async function getPelanggaranByMataKuliah(idMk: string): Promise<Pelanggaran[]> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from('pelanggaran')
+    .select(PELANGGARAN_SELECT)
+    .eq('jadwal.id_mk', idMk)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    logger.error('Error fetching pelanggaran by mata kuliah:', error);
+    return [];
+  }
+  return data as Pelanggaran[];
+}
+
+/**
+ * Create a new pelanggaran record.
+ */
 export async function createPelanggaran(input: CreatePelanggaranInput): Promise<Pelanggaran> {
-  const { data, error } = await supabase.from('Pelanggaran').insert(input).select().single();
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from('pelanggaran')
+    .insert(input)
+    .select(PELANGGARAN_SELECT)
+    .single();
 
   if (error) {
     logger.error('Error creating pelanggaran:', error);
-    throw new Error(`Failed to create Pelanggaran: ${error.message}`);
+    throw new Error(`Gagal mencatat pelanggaran: ${error.message}`);
   }
-  return data;
+  return data as Pelanggaran;
 }
 
-export async function deletePelanggaran(id: number): Promise<void> {
-  const { error } = await supabase.from('Pelanggaran').delete().eq('id', id);
+/**
+ * Finalize all pelanggaran for a specific mata kuliah.
+ * Sets is_final = true for all non-final records in that mata kuliah.
+ * Once finalized, records become read-only (enforced by RLS UPDATE policy).
+ */
+export async function finalizePelanggaranByMataKuliah(idMk: string): Promise<void> {
+  const supabase = createClient();
+
+  // Get all jadwal IDs for this mata kuliah
+  const { data: jadwals, error: jadwalError } = await supabase
+    .from('jadwal')
+    .select('id')
+    .eq('id_mk', idMk);
+
+  if (jadwalError) throw new Error(`Gagal mengambil jadwal: ${jadwalError.message}`);
+
+  const jadwalIds = jadwals.map((j: any) => j.id);
+  if (jadwalIds.length === 0) return;
+
+  const { error } = await supabase
+    .from('pelanggaran')
+    .update({
+      is_final: true,
+      finalized_at: new Date().toISOString(),
+    })
+    .in('id_jadwal', jadwalIds)
+    .eq('is_final', false);
+
+  if (error) {
+    logger.error('Error finalizing pelanggaran:', error);
+    throw new Error(`Gagal memfinalisasi pelanggaran: ${error.message}`);
+  }
+}
+
+/**
+ * Delete a pelanggaran record (only non-final, enforced by RLS).
+ */
+export async function deletePelanggaran(id: string): Promise<void> {
+  const supabase = createClient();
+  const { error } = await supabase.from('pelanggaran').delete().eq('id', id);
 
   if (error) {
     logger.error('Error deleting pelanggaran:', error);
-    throw new Error(`Failed to delete Pelanggaran: ${error.message}`);
+    throw new Error(`Gagal menghapus pelanggaran: ${error.message}`);
   }
 }

@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { SelectGroup } from '@radix-ui/react-select';
-import { DashboardStats } from '@/services/databaseService';
+import type { DashboardStats } from '@/services/databaseService';
 import { Jadwal } from '@/types/database';
 import { useDashboard } from '@/hooks/useDashboard';
 import { Button } from './ui/button';
@@ -31,15 +31,8 @@ export default function DashboardClient({
   initialSchedule,
   initialTerms,
 }: DashboardClientProps) {
-  const {
-    terms,
-    selectedTerm,
-    setSelectedTerm,
-    stats,
-    todaySchedule,
-    loading,
-    error,
-  } = useDashboard(initialTerms, initialStats, initialSchedule);
+  const { terms, selectedTerm, setSelectedTerm, stats, todaySchedule, loading, error } =
+    useDashboard(initialTerms, initialStats, initialSchedule);
 
   return (
     <>

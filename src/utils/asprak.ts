@@ -16,7 +16,8 @@ import { Asprak } from '@/types/database';
  * isAsprakActive(2020) // false (if current year is 2026 and threshold is 6)
  * isAsprakActive(2023) // true (if current year is 2026 and threshold is 6)
  */
-export function isAsprakActive(angkatan: number): boolean {
+export function isAsprakActive(angkatan: number | undefined): boolean {
+  if (angkatan === undefined) return false;
   const currentYear = new Date().getFullYear();
   return currentYear - angkatan <= ACTIVE_YEARS_THRESHOLD;
 }
@@ -28,7 +29,7 @@ export function isAsprakActive(angkatan: number): boolean {
  * @param angkatan - Graduation year of the Asprak
  * @returns true if inactive, false otherwise
  */
-export function isAsprakInactive(angkatan: number): boolean {
+export function isAsprakInactive(angkatan: number | undefined): boolean {
   return !isAsprakActive(angkatan);
 }
 

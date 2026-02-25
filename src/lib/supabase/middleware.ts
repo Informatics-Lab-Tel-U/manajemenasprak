@@ -1,10 +1,14 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
+import {
+  hasAccess,
+  isPublicPath,
+  ROLE_DEFAULT_REDIRECT,
+  type Role,
+} from '@/config/rbac';
 
 export async function updateSession(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({
-    request,
-  });
+  let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -15,12 +19,10 @@ export async function updateSession(request: NextRequest) {
           return request.cookies.getAll();
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) =>
+          cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
           );
-          supabaseResponse = NextResponse.next({
-            request,
-          });
+          supabaseResponse = NextResponse.next({ request });
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options)
           );
@@ -29,22 +31,84 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  // IMPORTANT: Avoid writing any logic between createServerClient and
-  // supabase.auth.getUser(). A simple mistake could make it very hard to debug
-  // issues with users being randomly logged out.
-
+  // IMPORTANT: Do not add any logic between createServerClient and getUser().
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (
-    !user &&
-    !request.nextUrl.pathname.startsWith('/login') &&
-    !request.nextUrl.pathname.startsWith('/auth')
-  ) {
-    // no user, potentially redirect to login?
-    // For now we just return the response, usually middleware handles redirects based on this.
-    // implementation_plan says we should mostly just refresh session here.
+  const { pathname } = request.nextUrl;
+
+  // 1. If logged-in user tries to access /login, redirect to their default page.
+  if (user && pathname === '/login') {
+    const { data: pengguna } = await supabase
+      .from('pengguna')
+      .select('role')
+      .eq('id', user.id)
+      .single();
+
+    const role = pengguna?.role as Role | undefined;
+    const destination = role ? ROLE_DEFAULT_REDIRECT[role] : '/';
+    const redirectUrl = request.nextUrl.clone();
+    redirectUrl.pathname = destination;
+    return NextResponse.redirect(redirectUrl);
+  }
+
+  // 2. API routes must never be redirected.
+  //    - Unauthenticated: return 401 JSON.
+  //    - Authenticated: pass through (API routes are not in ROLE_ALLOWED_PATHS,
+  //      but they are guarded by their own handlers / RLS).
+  if (pathname.startsWith('/api/')) {
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    return supabaseResponse;
+  }
+
+  // 3. Public paths are always accessible.
+  if (isPublicPath(pathname)) return supabaseResponse;
+
+  // 4. Unauthenticated users are redirected to /login.
+  if (!user) {
+    const loginUrl = request.nextUrl.clone();
+    loginUrl.pathname = '/login';
+    return NextResponse.redirect(loginUrl);
+  }
+
+  // 4. Fetch role from Pengguna table (needed for path-level guards).
+  const { data: pengguna, error: penggunaError } = await supabase
+    .from('pengguna')
+    .select('role')
+    .eq('id', user.id)
+    .single();
+
+  if (penggunaError) {
+    console.error('[Middleware] Pengguna query failed:', {
+      userId: user.id,
+      email: user.email,
+      error: penggunaError.message,
+      code: penggunaError.code,
+      hint: penggunaError.hint,
+    });
+  }
+
+  const role = pengguna?.role as Role | undefined;
+
+  // 5. If we can't determine role, sign out and redirect to login.
+  if (!role) {
+    console.error('[Middleware] No role found, signing out user:', user.email);
+    await supabase.auth.signOut();
+    const loginUrl = request.nextUrl.clone();
+    loginUrl.pathname = '/login';
+    loginUrl.searchParams.set('error', 'no-profile');
+    return NextResponse.redirect(loginUrl);
+  }
+
+  // 6. Role-based path access guard.
+  if (!hasAccess(role, pathname)) {
+    const fallback = ROLE_DEFAULT_REDIRECT[role];
+    const redirectUrl = request.nextUrl.clone();
+    redirectUrl.pathname = fallback;
+    return NextResponse.redirect(redirectUrl);
   }
 
   return supabaseResponse;

@@ -1,6 +1,9 @@
-import { supabase } from './supabase';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { MataKuliah } from '@/types/database';
 import { logger } from '@/lib/logger';
+
+// Admin Supabase client (bypasses RLS). This service is only used from API routes/server.
+const supabase = createAdminClient();
 
 export interface MataKuliahWithPraktikum extends MataKuliah {
   praktikum: {
@@ -17,9 +20,9 @@ export type MataKuliahGrouped = {
 };
 
 export async function getMataKuliahByTerm(term: string | null): Promise<MataKuliahGrouped[]> {
-  let query = supabase.from('Mata_Kuliah').select(`
+  let query = supabase.from('mata_kuliah').select(`
       *,
-      praktikum:Praktikum!inner (
+      praktikum:praktikum!inner (
         id,
         nama,
         tahun_ajaran
@@ -68,7 +71,7 @@ export interface CreateMataKuliahPayload {
 export async function createMataKuliah(
   payload: CreateMataKuliahPayload
 ): Promise<MataKuliah | null> {
-  const { data, error } = await supabase.from('Mata_Kuliah').insert(payload).select().single();
+  const { data, error } = await supabase.from('mata_kuliah').insert(payload).select().single();
 
   if (error) {
     logger.error('Error creating mata kuliah:', error);
@@ -91,7 +94,7 @@ export async function bulkCreateMataKuliah(
   // Insert sequentially to handle errors individually (safer) or bulk if confident
   // Using sequential for better error reporting per row
   for (const p of payloads) {
-    const { error } = await supabase.from('Mata_Kuliah').insert(p);
+    const { error } = await supabase.from('mata_kuliah').insert(p);
     if (error) {
       result.errors.push(
         `Failed to insert ${p.nama_lengkap} (${p.program_studi}): ${error.message}`
@@ -109,7 +112,7 @@ export async function checkMataKuliahExists(
   programStudi: string
 ): Promise<boolean> {
   const { count, error } = await supabase
-    .from('Mata_Kuliah')
+    .from('mata_kuliah')
     .select('*', { count: 'exact', head: true })
     .eq('id_praktikum', praktikumId)
     .eq('program_studi', programStudi);

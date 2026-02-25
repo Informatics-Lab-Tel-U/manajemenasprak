@@ -7,10 +7,10 @@ export async function getStats(initialTerm?: string): Promise<DashboardStats> {
   
   const [asprakRes, jadwalRes, pelanggaranRes, asprakRaw, jadwalRaw] = await Promise.all([
     supabase
-      .from('Asprak_Praktikum')
+      .from('asprak_praktikum')
       .select(
         `*, 
-          praktikum:Praktikum!inner (
+          praktikum:praktikum!inner (
               tahun_ajaran
         )
         `,
@@ -18,11 +18,11 @@ export async function getStats(initialTerm?: string): Promise<DashboardStats> {
       )
       .eq('praktikum.tahun_ajaran', initialTerm),
     supabase
-      .from('Jadwal')
+      .from('jadwal')
       .select(
         `*,
-        mata_kuliah:Mata_Kuliah!inner (
-          praktikum:Praktikum!inner (
+        mata_kuliah:mata_kuliah!inner (
+          praktikum:praktikum!inner (
               tahun_ajaran
           )
         )
@@ -32,12 +32,12 @@ export async function getStats(initialTerm?: string): Promise<DashboardStats> {
       )
       .eq('mata_kuliah.praktikum.tahun_ajaran', initialTerm),
     supabase
-      .from('Pelanggaran')
+      .from('pelanggaran')
       .select(
         `*,
-        jadwal:Jadwal!inner (
-          mata_kuliah:Mata_Kuliah!inner (
-            praktikum:Praktikum!inner (
+        jadwal:jadwal!inner (
+          mata_kuliah:mata_kuliah!inner (
+            praktikum:praktikum!inner (
                 tahun_ajaran
             )
         )
@@ -46,8 +46,8 @@ export async function getStats(initialTerm?: string): Promise<DashboardStats> {
         { count: 'exact', head: true }
       )
       .eq('jadwal.mata_kuliah.praktikum.tahun_ajaran', initialTerm),
-    supabase.from('Asprak').select('angkatan'),
-    supabase.from('Jadwal').select('hari'),
+    supabase.from('asprak').select('angkatan'),
+    supabase.from('jadwal').select('hari'),
   ]);
 
   // Type-safe data processing for asprak by angkatan

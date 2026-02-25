@@ -15,9 +15,9 @@ export async function GET(request: NextRequest) {
 
   try {
     const data = await getMataKuliahByTerm(term);
-    return NextResponse.json(data);
+    return NextResponse.json({ ok: true, data });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
   }
 }
 
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
         };
 
         const result = await createMataKuliah(payload);
-        return NextResponse.json(result);
+        return NextResponse.json({ ok: true, data: result });
         
     } else if (action === 'bulk') {
         // Bulk import logic
@@ -83,14 +83,17 @@ export async function POST(request: NextRequest) {
         
         const result = await bulkCreateMataKuliah(finalPayloads);
         return NextResponse.json({
-            inserted: result.inserted,
-            errors: [...errors, ...result.errors]
+            ok: true,
+            data: {
+              inserted: result.inserted,
+              errors: [...errors, ...result.errors],
+            },
         });
     }
 
-    return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
+    return NextResponse.json({ ok: false, error: 'Invalid action' }, { status: 400 });
 
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
   }
 }

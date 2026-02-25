@@ -79,7 +79,7 @@ function AsprakPageContent() {
     if (allAsprakResult.ok && allAsprakResult.data) {
       setAllExistingNims(allAsprakResult.data.map((a) => a.nim));
       setAllExistingAspraks(
-        allAsprakResult.data.map((a) => ({ kode: a.kode, angkatan: a.angkatan }))
+        allAsprakResult.data.map((a) => ({ kode: a.kode, angkatan: a.angkatan ?? 0 }))
       );
     }
   };
@@ -260,7 +260,7 @@ function AsprakPageContent() {
       <Tabs value={activeTab} className="w-full">
         <TabsContent value="data">
           {/* Filters and Table */}
-          <div className="card glass" style={{ marginBottom: '2rem' }}>
+          <div className="card glass p-6" style={{ marginBottom: '2rem' }}>
             <AsprakFilters
               searchQuery={searchQuery}
               onSearchChange={setSearchQuery}
