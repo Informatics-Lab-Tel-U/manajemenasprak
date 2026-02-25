@@ -1,6 +1,8 @@
 import { createAdminClient } from '@/lib/supabase/admin';
 import { logger } from '@/lib/logger';
 
+const supabase = createAdminClient();
+
 export interface DashboardStats {
   asprakCount: number;
   jadwalCount: number;
@@ -10,7 +12,6 @@ export interface DashboardStats {
 }
 
 export async function getStats(initialTerm?: string): Promise<DashboardStats> {
-  const supabase = createAdminClient();
   initialTerm = initialTerm || '2425-1';
   const [asprakRes, jadwalRes, pelanggaranRes, asprakRaw, jadwalRaw] = await Promise.all([
     supabase
