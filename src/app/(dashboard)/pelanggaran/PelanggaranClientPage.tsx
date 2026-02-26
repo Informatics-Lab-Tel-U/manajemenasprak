@@ -2,7 +2,15 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, AlertTriangle, CheckCircle2, Lock, ChevronLeft, ChevronRight } from 'lucide-react';
+import {
+  Plus,
+  CheckCircle2,
+  Lock,
+  ChevronLeft,
+  ChevronRight,
+  Download,
+  Filter,
+} from 'lucide-react';
 import {
   useReactTable,
   getCoreRowModel,
@@ -40,43 +48,109 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import PelanggaranAddModal from '@/components/pelanggaran/PelanggaranAddModal';
-import type { Pelanggaran, AsprakKoordinator } from '@/types/database';
+import type { Pelanggaran, Praktikum, Asprak, Jadwal } from '@/types/database';
 import type { Role } from '@/config/rbac';
 
 interface Props {
   violations: Pelanggaran[];
   role: Role;
-  koorAssignments: AsprakKoordinator[];
+  /** All available praktikum (scoped by RLS for ASPRAK_KOOR) */
+  praktikumList: Praktikum[];
+  tahunAjaranList: string[];
+  asprakList: (Asprak & { praktikum_ids?: string[] })[];
+  jadwalList: (Jadwal & { id_praktikum?: string })[];
 }
 
-export default function PelanggaranClientPage({ violations, role, koorAssignments }: Props) {
+// Helper: get praktikum key string from a violation record
+function getPraktikumKey(v: Pelanggaran): string {
+  const mk = v.jadwal?.mata_kuliah as any;
+  const idPraktikum = mk?.id_praktikum ?? '';
+  const tahunAjaran = mk?.praktikum?.tahun_ajaran ?? '';
+  return `${idPraktikum}__${tahunAjaran}`;
+}
+
+export default function PelanggaranClientPage({
+  violations,
+  role,
+  praktikumList,
+  tahunAjaranList,
+  asprakList,
+  jadwalList,
+}: Props) {
   const router = useRouter();
+
+  // ── Main filter state ──
+  const [filterTahun, setFilterTahun] = React.useState(tahunAjaranList[0] ?? '');
+  const [filterPraktikumId, setFilterPraktikumId] = React.useState('');
+
+  // ── Modal state ──
   const [isAddOpen, setIsAddOpen] = React.useState(false);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const [finalizeTarget, setFinalizeTarget] = React.useState<AsprakKoordinator | null>(null);
+
+  // ── Finalize state ──
+  const [finalizeTarget, setFinalizeTarget] = React.useState<{
+    id_praktikum: string;
+    tahun_ajaran: string;
+    nama: string;
+  } | null>(null);
   const [isFinalizing, setIsFinalizing] = React.useState(false);
 
   const isAdminOrAslab = role === 'ADMIN' || role === 'ASLAB';
   const isKoor = role === 'ASPRAK_KOOR';
 
-  // Determine which matkul IDs are fully finalized (all their pelanggaran have is_final = true)
-  const finalizedMkIds = React.useMemo(() => {
-    const byMk = new Map<string, Pelanggaran[]>();
-    for (const v of violations) {
-      const mkId = v.jadwal?.mata_kuliah?.id;
-      if (!mkId) continue;
-      if (!byMk.has(mkId)) byMk.set(mkId, []);
-      byMk.get(mkId)!.push(v);
-    }
+  // Praktikum filtered by selected tahun
+  const filteredPraktikumList = React.useMemo(() => {
+    if (!filterTahun) return praktikumList;
+    return praktikumList.filter((p) => p.tahun_ajaran === filterTahun);
+  }, [praktikumList, filterTahun]);
 
+  // Violations filtered by active filters
+  const filteredViolations = React.useMemo(() => {
+    return violations.filter((v) => {
+      const mk = v.jadwal?.mata_kuliah as any;
+      if (filterTahun && mk?.praktikum?.tahun_ajaran !== filterTahun) return false;
+      if (filterPraktikumId && mk?.id_praktikum !== filterPraktikumId) return false;
+      return true;
+    });
+  }, [violations, filterTahun, filterPraktikumId]);
+
+  // Determine which praktikum+tahun combos are fully finalized
+  const finalizedKeys = React.useMemo(() => {
+    const byKey = new Map<string, Pelanggaran[]>();
+    for (const v of filteredViolations) {
+      const key = getPraktikumKey(v);
+      if (!key.includes('__')) continue;
+      if (!byKey.has(key)) byKey.set(key, []);
+      byKey.get(key)!.push(v);
+    }
     const finalized = new Set<string>();
-    for (const [mkId, records] of byMk) {
+    for (const [key, records] of byKey) {
       if (records.length > 0 && records.every((r) => r.is_final)) {
-        finalized.add(mkId);
+        finalized.add(key);
       }
     }
     return finalized;
-  }, [violations]);
+  }, [filteredViolations]);
+
+  // Build finalize summary cards: one per praktikum
+  const finalizeSummary = React.useMemo(() => {
+    const scope = filterPraktikumId
+      ? filteredPraktikumList.filter((p) => p.id === filterPraktikumId)
+      : filteredPraktikumList;
+
+    return scope.map((p) => {
+      const key = `${p.id}__${p.tahun_ajaran}`;
+      const count = filteredViolations.filter((v) => getPraktikumKey(v) === key).length;
+      return {
+        id_praktikum: p.id,
+        tahun_ajaran: p.tahun_ajaran,
+        nama: p.nama,
+        key,
+        count,
+        isFinalized: finalizedKeys.has(key),
+      };
+    });
+  }, [filteredPraktikumList, filteredViolations, finalizedKeys, filterPraktikumId]);
 
   const columns = React.useMemo<ColumnDef<Pelanggaran>[]>(
     () => [
@@ -106,8 +180,8 @@ export default function PelanggaranClientPage({ violations, role, koorAssignment
         ),
       },
       {
-        id: 'mata_kuliah',
-        header: 'Mata Kuliah',
+        id: 'kelas_info',
+        header: 'Mata Kuliah / Kelas',
         cell: ({ row }) => (
           <div>
             <div>{row.original.jadwal?.mata_kuliah?.nama_lengkap ?? '—'}</div>
@@ -118,55 +192,76 @@ export default function PelanggaranClientPage({ violations, role, koorAssignment
         ),
       },
       {
-        accessorKey: 'jenis',
-        header: 'Jenis',
-      },
-      {
         accessorKey: 'modul',
         header: 'Modul',
+        cell: ({ row }) => (
+          <span>{row.original.modul ? `Modul ${row.original.modul}` : '—'}</span>
+        ),
+      },
+      {
+        accessorKey: 'jenis',
+        header: 'Jenis',
+        cell: ({ row }) => (
+          <Badge variant="outline" className="text-xs font-normal whitespace-nowrap">
+            {row.original.jenis}
+          </Badge>
+        ),
       },
       {
         accessorKey: 'is_final',
         header: 'Status',
-        cell: ({ row }) => (
+        cell: ({ row }) =>
           row.original.is_final ? (
-            <Badge variant="secondary" className="gap-1 text-green-700 bg-green-100 dark:bg-green-900/30 dark:text-green-400">
+            <Badge
+              variant="secondary"
+              className="gap-1 text-green-700 bg-green-100 dark:bg-green-900/30 dark:text-green-400"
+            >
               <CheckCircle2 className="h-3 w-3" />
               Final
             </Badge>
           ) : (
             <Badge variant="outline">Aktif</Badge>
-          )
-        ),
+          ),
       },
     ],
     []
   );
 
   const table = useReactTable({
-    data: violations,
+    data: filteredViolations,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-    initialState: {
-      pagination: {
-        pageSize: 10,
-      },
-    },
+    initialState: { pagination: { pageSize: 10 } },
   });
 
-  async function handleAddViolation(data: any) {
+  async function handleAddViolation(data: {
+    id_asprak: string[];
+    id_jadwal: string;
+    jenis: string;
+    modul: number | null;
+  }) {
     setIsSubmitting(true);
     try {
       const resp = await fetch('/api/pelanggaran', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          id_asprak: data.id_asprak,
+          id_jadwal: data.id_jadwal,
+          jenis: data.jenis,
+          modul: data.modul,
+        }),
       });
       const res = await resp.json();
       if (!res.ok) throw new Error(res.error || 'Gagal mencatat pelanggaran');
 
-      toast.success('Pelanggaran berhasil dicatat!');
+      const count = data.id_asprak.length;
+      toast.success(
+        count > 1
+          ? `${count} pelanggaran berhasil dicatat!`
+          : 'Pelanggaran berhasil dicatat!'
+      );
       setIsAddOpen(false);
       router.refresh();
     } catch (err: any) {
@@ -183,17 +278,15 @@ export default function PelanggaranClientPage({ violations, role, koorAssignment
       const resp = await fetch('/api/pelanggaran', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          action: 'finalize', 
-          id_mk: finalizeTarget.id_mata_kuliah 
+        body: JSON.stringify({
+          action: 'finalize',
+          id_praktikum: finalizeTarget.id_praktikum,
+          tahun_ajaran: finalizeTarget.tahun_ajaran,
         }),
       });
       const res = await resp.json();
       if (!res.ok) throw new Error(res.error || 'Gagal memfinalisasi pelanggaran');
-
-      toast.success(
-        `Pelanggaran for ${finalizeTarget.mata_kuliah?.nama_lengkap ?? 'matkul'} successfully finalized.`
-      );
+      toast.success(`Pelanggaran ${finalizeTarget.nama} berhasil difinalisasi.`);
       router.refresh();
     } catch (err: any) {
       toast.error(err.message ?? 'Gagal memfinalisasi pelanggaran');
@@ -203,68 +296,131 @@ export default function PelanggaranClientPage({ violations, role, koorAssignment
     }
   }
 
+  function handleExport() {
+    const params = new URLSearchParams();
+    if (filterPraktikumId) params.set('id_praktikum', filterPraktikumId);
+    if (filterTahun) params.set('tahun_ajaran', filterTahun);
+    window.location.href = `/api/pelanggaran/export?${params.toString()}`;
+  }
+
   return (
     <div className="container" style={{ position: 'relative' }}>
-      {/* Header */}
-      <div className="flex justify-between items-center mb-8">
+      {/* ── Header ── */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
           <h1 className="title-gradient" style={{ fontSize: '2rem', fontWeight: 'bold' }}>
             Pelanggaran
           </h1>
           <p className="text-muted-foreground">Log indisipliner asisten praktikum</p>
         </div>
-        <Button onClick={() => setIsAddOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Catat Pelanggaran
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={handleExport} className="gap-1.5">
+            <Download className="h-4 w-4" />
+            Export Excel
+          </Button>
+          <Button onClick={() => setIsAddOpen(true)} size="sm" className="gap-1.5">
+            <Plus className="h-4 w-4" />
+            Catat Pelanggaran
+          </Button>
+        </div>
       </div>
 
-      {/* Koor: finalization panel per matkul */}
-      {isKoor && koorAssignments.length > 0 && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-8">
-          {koorAssignments.map((assignment) => {
-            const isFinalized = finalizedMkIds.has(assignment.id_mata_kuliah);
-            const mkViolations = violations.filter(
-              (v) => v.jadwal?.mata_kuliah?.id === assignment.id_mata_kuliah
-            );
+      {/* ── Main Filters ── */}
+      <div className="card glass p-4 mb-6 flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+        <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+          <Filter className="h-4 w-4" />
+          Filter:
+        </div>
+        <Select
+          value={filterTahun}
+          onValueChange={(v) => {
+            setFilterTahun(v);
+            setFilterPraktikumId('');
+          }}
+        >
+          <SelectTrigger className="h-8 w-[160px] text-sm">
+            <SelectValue placeholder="Tahun Ajaran" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              {tahunAjaranList.map((t) => (
+                <SelectItem key={t} value={t}>
+                  {t}
+                </SelectItem>
+              ))}
+            </SelectGroup>
+          </SelectContent>
+        </Select>
 
-            return (
-              <div key={assignment.id} className="card glass p-4 relative overflow-hidden">
-                <div className="mb-4">
-                  <h3 className="text-sm font-semibold leading-tight">
-                    {assignment.mata_kuliah?.nama_lengkap ?? 'Mata Kuliah'}
-                  </h3>
-                  <p className="text-xs text-muted-foreground">
-                    {assignment.mata_kuliah?.program_studi}
-                  </p>
-                </div>
-                <div className="flex items-center justify-between pt-0">
-                  <span className="text-2xl font-bold">{mkViolations.length}</span>
-                  {isFinalized ? (
-                    <Badge variant="secondary" className="gap-1 text-green-700 bg-green-100 dark:bg-green-900/30 dark:text-green-400">
-                      <CheckCircle2 className="h-3 w-3" />
-                      Terfinalisasi
-                    </Badge>
-                  ) : (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setFinalizeTarget(assignment)}
-                      className="gap-1"
-                    >
-                      <Lock className="h-3.5 w-3.5" />
-                      Finalisasi
-                    </Button>
-                  )}
-                </div>
+        <Select
+          value={filterPraktikumId || 'all'}
+          onValueChange={(v) => setFilterPraktikumId(v === 'all' ? '' : v)}
+          disabled={!filterTahun}
+        >
+          <SelectTrigger className="h-8 w-[220px] text-sm">
+            <SelectValue placeholder="Nama Praktikum" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              <SelectItem value="all">Semua Praktikum</SelectItem>
+              {filteredPraktikumList.map((p) => (
+                <SelectItem key={p.id} value={p.id}>
+                  {p.nama}
+                </SelectItem>
+              ))}
+            </SelectGroup>
+          </SelectContent>
+        </Select>
+
+        <span className="text-sm text-muted-foreground ml-auto">
+          {filteredViolations.length} pelanggaran
+        </span>
+      </div>
+
+      {/* ── Finalize Cards (one per aktif praktikum) ── */}
+      {finalizeSummary.length > 0 && (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-6">
+          {finalizeSummary.map((item) => (
+            <div key={item.key} className="card glass p-4 relative overflow-hidden">
+              <div className="mb-3">
+                <h3 className="text-sm font-semibold leading-tight">{item.nama}</h3>
+                <p className="text-xs text-muted-foreground">{item.tahun_ajaran}</p>
               </div>
-            );
-          })}
+              <div className="flex items-center justify-between">
+                <span className="text-2xl font-bold">{item.count}</span>
+                {item.isFinalized ? (
+                  <Badge
+                    variant="secondary"
+                    className="gap-1 text-green-700 bg-green-100 dark:bg-green-900/30 dark:text-green-400"
+                  >
+                    <CheckCircle2 className="h-3 w-3" />
+                    Terfinalisasi
+                  </Badge>
+                ) : (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() =>
+                      setFinalizeTarget({
+                        id_praktikum: item.id_praktikum,
+                        tahun_ajaran: item.tahun_ajaran,
+                        nama: item.nama,
+                      })
+                    }
+                    className="gap-1"
+                  >
+                    <Lock className="h-3.5 w-3.5" />
+                    Finalisasi
+                  </Button>
+                )}
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
-      {/* Table Section */}
-      <div className="card glass p-6" style={{ marginBottom: '2rem' }}>
+      {/* ── Table ── */}
+      <div className="card glass p-6 mb-8">
         <div className="rounded-md border mb-4">
           <Table>
             <TableHeader>
@@ -293,8 +449,11 @@ export default function PelanggaranClientPage({ violations, role, koorAssignment
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={columns.length} className="h-32 text-center text-muted-foreground py-12">
-                    Belum ada data pelanggaran.
+                  <TableCell
+                    colSpan={columns.length}
+                    className="h-32 text-center text-muted-foreground py-12"
+                  >
+                    Belum ada data pelanggaran untuk filter ini.
                   </TableCell>
                 </TableRow>
               )}
@@ -302,15 +461,13 @@ export default function PelanggaranClientPage({ violations, role, koorAssignment
           </Table>
         </div>
 
-        {/* Pagination Controls */}
+        {/* Pagination */}
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <p className="text-sm font-medium">Rows per page</p>
+            <p className="text-sm font-medium">Baris per halaman</p>
             <Select
               value={`${table.getState().pagination.pageSize}`}
-              onValueChange={(value) => {
-                table.setPageSize(Number(value));
-              }}
+              onValueChange={(value) => table.setPageSize(Number(value))}
             >
               <SelectTrigger className="h-8 w-[70px]">
                 <SelectValue placeholder={table.getState().pagination.pageSize} />
@@ -328,8 +485,8 @@ export default function PelanggaranClientPage({ violations, role, koorAssignment
           </div>
 
           <div className="flex items-center space-x-6 lg:space-x-8">
-            <div className="flex w-[100px] items-center justify-center text-sm font-medium">
-              Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
+            <div className="flex w-[120px] items-center justify-center text-sm font-medium">
+              Halaman {table.getState().pagination.pageIndex + 1} dari {table.getPageCount()}
             </div>
             <div className="flex items-center space-x-2">
               <Button
@@ -339,7 +496,7 @@ export default function PelanggaranClientPage({ violations, role, koorAssignment
                 disabled={!table.getCanPreviousPage()}
               >
                 <ChevronLeft className="h-4 w-4" />
-                Previous
+                Prev
               </Button>
               <Button
                 variant="outline"
@@ -355,15 +512,19 @@ export default function PelanggaranClientPage({ violations, role, koorAssignment
         </div>
       </div>
 
-      {/* Add Modal */}
+      {/* ── Add Modal ── */}
       <PelanggaranAddModal
         open={isAddOpen}
         onClose={() => setIsAddOpen(false)}
         onSubmit={handleAddViolation}
         isLoading={isSubmitting}
+        praktikumList={praktikumList}
+        tahunAjaranList={tahunAjaranList}
+        asprakList={asprakList}
+        jadwalList={jadwalList}
       />
 
-      {/* Finalize Confirmation */}
+      {/* ── Finalize Confirmation ── */}
       <AlertDialog
         open={!!finalizeTarget}
         onOpenChange={(open) => !open && setFinalizeTarget(null)}
@@ -373,8 +534,11 @@ export default function PelanggaranClientPage({ violations, role, koorAssignment
             <AlertDialogTitle>Finalisasi Pelanggaran</AlertDialogTitle>
             <AlertDialogDescription>
               Anda akan memfinalisasi semua data pelanggaran untuk{' '}
-              <strong>{finalizeTarget?.mata_kuliah?.nama_lengkap}</strong>. Setelah difinalisasi,
-              data tidak dapat diubah lagi. Pastikan semua data sudah benar.
+              <strong>
+                {finalizeTarget?.nama} ({finalizeTarget?.tahun_ajaran})
+              </strong>
+              . Setelah difinalisasi, data tidak dapat diubah lagi. Pastikan semua data sudah
+              benar.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
