@@ -18,9 +18,7 @@ export async function GET() {
     const { data: authUsers, error: authError } = await admin.auth.admin.listUsers();
     if (authError) throw authError;
 
-    const { data: pengguna, error: profileError } = await admin
-      .from('pengguna')
-      .select('*');
+    const { data: pengguna, error: profileError } = await admin.from('pengguna').select('*');
     if (profileError) throw profileError;
 
     const profileMap = new Map(pengguna.map((p: any) => [p.id, p]));
@@ -51,21 +49,21 @@ export async function POST(request: NextRequest) {
     const { email, password, nama_lengkap, role } = body;
 
     if (!email || !password || !nama_lengkap || !role) {
-      return NextResponse.json(
-        { ok: false, error: 'Semua field wajib diisi.' },
-        { status: 400 }
-      );
+      console.error('Missing fields in request body:', body);
+
+      return NextResponse.json({ ok: false, error: 'Semua field wajib diisi.' }, { status: 400 });
     }
 
     const admin = createAdminClient();
 
-    // Create auth user (email_confirm disabled in Supabase settings)
     const { data: newUser, error: createError } = await admin.auth.admin.createUser({
       email,
       password,
       user_metadata: { nama_lengkap },
       email_confirm: true, // skip email verification flow entirely
     });
+
+    console.log('Create user result:', { newUser, createError });
 
     if (createError) throw createError;
 
@@ -77,6 +75,8 @@ export async function POST(request: NextRequest) {
       .from('pengguna')
       .update({ nama_lengkap, role })
       .eq('id', newUser.user.id);
+
+    console.log('Update profile result:', { updateError });
 
     if (updateError) throw updateError;
 
