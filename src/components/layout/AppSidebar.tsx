@@ -3,7 +3,7 @@
 import * as React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import {
   Home,
   Users,
@@ -63,8 +63,8 @@ const ALL_NAV_ITEMS: NavItem[] = [
     href: '#',
     icon: Users,
     items: [
-      { label: 'Data Asprak', href: '/asprak' },
-      { label: 'Plotting Asprak', href: '/plotting' },
+      { label: 'Data Asprak', href: '/asprak?tab=data' },
+      { label: 'Generate Kode Asprak', href: '/asprak?tab=rules' },
     ],
   },
   { label: 'Jadwal Praktikum', href: '/jadwal', icon: Calendar },
@@ -85,6 +85,7 @@ type AppSidebarProps = React.ComponentProps<typeof Sidebar> & {
 
 export function AppSidebar({ user, ...props }: AppSidebarProps) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   const visibleNavItems = ALL_NAV_ITEMS.filter((item) => {
     if (item.items) {
@@ -109,7 +110,11 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-semibold">Informatics Lab</span>
                   <span className="truncate text-xs text-muted-foreground">
-                    {user.role === 'ADMIN' ? 'Admin Portal' : user.role === 'ASLAB' ? 'Aslab Portal' : 'Koor Portal'}
+                    {user.role === 'ADMIN'
+                      ? 'Admin Portal'
+                      : user.role === 'ASLAB'
+                        ? 'Aslab Portal'
+                        : 'Koor Portal'}
                   </span>
                 </div>
               </Link>
@@ -127,7 +132,7 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
                 const Icon = item.icon;
                 const isActive =
                   pathname === item.href ||
-                  item.items?.some((sub) => pathname.startsWith(sub.href));
+                  item.items?.some((sub) => pathname.startsWith(sub.href.split('?')[0]));
                 const hasSubmenu = item.items && item.items.length > 0;
 
                 if (hasSubmenu) {
@@ -151,18 +156,23 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
                         </CollapsibleTrigger>
                         <CollapsibleContent>
                           <SidebarMenuSub>
-                            {visibleSubItems.map((subItem) => (
-                              <SidebarMenuSubItem key={subItem.href}>
-                                <SidebarMenuSubButton
-                                  asChild
-                                  isActive={pathname.startsWith(subItem.href)}
-                                >
-                                  <Link href={subItem.href}>
-                                    <span>{subItem.label}</span>
-                                  </Link>
-                                </SidebarMenuSubButton>
-                              </SidebarMenuSubItem>
-                            ))}
+                            {visibleSubItems.map((subItem) => {
+                              // Precise active matching checking query params
+                              const [basePath, query] = subItem.href.split('?');
+                              const isSubActive =
+                                pathname.startsWith(basePath) &&
+                                (!query || searchParams?.toString().includes(query));
+
+                              return (
+                                <SidebarMenuSubItem key={subItem.href}>
+                                  <SidebarMenuSubButton asChild isActive={isSubActive}>
+                                    <Link href={subItem.href}>
+                                      <span>{subItem.label}</span>
+                                    </Link>
+                                  </SidebarMenuSubButton>
+                                </SidebarMenuSubItem>
+                              );
+                            })}
                           </SidebarMenuSub>
                         </CollapsibleContent>
                       </SidebarMenuItem>
