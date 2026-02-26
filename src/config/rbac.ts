@@ -68,7 +68,8 @@ export const ROLE_DEFAULT_REDIRECT: Record<Role, string> = {
 /**
  * Returns true if the given role is allowed to access the given pathname.
  */
-export function hasAccess(role: Role, pathname: string): boolean {
+export function hasAccess(role: Role, urlPath: string): boolean {
+  const pathname = urlPath.split('?')[0];
   const allowed = ROLE_ALLOWED_PATHS[role];
   return allowed.some((allowedPath) => {
     if (allowedPath === '/') return pathname === '/';
@@ -80,7 +81,5 @@ export function hasAccess(role: Role, pathname: string): boolean {
  * Returns true if a path is public (accessible without authentication).
  */
 export function isPublicPath(pathname: string): boolean {
-  return PUBLIC_PATHS.some(
-    (p) => pathname === p || pathname.startsWith(p + '/')
-  );
+  return PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p + '/'));
 }
