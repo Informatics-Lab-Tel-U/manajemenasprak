@@ -6,8 +6,11 @@ import type { UpdatePenggunaInput } from '@/types/api';
 
 /**
  * PATCH /api/admin/users/[id]
- * Update a user's role or nama_lengkap.
- * Admin only.
+ * Update a user's profile (name, role).
+ * If role = ASPRAK_KOOR and praktikum_ids provided, sync asprak_koordinator records.
+ *
+ * asprak_koordinator schema: id_pengguna, id_praktikum, is_active
+ * UNIQUE constraint: (id_pengguna, id_praktikum)
  */
 export async function PATCH(
   request: NextRequest,
@@ -16,16 +19,51 @@ export async function PATCH(
   try {
     await requireRole(['ADMIN'], '/');
 
-    const { id } = await params;
+    const { id: userId } = await params;
     const body: UpdatePenggunaInput = await request.json();
+    const { nama_lengkap, role, praktikum_ids } = body;
 
+    const admin = createAdminClient();
     const supabase = await createClient();
-    const { error } = await supabase
-      .from('pengguna')
-      .update(body)
-      .eq('id', id);
 
-    if (error) throw error;
+    // 1. Update basic profile
+    const updateData: Record<string, any> = {};
+    if (nama_lengkap) updateData.nama_lengkap = nama_lengkap;
+    if (role) updateData.role = role;
+
+    if (Object.keys(updateData).length > 0) {
+      const { error } = await supabase
+        .from('pengguna')
+        .update(updateData)
+        .eq('id', userId);
+      if (error) throw error;
+    }
+
+    // 2. Sync ASPRAK_KOOR assignments if provided
+    //    Strategy: delete all existing → insert new ones
+    //    Uses only id_pengguna + id_praktikum (no id_mata_kuliah, no tahun_ajaran)
+    if (role === 'ASPRAK_KOOR' && praktikum_ids) {
+      // Delete all existing assignments for this user
+      const { error: deleteError } = await admin
+        .from('asprak_koordinator')
+        .delete()
+        .eq('id_pengguna', userId);
+      if (deleteError) throw deleteError;
+
+      // Insert new assignments
+      if (praktikum_ids.length > 0) {
+        const rows = praktikum_ids.map((pId) => ({
+          id_pengguna: userId,
+          id_praktikum: pId,
+          is_active: true,
+        }));
+
+        const { error: insertError } = await admin
+          .from('asprak_koordinator')
+          .insert(rows);
+        if (insertError) throw insertError;
+      }
+    }
 
     return NextResponse.json({ ok: true });
   } catch (err: any) {
@@ -35,7 +73,7 @@ export async function PATCH(
 
 /**
  * DELETE /api/admin/users/[id]
- * Delete a user from the system (auth + Pengguna via CASCADE).
+ * Delete a user from auth + cascade to pengguna.
  * Admin only.
  */
 export async function DELETE(

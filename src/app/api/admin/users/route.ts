@@ -2,11 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { requireRole } from '@/lib/auth';
-import type { CreatePenggunaInput, UpdatePenggunaInput } from '@/types/api';
+import type { CreatePenggunaInput } from '@/types/api';
 
 /**
  * GET /api/admin/users
- * List all users (auth.users joined with Pengguna profile).
+ * List all users (auth.users joined with pengguna profile).
  * Admin only.
  */
 export async function GET() {
@@ -39,48 +39,62 @@ export async function GET() {
 /**
  * POST /api/admin/users
  * Create a new user with a specific role.
- * Admin only.
+ * If role = ASPRAK_KOOR and praktikum_ids provided, insert asprak_koordinator records.
+ *
+ * asprak_koordinator schema: id_pengguna, id_praktikum, is_active
+ * (tahun_ajaran lives in praktikum table — derived via join)
  */
 export async function POST(request: NextRequest) {
   try {
     await requireRole(['ADMIN'], '/');
 
     const body: CreatePenggunaInput = await request.json();
-    const { email, password, nama_lengkap, role } = body;
+    const { email, password, nama_lengkap, role, praktikum_ids } = body;
 
     if (!email || !password || !nama_lengkap || !role) {
-      console.error('Missing fields in request body:', body);
-
       return NextResponse.json({ ok: false, error: 'Semua field wajib diisi.' }, { status: 400 });
     }
 
     const admin = createAdminClient();
 
+    // 1. Create auth user
     const { data: newUser, error: createError } = await admin.auth.admin.createUser({
       email,
       password,
       user_metadata: { nama_lengkap },
-      email_confirm: true, // skip email verification flow entirely
+      email_confirm: true,
     });
-
-    console.log('Create user result:', { newUser, createError });
-
     if (createError) throw createError;
 
-    // The trigger handle_new_user auto-creates a Pengguna row with default role ASPRAK_KOOR.
-    // Override the role with the one specified.
-    // Use regular client for the update to ensure audit log attribution
+    const userId = newUser.user.id;
+
+    // 2. Update pengguna profile (trigger handle_new_user already created the row)
     const supabase = await createClient();
     const { error: updateError } = await supabase
       .from('pengguna')
       .update({ nama_lengkap, role })
-      .eq('id', newUser.user.id);
-
-    console.log('Update profile result:', { updateError });
-
+      .eq('id', userId);
     if (updateError) throw updateError;
 
-    return NextResponse.json({ ok: true, data: { id: newUser.user.id } });
+    // 3. For ASPRAK_KOOR: insert asprak_koordinator records (one per praktikum)
+    if (role === 'ASPRAK_KOOR' && praktikum_ids && praktikum_ids.length > 0) {
+      const assignmentRows = praktikum_ids.map((pId) => ({
+        id_pengguna: userId,
+        id_praktikum: pId,
+        is_active: true,
+      }));
+
+      const { error: assignError } = await supabase
+        .from('asprak_koordinator')
+        .insert(assignmentRows);
+
+      if (assignError) {
+        // Non-fatal — user is created, log the assignment failure
+        console.error('Failed to create koor assignments:', assignError.message);
+      }
+    }
+
+    return NextResponse.json({ ok: true, data: { id: userId } });
   } catch (err: any) {
     return NextResponse.json({ ok: false, error: err.message }, { status: 500 });
   }
