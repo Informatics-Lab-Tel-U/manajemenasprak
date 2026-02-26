@@ -12,10 +12,13 @@ export type AsprakKoordinator = {
   id: string;
   id_pengguna: string;
   id_mata_kuliah: string;
+  id_praktikum?: string;
+  tahun_ajaran?: string;
   is_active: boolean;
   created_at: string;
   updated_at: string;
   mata_kuliah?: MataKuliah;
+  praktikum?: Pick<Praktikum, 'id' | 'nama' | 'tahun_ajaran'>;
 };
 
 export type Asprak = {

@@ -1,186 +1,537 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Loader2 } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Loader2, Search, X, ChevronDown, ChevronRight, Users, Calendar } from 'lucide-react';
 import { toast } from 'sonner';
-import type { Asprak, Jadwal } from '@/types/database';
-import { fetchAllAsprak } from '@/lib/fetchers/asprakFetcher';
-import { fetchJadwal } from '@/lib/fetchers/jadwalFetcher';
+import type { Asprak, Jadwal, Praktikum } from '@/types/database';
+
+export const VIOLATION_TYPES = [
+  'TELAT DATANG',
+  'TIDAK DATANG',
+  'TELAT NILAI',
+  'PAKAIAN TIDAK SESUAI',
+  'LAIN-LAIN',
+] as const;
+
+export type ViolationType = (typeof VIOLATION_TYPES)[number];
+
+// Which side-panel is currently open
+type SidePanel = 'asprak' | 'jadwal' | null;
 
 interface PelanggaranFormProps {
-  onSubmit: (data: any) => Promise<void>;
+  onSubmit: (data: {
+    id_asprak: string[];
+    id_jadwal: string;
+    jenis: string;
+    modul: number | null;
+  }) => Promise<void>;
   onCancel: () => void;
   isLoading?: boolean;
+  praktikumList: Praktikum[];
+  tahunAjaranList: string[];
+  asprakList: (Asprak & { praktikum_ids?: string[] })[];
+  jadwalList: (Jadwal & { id_praktikum?: string })[];
+  /** Notify parent modal when side panel opens/closes so it can resize */
+  onSidePanelChange?: (panel: SidePanel) => void;
 }
-
-const VIOLATION_TYPES = [
-  'Terlambat',
-  'Tidak Hadir',
-  'Tidak Siap Mengajar',
-  'Berperilaku Tidak Pantas',
-  'Lainnya',
-];
 
 export default function PelanggaranForm({
   onSubmit,
   onCancel,
   isLoading = false,
+  praktikumList,
+  tahunAjaranList,
+  asprakList,
+  jadwalList,
+  onSidePanelChange,
 }: PelanggaranFormProps) {
-  const [asprakList, setAsprakList] = useState<Asprak[]>([]);
-  const [jadwalList, setJadwalList] = useState<Jadwal[]>([]);
-  const [loadingData, setLoadingData] = useState(false);
+  // ── Context filters ──
+  const [selectedTahunAjaran, setSelectedTahunAjaran] = useState('');
+  const [selectedPraktikumId, setSelectedPraktikumId] = useState('');
 
-  const [idAsprak, setIdAsprak] = useState('');
+  // ── Violation fields ──
+  const [selectedAsprakIds, setSelectedAsprakIds] = useState<string[]>([]);
   const [idJadwal, setIdJadwal] = useState('');
   const [jenis, setJenis] = useState('');
-  const [modul, setModul] = useState<number | null>(null);
+  const [modul, setModul] = useState<string>('none'); // Using 'none' string for shadcn select empty value stability
 
-  useEffect(() => {
-    async function loadData() {
-      setLoadingData(true);
-      try {
-        const [asprakRes, jadwalRes] = await Promise.all([
-          fetchAllAsprak(),
-          fetchJadwal(),
-        ]);
-        if (asprakRes.ok && asprakRes.data) setAsprakList(asprakRes.data);
-        if (jadwalRes.ok && jadwalRes.data) setJadwalList(jadwalRes.data);
-      } catch {
-        toast.error('Gagal memuat data awal');
-      } finally {
-        setLoadingData(false);
-      }
+  // ── Side panel state ──
+  const [sidePanel, setSidePanel] = useState<SidePanel>(null);
+  const [asprakSearch, setAsprakSearch] = useState('');
+  const [jadwalSearch, setJadwalSearch] = useState('');
+
+  function openPanel(panel: SidePanel) {
+    setSidePanel(panel);
+    onSidePanelChange?.(panel);
+  }
+
+  function closePanel() {
+    setSidePanel(null);
+    onSidePanelChange?.(null);
+    setAsprakSearch('');
+    setJadwalSearch('');
+  }
+
+  // Reset violation fields (called on context change)
+  const resetViolationFields = useCallback(() => {
+    setSelectedAsprakIds([]);
+    setIdJadwal('');
+    setJenis('');
+    setModul('none');
+    setAsprakSearch('');
+    setJadwalSearch('');
+    setSidePanel(null);
+    onSidePanelChange?.(null);
+  }, [onSidePanelChange]);
+
+  // ── Derived lists ──
+  const filteredPraktikumList = useMemo(
+    () =>
+      selectedTahunAjaran
+        ? praktikumList.filter((p) => p.tahun_ajaran === selectedTahunAjaran)
+        : praktikumList,
+    [praktikumList, selectedTahunAjaran]
+  );
+
+  const filteredAsprak = useMemo(() => {
+    let list = asprakList;
+    if (selectedPraktikumId) {
+      list = list.filter((a) => a.praktikum_ids?.includes(selectedPraktikumId));
     }
-    loadData();
-  }, []);
+    if (asprakSearch.trim()) {
+      const q = asprakSearch.toLowerCase();
+      list = list.filter(
+        (a) =>
+          a.nama_lengkap.toLowerCase().includes(q) ||
+          a.kode.toLowerCase().includes(q) ||
+          a.nim.toLowerCase().includes(q)
+      );
+    }
+    return list;
+  }, [asprakList, selectedPraktikumId, asprakSearch]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const filteredJadwal = useMemo(() => {
+    let list = jadwalList;
+    if (selectedPraktikumId) {
+      list = list.filter((j) => j.id_praktikum === selectedPraktikumId);
+    }
+    if (jadwalSearch.trim()) {
+      const q = jadwalSearch.toLowerCase();
+      list = list.filter(
+        (j) =>
+          j.kelas.toLowerCase().includes(q) ||
+          (j.mata_kuliah?.nama_lengkap ?? '').toLowerCase().includes(q) ||
+          j.hari.toLowerCase().includes(q)
+      );
+    }
+    return list;
+  }, [jadwalList, selectedPraktikumId, jadwalSearch]);
+
+  const selectedJadwal = useMemo(
+    () => jadwalList.find((j) => j.id === idJadwal),
+    [jadwalList, idJadwal]
+  );
+
+  function toggleAsprak(id: string) {
+    setSelectedAsprakIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    
+    const finalModul = modul === 'none' ? null : parseInt(modul);
 
-    if (!idAsprak || !idJadwal || !jenis) {
+    if (!selectedTahunAjaran || !selectedPraktikumId) {
+      toast.error('Pilih Tahun Ajaran dan Nama Praktikum terlebih dahulu');
+      return;
+    }
+    if (selectedAsprakIds.length === 0) {
+      toast.error('Pilih minimal 1 Asprak');
+      return;
+    }
+    if (!idJadwal || !jenis) {
       toast.error('Mohon lengkapi semua field yang wajib');
       return;
     }
 
-    const formData = {
-      id_asprak: idAsprak,
-      id_jadwal: idJadwal,
-      jenis,
-      ...(modul !== null && { modul }),
-    };
+    await onSubmit({ 
+      id_asprak: selectedAsprakIds, 
+      id_jadwal: idJadwal, 
+      jenis, 
+      modul: finalModul 
+    });
+  }
 
-    await onSubmit(formData);
-  };
+  const contextReady = !!selectedTahunAjaran && !!selectedPraktikumId;
+
+  // ── Rendered side panel content ──
+  const sidePanelContent =
+    sidePanel === 'asprak' ? (
+      <div className="flex flex-col h-full p-2">
+        <div className="flex items-center justify-between px-4 py-3 border-b">
+          <div className="flex items-center gap-2 font-medium text-sm">
+            <Users className="h-4 w-4 text-primary" />
+            Pilih Asprak
+          </div>
+          <button
+            type="button"
+            onClick={closePanel}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        {/* search */}
+        <div className="px-3 py-2 border-b">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Nama, kode, atau NIM..."
+              value={asprakSearch}
+              onChange={(e) => setAsprakSearch(e.target.value)}
+              className="pl-8 h-8 text-sm"
+              autoFocus
+            />
+          </div>
+        </div>
+
+        {/* selected count badge */}
+        {selectedAsprakIds.length > 0 && (
+          <div className="px-3 py-1.5 border-b bg-primary/5 text-xs text-primary flex items-center gap-1.5">
+            <span className="font-semibold">{selectedAsprakIds.length}</span> asprak dipilih
+            <button
+              type="button"
+              onClick={() => setSelectedAsprakIds([])}
+              className="ml-auto text-muted-foreground hover:text-foreground"
+            >
+              Hapus semua
+            </button>
+          </div>
+        )}
+
+        {/* list */}
+        <div className="flex-1 overflow-y-auto">
+          {filteredAsprak.length === 0 ? (
+            <p className="py-10 text-center text-sm text-muted-foreground">Tidak ada asprak</p>
+          ) : (
+            filteredAsprak.map((a) => {
+              const checked = selectedAsprakIds.includes(a.id);
+              return (
+                <div
+                  key={a.id}
+                  className={`flex items-center gap-2.5 px-3 py-2.5 cursor-pointer border-b border-border/40 last:border-0
+                    ${checked ? 'bg-primary/5' : 'hover:bg-accent'}`}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    toggleAsprak(a.id);
+                  }}
+                >
+                  <Checkbox
+                    checked={checked}
+                    className="pointer-events-none flex-shrink-0"
+                    tabIndex={-1}
+                  />
+                  <div className="leading-tight min-w-0">
+                    <div className="text-sm font-medium truncate">{a.nama_lengkap}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {a.kode} · {a.nim}
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        <div className="px-3 pb-1 pt-3 border-t">
+          <Button
+            type="button"
+            size="sm"
+            className="w-full h-8"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              closePanel();
+            }}
+          >
+            Selesai ({selectedAsprakIds.length} dipilih)
+          </Button>
+        </div>
+      </div>
+    ) : sidePanel === 'jadwal' ? (
+      <div className="flex flex-col h-full p-2">
+        <div className="flex items-center justify-between px-4 py-3 border-b">
+          <div className="flex items-center gap-2 font-medium text-sm">
+            <Calendar className="h-4 w-4 text-primary" />
+            Pilih Jadwal
+          </div>
+          <button
+            type="button"
+            onClick={closePanel}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="px-3 py-2 border-b">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Kelas, hari, atau nama MK..."
+              value={jadwalSearch}
+              onChange={(e) => setJadwalSearch(e.target.value)}
+              className="pl-8 h-8 text-sm"
+              autoFocus
+            />
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto">
+          {filteredJadwal.length === 0 ? (
+            <p className="py-10 text-center text-sm text-muted-foreground">Tidak ada jadwal</p>
+          ) : (
+            filteredJadwal.map((j) => {
+              const selected = idJadwal === j.id;
+              return (
+                <div
+                  key={j.id}
+                  className={`px-3 py-2.5 cursor-pointer border-b border-border/40 last:border-0
+                    ${selected ? 'bg-primary/5 border-l-2 border-l-primary' : 'hover:bg-accent'}`}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    setIdJadwal(j.id);
+                    closePanel();
+                  }}
+                >
+                  <div className="text-sm font-medium">
+                    {j.mata_kuliah?.nama_lengkap ?? '—'} — Kelas {j.kelas}
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-0.5">
+                    {j.hari} · {j.jam}
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      </div>
+    ) : null;
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-3">
-        {/* Asprak */}
-        <div className="space-y-1.5">
-          <Label htmlFor="asprak">Asprak *</Label>
-          <Select value={idAsprak} onValueChange={setIdAsprak} disabled={loadingData}>
-            <SelectTrigger className="h-9 w-full">
-              <SelectValue placeholder="Pilih Asprak" />
-            </SelectTrigger>
-            <SelectContent>
-              {asprakList.map((asprak) => (
-                <SelectItem key={asprak.id} value={asprak.id}>
-                  {asprak.nama_lengkap} ({asprak.kode})
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+    <div className="flex h-full min-h-0">
+      {/* ── LEFT: Form (scrollable independently) ── */}
+      <form
+        onSubmit={handleSubmit}
+        className="flex flex-col flex-1 min-w-0 min-h-0">
+        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-5">
+        <div className="rounded-lg border border-border/60 bg-muted/30 p-4 space-y-3">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+            Konteks Pelanggaran
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label>Tahun Ajaran *</Label>
+              <Select
+                value={selectedTahunAjaran}
+                onValueChange={(v) => {
+                  setSelectedTahunAjaran(v);
+                  setSelectedPraktikumId('');
+                  resetViolationFields();
+                }}
+              >
+                <SelectTrigger className="w-full h-9">
+                  <SelectValue placeholder="Pilih Tahun Ajaran" />
+                </SelectTrigger>
+                <SelectContent>
+                  {tahunAjaranList.map((t) => (
+                    <SelectItem key={t} value={t}>{t}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Nama Praktikum *</Label>
+              <Select
+                value={selectedPraktikumId}
+                onValueChange={(v) => {
+                  setSelectedPraktikumId(v);
+                  resetViolationFields();
+                }}
+                disabled={!selectedTahunAjaran}
+              >
+                <SelectTrigger className="w-full h-9">
+                  <SelectValue placeholder="Pilih Praktikum" />
+                </SelectTrigger>
+                <SelectContent>
+                  {filteredPraktikumList.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>{p.nama}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
         </div>
 
-        {/* Jadwal */}
-        <div className="space-y-1.5">
-          <Label htmlFor="jadwal">Jadwal *</Label>
-          <Select value={idJadwal} onValueChange={setIdJadwal} disabled={loadingData}>
-            <SelectTrigger className="h-9 w-full">
-              <SelectValue placeholder="Pilih Jadwal" />
-            </SelectTrigger>
-            <SelectContent>
-              {jadwalList.map((jadwal) => {
-                const mkName = jadwal.mata_kuliah?.nama_lengkap ?? 'Unknown MK';
-                return (
-                  <SelectItem key={jadwal.id} value={jadwal.id}>
-                    {mkName} — {jadwal.hari}, {jadwal.jam} (Kelas {jadwal.kelas})
-                  </SelectItem>
-                );
-              })}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Jenis Pelanggaran */}
-        <div className="space-y-1.5">
-          <Label htmlFor="jenis">Jenis Pelanggaran *</Label>
-          <Select value={jenis} onValueChange={setJenis}>
-            <SelectTrigger className="h-9 w-full">
-              <SelectValue placeholder="Pilih Jenis Pelanggaran" />
-            </SelectTrigger>
-            <SelectContent>
-              {VIOLATION_TYPES.map((type) => (
-                <SelectItem key={type} value={type}>
-                  {type}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Modul */}
-        <div className="space-y-1.5">
-          <Label htmlFor="modul">Modul</Label>
-          <Select
-            value={modul !== null ? String(modul) : ''}
-            onValueChange={(v) => setModul(parseInt(v))}
-            disabled={loadingData}
-          >
-            <SelectTrigger className="h-9 w-full" id="modul">
-              <SelectValue placeholder="Pilih Modul (opsional)" />
-            </SelectTrigger>
-            <SelectContent>
-              {Array.from({ length: 16 }, (_, i) => (
-                <SelectItem key={i + 1} value={String(i + 1)}>
-                  Modul {i + 1}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      <div className="flex justify-end gap-2 pt-2">
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={onCancel}
-          className="h-8"
-          disabled={isLoading}
+        {/* Step 2: Violation fields */}
+        <div
+          className={`space-y-4 transition-opacity ${
+            contextReady ? 'opacity-100' : 'opacity-40 pointer-events-none'
+          }`}
         >
-          Batal
-        </Button>
-        <Button
-          type="submit"
-          size="sm"
-          className="h-8"
-          disabled={isLoading || loadingData}
-        >
-          {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Catat Pelanggaran
-        </Button>
-      </div>
-    </form>
+          {/* Asprak picker trigger */}
+          <div className="space-y-1.5">
+            <Label>Asprak yang Melanggar *</Label>
+
+            {selectedAsprakIds.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mb-1">
+                {selectedAsprakIds.map((id) => {
+                  const a = asprakList.find((x) => x.id === id);
+                  if (!a) return null;
+                  return (
+                    <Badge key={id} variant="secondary" className="gap-1 pr-1 text-xs">
+                      {a.kode}
+                      <button
+                        type="button"
+                        onMouseDown={(e) => { e.preventDefault(); toggleAsprak(id); }}
+                        className="ml-0.5 rounded-full hover:bg-muted"
+                      >
+                        <X className="h-2.5 w-2.5" />
+                      </button>
+                    </Badge>
+                  );
+                })}
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={() => openPanel(sidePanel === 'asprak' ? null : 'asprak')}
+              className={`w-full flex items-center justify-between h-9 rounded-md border px-3 py-2 text-sm text-left transition-colors
+                ${sidePanel === 'asprak'
+                  ? 'border-primary bg-primary/5 text-primary'
+                  : 'border-input bg-transparent hover:bg-accent text-muted-foreground'}`}
+            >
+              <span className="flex items-center gap-2">
+                <Users className="h-4 w-4 flex-shrink-0" />
+                {selectedAsprakIds.length === 0
+                  ? 'Pilih Asprak...'
+                  : `${selectedAsprakIds.length} asprak dipilih`}
+              </span>
+              <ChevronRight className="h-4 w-4 flex-shrink-0" />
+            </button>
+
+            {selectedAsprakIds.length > 1 && (
+              <p className="text-xs text-amber-600 dark:text-amber-400">
+                ⚠ Multi-pilih: semua asprak akan dicatat dengan jenis, modul, dan kelas yang sama.
+              </p>
+            )}
+          </div>
+
+          {/* Jadwal picker trigger */}
+          <div className="space-y-1.5">
+            <Label>Kelas / Jadwal *</Label>
+            <button
+              type="button"
+              onClick={() => openPanel(sidePanel === 'jadwal' ? null : 'jadwal')}
+              className={`w-full flex items-center justify-between h-9 rounded-md border px-3 py-2 text-sm text-left transition-colors
+                ${sidePanel === 'jadwal'
+                  ? 'border-primary bg-primary/5 text-primary'
+                  : 'border-input bg-transparent hover:bg-accent'}`}
+            >
+              <span
+                className={`flex items-center gap-2 min-w-0 ${
+                  selectedJadwal ? 'text-foreground' : 'text-muted-foreground'
+                }`}
+              >
+                <Calendar className="h-4 w-4 flex-shrink-0" />
+                <span className="truncate">
+                  {selectedJadwal
+                    ? `${selectedJadwal.mata_kuliah?.nama_lengkap ?? ''} — ${selectedJadwal.kelas} (${selectedJadwal.hari})`
+                    : 'Pilih Jadwal / Kelas...'}
+                </span>
+              </span>
+              <ChevronRight className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
+            </button>
+          </div>
+
+          {/* Jenis Pelanggaran — shadcn select */}
+          <div className="space-y-1.5">
+            <Label>Jenis Pelanggaran *</Label>
+            <Select value={jenis} onValueChange={setJenis}>
+              <SelectTrigger className="w-full h-9">
+                <SelectValue placeholder="Pilih Jenis Pelanggaran" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  {VIOLATION_TYPES.map((type) => (
+                    <SelectItem key={type} value={type}>{type}</SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Modul — shadcn select */}
+          <div className="space-y-1.5">
+            <Label>
+              Modul{' '}
+              <span className="text-muted-foreground font-normal text-xs">(opsional)</span>
+            </Label>
+            <Select value={modul} onValueChange={setModul}>
+              <SelectTrigger className="w-full h-9">
+                <SelectValue placeholder="Pilih Modul" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectItem value="none">— Pilih Modul —</SelectItem>
+                  {Array.from({ length: 16 }, (_, i) => (
+                    <SelectItem key={i + 1} value={String(i + 1)}>Modul {i + 1}</SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        </div>
+
+        {/* Footer — sticky at bottom of form column */}
+        <div className="flex justify-end gap-2 px-6 py-3 border-t bg-background shrink-0">
+          <Button type="button" variant="outline" size="sm" onClick={onCancel} className="h-8" disabled={isLoading}>
+            Batal
+          </Button>
+          <Button type="submit" size="sm" className="h-8" disabled={isLoading || !contextReady}>
+            {isLoading ? (
+              <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Menyimpan...</>
+            ) : (
+              'Catat Pelanggaran'
+            )}
+          </Button>
+        </div>
+      </form>
+
+      {/* ── RIGHT: Side Panel (scrollable independently) ── */}
+      {sidePanel && (
+        <div className="w-72 flex-shrink-0 border-l border-border bg-background flex flex-col min-h-0 overflow-hidden">
+          {sidePanelContent}
+        </div>
+      )}
+    </div>
   );
 }
