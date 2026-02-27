@@ -87,7 +87,7 @@ export default function DashboardCharts({
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Schedule Visualization */}
-      <Card className="col-span-full">
+      <Card className="col-span-full bg-white/60 dark:bg-zinc-900/60 backdrop-blur-sm border-border/50 shadow-sm">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle>
@@ -197,7 +197,7 @@ export default function DashboardCharts({
         </CardContent>
       </Card>
       {/* Chart 1: Asprak per Angkatan */}
-      <Card>
+      <Card className="bg-white/60 dark:bg-zinc-900/60 backdrop-blur-sm border-border/50 shadow-sm">
         <CardHeader>
           <CardTitle>Total Asprak per Angkatan</CardTitle>
           <CardDescription>Distribusi asisten praktikum berdasarkan angkatan</CardDescription>
@@ -216,7 +216,7 @@ export default function DashboardCharts({
       </Card>
 
       {/* Chart 2: Jadwal per Hari */}
-      <Card>
+      <Card className="bg-white/60 dark:bg-zinc-900/60 backdrop-blur-sm border-border/50 shadow-sm">
         <CardHeader>
           <CardTitle>Distribusi Jadwal per Hari</CardTitle>
           <CardDescription>Jumlah kelas praktikum per hari dalam seminggu</CardDescription>

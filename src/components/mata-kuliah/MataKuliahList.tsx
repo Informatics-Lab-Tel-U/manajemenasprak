@@ -36,7 +36,7 @@ export default function MataKuliahList({ groupedData, loading, onRefresh }: Mata
       {groupedData.map((group) => (
         <div key={group.mk_singkat} className="space-y-4">
           <div className="flex items-center gap-2 border-b pb-2">
-            <h2 className="text-xl font-bold tracking-tight text-primary">{group.mk_singkat}</h2>
+            <h2 className="text-xl font-bold tracking-tight text-foreground">{group.mk_singkat}</h2>
             <span className="text-xs font-mono bg-muted px-2 py-0.5 rounded-full text-muted-foreground">
               {group.items.length} variants
             </span>

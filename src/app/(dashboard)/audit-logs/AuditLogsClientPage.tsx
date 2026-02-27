@@ -165,18 +165,18 @@ export default function AuditLogsClientPage({
   });
 
   return (
-    <div className="container" style={{ position: 'relative' }}>
+    <div className="container relative space-y-8">
       {/* Header */}
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex justify-between items-center">
         <div>
-          <h1 className="title-gradient" style={{ fontSize: '2rem', fontWeight: 'bold' }}>
+          <h1 className="title-gradient text-3xl font-bold">
             Audit Logs
           </h1>
-          <p className="text-muted-foreground">Riwayat aktifitas dan perubahan data dalam sistem</p>
+          <p className="text-muted-foreground mt-2">Riwayat aktifitas dan perubahan data dalam sistem</p>
         </div>
       </div>
 
-      <div className="card glass p-6" style={{ marginBottom: '2rem' }}>
+      <div className="card glass p-6">
         <div className="flex justify-between items-center mb-6">
            <div className="relative w-full md:w-72">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -232,7 +232,7 @@ export default function AuditLogsClientPage({
         {/* Pagination Controls */}
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <p className="text-sm font-medium">Rows per page</p>
+            <p className="text-sm font-medium">Baris per halaman</p>
             <Select
               value={`${pageSize}`}
               onValueChange={handlePageSizeChange}
@@ -253,8 +253,8 @@ export default function AuditLogsClientPage({
           </div>
 
           <div className="flex items-center space-x-6 lg:space-x-8">
-            <div className="flex w-[100px] items-center justify-center text-sm font-medium">
-              Page {currentPage} of {totalPages || 1}
+            <div className="flex w-[120px] items-center justify-center text-sm font-medium">
+              Halaman {currentPage} dari {totalPages || 1}
             </div>
             <div className="flex items-center space-x-2">
               <Button
@@ -264,7 +264,7 @@ export default function AuditLogsClientPage({
                 disabled={currentPage <= 1}
               >
                 <ChevronLeft className="h-4 w-4" />
-                Previous
+                Sebelumnya
               </Button>
               <Button
                 variant="outline"
@@ -272,7 +272,7 @@ export default function AuditLogsClientPage({
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage >= totalPages}
               >
-                Next
+                Berikutnya
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>

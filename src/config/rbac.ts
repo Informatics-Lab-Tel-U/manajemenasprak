@@ -48,7 +48,7 @@ export const ROLE_ALLOWED_PATHS: Record<Role, string[]> = {
     '/database',
     '/audit-logs',
   ],
-  ASPRAK_KOOR: ['/pelanggaran'],
+  ASPRAK_KOOR: ['/pelanggaran', '/panduan'],
 };
 
 /**

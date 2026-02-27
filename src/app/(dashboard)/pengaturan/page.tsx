@@ -30,6 +30,9 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 
+import { useTahunAjaran } from '@/hooks/useTahunAjaran';
+import { useEffect } from 'react';
+
 export default function DatabasePage() {
   const [termYear, setTermYear] = useState('24');
   const [termSem, setTermSem] = useState<'1' | '2'>('2');
@@ -40,6 +43,15 @@ export default function DatabasePage() {
     message: string;
   } | null>(null);
   const [progress, setProgress] = useState(0);
+
+  const { tahunAjaranList, loading: loadingTahunAjaran } = useTahunAjaran();
+  const [exportTerm, setExportTerm] = useState('');
+
+  useEffect(() => {
+    if (tahunAjaranList.length > 0 && !exportTerm) {
+      setExportTerm(tahunAjaranList[0]);
+    }
+  }, [tahunAjaranList, exportTerm]);
 
   // Modal state
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -56,7 +68,7 @@ export default function DatabasePage() {
 
       setLoading(true);
       setProgress(0);
-      setStatus({ type: 'info', message: `Processing ${file.name} for term: ${term}...` });
+      setStatus({ type: 'info', message: `Memproses ${file.name} untuk angkatan: ${term}...` });
 
       // Simulate progress since we don't have real upload progress from fetch
       const interval = setInterval(() => {
@@ -74,31 +86,31 @@ export default function DatabasePage() {
         if (result.ok) {
           setStatus({
             type: 'success',
-            message: result.message || `Successfully imported ${file.name}!`,
+            message: result.message || `Berhasil mengimpor ${file.name}!`,
           });
         } else if (result.error?.includes('CONFLICT:')) {
           const userWantsToSkip = confirm(
-            `${result.error}\n\nDo you want to SKIP this conflicting asprak and continue with others?`
+            `${result.error}\n\nApakah Anda ingin MELEWATI asprak yang konflik ini dan melanjutkan dengan yang lain?`
           );
           if (userWantsToSkip) {
-            setStatus({ type: 'info', message: `Retrying (Skipping Conflicts)...` });
+            setStatus({ type: 'info', message: `Mencoba ulang (Melewati Konflik)...` });
             const retryResult = await importFetcher.uploadExcel(file, term, {
               skipConflicts: true,
             });
             if (retryResult.ok) {
-              setStatus({ type: 'success', message: `Imported ${file.name} (Conflicts Skipped)!` });
+              setStatus({ type: 'success', message: `Berhasil mengimpor ${file.name} (Konflik Dilewati)!` });
             } else {
-              setStatus({ type: 'error', message: retryResult.error || 'Retry failed' });
+              setStatus({ type: 'error', message: retryResult.error || 'Gagal mencoba ulang' });
             }
           } else {
             setStatus({ type: 'error', message: result.error });
           }
         } else {
-          setStatus({ type: 'error', message: result.error || 'Import failed' });
+          setStatus({ type: 'error', message: result.error || 'Impor gagal' });
         }
       } catch (e: any) {
         clearInterval(interval);
-        setStatus({ type: 'error', message: e.message || 'Import failed' });
+        setStatus({ type: 'error', message: e.message || 'Impor gagal' });
       } finally {
         setLoading(false);
         // Reset progress after a delay if successful, or immediately?
@@ -126,13 +138,13 @@ export default function DatabasePage() {
 
     setIsDeleteModalOpen(false);
     setLoading(true);
-    setStatus({ type: 'info', message: 'Clearing database...' });
+    setStatus({ type: 'info', message: 'Membersihkan database...' });
 
     try {
       const res = await fetch('/api/clear', { method: 'POST' });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-      setStatus({ type: 'success', message: 'Database successfully cleared!' });
+      setStatus({ type: 'success', message: 'Database berhasil dibersihkan!' });
     } catch (e: any) {
       setStatus({ type: 'error', message: e.message });
     } finally {
@@ -141,14 +153,16 @@ export default function DatabasePage() {
   };
 
   const handleExport = async () => {
-    const startY = parseInt(termYear);
-    const term = `${startY}${startY + 1}-${termSem}`;
+    if (!exportTerm) {
+      setStatus({ type: 'error', message: 'Silakan pilih tahun ajaran yang akan diexport' });
+      return;
+    }
     
     setLoading(true);
-    setStatus({ type: 'info', message: `Exporting data for term: ${term}...` });
+    setStatus({ type: 'info', message: `Mengekspor data untuk angkatan: ${exportTerm}...` });
 
     try {
-      const result = await importFetcher.exportExcelDataset(term);
+      const result = await importFetcher.exportExcelDataset(exportTerm);
       if (result.ok && result.data) {
         const wb = XLSX.utils.book_new();
         
@@ -168,13 +182,13 @@ export default function DatabasePage() {
         const wsPivot = XLSX.utils.json_to_sheet(result.data.asprak_praktikum);
         XLSX.utils.book_append_sheet(wb, wsPivot, 'asprak_praktikum');
 
-        XLSX.writeFile(wb, `EXPORT_${term}.xlsx`);
-        setStatus({ type: 'success', message: `Successfully exported data for ${term}!` });
+        XLSX.writeFile(wb, `EXPORT_${exportTerm}.xlsx`);
+        setStatus({ type: 'success', message: `Berhasil mengekspor data untuk ${exportTerm}!` });
       } else {
-        setStatus({ type: 'error', message: result.error || 'Export failed' });
+        setStatus({ type: 'error', message: result.error || 'Ekspor gagal' });
       }
     } catch (e: any) {
-      setStatus({ type: 'error', message: e.message || 'Export failed' });
+      setStatus({ type: 'error', message: e.message || 'Ekspor gagal' });
     } finally {
       setLoading(false);
     }
@@ -273,11 +287,10 @@ export default function DatabasePage() {
   return (
     <div className="container">
       <header className="mb-8">
-        <h1 className="title-gradient text-4xl font-bold">
-          Pengaturan{' '}
-          <span className="text-base opacity-60 font-normal">(Developer Mode)</span>
+        <h1 className="title-gradient text-3xl font-bold">
+          Pengaturan
         </h1>
-        <p className="text-muted-foreground mt-1">Manage imports and cleanup</p>
+        <p className="text-muted-foreground mt-2">Kelola impor dan pembersihan data</p>
       </header>
 
       {status && (
@@ -356,13 +369,13 @@ export default function DatabasePage() {
               <input {...getInputProps()} />
               <FileSpreadsheet size={48} className="text-muted-foreground mb-4 mx-auto" />
               {isDragActive ? (
-                <p className="text-chart-2 font-semibold">Drop the Excel file here...</p>
+                <p className="text-chart-2 font-semibold">Letakkan file Excel di sini...</p>
               ) : (
                 <div className="space-y-2">
-                  <p className="font-medium">Drag & drop dataset .xlsx here</p>
-                  <p className="text-sm text-muted-foreground">or click to select file</p>
+                  <p className="font-medium">Tarik & letakkan dataset .xlsx di sini</p>
+                  <p className="text-sm text-muted-foreground">atau klik untuk memilih file</p>
                   <p className="text-xs text-muted-foreground mt-4">
-                    Must contain sheets: praktikum, mata_kuliah, asprak, jadwal, asprak_praktikum
+                    Harus berisi sheet: praktikum, mata_kuliah, asprak, jadwal, asprak_praktikum
                   </p>
                 </div>
               )}
@@ -370,7 +383,7 @@ export default function DatabasePage() {
               {loading && (
                 <div className="mt-4 space-y-2">
                    <Progress value={progress} className="h-2 w-full" />
-                   <p className="text-sm text-center text-muted-foreground">{progress}% Uploading & Processing...</p>
+                   <p className="text-sm text-center text-muted-foreground">{progress}% Mengunggah & Memproses...</p>
                 </div>
               )}
             </div>
@@ -389,16 +402,36 @@ export default function DatabasePage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="p-4 rounded-lg bg-muted/30 border border-border/50 text-sm space-y-2">
-              <p className="font-medium">Export Filter:</p>
-              <p className="text-muted-foreground">
-                Data will be exported for academic year: <span className="text-foreground font-semibold">20{termYear}/20{parseInt(termYear) + 1} - {termSem === '1' ? 'Ganjil' : 'Genap'}</span>
-              </p>
+            <div className="space-y-2">
+              <Label>Pilih Tahun Ajaran untuk Export</Label>
+              <Select 
+                value={exportTerm} 
+                onValueChange={setExportTerm}
+                disabled={loading || loadingTahunAjaran}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder={loadingTahunAjaran ? "Memuat..." : "Pilih Tahun Ajaran"} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    {tahunAjaranList.map((term) => (
+                      <SelectItem key={term} value={term}>
+                        {term}
+                      </SelectItem>
+                    ))}
+                    {tahunAjaranList.length === 0 && !loadingTahunAjaran && (
+                      <SelectItem value="none" disabled>
+                        Tidak ada data di database
+                      </SelectItem>
+                    )}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
             </div>
 
             <Button
               onClick={handleExport}
-              disabled={loading}
+              disabled={loading || !exportTerm}
               className="w-full bg-chart-4 hover:bg-chart-4/90 text-white gap-2"
             >
               <FileSpreadsheet size={16} />
@@ -406,7 +439,7 @@ export default function DatabasePage() {
             </Button>
 
             <div className="pt-4 border-t border-border/50">
-              <p className="text-xs text-muted-foreground mb-3 text-center">Need a blank format?</p>
+              <p className="text-xs text-muted-foreground mb-3 text-center">Butuh format kosong?</p>
               <Button
                 onClick={handleDownloadTemplate}
                 variant="outline"
