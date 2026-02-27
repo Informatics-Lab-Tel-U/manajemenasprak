@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Pencil, Trash2, Shield, ShieldCheck, User, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Pencil, Trash2, Shield, ShieldCheck, User, ChevronLeft, ChevronRight, Key } from 'lucide-react';
 import {
   useReactTable,
   getCoreRowModel,
@@ -40,6 +40,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { ManajemenAkunFormModal } from './ManajemenAkunFormModal';
+import { ChangePasswordModal } from './ChangePasswordModal';
 import type { Pengguna } from '@/types/database';
 import type { Role } from '@/config/rbac';
 
@@ -61,6 +62,7 @@ export function ManajemenAkunClientPage({ users }: { users: UserWithEmail[] }) {
   const router = useRouter();
   const [isCreateOpen, setIsCreateOpen] = React.useState(false);
   const [editTarget, setEditTarget] = React.useState<UserWithEmail | null>(null);
+  const [passwordTarget, setPasswordTarget] = React.useState<UserWithEmail | null>(null);
   const [deleteTarget, setDeleteTarget] = React.useState<UserWithEmail | null>(null);
   const [isDeleting, setIsDeleting] = React.useState(false);
 
@@ -108,6 +110,15 @@ export function ManajemenAkunClientPage({ users }: { users: UserWithEmail[] }) {
         header: () => <div className="text-right">Aksi</div>,
         cell: ({ row }) => (
           <div className="flex justify-end gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setPasswordTarget(row.original)}
+              title="Ubah Kata Sandi"
+              className="text-primary hover:text-primary"
+            >
+              <Key className="h-4 w-4" />
+            </Button>
             <Button
               variant="ghost"
               size="icon"
@@ -311,6 +322,14 @@ export function ManajemenAkunClientPage({ users }: { users: UserWithEmail[] }) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Change Password Modal */}
+      <ChangePasswordModal
+        open={!!passwordTarget}
+        onOpenChange={(open: boolean) => !open && setPasswordTarget(null)}
+        user={passwordTarget}
+        onSuccess={() => router.refresh()}
+      />
     </div>
   );
 }

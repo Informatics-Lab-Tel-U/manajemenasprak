@@ -37,7 +37,7 @@ interface PelanggaranFormProps {
     id_asprak: string[];
     id_jadwal: string;
     jenis: string;
-    modul: number | null;
+    modul: number;
   }) => Promise<void>;
   onCancel: () => void;
   isLoading?: boolean;
@@ -67,7 +67,7 @@ export default function PelanggaranForm({
   const [selectedAsprakIds, setSelectedAsprakIds] = useState<string[]>([]);
   const [idJadwal, setIdJadwal] = useState('');
   const [jenis, setJenis] = useState('');
-  const [modul, setModul] = useState<string>('none'); // Using 'none' string for shadcn select empty value stability
+  const [modul, setModul] = useState<string>(''); 
 
   // ── Side panel state ──
   const [sidePanel, setSidePanel] = useState<SidePanel>(null);
@@ -91,7 +91,7 @@ export default function PelanggaranForm({
     setSelectedAsprakIds([]);
     setIdJadwal('');
     setJenis('');
-    setModul('none');
+    setModul('');
     setAsprakSearch('');
     setJadwalSearch('');
     setSidePanel(null);
@@ -155,7 +155,7 @@ export default function PelanggaranForm({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     
-    const finalModul = modul === 'none' ? null : parseInt(modul);
+    const finalModul = parseInt(modul);
 
     if (!selectedTahunAjaran || !selectedPraktikumId) {
       toast.error('Pilih Tahun Ajaran dan Nama Praktikum terlebih dahulu');
@@ -165,7 +165,7 @@ export default function PelanggaranForm({
       toast.error('Pilih minimal 1 Asprak');
       return;
     }
-    if (!idJadwal || !jenis) {
+    if (!idJadwal || !jenis || !modul) {
       toast.error('Mohon lengkapi semua field yang wajib');
       return;
     }
@@ -490,17 +490,13 @@ export default function PelanggaranForm({
 
           {/* Modul — shadcn select */}
           <div className="space-y-1.5">
-            <Label>
-              Modul{' '}
-              <span className="text-muted-foreground font-normal text-xs">(opsional)</span>
-            </Label>
+            <Label>Modul *</Label>
             <Select value={modul} onValueChange={setModul}>
               <SelectTrigger className="w-full h-9">
                 <SelectValue placeholder="Pilih Modul" />
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
-                  <SelectItem value="none">— Pilih Modul —</SelectItem>
                   {Array.from({ length: 16 }, (_, i) => (
                     <SelectItem key={i + 1} value={String(i + 1)}>Modul {i + 1}</SelectItem>
                   ))}

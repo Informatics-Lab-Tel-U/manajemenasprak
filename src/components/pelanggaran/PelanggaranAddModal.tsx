@@ -16,7 +16,7 @@ interface PelanggaranAddModalProps {
     id_asprak: string[];
     id_jadwal: string;
     jenis: string;
-    modul: number | null;
+    modul: number;
   }) => Promise<void>;
   onClose: () => void;
   open: boolean;

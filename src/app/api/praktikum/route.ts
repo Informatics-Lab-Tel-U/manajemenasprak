@@ -2,9 +2,11 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import * as praktikumService from '@/services/praktikumService';
 import { logger } from '@/lib/logger';
+import { requireRole } from '@/lib/auth';
 
 export async function GET(req: Request) {
   try {
+    await requireRole(['ADMIN', 'ASLAB']);
     const supabase = await createClient();
     const { searchParams } = new URL(req.url);
     const action = searchParams.get('action');
@@ -49,6 +51,7 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
+    await requireRole(['ADMIN', 'ASLAB']);
     const supabase = await createClient();
     const body = await req.json();
     const { action, nama, tahunAjaran } = body;
@@ -60,6 +63,10 @@ export async function POST(req: Request) {
 
     if (action === 'bulk-import' && body.rows) {
       const result = await praktikumService.bulkUpsertPraktikum(body.rows, supabase);
+
+      const { createAuditLog } = await import('@/services/server/auditLogService');
+      await createAuditLog('Praktikum', 'BULK', 'IMPORT', { count: body.rows.length });
+
       return NextResponse.json({ ok: true, data: result });
     }
 
