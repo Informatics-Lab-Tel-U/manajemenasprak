@@ -49,15 +49,15 @@ function PraktikumPageContent() {
     const result = await bulkImport(rows);
     if (result.ok && result.data) {
       const { inserted, skipped, errors } = result.data;
-      toast.success(`Import selesai! Inserted: ${inserted}, Skipped: ${skipped}`);
+      toast.success(`Import selesai! Berhasil: ${inserted}, Dilewati: ${skipped}`);
       if (errors.length > 0) {
-        toast.error(`Errors occurred: ${errors.length} errors. Check console.`);
+        toast.error(`Terjadi kesalahan: ${errors.length} galat. Cek konsol.`);
         console.error(errors);
       }
       setShowImportModal(false);
       refreshList();
     } else {
-      toast.error(`Import failed: ${result.error}`);
+      toast.error(`Import gagal: ${result.error}`);
     }
   };
 
@@ -89,26 +89,25 @@ function PraktikumPageContent() {
   };
 
   return (
-    <div className="container" style={{ position: 'relative' }}>
-      {/* Header */}
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="title-gradient" style={{ fontSize: '2rem', fontWeight: 'bold' }}>
-            Data Praktikum
-          </h1>
-          <p className="text-muted-foreground">Manage courses and assignments per term</p>
+    <div className="container relative space-y-8">
+      <header>
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="title-gradient text-3xl font-bold">Data Praktikum</h1>
+            <p className="text-muted-foreground mt-2">Kelola data praktikum dan penugasan per angkatan</p>
+          </div>
+          <div className="flex gap-3 items-center">
+            <Button onClick={() => setShowManualModal(true)} variant="outline">
+              <Plus size={18} className="mr-2" />
+              Input Manual
+            </Button>
+            <Button onClick={() => setShowImportModal(true)}>
+              <Upload size={18} className="mr-2" />
+              Import CSV
+            </Button>
+          </div>
         </div>
-        <div className="flex gap-3 items-center">
-          <Button onClick={() => setShowManualModal(true)} variant="secondary">
-            <Plus size={18} className="mr-2" />
-            Input Manual
-          </Button>
-          <Button onClick={() => setShowImportModal(true)}>
-            <Upload size={18} className="mr-2" />
-            Import CSV
-          </Button>
-        </div>
-      </div>
+      </header>
 
       <div className="mb-8">
         <AsprakFilters
@@ -160,7 +159,7 @@ function PraktikumPageContent() {
 
 export default function PraktikumPage() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<div className="container py-10 text-center">Memuat...</div>}>
       <PraktikumPageContent />
     </Suspense>
   );

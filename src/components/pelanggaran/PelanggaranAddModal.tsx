@@ -37,44 +37,17 @@ export default function PelanggaranAddModal({
   asprakList,
   jadwalList,
 }: PelanggaranAddModalProps) {
-  const [sidePanelOpen, setSidePanelOpen] = useState(false);
-
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      {/*
-       * DialogContent base has: grid, p-6, gap-4, sm:max-w-lg, max-w-[calc(100%-2rem)]
-       * We override ALL of those to get a flex-based layout with controlled sizing.
-       */}
-      <DialogContent
-        className={`!flex !flex-col !gap-0 !p-0 overflow-hidden transition-[max-width,width] duration-200 ease-in-out
-          ${sidePanelOpen
-            ? '!max-w-[min(780px,95vw)] !w-[min(780px,95vw)]'
-            : '!max-w-[min(520px,95vw)] !w-[min(520px,95vw)]'
-          }
-          h-[min(640px,85vh)]`}
-      >
-        {/* Header — fixed at top */}
-        <DialogHeader className="border-b px-6 py-4 shrink-0">
-          <DialogTitle>Catat Pelanggaran Baru</DialogTitle>
-          <DialogDescription className="sr-only">
-            Form untuk mencatat pelanggaran asprak praktikum
-          </DialogDescription>
-        </DialogHeader>
-
-        {/* Body — fills remaining space, flex row for form + side panel */}
-        <div className="min-h-0">
-          <PelanggaranForm
-            onSubmit={onSubmit}
-            onCancel={onClose}
-            isLoading={isLoading}
-            praktikumList={praktikumList}
-            tahunAjaranList={tahunAjaranList}
-            asprakList={asprakList}
-            jadwalList={jadwalList}
-            onSidePanelChange={(panel) => setSidePanelOpen(panel !== null)}
-          />
-        </div>
-      </DialogContent>
+      <PelanggaranForm
+        onSubmit={onSubmit}
+        onCancel={onClose}
+        isLoading={isLoading}
+        praktikumList={praktikumList}
+        tahunAjaranList={tahunAjaranList}
+        asprakList={asprakList}
+        jadwalList={jadwalList}
+      />
     </Dialog>
   );
 }

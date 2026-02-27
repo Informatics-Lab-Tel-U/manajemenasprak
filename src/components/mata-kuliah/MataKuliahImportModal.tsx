@@ -5,7 +5,12 @@ import * as XLSX from 'xlsx';
 import { FileSpreadsheet, Upload, FileText, X, Download } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -19,6 +24,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  Field,
+  FieldGroup,
+  FieldLabel,
+} from '@/components/ui/field';
 import { cn } from '@/lib/utils'; // Ensure utility exists or use standard class string
 
 import TermInput, { buildTermString } from '@/components/asprak/TermInput';
@@ -165,17 +175,17 @@ export default function MataKuliahImportModal({
 
             if (isDuplicate) {
               status = 'error';
-              statusMessage = 'Duplicate Data in Database';
+              statusMessage = 'Data Duplikat di Database';
             } else if (!isKoorValid || !isProdiValid) {
               status = 'error';
-              statusMessage = 'Invalid data (Prodi/Dosen)';
+              statusMessage = 'Data Tidak Valid (Prodi/Dosen)';
             } else if (!isMkKnown) {
               // Allow unknown MK - it will be created automatically by backend
               status = 'ok';
               statusMessage = 'Praktikum baru akan dibuat otomatis';
             } else if (!mk_singkat || !nama_lengkap) {
               status = 'error';
-              statusMessage = 'Missing Required Fields';
+              statusMessage = 'Field Wajib Kurang';
             }
 
             return {
@@ -338,7 +348,7 @@ export default function MataKuliahImportModal({
               <Upload size={18} />
               Import Data Mata Kuliah
               {step === 'preview' && (
-                <span className="text-sm font-normal text-muted-foreground ml-2">— Preview</span>
+                <span className="text-sm font-normal text-muted-foreground ml-2">— Pratinjau</span>
               )}
             </DialogTitle>
           </DialogHeader>
@@ -355,19 +365,21 @@ export default function MataKuliahImportModal({
                   </Alert>
                 )}
 
-                <div className="space-y-6">
-                  <TermInput
-                    termYear={termYear}
-                    termSem={termSem}
-                    onYearChange={setTermYear}
-                    onSemChange={setTermSem}
-                    label="Tahun Ajaran Target"
-                    description="Pilih tahun ajaran untuk data yang akan diimport."
-                  />
+                <FieldGroup className="space-y-6">
+                  <Field>
+                    <TermInput
+                      termYear={termYear}
+                      termSem={termSem}
+                      onYearChange={setTermYear}
+                      onSemChange={setTermSem}
+                      label="Tahun Ajaran Target"
+                      description="Pilih tahun ajaran untuk data yang akan diimport."
+                    />
+                  </Field>
 
-                  <div className="space-y-2">
+                  <Field className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <label className="text-sm font-medium leading-none">Upload CSV</label>
+                      <FieldLabel className="text-sm font-medium leading-none">Upload CSV</FieldLabel>
                       {fileName && (
                         <span className="text-xs text-muted-foreground flex items-center gap-1">
                           <FileText size={12} /> {fileName}
@@ -460,8 +472,8 @@ export default function MataKuliahImportModal({
                         </div>
                       </div>
                     </div>
-                  </div>
-                </div>
+                  </Field>
+                </FieldGroup>
               </div>
             </ScrollArea>
           )}
@@ -489,14 +501,14 @@ export default function MataKuliahImportModal({
           <AlertDialogHeader>
             <AlertDialogTitle>Batalkan Import?</AlertDialogTitle>
             <AlertDialogDescription>
-              Anda sedang dalam proses import. Jika Anda keluar sekarang, data preview akan hilang.
+              Anda sedang dalam proses import. Jika Anda keluar sekarang, data pratinjau akan hilang.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Batal, kembali ke preview</AlertDialogCancel>
+            <AlertDialogCancel>Batal, kembali ke pratinjau</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleClose}
-              className="bg-destructive hover:bg-destructive/90"
+              variant="destructive"
             >
               Ya, Batalkan Import
             </AlertDialogAction>

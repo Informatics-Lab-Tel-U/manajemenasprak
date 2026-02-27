@@ -186,12 +186,12 @@ export default function JadwalPage() {
   }, [programType]);
 
   return (
-    <div className="container min-h-screen p-4 sm:p-8">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+    <div className="container relative space-y-8">
+      <div className="flex justify-between items-center">
         <div className="flex items-center gap-4">
           <div>
-            <h1 className="text-2xl font-bold title-gradient">Jadwal Praktikum</h1>
-            <p className="text-muted-foreground text-sm">Overview jadwal per ruangan</p>
+            <h1 className="title-gradient text-3xl font-bold">Jadwal Praktikum</h1>
+            <p className="text-muted-foreground mt-2 text-sm">Overview jadwal per ruangan</p>
           </div>
 
           <div className="bg-muted/50 p-1.5 rounded-lg flex items-center gap-1 border border-border/50">

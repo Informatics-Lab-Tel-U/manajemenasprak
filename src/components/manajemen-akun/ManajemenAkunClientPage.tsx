@@ -107,9 +107,9 @@ export function ManajemenAkunClientPage({ users }: { users: UserWithEmail[] }) {
       },
       {
         id: 'actions',
-        header: () => <div className="text-right">Aksi</div>,
+        header: () => <div className="text-center">Aksi</div>,
         cell: ({ row }) => (
-          <div className="flex justify-end gap-1">
+          <div className="flex justify-center gap-1">
             <Button
               variant="ghost"
               size="icon"
@@ -175,14 +175,14 @@ export function ManajemenAkunClientPage({ users }: { users: UserWithEmail[] }) {
   }
 
   return (
-    <div className="container" style={{ position: 'relative' }}>
+    <div className="container relative space-y-8">
       {/* Header */}
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex justify-between items-center">
         <div>
-          <h1 className="title-gradient" style={{ fontSize: '2rem', fontWeight: 'bold' }}>
+          <h1 className="title-gradient text-3xl font-bold">
             Manajemen Akun
           </h1>
-          <p className="text-muted-foreground">Kelola akun pengguna yang terdaftar di sistem</p>
+          <p className="text-muted-foreground mt-2">Kelola akun pengguna yang terdaftar di sistem</p>
         </div>
         <Button onClick={() => setIsCreateOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
@@ -190,7 +190,7 @@ export function ManajemenAkunClientPage({ users }: { users: UserWithEmail[] }) {
         </Button>
       </div>
 
-      <div className="card glass p-6" style={{ marginBottom: '2rem' }}>
+      <div className="card glass p-6">
         <div className="rounded-md border mb-4">
           <Table>
             <TableHeader>
@@ -231,7 +231,7 @@ export function ManajemenAkunClientPage({ users }: { users: UserWithEmail[] }) {
         {/* Pagination Controls */}
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <p className="text-sm font-medium">Rows per page</p>
+            <p className="text-sm font-medium">Baris per halaman</p>
             <Select
               value={`${table.getState().pagination.pageSize}`}
               onValueChange={(value) => {
@@ -254,8 +254,8 @@ export function ManajemenAkunClientPage({ users }: { users: UserWithEmail[] }) {
           </div>
 
           <div className="flex items-center space-x-6 lg:space-x-8">
-            <div className="flex w-[100px] items-center justify-center text-sm font-medium">
-              Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
+            <div className="flex w-[120px] items-center justify-center text-sm font-medium">
+              Halaman {table.getState().pagination.pageIndex + 1} dari {table.getPageCount()}
             </div>
             <div className="flex items-center space-x-2">
               <Button
@@ -265,7 +265,7 @@ export function ManajemenAkunClientPage({ users }: { users: UserWithEmail[] }) {
                 disabled={!table.getCanPreviousPage()}
               >
                 <ChevronLeft className="h-4 w-4" />
-                Previous
+                Sebelumnya
               </Button>
               <Button
                 variant="outline"
@@ -273,7 +273,7 @@ export function ManajemenAkunClientPage({ users }: { users: UserWithEmail[] }) {
                 onClick={() => table.nextPage()}
                 disabled={!table.getCanNextPage()}
               >
-                Next
+                Berikutnya
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
@@ -315,7 +315,7 @@ export function ManajemenAkunClientPage({ users }: { users: UserWithEmail[] }) {
             <AlertDialogAction
               onClick={handleDelete}
               disabled={isDeleting}
-              className="bg-destructive hover:bg-destructive/90"
+              variant="destructive"
             >
               {isDeleting ? 'Menghapus...' : 'Hapus'}
             </AlertDialogAction>

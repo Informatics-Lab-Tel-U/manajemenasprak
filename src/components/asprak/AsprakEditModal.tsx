@@ -94,7 +94,7 @@ export default function AsprakEditModal({
 
         <div className="px-6 py-2 flex-1 overflow-y-auto min-h-0 border-t">
             {loadingPraktikum ? (
-                 <div className="text-sm text-muted-foreground py-4">Loading praktikum...</div>
+                 <div className="text-sm text-muted-foreground py-4">Memuat praktikum...</div>
             ) : availablePraktikums.length === 0 ? (
                 <div className="text-sm text-muted-foreground italic bg-muted/30 p-3 rounded my-2">
                     Tidak ada data praktikum.
@@ -132,9 +132,9 @@ export default function AsprakEditModal({
         </div>
 
         <DialogFooter className="px-6 py-4 border-t mt-auto">
-          <Button variant="outline" onClick={onClose} disabled={saving}>Cancel</Button>
+          <Button variant="outline" onClick={onClose} disabled={saving}>Batal</Button>
           <Button onClick={handleSave} disabled={saving}>
-            {saving ? 'Saving...' : 'Save Changes'}
+            {saving ? 'Menyimpan...' : 'Simpan Perubahan'}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -18,6 +18,16 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2, Search, X, ChevronDown, ChevronRight, Users, Calendar } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Asprak, Jadwal, Praktikum } from '@/types/database';
+import { Field, FieldGroup } from '@/components/ui/field';
+
+import {
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose,
+} from '@/components/ui/dialog';
 
 export const VIOLATION_TYPES = [
   'TELAT DATANG',
@@ -45,8 +55,6 @@ interface PelanggaranFormProps {
   tahunAjaranList: string[];
   asprakList: (Asprak & { praktikum_ids?: string[] })[];
   jadwalList: (Jadwal & { id_praktikum?: string })[];
-  /** Notify parent modal when side panel opens/closes so it can resize */
-  onSidePanelChange?: (panel: SidePanel) => void;
 }
 
 export default function PelanggaranForm({
@@ -57,7 +65,6 @@ export default function PelanggaranForm({
   tahunAjaranList,
   asprakList,
   jadwalList,
-  onSidePanelChange,
 }: PelanggaranFormProps) {
   // ── Context filters ──
   const [selectedTahunAjaran, setSelectedTahunAjaran] = useState('');
@@ -76,12 +83,10 @@ export default function PelanggaranForm({
 
   function openPanel(panel: SidePanel) {
     setSidePanel(panel);
-    onSidePanelChange?.(panel);
   }
 
   function closePanel() {
     setSidePanel(null);
-    onSidePanelChange?.(null);
     setAsprakSearch('');
     setJadwalSearch('');
   }
@@ -95,8 +100,7 @@ export default function PelanggaranForm({
     setAsprakSearch('');
     setJadwalSearch('');
     setSidePanel(null);
-    onSidePanelChange?.(null);
-  }, [onSidePanelChange]);
+  }, []);
 
   // ── Derived lists ──
   const filteredPraktikumList = useMemo(
@@ -184,22 +188,15 @@ export default function PelanggaranForm({
   const sidePanelContent =
     sidePanel === 'asprak' ? (
       <div className="flex flex-col h-full p-2">
-        <div className="flex items-center justify-between px-4 py-3 border-b">
+        <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-2 font-medium text-sm">
             <Users className="h-4 w-4 text-primary" />
             Pilih Asprak
           </div>
-          <button
-            type="button"
-            onClick={closePanel}
-            className="text-muted-foreground hover:text-foreground"
-          >
-            <X className="h-4 w-4" />
-          </button>
         </div>
 
         {/* search */}
-        <div className="px-3 py-2 border-b">
+        <div className="px-3 pt-2 pb-4 border-b">
           <div className="relative">
             <Search className="absolute left-2.5 top-2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -260,37 +257,17 @@ export default function PelanggaranForm({
           )}
         </div>
 
-        <div className="px-3 pb-1 pt-3 border-t">
-          <Button
-            type="button"
-            size="sm"
-            className="w-full h-8"
-            onMouseDown={(e) => {
-              e.preventDefault();
-              closePanel();
-            }}
-          >
-            Selesai ({selectedAsprakIds.length} dipilih)
-          </Button>
-        </div>
       </div>
     ) : sidePanel === 'jadwal' ? (
       <div className="flex flex-col h-full p-2">
-        <div className="flex items-center justify-between px-4 py-3 border-b">
+        <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-2 font-medium text-sm">
             <Calendar className="h-4 w-4 text-primary" />
             Pilih Jadwal
           </div>
-          <button
-            type="button"
-            onClick={closePanel}
-            className="text-muted-foreground hover:text-foreground"
-          >
-            <X className="h-4 w-4" />
-          </button>
         </div>
 
-        <div className="px-3 py-2 border-b">
+        <div className="px-3 pt-2 pb-4 border-b">
           <div className="relative">
             <Search className="absolute left-2.5 top-2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -335,199 +312,209 @@ export default function PelanggaranForm({
     ) : null;
 
   return (
-    <div className="flex h-full min-h-0">
-      {/* ── LEFT: Form (scrollable independently) ── */}
-      <form
-        onSubmit={handleSubmit}
-        className="flex flex-col flex-1 min-w-0 min-h-0">
-        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-5">
-        <div className="rounded-lg border border-border/60 bg-muted/30 p-4 space-y-3">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-            Konteks Pelanggaran
-          </p>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label>Tahun Ajaran *</Label>
-              <Select
-                value={selectedTahunAjaran}
-                onValueChange={(v) => {
-                  setSelectedTahunAjaran(v);
-                  setSelectedPraktikumId('');
-                  resetViolationFields();
-                }}
-              >
-                <SelectTrigger className="w-full h-9">
-                  <SelectValue placeholder="Pilih Tahun Ajaran" />
-                </SelectTrigger>
-                <SelectContent>
-                  {tahunAjaranList.map((t) => (
-                    <SelectItem key={t} value={t}>{t}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label>Nama Praktikum *</Label>
-              <Select
-                value={selectedPraktikumId}
-                onValueChange={(v) => {
-                  setSelectedPraktikumId(v);
-                  resetViolationFields();
-                }}
-                disabled={!selectedTahunAjaran}
-              >
-                <SelectTrigger className="w-full h-9">
-                  <SelectValue placeholder="Pilih Praktikum" />
-                </SelectTrigger>
-                <SelectContent>
-                  {filteredPraktikumList.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>{p.nama}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </div>
+    <form onSubmit={handleSubmit}>
+      <DialogContent
+        className={`!flex !flex-col !gap-0 !p-0 overflow-hidden transition-[max-width,width] duration-200 ease-in-out
+          ${sidePanel
+            ? '!max-w-[min(780px,95vw)] !w-[min(780px,95vw)]'
+            : '!max-w-[min(520px,95vw)] !w-[min(520px,95vw)]'
+          }
+          h-[min(640px,85vh)]`}
+      >
+        <DialogHeader className="border-b px-6 py-4 shrink-0">
+          <DialogTitle>Catat Pelanggaran Baru</DialogTitle>
+          <DialogDescription className="sr-only">
+            Form untuk mencatat pelanggaran asprak praktikum
+          </DialogDescription>
+        </DialogHeader>
 
-        {/* Step 2: Violation fields */}
-        <div
-          className={`space-y-4 transition-opacity ${
-            contextReady ? 'opacity-100' : 'opacity-40 pointer-events-none'
-          }`}
-        >
-          {/* Asprak picker trigger */}
-          <div className="space-y-1.5">
-            <Label>Asprak yang Melanggar *</Label>
-
-            {selectedAsprakIds.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 mb-1">
-                {selectedAsprakIds.map((id) => {
-                  const a = asprakList.find((x) => x.id === id);
-                  if (!a) return null;
-                  return (
-                    <Badge key={id} variant="secondary" className="gap-1 pr-1 text-xs">
-                      {a.kode}
-                      <button
-                        type="button"
-                        onMouseDown={(e) => { e.preventDefault(); toggleAsprak(id); }}
-                        className="ml-0.5 rounded-full hover:bg-muted"
-                      >
-                        <X className="h-2.5 w-2.5" />
-                      </button>
-                    </Badge>
-                  );
-                })}
+        <div className="flex flex-1 min-h-0 min-w-0">
+          {/* ── LEFT: Form ── */}
+          <div className="flex flex-col flex-1 min-w-0 min-h-0">
+            <FieldGroup className="flex-1 overflow-y-auto px-6 py-4">
+              <div className="rounded-lg border border-border/60 bg-muted/30 p-4 space-y-3">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  Konteks Pelanggaran
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field>
+                    <Label>Tahun Ajaran *</Label>
+                    <Select
+                      value={selectedTahunAjaran}
+                      onValueChange={(v) => {
+                        setSelectedTahunAjaran(v);
+                        setSelectedPraktikumId('');
+                        resetViolationFields();
+                      }}
+                    >
+                      <SelectTrigger className="w-full h-9">
+                        <SelectValue placeholder="Pilih Tahun Ajaran" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {tahunAjaranList.map((t) => (
+                          <SelectItem key={t} value={t}>{t}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </Field>
+                  <Field>
+                    <Label>Nama Praktikum *</Label>
+                    <Select
+                      value={selectedPraktikumId}
+                      onValueChange={(v) => {
+                        setSelectedPraktikumId(v);
+                        resetViolationFields();
+                      }}
+                      disabled={!selectedTahunAjaran}
+                    >
+                      <SelectTrigger className="w-full h-9">
+                        <SelectValue placeholder="Pilih Praktikum" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {filteredPraktikumList.map((p) => (
+                          <SelectItem key={p.id} value={p.id}>{p.nama}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </Field>
+                </div>
               </div>
-            )}
 
-            <button
-              type="button"
-              onClick={() => openPanel(sidePanel === 'asprak' ? null : 'asprak')}
-              className={`w-full flex items-center justify-between h-9 rounded-md border px-3 py-2 text-sm text-left transition-colors
-                ${sidePanel === 'asprak'
-                  ? 'border-primary bg-primary/5 text-primary'
-                  : 'border-input bg-transparent hover:bg-accent text-muted-foreground'}`}
-            >
-              <span className="flex items-center gap-2">
-                <Users className="h-4 w-4 flex-shrink-0" />
-                {selectedAsprakIds.length === 0
-                  ? 'Pilih Asprak...'
-                  : `${selectedAsprakIds.length} asprak dipilih`}
-              </span>
-              <ChevronRight className="h-4 w-4 flex-shrink-0" />
-            </button>
-
-            {selectedAsprakIds.length > 1 && (
-              <p className="text-xs text-amber-600 dark:text-amber-400">
-                ⚠ Multi-pilih: semua asprak akan dicatat dengan jenis, modul, dan kelas yang sama.
-              </p>
-            )}
-          </div>
-
-          {/* Jadwal picker trigger */}
-          <div className="space-y-1.5">
-            <Label>Kelas / Jadwal *</Label>
-            <button
-              type="button"
-              onClick={() => openPanel(sidePanel === 'jadwal' ? null : 'jadwal')}
-              className={`w-full flex items-center justify-between h-9 rounded-md border px-3 py-2 text-sm text-left transition-colors
-                ${sidePanel === 'jadwal'
-                  ? 'border-primary bg-primary/5 text-primary'
-                  : 'border-input bg-transparent hover:bg-accent'}`}
-            >
-              <span
-                className={`flex items-center gap-2 min-w-0 ${
-                  selectedJadwal ? 'text-foreground' : 'text-muted-foreground'
+              <FieldGroup
+                className={`transition-opacity ${
+                  contextReady ? 'opacity-100' : 'opacity-40 pointer-events-none'
                 }`}
               >
-                <Calendar className="h-4 w-4 flex-shrink-0" />
-                <span className="truncate">
-                  {selectedJadwal
-                    ? `${selectedJadwal.mata_kuliah?.nama_lengkap ?? ''} — ${selectedJadwal.kelas} (${selectedJadwal.hari})`
-                    : 'Pilih Jadwal / Kelas...'}
-                </span>
-              </span>
-              <ChevronRight className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
-            </button>
+                <Field>
+                  <Label>Asprak yang Melanggar *</Label>
+                  {selectedAsprakIds.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mb-1">
+                      {selectedAsprakIds.map((id) => {
+                        const a = asprakList.find((x) => x.id === id);
+                        if (!a) return null;
+                        return (
+                          <Badge key={id} variant="secondary" className="gap-1 pr-1 text-xs">
+                            {a.kode}
+                            <button
+                              type="button"
+                              onMouseDown={(e) => { e.preventDefault(); toggleAsprak(id); }}
+                              className="ml-0.5 rounded-full hover:bg-muted"
+                            >
+                              <X className="h-2.5 w-2.5" />
+                            </button>
+                          </Badge>
+                        );
+                      })}
+                    </div>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => openPanel(sidePanel === 'asprak' ? null : 'asprak')}
+                    className={`w-full flex items-center justify-between h-9 rounded-md border px-3 py-2 text-sm text-left transition-colors
+                      ${sidePanel === 'asprak'
+                        ? 'border-primary bg-primary/5 text-primary'
+                        : 'border-input bg-transparent hover:bg-accent text-muted-foreground'}`}
+                  >
+                    <span className="flex items-center gap-2">
+                      <Users className="h-4 w-4 flex-shrink-0" />
+                      {selectedAsprakIds.length === 0
+                        ? 'Pilih Asprak...'
+                        : `${selectedAsprakIds.length} asprak dipilih`}
+                    </span>
+                    <ChevronRight className="h-4 w-4 flex-shrink-0" />
+                  </button>
+
+                  {selectedAsprakIds.length > 1 && (
+                    <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                      ⚠ Multi-pilih: semua asprak akan dicatat dengan jenis, modul, dan kelas yang sama.
+                    </p>
+                  )}
+                </Field>
+
+                <Field>
+                  <Label>Kelas / Jadwal *</Label>
+                  <button
+                    type="button"
+                    onClick={() => openPanel(sidePanel === 'jadwal' ? null : 'jadwal')}
+                    className={`w-full flex items-center justify-between h-9 rounded-md border px-3 py-2 text-sm text-left transition-colors
+                      ${sidePanel === 'jadwal'
+                        ? 'border-primary bg-primary/5 text-primary'
+                        : 'border-input bg-transparent hover:bg-accent'}`}
+                  >
+                    <span
+                      className={`flex items-center gap-2 min-w-0 ${
+                        selectedJadwal ? 'text-foreground' : 'text-muted-foreground'
+                      }`}
+                    >
+                      <Calendar className="h-4 w-4 flex-shrink-0" />
+                      <span className="truncate">
+                        {selectedJadwal
+                          ? `${selectedJadwal.mata_kuliah?.nama_lengkap ?? ''} — ${selectedJadwal.kelas} (${selectedJadwal.hari})`
+                          : 'Pilih Jadwal / Kelas...'}
+                      </span>
+                    </span>
+                    <ChevronRight className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
+                  </button>
+                </Field>
+
+                <Field>
+                  <Label>Jenis Pelanggaran *</Label>
+                  <Select value={jenis} onValueChange={setJenis}>
+                    <SelectTrigger className="w-full h-9">
+                      <SelectValue placeholder="Pilih Jenis Pelanggaran" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        {VIOLATION_TYPES.map((type) => (
+                          <SelectItem key={type} value={type}>{type}</SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </Field>
+
+                <Field>
+                  <Label>Modul *</Label>
+                  <Select value={modul} onValueChange={setModul}>
+                    <SelectTrigger className="w-full h-9">
+                      <SelectValue placeholder="Pilih Modul" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        {Array.from({ length: 16 }, (_, i) => (
+                          <SelectItem key={i + 1} value={String(i + 1)}>Modul {i + 1}</SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </Field>
+              </FieldGroup>
+            </FieldGroup>
+
+            <DialogFooter className="px-6 py-4 border-t bg-background shrink-0 mt-auto">
+              <DialogClose asChild>
+                <Button type="button" variant="outline" size="sm" onClick={onCancel} className="h-8" disabled={isLoading}>
+                  Batal
+                </Button>
+              </DialogClose>
+              <Button type="submit" size="sm" className="h-8" disabled={isLoading || !contextReady}>
+                {isLoading ? (
+                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Menyimpan...</>
+                ) : (
+                  'Catat Pelanggaran'
+                )}
+              </Button>
+            </DialogFooter>
           </div>
 
-          {/* Jenis Pelanggaran — shadcn select */}
-          <div className="space-y-1.5">
-            <Label>Jenis Pelanggaran *</Label>
-            <Select value={jenis} onValueChange={setJenis}>
-              <SelectTrigger className="w-full h-9">
-                <SelectValue placeholder="Pilih Jenis Pelanggaran" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  {VIOLATION_TYPES.map((type) => (
-                    <SelectItem key={type} value={type}>{type}</SelectItem>
-                  ))}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Modul — shadcn select */}
-          <div className="space-y-1.5">
-            <Label>Modul *</Label>
-            <Select value={modul} onValueChange={setModul}>
-              <SelectTrigger className="w-full h-9">
-                <SelectValue placeholder="Pilih Modul" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  {Array.from({ length: 16 }, (_, i) => (
-                    <SelectItem key={i + 1} value={String(i + 1)}>Modul {i + 1}</SelectItem>
-                  ))}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-          </div>
+          {/* ── RIGHT: Side Panel ── */}
+          {sidePanel && (
+            <div className="w-72 flex-shrink-0 border-l border-border bg-background flex flex-col min-h-0 overflow-hidden">
+              {sidePanelContent}
+            </div>
+          )}
         </div>
-        </div>
-
-        {/* Footer — sticky at bottom of form column */}
-        <div className="flex justify-end gap-2 px-6 py-3 border-t bg-background shrink-0">
-          <Button type="button" variant="outline" size="sm" onClick={onCancel} className="h-8" disabled={isLoading}>
-            Batal
-          </Button>
-          <Button type="submit" size="sm" className="h-8" disabled={isLoading || !contextReady}>
-            {isLoading ? (
-              <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Menyimpan...</>
-            ) : (
-              'Catat Pelanggaran'
-            )}
-          </Button>
-        </div>
-      </form>
-
-      {/* ── RIGHT: Side Panel (scrollable independently) ── */}
-      {sidePanel && (
-        <div className="w-72 flex-shrink-0 border-l border-border bg-background flex flex-col min-h-0 overflow-hidden">
-          {sidePanelContent}
-        </div>
-      )}
-    </div>
+      </DialogContent>
+    </form>
   );
 }

@@ -1,256 +1,97 @@
-# 📋 Sistem Manajemen Asprak
+# 📋 Sistem Manajemen Asprak (Informatics Lab)
 
-Aplikasi web internal untuk manajemen asisten praktikum (ASPRAK) Laboratorium Informatika. Dibangun dengan Next.js dan Supabase.
+Aplikasi web internal profesional untuk manajemen asisten praktikum (ASPRAK), penjadwalan, dan pencatatan pelanggaran di Laboratorium Informatika. Dibangun dengan fokus pada efisiensi administratif dan integritas data.
 
-## 🎯 Tujuan Aplikasi
+## 🎯 Fitur Utama
 
-Sistem internal CASLAB/ASLAB dengan fokus utama:
-
-| No  | Fitur                      | Deskripsi                                                  |
-| :-: | -------------------------- | ---------------------------------------------------------- |
-|  1  | Pendataan Asprak           | Mendata siapa saja asprak di setiap pool praktikum         |
-|  2  | Pendataan Jadwal Praktikum | Mengelola jadwal rutin per kelas per praktikum             |
-|  3  | Sistem Pelanggaran         | Mencatat dan mengelola pelanggaran asprak                  |
-|  4  | Jadwal Pengganti           | Membuat dan tracking jadwal pengganti saat ada libur/acara |
+- **🌍 UI Terlokalisasi**: Antarmuka sepenuhnya dalam Bahasa Indonesia untuk kemudahan penggunaan.
+- **👥 Manajemen Asprak**: Database asisten lengkap dengan sistem inisial kode dan tracking angkatan.
+- **📅 Penjadwalan & Plotting**: Kelola jadwal praktikum mingguan dan penugasan asisten ke setiap sesi secara dinamis.
+- **⚠️ Sistem Pelanggaran**: Pencatatan indisipliner asisten dengan alur finalisasi yang menjamin integritas data (tidak bisa diubah setelah final).
+- **📝 Audit Logs**: Pencatatan otomatis setiap aktivitas perubahan data di sistem untuk akuntabilitas.
+- **🔐 RBAC (Role-Based Access Control)**: Dukungan multi-role dengan hak akses yang terenkondisi:
+  - **Admin**: Akses penuh ke seluruh sistem termasuk manajemen akun dan database.
+  - **Aslab**: Akses ke fitur operasional praktikum, jadwal, dan pelanggaran.
+  - **Koor Asprak**: Akses terbatas hanya untuk melihat panduan dan mengelola pelanggaran pada praktikum yang di-assign.
+- **📊 Import/Export Data**: Kemudahan migrasi data melalui format Excel (.xlsx) untuk laporan dan setup semester.
 
 ## 🛠️ Tech Stack
 
-- **Frontend**: [Next.js](https://nextjs.org/) 16.1 (App Router)
-- **Backend**: [Supabase](https://supabase.com/) (PostgreSQL Database)
-- **UI Icons**: [Lucide React](https://lucide.dev/)
+- **Frontend**: [Next.js](https://nextjs.org/) 16.1 (App Router & Server Components)
+- **Backend-as-a-Service**: [Supabase](https://supabase.com/) & PostgreSQL
+- **Language**: [TypeScript](https://www.typescriptlang.org/)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/) 4.x
+- **UI Components**: [Shadcn UI](https://ui.shadcn.com/) (Radix UI)
+- **Data Table**: TanStack Table
+- **Icons**: [Lucide React](https://lucide.dev/)
 - **Charts**: [Recharts](https://recharts.org/)
-- **Language**: TypeScript 5.x
-- **Code Quality**: Prettier, ESLint
 
-## 📁 Struktur Folder
+## 📁 Struktur Folder Utama
 
 ```
 webapp/
 ├── src/
-│   ├── app/              # Next.js App Router (pages & API routes)
-│   │   ├── api/          # API endpoints
-│   │   ├── asprak/       # Asprak management page
-│   │   ├── jadwal/       # Scheduling page
-│   │   ├── database/     # Database management page
-│   │   ├── pelanggaran/  # Violation tracking page
-│   │   └── layout.tsx    # Root layout
-│   ├── components/       # React components
-│   │   ├── asprak/       # Asprak-specific components
-│   │   ├── layout/       # Layout components (Sidebar)
-│   │   └── ui/           # Reusable UI components
-│   ├── hooks/            # Custom React hooks
-│   ├── lib/              # Libraries & utilities
-│   │   └── fetchers/     # API client fetchers
-│   ├── services/         # Server-side services (Supabase)
-│   ├── types/            # TypeScript type definitions
-│   ├── utils/            # Utility functions
-│   └── constants/        # Application constants
-├── docs/                 # Project documentation
-│   ├── md/               # Markdown docs
-│   └── datasets/         # Sample data (CSV, Excel)
-├── scripts/              # Utility scripts (seeding, testing)
-├── public/               # Static assets
-│   └── references/       # Reference data
-├── .vscode/              # VS Code settings
-├── .prettierrc           # Prettier config
-├── .gitignore            # Git ignore rules
-└── package.json          # Dependencies & scripts
+│   ├── app/                # App Router
+│   │   ├── (auth)/         # Halaman Otentikasi (Login)
+│   │   ├── (dashboard)/    # Halaman Utama (Layout Terproteksi)
+│   │   └── api/            # API Route Handlers
+│   ├── components/         # React Components
+│   │   ├── ui/             # Shadcn UI (Reusable)
+│   │   ├── layout/         # Navigation & Sidebar
+│   │   └── [feature]/      # Komponen spesifik fitur
+│   ├── hooks/              # Custom React Hooks
+│   ├── lib/                # Konfigurasi Library (Supabase, Auth)
+│   ├── services/           # Logika Bisnis Server-side
+│   └── types/              # Definisi TypeScript
+├── docs/                   # Dokumentasi Teknis & User Guide
+├── scripts/                # Utility Scripts (Seed, Test)
+└── public/                 # Asset Statis (Gambar, Logos)
 ```
-
-## 📚 Dokumentasi
-
-Dokumentasi lengkap tersedia di folder `docs/md/`:
-
-| File                                                             | Deskripsi                   |
-| ---------------------------------------------------------------- | --------------------------- |
-| [tujuanaplikasi.md](docs/md/tujuanaplikasi.md)                   | Tujuan dan scope aplikasi   |
-| [techstack.md](docs/md/techstack.md)                             | Teknologi yang digunakan    |
-| [gambaransistemasprak.md](docs/md/gambaransistemasprak.md)       | Gambaran sistem asprak      |
-| [gambaransistempraktikum.md](docs/md/gambaransistempraktikum.md) | Gambaran sistem praktikum   |
-| [gambaranjadwal.md](docs/md/gambaranjadwal.md)                   | Gambaran sistem penjadwalan |
-| [gambaranpelanggaran.md](docs/md/gambaranpelanggaran.md)         | Gambaran sistem pelanggaran |
 
 ## 🚀 Getting Started
 
 ### Prerequisites
 
-- Node.js 18.x atau lebih baru
-- npm / yarn / pnpm / bun
-- Akun Supabase
+- Node.js 18.x / 20.x
+- npm / yarn / pnpm
+- Akun Supabase (untuk database & auth)
 
 ### Instalasi
 
 1. **Clone repository**
-
    ```bash
    git clone <repository-url>
    cd webapp
    ```
 
 2. **Install dependencies**
-
    ```bash
    npm install
-   # atau
-   yarn install
-   # atau
-   pnpm install
    ```
 
 3. **Setup environment variables**
-
-   Copy file `env.example` ke `.env.local`:
-
-   ```bash
-   cp env.example .env.local
-   ```
-
-   Isi dengan kredensial Supabase Anda:
-
+   Buat file `.env.local` dan isi kredensial Supabase Anda:
    ```env
    NEXT_PUBLIC_SUPABASE_URL=your-project-url
    NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+   SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
    ```
 
-4. **Setup Supabase Database**
-
-   Buat tabel-tabel berikut di Supabase Dashboard:
-   - `Praktikum` - Data praktikum per semester
-   - `Mata_Kuliah` - Mata kuliah praktikum
-   - `Asprak` - Data asisten praktikum
-   - `Asprak_Praktikum` - Pivot table asprak-praktikum
-   - `Jadwal` - Jadwal praktikum per kelas
-   - `Pelanggaran` - Data pelanggaran asprak
-
-   Schema lengkap ada di `docs/database-schema.md` (jika ada) atau lihat `src/types/database.ts`
-
-5. **Jalankan development server**
-
+4. **Jalankan development server**
    ```bash
    npm run dev
    ```
 
-6. Buka [http://localhost:3000](http://localhost:3000) di browser
+5. Buka [http://localhost:3000](http://localhost:3000)
 
 ## 🌿 Git Workflow
 
-### Membuat Branch Baru
+Gunakan [Conventional Commits](https://www.conventionalcommits.org/) dalam setiap pesan commit:
+- `feat:` (fitur baru)
+- `fix:` (perbaikan bug)
+- `docs:` (pembaruan dokumentasi)
+- `style:` (perubahan visual/formatting)
+- `refactor:` (perubahan struktur code tanpa mengubah fitur)
 
-Gunakan format penamaan branch: `<nama>`
-
-**Contoh:**
-
-```bash
-# Buat branch dengan nama Anda
-git checkout -b abiyyu
-git checkout -b athila
-git checkout -b hendika
-```
-
-**Tips:**
-
-- Satu developer = satu branch aktif
-- Merge ke main setelah fitur selesai, lalu lanjut di branch yang sama
-
-### Langkah-langkah Development
-
-1. **Pastikan branch main up-to-date**
-
-   ```bash
-   git checkout main
-   git pull origin main
-   ```
-
-2. **Buat branch development Anda**
-
-   ```bash
-   git checkout -b <nama>
-
-   # Contoh:
-   git checkout -b abiyyu
-   ```
-
-3. **Lakukan development**
-   - Edit code sesuai kebutuhan
-   - Format code sebelum commit:
-     ```bash
-     npm run format
-     ```
-
-4. **Commit dengan conventional commits**
-
-   ```bash
-   git add .
-   git commit -m "feat: deskripsi perubahan"
-   ```
-
-5. **Push branch ke remote**
-
-   ```bash
-   git push origin <nama>
-
-   # Contoh:
-   git push origin abiyyu
-   ```
-
-6. **Buat Pull Request ke main**
-   - Buka GitHub repository
-   - Buat Pull Request dari `<nama>` ke `main`
-   - Request review dari tim
-   - Merge setelah approved
-
-### Konvensi Commit Message
-
-Gunakan format [Conventional Commits](https://www.conventionalcommits.org/):
-
-| Prefix      | Penggunaan                       |
-| ----------- | -------------------------------- |
-| `feat:`     | Fitur baru                       |
-| `fix:`      | Bug fix                          |
-| `docs:`     | Perubahan dokumentasi            |
-| `style:`    | Formatting, tidak mengubah logic |
-| `refactor:` | Refactoring code                 |
-| `test:`     | Menambah/memperbaiki test        |
-| `chore:`    | Maintenance tasks                |
-
-**Contoh:**
-
-```bash
-git commit -m "feat: tambah fitur import CSV asprak"
-git commit -m "fix: perbaiki validasi jadwal bentrok"
-git commit -m "docs: update dokumentasi API"
-```
-
-## 📜 Available Scripts
-
-| Script                 | Deskripsi                     |
-| ---------------------- | ----------------------------- |
-| `npm run dev`          | Jalankan development server   |
-| `npm run build`        | Build production              |
-| `npm run start`        | Jalankan production server    |
-| `npm run lint`         | Jalankan ESLint               |
-| `npm run format`       | Format code dengan Prettier   |
-| `npm run format:check` | Check formatting tanpa modify |
-
-### Database Scripts
-
-```bash
-# Seed database dengan data awal
-npx tsx scripts/seed.ts
-
-# Test koneksi database
-npx tsx scripts/test_fetch.ts
-```
-
-## 🤝 Contributing
-
-1. Buat branch dengan nama Anda: `git checkout -b <nama>`
-2. Lakukan perubahan dengan commit yang jelas (conventional commits)
-3. Format code dengan `npm run format`
-4. Push dan buat Pull Request
-5. Request review dari tim
-6. Merge setelah approved
-
-## 📄 License
-
-Private - Internal Use Only
+---
+**Laboratorium Informatika** - *Efficiency through Technology*
