@@ -27,7 +27,7 @@ export default function AsprakFilters({
   hideSearch = false,
 }: AsprakFiltersProps) {
   return (
-    <div className={`flex flex-col sm:flex-row gap-4 pb-6 border-b border-border items-center ${hideSearch ? 'justify-end' : ''}`}>
+    <div className={`flex flex-col sm:flex-row gap-4 border-border items-center ${hideSearch ? 'justify-end' : ''}`}>
       {!hideSearch && (
         <div className="relative flex-1 w-full">
           <Search
@@ -36,7 +36,7 @@ export default function AsprakFilters({
           />
           <Input
             type="text"
-            placeholder="Search..."
+            placeholder="Cari..."
             value={searchQuery || ''}
             onChange={(e) => onSearchChange?.(e.target.value)}
             className="pl-10"
@@ -47,11 +47,11 @@ export default function AsprakFilters({
       <div className={`w-full sm:w-auto ${hideSearch ? 'ml-auto' : ''}`}>
         <Select value={selectedTerm} onValueChange={onTermChange}>
           <SelectTrigger className="w-full sm:w-[180px]">
-            <SelectValue placeholder="Select term" />
+            <SelectValue placeholder="Pilih Angkatan" />
           </SelectTrigger>
           <SelectContent>
             <SelectGroup>
-              <SelectItem value="all">All Terms</SelectItem>
+              <SelectItem value="all">Semua Angkatan</SelectItem>
               {terms.map((term) => (
                 <SelectItem key={term} value={term}>
                   {term}

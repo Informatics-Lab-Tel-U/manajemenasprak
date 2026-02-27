@@ -35,7 +35,7 @@ export default function AsprakDeleteDialog({
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Batal</AlertDialogCancel>
-          <AlertDialogAction onClick={onConfirm} className="bg-destructive hover:bg-destructive/90">
+          <AlertDialogAction onClick={onConfirm} variant="destructive">
             Hapus
           </AlertDialogAction>
         </AlertDialogFooter>

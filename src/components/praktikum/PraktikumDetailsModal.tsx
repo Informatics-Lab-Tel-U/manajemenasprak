@@ -51,7 +51,6 @@ export default function PraktikumDetailsModal({
             <div className="flex flex-col items-center justify-center p-3 border rounded-lg bg-muted/20">
               <span className="text-sm text-muted-foreground font-medium">Total Asprak</span>
               <div className="flex items-center mt-1">
-                <Users className="w-4 h-4 mr-1.5 text-blue-500" />
                 <span className="text-2xl font-bold">{praktikum.asprak_count}</span>
               </div>
             </div>
@@ -61,7 +60,6 @@ export default function PraktikumDetailsModal({
                 <Loader2 className="w-5 h-5 animate-spin mt-2 text-muted-foreground" />
               ) : (
                 <div className="flex items-center mt-1">
-                  <Calendar className="w-4 h-4 mr-1.5 text-green-500" />
                   <span className="text-2xl font-bold">{details?.total_kelas || 0}</span>
                 </div>
               )}
