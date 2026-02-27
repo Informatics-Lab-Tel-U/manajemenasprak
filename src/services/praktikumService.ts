@@ -11,6 +11,18 @@ export interface PraktikumWithStats extends Praktikum {
   asprak_count: number;
 }
 
+export async function getPraktikumById(id: string, supabaseClient?: SupabaseClient): Promise<Praktikum | null> {
+  const supabase = supabaseClient || globalAdmin;
+  const { data, error } = await supabase.from('praktikum').select('*').eq('id', id).single();
+  if (error) {
+    if (error.code !== 'PGRST116') {
+      logger.error(`Error fetching praktikum ${id}:`, error);
+    }
+    return null;
+  }
+  return data as Praktikum;
+}
+
 export interface PraktikumDetails {
   total_kelas: number;
   classes: {

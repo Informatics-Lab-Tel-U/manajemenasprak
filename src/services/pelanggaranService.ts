@@ -1,7 +1,7 @@
 import 'server-only';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { createAdminClient } from '@/lib/supabase/admin';
-import type { Pelanggaran } from '@/types/database';
+import type { Pelanggaran, Praktikum, Jadwal } from '@/types/database';
 import type { CreatePelanggaranInput } from '@/types/api';
 import { logger } from '@/lib/logger';
 
@@ -32,6 +32,14 @@ const PELANGGARAN_SELECT = `
   )
 `;
 
+export type PelanggaranCountEntry = {
+  total: number;
+  allFinal: boolean;
+  finalized: boolean;
+};
+
+export type PelanggaranCountMap = Record<string, PelanggaranCountEntry>;
+
 /**
  * Fetch all pelanggaran (ADMIN / ASLAB — server-side via separate server service).
  */
@@ -47,6 +55,38 @@ export async function getAllPelanggaran(supabaseClient?: SupabaseClient): Promis
     return [];
   }
   return data as Pelanggaran[];
+}
+
+/**
+ * Fetch praktikum list for ASPRAK_KOOR user based on asprak_koordinator assignments.
+ */
+export async function getKoorPraktikumList(
+  userId: string,
+  supabaseClient: SupabaseClient
+): Promise<Praktikum[]> {
+  const { data, error } = await supabaseClient
+    .from('asprak_koordinator')
+    .select('id_praktikum, praktikum:praktikum(id, nama, tahun_ajaran)')
+    .eq('id_pengguna', userId)
+    .eq('is_active', true);
+
+  if (error) {
+    logger.error('Error fetching koor praktikum list:', error);
+    return [];
+  }
+
+  const seen = new Set<string>();
+  const praktikumList: Praktikum[] = [];
+
+  for (const a of data ?? []) {
+    const p = (a as any).praktikum;
+    if (p && !seen.has(p.id)) {
+      seen.add(p.id);
+      praktikumList.push(p as Praktikum);
+    }
+  }
+
+  return praktikumList;
 }
 
 /**
@@ -100,6 +140,46 @@ export async function getPelanggaranByKoor(supabaseClient?: SupabaseClient): Pro
     return [];
   }
   return data as Pelanggaran[];
+}
+
+/**
+ * Aggregate pelanggaran counts per praktikum.
+ * For ASPRAK_KOOR we use the RLS-protected supabase client, for others we fall back to admin.
+ */
+export async function getPelanggaranCountsByPraktikum(
+  isKoor: boolean,
+  supabaseClient: SupabaseClient
+): Promise<PelanggaranCountMap> {
+  const client = isKoor ? supabaseClient : globalAdmin;
+
+  const { data, error } = await client
+    .from('pelanggaran')
+    .select('jadwal:jadwal(mata_kuliah:mata_kuliah(id_praktikum, praktikum:praktikum(tahun_ajaran))), is_final');
+
+  if (error) {
+    logger.error('Error fetching pelanggaran counts:', error);
+    return {};
+  }
+
+  const countMap = new Map<string, PelanggaranCountEntry>();
+
+  for (const row of data ?? []) {
+    const mk = (row as any).jadwal?.mata_kuliah;
+    const id = mk?.id_praktikum;
+    if (!id) continue;
+    if (!countMap.has(id)) {
+      countMap.set(id, { total: 0, allFinal: true, finalized: false });
+    }
+    const entry = countMap.get(id)!;
+    entry.total += 1;
+    if (!(row as any).is_final) entry.allFinal = false;
+  }
+
+  for (const [, entry] of countMap) {
+    entry.finalized = entry.total > 0 && entry.allFinal;
+  }
+
+  return Object.fromEntries(countMap);
 }
 
 /**
@@ -262,4 +342,32 @@ export async function deletePelanggaran(id: string, supabaseClient?: SupabaseCli
     logger.error('Error deleting pelanggaran:', error);
     throw new Error(`Gagal menghapus pelanggaran: ${error.message}`);
   }
+}
+
+/**
+ * Fetch jadwal list with praktikum information for Pelanggaran modal.
+ */
+export async function getJadwalForPelanggaran(
+  supabaseClient?: SupabaseClient
+): Promise<(Jadwal & { id_praktikum?: string | null })[]> {
+  const supabase = supabaseClient || globalAdmin;
+
+  const { data, error } = await supabase
+    .from('jadwal')
+    .select(
+      '*, mata_kuliah:mata_kuliah(id, nama_lengkap, program_studi, id_praktikum, praktikum:praktikum(id, nama, tahun_ajaran))'
+    )
+    .order('kelas', { ascending: true });
+
+  if (error) {
+    logger.error('Error fetching jadwal for pelanggaran:', error);
+    return [];
+  }
+
+  const jadwalRaw = (data ?? []) as any[];
+
+  return jadwalRaw.map((j) => ({
+    ...j,
+    id_praktikum: j.mata_kuliah?.id_praktikum ?? null,
+  })) as (Jadwal & { id_praktikum?: string | null })[];
 }

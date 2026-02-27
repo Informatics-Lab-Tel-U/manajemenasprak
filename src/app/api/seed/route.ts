@@ -1,9 +1,11 @@
 import { NextResponse } from 'next/server';
 import { exec } from 'child_process';
 import { logger } from '@/lib/logger';
+import { requireRole } from '@/lib/auth';
 
 export async function POST(req: Request): Promise<NextResponse> {
   try {
+    await requireRole(['ADMIN']);
     const { term } = await req.json();
 
     logger.info(`Triggering seed for ${term}`);

@@ -2,9 +2,11 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import * as plottingService from '@/services/plottingService';
 import { logger } from '@/lib/logger';
+import { requireRole } from '@/lib/auth';
 
 export async function GET(req: Request) {
   try {
+    await requireRole(['ADMIN', 'ASLAB', 'ASPRAK_KOOR']); // Plotting can be viewed by Koor
     const supabase = await createClient();
     const url = new URL(req.url);
     const term = url.searchParams.get('term') || undefined;
@@ -39,6 +41,7 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
+    await requireRole(['ADMIN', 'ASLAB']);
     const supabase = await createClient();
     const body = await req.json();
     const { action } = body;
@@ -52,6 +55,10 @@ export async function POST(req: Request) {
     if (action === 'save-plotting') {
         const { assignments } = body; // { asprak_id, praktikum_id }[]
         await plottingService.savePlotting(assignments, supabase);
+
+        const { createAuditLog } = await import('@/services/server/auditLogService');
+        await createAuditLog('Plotting', 'BULK', 'SAVE_PLOTTING', { count: assignments.length });
+
         return NextResponse.json({ success: true });
     }
 
