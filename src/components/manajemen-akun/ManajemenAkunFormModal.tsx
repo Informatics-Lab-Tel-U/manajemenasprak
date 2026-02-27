@@ -21,6 +21,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import {
+  Field,
+  FieldContent,
+  FieldDescription,
+  FieldLabel,
+  FieldTitle,
+} from '@/components/ui/field';
 import type { Pengguna, Praktikum } from '@/types/database';
 import type { Role } from '@/config/rbac';
 
@@ -313,7 +321,7 @@ export function ManajemenAkunFormModal({ open, onOpenChange, mode, user, onSucce
               }}
               disabled={isLoading}
             >
-              <SelectTrigger id="akun-role">
+              <SelectTrigger id="akun-role" className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -349,7 +357,7 @@ export function ManajemenAkunFormModal({ open, onOpenChange, mode, user, onSucce
                   }}
                   disabled={isLoading || loadingPraktikum || tahunAjaranList.length === 0}
                 >
-                  <SelectTrigger className="h-8">
+                  <SelectTrigger className="h-8 w-full">
                     <SelectValue placeholder="Pilih Tahun Ajaran" />
                   </SelectTrigger>
                   <SelectContent>
@@ -372,35 +380,25 @@ export function ManajemenAkunFormModal({ open, onOpenChange, mode, user, onSucce
                     Tidak ada praktikum di tahun ini
                   </p>
                 ) : (
-                  <div className="space-y-1 max-h-40 overflow-y-auto pr-1">
-                    {filteredPraktikum.map((p) => {
-                      const isSelected = selectedPraktikumId === p.id;
-                      return (
-                        <button
-                          key={p.id}
-                          type="button"
-                          onClick={() => setSelectedPraktikumId(p.id)}
-                          disabled={isLoading}
-                          className={`w-full flex items-center gap-2.5 rounded-md px-3 py-2 text-left text-sm transition-colors
-                            ${isSelected
-                              ? 'bg-primary/10 text-primary border border-primary/30'
-                              : 'hover:bg-accent border border-transparent'
-                            }`}
-                        >
-                          {/* Radio indicator */}
-                          <span
-                            className={`flex-shrink-0 h-3.5 w-3.5 rounded-full border-2 flex items-center justify-center
-                              ${isSelected ? 'border-primary' : 'border-muted-foreground/50'}`}
-                          >
-                            {isSelected && (
-                              <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-                            )}
-                          </span>
-                          {p.nama}
-                        </button>
-                      );
-                    })}
-                  </div>
+                  <RadioGroup
+                    value={selectedPraktikumId}
+                    onValueChange={setSelectedPraktikumId}
+                    className="space-y-2 max-h-60 overflow-y-auto pr-1"
+                  >
+                    {filteredPraktikum.map((p) => (
+                      <FieldLabel key={p.id} htmlFor={`p-${p.id}`} className="cursor-pointer">
+                        <Field orientation="horizontal">
+                          <FieldContent>
+                            <FieldTitle>{p.nama}</FieldTitle>
+                            <FieldDescription>
+                              ID: {p.id.substring(0, 8)}...
+                            </FieldDescription>
+                          </FieldContent>
+                          <RadioGroupItem value={p.id} id={`p-${p.id}`} disabled={isLoading} />
+                        </Field>
+                      </FieldLabel>
+                    ))}
+                  </RadioGroup>
                 )}
               </div>
             </div>

@@ -36,3 +36,34 @@ export async function getAuditLogs(
     count: count || 0,
   };
 }
+
+export async function createAuditLog(
+  tableName: string,
+  recordId: string,
+  operation: string,
+  newValues?: any,
+  oldValues?: any
+): Promise<void> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    console.warn(`Attempted to create audit log without user context for table ${tableName}`);
+    return;
+  }
+
+  const { error } = await supabase.from('audit_log').insert({
+    table_name: tableName,
+    record_id: recordId,
+    operation,
+    new_values: newValues,
+    old_values: oldValues,
+    id_pengguna: user.id,
+  });
+
+  if (error) {
+    console.error(`Failed to create audit log for ${tableName}:`, error);
+  }
+}

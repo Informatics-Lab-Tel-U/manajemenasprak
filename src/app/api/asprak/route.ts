@@ -7,9 +7,11 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import * as asprakService from '@/services/asprakService';
 import { logger } from '@/lib/logger';
+import { requireRole } from '@/lib/auth';
 
 export async function GET(req: Request) {
   try {
+    await requireRole(['ADMIN', 'ASLAB']);
     const supabase = await createClient();
     const url = new URL(req.url);
     const params = url.searchParams;
@@ -41,6 +43,7 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
+    await requireRole(['ADMIN', 'ASLAB']);
     const supabase = await createClient();
     const body = await req.json();
     const { action } = body;
@@ -83,6 +86,7 @@ export async function POST(req: Request) {
 
 export async function DELETE(req: Request) {
   try {
+    await requireRole(['ADMIN']);
     const supabase = await createClient();
     const body = await req.json();
     const { id } = body;
@@ -92,6 +96,10 @@ export async function DELETE(req: Request) {
     }
 
     await asprakService.deleteAsprak(id, supabase);
+
+    const { createAuditLog } = await import('@/services/server/auditLogService');
+    await createAuditLog('Asprak', id, 'DELETE');
+
     return NextResponse.json({ ok: true, data: null });
   } catch (e: any) {
     logger.error('DELETE /api/asprak error:', e);

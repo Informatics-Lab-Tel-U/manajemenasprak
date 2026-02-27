@@ -21,12 +21,23 @@ export async function PATCH(
 
     const { id: userId } = await params;
     const body: UpdatePenggunaInput = await request.json();
-    const { nama_lengkap, role, praktikum_ids } = body;
+    const { nama_lengkap, role, praktikum_ids, password } = body;
 
     const admin = createAdminClient();
     const supabase = await createClient();
 
-    // 1. Update basic profile
+    // 1. Update auth password if provided (Admin only, direct update)
+    if (password) {
+      const { error: authError } = await admin.auth.admin.updateUserById(userId, {
+        password: password,
+      });
+      if (authError) throw authError;
+
+      const { createAuditLog } = await import('@/services/server/auditLogService');
+      await createAuditLog('User', userId, 'UPDATE_PASSWORD');
+    }
+
+    // 2. Update basic profile
     const updateData: Record<string, any> = {};
     if (nama_lengkap) updateData.nama_lengkap = nama_lengkap;
     if (role) updateData.role = role;
@@ -88,6 +99,9 @@ export async function DELETE(
 
     const { error } = await admin.auth.admin.deleteUser(id);
     if (error) throw error;
+
+    const { createAuditLog } = await import('@/services/server/auditLogService');
+    await createAuditLog('User', id, 'DELETE');
 
     return NextResponse.json({ ok: true });
   } catch (err: any) {

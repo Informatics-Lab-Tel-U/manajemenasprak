@@ -16,6 +16,7 @@ import { Label } from '@/components/ui/label';
 import { createClient } from '@/lib/supabase/client';
 import { Loader2, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const URL_ERROR_MESSAGES: Record<string, string> = {
   'no-profile': 'Akun Anda belum terdaftar dalam sistem. Hubungi administrator.',
@@ -29,6 +30,7 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [showPassword, setShowPassword] = React.useState(false);
+  const [rememberMe, setRememberMe] = React.useState(true);
 
   React.useEffect(() => {
     const urlError = searchParams.get('error');
@@ -132,6 +134,20 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
                   )}
                 </button>
               </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="remember"
+                checked={rememberMe}
+                onCheckedChange={(checked) => setRememberMe(!!checked)}
+              />
+              <Label
+                htmlFor="remember"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+              >
+                Tetap masuk
+              </Label>
             </div>
 
             <Button type="submit" disabled={isLoading} className="w-full mt-2">
