@@ -28,8 +28,6 @@ function useDebounceValue<T>(value: T, delay: number): T {
 }
 
 interface AsprakFormProps {
-  // existingCodes?: string[]; // Optional now as we check backend
-  // availablePraktikums removed - we fetch per term
   onSubmit: (data: UpsertAsprakInput) => Promise<void>;
   onCancel: () => void;
 }
@@ -112,8 +110,8 @@ export default function AsprakForm({ onSubmit, onCancel }: AsprakFormProps) {
     if (!debouncedNama || debouncedNama.length < 3) return;
     
     // If code is already manually set to something valid (length 3), maybe don't overwrite?
-    // But usually "Auto" means it reacts to Name.
-    // We'll simplistic: generate.
+    // But biasanya "Auto" berarti bereaksi terhadap Nama.
+    // Kita gunakan logika sederhana: generate.
     
     async function gen() {
         setCodeStatus('generating');
@@ -367,7 +365,7 @@ export default function AsprakForm({ onSubmit, onCancel }: AsprakFormProps) {
                                     onValueChange={(val) => handleTermChange(block.id, val)}
                                 >
                                     <SelectTrigger className="bg-background h-8 text-xs">
-                                        <SelectValue placeholder="Pilih Term" />
+                                        <SelectValue placeholder="Pilih Angkatan" />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {availableTerms.map(t => (
@@ -430,7 +428,7 @@ export default function AsprakForm({ onSubmit, onCancel }: AsprakFormProps) {
 
       <div className="flex justify-end gap-2 pt-2">
         <Button type="button" variant="outline" size="sm" onClick={onCancel} className="h-8">
-          Cancel
+          Batal
         </Button>
         <Button 
             type="submit" 

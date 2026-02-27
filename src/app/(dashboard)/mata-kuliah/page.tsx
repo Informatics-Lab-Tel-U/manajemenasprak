@@ -27,8 +27,6 @@ function MataKuliahPageContent() {
   // Fetch Data
   useEffect(() => {
     async function fetchData() {
-        // Fetch data even if term is empty (All Terms)
-
         
         try {
             const [mkData, praktikumData] = await Promise.all([
@@ -63,7 +61,7 @@ function MataKuliahPageContent() {
           const res = await bulkImportMataKuliah(rows, term);
           toast.success(`Import berhasil: ${res.inserted} data masuk.`);
           if (res.errors.length > 0) {
-              toast.warning(`Beberapa data gagal: ${res.errors.length} errors`);
+              toast.warning(`Beberapa data gagal: ${res.errors.length} kesalahan`);
               console.error(res.errors);
           }
            // Refresh list if imported to current term
@@ -93,13 +91,13 @@ function MataKuliahPageContent() {
        {/* Header */}
        <div className="flex justify-between items-center">
          <div>
-           <h1 className="title-gradient text-4xl font-bold">Mata Kuliah</h1>
+           <h1 className="title-gradient text-3xl font-bold">Mata Kuliah</h1>
            <p className="text-muted-foreground mt-2">
              Kelola data mata kuliah, koordinator, dan varian prodi per tahun ajaran.
            </p>
          </div>
          <div className="flex gap-3">
-            <Button variant="secondary" onClick={() => setShowManualModal(true)}>
+            <Button variant="outline" onClick={() => setShowManualModal(true)}>
                 <Plus className="mr-2 h-4 w-4" /> Input Manual
             </Button>
             <Button onClick={() => setShowImportModal(true)}>
@@ -154,7 +152,7 @@ function MataKuliahPageContent() {
 
 export default function MataKuliahPage() {
     return (
-        <Suspense fallback={<div>Loading...</div>}>
+        <Suspense fallback={<div className="container py-10 text-center">Memuat...</div>}>
             <MataKuliahPageContent />
         </Suspense>
     );

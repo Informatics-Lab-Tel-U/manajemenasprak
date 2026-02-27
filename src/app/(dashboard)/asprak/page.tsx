@@ -106,8 +106,7 @@ function AsprakPageContent() {
     if (!result.ok) {
       throw new Error(result.error);
     }
-
-    toast.success('Data saved successfully!');
+    toast.success('Data berhasil disimpan!');
     setShowAddModal(false);
     fetchAsprak();
     refreshCodesAndNims();
@@ -205,10 +204,10 @@ function AsprakPageContent() {
      
      const result = await deleteAsprak(deleteTarget.id);
      if (result.ok) {
-       toast.success(`Deleted ${deleteTarget.nama_lengkap}`);
+       toast.success(`Berhasil menghapus ${deleteTarget.nama_lengkap}`);
        refreshCodesAndNims();
      } else {
-       toast.error(`Failed to delete: ${result.error}`);
+       toast.error(`Gagal menghapus: ${result.error}`);
      }
      setDeleteTarget(null);
   };
@@ -237,10 +236,10 @@ function AsprakPageContent() {
       {/* Header */}
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="title-gradient" style={{ fontSize: '2rem', fontWeight: 'bold' }}>
+          <h1 className="title-gradient text-3xl font-bold">
             Data Asisten Praktikum
           </h1>
-          <p className="text-muted-foreground">Manage assistant pool</p>
+          <p className="text-muted-foreground mt-2">Kelola daftar asisten praktikum</p>
         </div>
         <div className="flex gap-3 items-center">
           <Button variant="outline" onClick={() => setShowAddModal(true)}>
@@ -280,7 +279,7 @@ function AsprakPageContent() {
             size="icon"
             onClick={() => setIsEditMode(!isEditMode)}
             className={isEditMode ? "bg-amber-100 text-amber-600 hover:bg-amber-200" : "text-muted-foreground"}
-            title={isEditMode ? "Exit Edit Mode" : "Enable Edit Mode"}
+            title={isEditMode ? "Keluar Mode Edit" : "Aktifkan Mode Edit"}
           >
             {isEditMode ? <X size={20} /> : <Pencil size={20} />}
           </Button>
@@ -290,7 +289,7 @@ function AsprakPageContent() {
       <Tabs value={activeTab} className="w-full">
         <TabsContent value="data">
           {/* Filters and Table */}
-          <div className="card glass p-6" style={{ marginBottom: '2rem' }}>
+          <div className="card glass p-6">
             <AsprakFilters
               searchQuery={searchQuery}
               onSearchChange={setSearchQuery}
@@ -379,7 +378,7 @@ function AsprakPageContent() {
 
 export default function AsprakPage() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<div className="container py-10 text-center">Memuat...</div>}>
       <AsprakPageContent />
     </Suspense>
   );

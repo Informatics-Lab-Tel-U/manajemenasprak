@@ -351,7 +351,7 @@ export function JadwalModal({
 
           <DialogFooter>
             <Button variant="outline" type="button" onClick={onClose}>
-              Cancel
+              Batal
             </Button>
             <Button type="submit" disabled={isLoading}>
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

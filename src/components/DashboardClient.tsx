@@ -38,7 +38,7 @@ export default function DashboardClient({
     <>
       <header className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="title-gradient text-4xl font-bold">Overview</h1>
+          <h1 className="title-gradient text-3xl font-bold">Ringkasan</h1>
           <p className="text-muted-foreground mt-1">
             Selamat datang di portal admin Manajemen Asisten Praktikum
           </p>
@@ -46,7 +46,7 @@ export default function DashboardClient({
         <div>
           <Select value={selectedTerm} onValueChange={setSelectedTerm}>
             <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Pilih Term" />
+              <SelectValue placeholder="Pilih Angkatan" />
             </SelectTrigger>
             <SelectContent>
               <SelectGroup>
@@ -66,31 +66,31 @@ export default function DashboardClient({
         <StatCard
           title="Total Asprak"
           value={loading ? '...' : stats.asprakCount}
-          subtitle="Registered in system"
+          subtitle="Terdaftar di sistem"
           icon={Users}
-          trend="Active"
+          trend="Aktif"
           color="purple"
         />
         <StatCard
           title="Total Jadwal"
           value={loading ? '...' : stats.jadwalCount}
-          subtitle="Classes scheduled"
+          subtitle="Kelas terjadwal"
           icon={BookOpen}
           color="blue"
         />
         <StatCard
           title="Pelanggaran"
           value={loading ? '...' : stats.pelanggaranCount}
-          subtitle="Total recorded"
+          subtitle="Total tercatat"
           icon={AlertTriangle}
-          trend="Needs review"
+          trend="Perlu tinjauan"
           color="red"
         />
 
         <StatCard
           title="Jadwal Hari Ini"
           value={todaySchedule.length}
-          subtitle="Sessions today"
+          subtitle="Sesi hari ini"
           icon={Calendar}
           color="green"
         />

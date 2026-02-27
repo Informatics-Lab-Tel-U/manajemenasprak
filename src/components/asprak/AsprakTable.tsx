@@ -68,7 +68,7 @@ export default function AsprakTable({
       },
       {
         id: 'actions',
-        header: 'Actions',
+        header: 'Aksi',
         cell: ({ row }) => (
           isEditMode ? (
             <div className="flex items-center gap-2">
@@ -86,14 +86,14 @@ export default function AsprakTable({
                 size="icon"
                 className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
                 onClick={() => onDelete?.(row.original)}
-                title="Delete"
+                title="Hapus"
               >
                 <Trash size={14} />
               </Button>
             </div>
           ) : (
             <Button variant="ghost" size="sm" onClick={() => onViewDetails(row.original)}>
-              View <ArrowUpRight className="ml-1" size={14} />
+              Lihat <ArrowUpRight className="ml-1" size={14} />
             </Button>
           )
         ),
@@ -124,13 +124,13 @@ export default function AsprakTable({
               <TableHead>Nama Lengkap</TableHead>
               <TableHead>Kode</TableHead>
               <TableHead>Angkatan</TableHead>
-              <TableHead>Actions</TableHead>
+              <TableHead>Aksi</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             <TableRow>
               <TableCell colSpan={5} className="text-center py-8">
-                Loading...
+                Memuat...
               </TableCell>
             </TableRow>
           </TableBody>
@@ -170,7 +170,7 @@ export default function AsprakTable({
             ) : (
               <TableRow>
                 <TableCell colSpan={columns.length} className="h-24 text-center">
-                  No data found
+                  Data tidak ditemukan
                 </TableCell>
               </TableRow>
             )}
@@ -181,7 +181,7 @@ export default function AsprakTable({
       {/* Pagination Controls */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
-          <p className="text-sm font-medium">Rows per page</p>
+          <p className="text-sm font-medium">Baris per halaman</p>
           <Select
             value={`${table.getState().pagination.pageSize}`}
             onValueChange={(value) => {
@@ -204,8 +204,8 @@ export default function AsprakTable({
         </div>
 
         <div className="flex items-center space-x-6 lg:space-x-8">
-          <div className="flex w-[100px] items-center justify-center text-sm font-medium">
-            Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
+          <div className="flex w-[120px] items-center justify-center text-sm font-medium">
+            Halaman {table.getState().pagination.pageIndex + 1} dari {table.getPageCount()}
           </div>
           <div className="flex items-center space-x-2">
             <Button
@@ -215,7 +215,7 @@ export default function AsprakTable({
               disabled={!table.getCanPreviousPage()}
             >
               <ChevronLeft className="h-4 w-4" />
-              Previous
+              Sebelumnya
             </Button>
             <Button
               variant="outline"
@@ -223,7 +223,7 @@ export default function AsprakTable({
               onClick={() => table.nextPage()}
               disabled={!table.getCanNextPage()}
             >
-              Next
+              Berikutnya
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>

@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import {
-  ArrowLeft, ArrowUpDown, CheckCircle2, Download, Lock, Plus, Search,
+  ArrowLeft, ArrowUpDown, CheckCircle2, Download, Lock, Plus, Search, Trash2,
 } from 'lucide-react';
 import {
   useReactTable, getCoreRowModel, getPaginationRowModel,
@@ -173,16 +173,27 @@ export default function PelanggaranDetailClient({
         ),
       },
       {
-        accessorKey: 'is_final',
-        header: 'Status',
-        cell: ({ row }) =>
-          row.original.is_final ? (
-            <Badge className="gap-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-              <CheckCircle2 className="h-3 w-3" /> Final
-            </Badge>
-          ) : (
-            <Badge variant="outline">Aktif</Badge>
-          ),
+        id: 'actions',
+        header: 'Aksi',
+        cell: ({ row: { original: v } }) => (
+          <div className="flex items-center gap-2">
+            {v.is_final ? (
+              <Badge className="gap-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                <CheckCircle2 className="h-3 w-3" /> Final
+              </Badge>
+            ) : (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                onClick={() => setViolationToDelete(v.id)}
+              >
+                <Trash2 className="h-4 w-4" />
+                <span className="sr-only">Hapus</span>
+              </Button>
+            )}
+          </div>
+        ),
       },
     ],
     []
@@ -209,6 +220,20 @@ export default function PelanggaranDetailClient({
     return Array.from(set).sort();
   }, [violations]);
 
+  const [violationToDelete, setViolationToDelete] = React.useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = React.useState(false);
+
+  async function handleDeleteViolation() {
+    if (!violationToDelete) return;
+    setIsDeleting(true);
+    try {
+      await deletePelanggaran(violationToDelete);
+    } finally {
+      setIsDeleting(false);
+      setViolationToDelete(null);
+    }
+  }
+
   async function handleFinalize() {
     setIsFinalizing(true);
     try {
@@ -230,6 +255,30 @@ export default function PelanggaranDetailClient({
 
   return (
     <div className="container">
+      {/* Delete confirmation dialog */}
+      <AlertDialog
+        open={!!violationToDelete}
+        onOpenChange={(o) => !o && setViolationToDelete(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Hapus Data Pelanggaran</AlertDialogTitle>
+            <AlertDialogDescription>
+              Apakah Anda yakin ingin menghapus data pelanggaran ini? Tindakan ini tidak dapat dibatalkan.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Batal</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteViolation}
+              variant="destructive"
+              disabled={isDeleting}
+            >
+              {isDeleting ? 'Menghapus...' : 'Ya, Hapus'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div className="flex items-center gap-3">

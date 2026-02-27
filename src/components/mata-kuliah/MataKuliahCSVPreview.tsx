@@ -12,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 
 export interface MataKuliahCSVRow {
@@ -275,16 +276,17 @@ export default function MataKuliahCSVPreview({
                         {row.dosen_koor}
                       </span>
                       {isKoorInvalid && !isDuplicate && (
-                         <input 
-                            className="w-full text-center text-xs border px-1 py-1 rounded border-red-300 focus:outline-red-500"
+                         <Input 
+                            className="h-7 w-full text-center text-xs px-1 border-destructive/50 focus-visible:ring-destructive/20"
                             placeholder="???"
+                            value={row.dosen_koor}
                             maxLength={3}
                             onChange={(e) => {
                                 const val = e.target.value.toUpperCase();
-                                if (val.length === 3) {
+                                if (val.length <= 3) {
                                      const prodiOk = isValidProdi(row.program_studi);
                                      const mkValid = validPraktikums.some(p => p.nama === row.mk_singkat) || row.mappedPraktikumId || row.status === 'ok'; 
-                                     const nextStatus = (prodiOk && mkValid) ? 'ok' : 'error';
+                                     const nextStatus = (prodiOk && val.length === 3 && mkValid) ? 'ok' : 'error';
 
                                      onUpdateRow(idx, {
                                          dosen_koor: val,
