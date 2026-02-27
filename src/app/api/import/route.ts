@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import * as XLSX from 'xlsx';
 import { createClient } from '@/lib/supabase/server';
 import { logger } from '@/lib/logger';
+import { requireRole } from '@/lib/auth';
 import {
   checkCodeConflict,
   generateConflictErrorMessage,
@@ -9,8 +10,9 @@ import {
 } from '@/utils/conflict';
 
 export async function POST(req: Request) {
-  const supabase = await createClient();
   try {
+    await requireRole(['ADMIN']);
+    const supabase = await createClient();
     const formData = await req.formData();
     const file = formData.get('file') as File;
     const term = formData.get('term') as string;
@@ -235,6 +237,10 @@ export async function POST(req: Request) {
       }
 
       logger.info(`Import complete: ${jadwalInserted} jadwal inserted`);
+      
+      const { createAuditLog } = await import('@/services/server/auditLogService');
+      await createAuditLog('DATA_IMPORT', 'EXCEL', 'IMPORT', { term, count: jadwalInserted });
+      
       return NextResponse.json({ success: true, message: `Imported ${jadwalInserted} schedules` });
     } catch (e: any) {
       logger.error('Import failed, rolling back...', e);

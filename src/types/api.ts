@@ -9,9 +9,9 @@ export interface ServiceResult<T> {
 }
 
 export interface CreatePelanggaranInput {
-  id_asprak: string;
+  id_asprak: string | string[];
   id_jadwal: string;
-  modul?: number | null;
+  modul: number;
   jenis: string;
 }
 
@@ -27,6 +27,7 @@ export interface CreatePenggunaInput {
 export interface UpdatePenggunaInput {
   nama_lengkap?: string;
   role?: 'ADMIN' | 'ASLAB' | 'ASPRAK_KOOR';
+  password?: string;
   /** Only for ASPRAK_KOOR: praktikum IDs to assign. tahun_ajaran is derived via join */
   praktikum_ids?: string[];
 }

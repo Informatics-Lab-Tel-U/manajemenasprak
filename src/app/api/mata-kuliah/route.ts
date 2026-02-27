@@ -2,19 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { getMataKuliahByTerm, createMataKuliah, bulkCreateMataKuliah } from '@/services/mataKuliahService';
 import { getOrCreatePraktikum } from '@/services/praktikumService';
+import { requireRole } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
-  const supabase = await createClient();
-  const searchParams = request.nextUrl.searchParams;
-  const term = searchParams.get('term');
-
-  /* 
-   * If term is not provided or 'all', we fetch all.
-   * Service handles the logic.
-   */
-
-
   try {
+    await requireRole(['ADMIN', 'ASLAB']);
+    const supabase = await createClient();
+    const searchParams = request.nextUrl.searchParams;
+    const term = searchParams.get('term');
+
     const data = await getMataKuliahByTerm(term, supabase);
     return NextResponse.json({ ok: true, data });
   } catch (error: any) {
@@ -24,6 +20,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    await requireRole(['ADMIN', 'ASLAB']);
     const supabase = await createClient();
     const body = await request.json();
     const { action, data, term } = body;
@@ -49,6 +46,12 @@ export async function POST(request: NextRequest) {
         };
 
         const result = await createMataKuliah(payload, supabase);
+
+        if (result) {
+            const { createAuditLog } = await import('@/services/server/auditLogService');
+            await createAuditLog('Mata_Kuliah', result.id, 'CREATE', payload);
+        }
+
         return NextResponse.json({ ok: true, data: result });
         
     } else if (action === 'bulk') {
@@ -84,6 +87,10 @@ export async function POST(request: NextRequest) {
         }
         
         const result = await bulkCreateMataKuliah(finalPayloads, supabase);
+
+        const { createAuditLog } = await import('@/services/server/auditLogService');
+        await createAuditLog('Mata_Kuliah', 'BULK', 'IMPORT', { count: result.inserted });
+
         return NextResponse.json({
             ok: true,
             data: {

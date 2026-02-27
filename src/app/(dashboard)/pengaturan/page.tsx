@@ -140,6 +140,46 @@ export default function DatabasePage() {
     }
   };
 
+  const handleExport = async () => {
+    const startY = parseInt(termYear);
+    const term = `${startY}${startY + 1}-${termSem}`;
+    
+    setLoading(true);
+    setStatus({ type: 'info', message: `Exporting data for term: ${term}...` });
+
+    try {
+      const result = await importFetcher.exportExcelDataset(term);
+      if (result.ok && result.data) {
+        const wb = XLSX.utils.book_new();
+        
+        // Add all 5 sheets
+        const wsPraktikum = XLSX.utils.json_to_sheet(result.data.praktikum);
+        XLSX.utils.book_append_sheet(wb, wsPraktikum, 'praktikum');
+
+        const wsMk = XLSX.utils.json_to_sheet(result.data.mata_kuliah);
+        XLSX.utils.book_append_sheet(wb, wsMk, 'mata_kuliah');
+
+        const wsAsprak = XLSX.utils.json_to_sheet(result.data.asprak);
+        XLSX.utils.book_append_sheet(wb, wsAsprak, 'asprak');
+
+        const wsJadwal = XLSX.utils.json_to_sheet(result.data.jadwal);
+        XLSX.utils.book_append_sheet(wb, wsJadwal, 'jadwal');
+
+        const wsPivot = XLSX.utils.json_to_sheet(result.data.asprak_praktikum);
+        XLSX.utils.book_append_sheet(wb, wsPivot, 'asprak_praktikum');
+
+        XLSX.writeFile(wb, `EXPORT_${term}.xlsx`);
+        setStatus({ type: 'success', message: `Successfully exported data for ${term}!` });
+      } else {
+        setStatus({ type: 'error', message: result.error || 'Export failed' });
+      }
+    } catch (e: any) {
+      setStatus({ type: 'error', message: e.message || 'Export failed' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleDownloadTemplate = () => {
     const wb = XLSX.utils.book_new();
     const startY = parseInt(termYear);
@@ -335,19 +375,47 @@ export default function DatabasePage() {
               )}
             </div>
 
-            {/* Download Template Button */}
+            </CardContent>
+        </Card>
+
+        {/* Export Section */}
+        <Card className="bg-card/80 backdrop-blur-sm shadow-md">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-3">
+              <div className="p-3 rounded-xl bg-chart-4/10 text-chart-4">
+                <Download size={24} />
+              </div>
+              Export Excel Dataset
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="p-4 rounded-lg bg-muted/30 border border-border/50 text-sm space-y-2">
+              <p className="font-medium">Export Filter:</p>
+              <p className="text-muted-foreground">
+                Data will be exported for academic year: <span className="text-foreground font-semibold">20{termYear}/20{parseInt(termYear) + 1} - {termSem === '1' ? 'Ganjil' : 'Genap'}</span>
+              </p>
+            </div>
+
             <Button
-              onClick={handleDownloadTemplate}
-              variant="outline"
-              className="w-full border-chart-4/50 text-chart-4 hover:bg-chart-4/10"
+              onClick={handleExport}
+              disabled={loading}
+              className="w-full bg-chart-4 hover:bg-chart-4/90 text-white gap-2"
             >
-              <Download size={16} />
-              Download Template Excel
+              <FileSpreadsheet size={16} />
+              Export Dataset ke Excel (.xlsx)
             </Button>
-            <p className="text-xs text-muted-foreground text-center">
-              Template includes example rows. Reference files also available in app assets
-              (public/references).
-            </p>
+
+            <div className="pt-4 border-t border-border/50">
+              <p className="text-xs text-muted-foreground mb-3 text-center">Need a blank format?</p>
+              <Button
+                onClick={handleDownloadTemplate}
+                variant="outline"
+                className="w-full border-chart-4/50 text-chart-4 hover:bg-chart-4/10"
+              >
+                <Download size={16} />
+                Download Template Excel
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
