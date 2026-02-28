@@ -74,7 +74,7 @@ export default function PelanggaranForm({
   const [selectedAsprakIds, setSelectedAsprakIds] = useState<string[]>([]);
   const [idJadwal, setIdJadwal] = useState('');
   const [jenis, setJenis] = useState('');
-  const [modul, setModul] = useState<string>(''); 
+  const [modul, setModul] = useState<string>('');
 
   // ── Side panel state ──
   const [sidePanel, setSidePanel] = useState<SidePanel>(null);
@@ -158,7 +158,7 @@ export default function PelanggaranForm({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    
+
     const finalModul = parseInt(modul);
 
     if (!selectedTahunAjaran || !selectedPraktikumId) {
@@ -174,11 +174,11 @@ export default function PelanggaranForm({
       return;
     }
 
-    await onSubmit({ 
-      id_asprak: selectedAsprakIds, 
-      id_jadwal: idJadwal, 
-      jenis, 
-      modul: finalModul 
+    await onSubmit({
+      id_asprak: selectedAsprakIds,
+      id_jadwal: idJadwal,
+      jenis,
+      modul: finalModul,
     });
   }
 
@@ -256,7 +256,6 @@ export default function PelanggaranForm({
             })
           )}
         </div>
-
       </div>
     ) : sidePanel === 'jadwal' ? (
       <div className="flex flex-col h-full p-2">
@@ -312,15 +311,16 @@ export default function PelanggaranForm({
     ) : null;
 
   return (
-    <form onSubmit={handleSubmit}>
-      <DialogContent
-        className={`!flex !flex-col !gap-0 !p-0 overflow-hidden transition-[max-width,width] duration-200 ease-in-out
-          ${sidePanel
+    <DialogContent
+      className={`!flex !flex-col !gap-0 !p-0 overflow-hidden transition-[max-width,width] duration-200 ease-in-out
+        ${
+          sidePanel
             ? '!max-w-[min(780px,95vw)] !w-[min(780px,95vw)]'
             : '!max-w-[min(520px,95vw)] !w-[min(520px,95vw)]'
-          }
-          h-[min(640px,85vh)]`}
-      >
+        }
+        h-[min(640px,85vh)]`}
+    >
+      <form onSubmit={handleSubmit} className="flex flex-col h-full min-h-0">
         <DialogHeader className="border-b px-6 py-4 shrink-0">
           <DialogTitle>Catat Pelanggaran Baru</DialogTitle>
           <DialogDescription className="sr-only">
@@ -352,7 +352,9 @@ export default function PelanggaranForm({
                       </SelectTrigger>
                       <SelectContent>
                         {tahunAjaranList.map((t) => (
-                          <SelectItem key={t} value={t}>{t}</SelectItem>
+                          <SelectItem key={t} value={t}>
+                            {t}
+                          </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -372,7 +374,9 @@ export default function PelanggaranForm({
                       </SelectTrigger>
                       <SelectContent>
                         {filteredPraktikumList.map((p) => (
-                          <SelectItem key={p.id} value={p.id}>{p.nama}</SelectItem>
+                          <SelectItem key={p.id} value={p.id}>
+                            {p.nama}
+                          </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -397,7 +401,10 @@ export default function PelanggaranForm({
                             {a.kode}
                             <button
                               type="button"
-                              onMouseDown={(e) => { e.preventDefault(); toggleAsprak(id); }}
+                              onMouseDown={(e) => {
+                                e.preventDefault();
+                                toggleAsprak(id);
+                              }}
                               className="ml-0.5 rounded-full hover:bg-muted"
                             >
                               <X className="h-2.5 w-2.5" />
@@ -411,9 +418,11 @@ export default function PelanggaranForm({
                     type="button"
                     onClick={() => openPanel(sidePanel === 'asprak' ? null : 'asprak')}
                     className={`w-full flex items-center justify-between h-9 rounded-md border px-3 py-2 text-sm text-left transition-colors
-                      ${sidePanel === 'asprak'
-                        ? 'border-primary bg-primary/5 text-primary'
-                        : 'border-input bg-transparent hover:bg-accent text-muted-foreground'}`}
+                      ${
+                        sidePanel === 'asprak'
+                          ? 'border-primary bg-primary/5 text-primary'
+                          : 'border-input bg-transparent hover:bg-accent text-muted-foreground'
+                      }`}
                   >
                     <span className="flex items-center gap-2">
                       <Users className="h-4 w-4 flex-shrink-0" />
@@ -426,7 +435,8 @@ export default function PelanggaranForm({
 
                   {selectedAsprakIds.length > 1 && (
                     <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
-                      ⚠ Multi-pilih: semua asprak akan dicatat dengan jenis, modul, dan kelas yang sama.
+                      ⚠ Multi-pilih: semua asprak akan dicatat dengan jenis, modul, dan kelas yang
+                      sama.
                     </p>
                   )}
                 </Field>
@@ -437,9 +447,11 @@ export default function PelanggaranForm({
                     type="button"
                     onClick={() => openPanel(sidePanel === 'jadwal' ? null : 'jadwal')}
                     className={`w-full flex items-center justify-between h-9 rounded-md border px-3 py-2 text-sm text-left transition-colors
-                      ${sidePanel === 'jadwal'
-                        ? 'border-primary bg-primary/5 text-primary'
-                        : 'border-input bg-transparent hover:bg-accent'}`}
+                      ${
+                        sidePanel === 'jadwal'
+                          ? 'border-primary bg-primary/5 text-primary'
+                          : 'border-input bg-transparent hover:bg-accent'
+                      }`}
                   >
                     <span
                       className={`flex items-center gap-2 min-w-0 ${
@@ -466,7 +478,9 @@ export default function PelanggaranForm({
                     <SelectContent>
                       <SelectGroup>
                         {VIOLATION_TYPES.map((type) => (
-                          <SelectItem key={type} value={type}>{type}</SelectItem>
+                          <SelectItem key={type} value={type}>
+                            {type}
+                          </SelectItem>
                         ))}
                       </SelectGroup>
                     </SelectContent>
@@ -482,7 +496,9 @@ export default function PelanggaranForm({
                     <SelectContent>
                       <SelectGroup>
                         {Array.from({ length: 16 }, (_, i) => (
-                          <SelectItem key={i + 1} value={String(i + 1)}>Modul {i + 1}</SelectItem>
+                          <SelectItem key={i + 1} value={String(i + 1)}>
+                            Modul {i + 1}
+                          </SelectItem>
                         ))}
                       </SelectGroup>
                     </SelectContent>
@@ -493,13 +509,22 @@ export default function PelanggaranForm({
 
             <DialogFooter className="px-6 py-4 border-t bg-background shrink-0 mt-auto">
               <DialogClose asChild>
-                <Button type="button" variant="outline" size="sm" onClick={onCancel} className="h-8" disabled={isLoading}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={onCancel}
+                  className="h-8"
+                  disabled={isLoading}
+                >
                   Batal
                 </Button>
               </DialogClose>
               <Button type="submit" size="sm" className="h-8" disabled={isLoading || !contextReady}>
                 {isLoading ? (
-                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Menyimpan...</>
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Menyimpan...
+                  </>
                 ) : (
                   'Catat Pelanggaran'
                 )}
@@ -514,7 +539,7 @@ export default function PelanggaranForm({
             </div>
           )}
         </div>
-      </DialogContent>
-    </form>
+      </form>
+    </DialogContent>
   );
 }

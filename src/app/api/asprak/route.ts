@@ -11,7 +11,7 @@ import { requireRole } from '@/lib/auth';
 
 export async function GET(req: Request) {
   try {
-    await requireRole(['ADMIN', 'ASLAB']);
+    await requireRole(['ADMIN', 'ASLAB', 'ASPRAK_KOOR']);
     const supabase = await createClient();
     const url = new URL(req.url);
     const params = url.searchParams;
@@ -43,10 +43,15 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    await requireRole(['ADMIN', 'ASLAB']);
+    const user = await requireRole(['ADMIN', 'ASLAB', 'ASPRAK_KOOR']);
     const supabase = await createClient();
     const body = await req.json();
     const { action } = body;
+
+    // Restriction: coordinators can only 'view'
+    if (user.pengguna.role === 'ASPRAK_KOOR' && action !== 'view') {
+      return NextResponse.json({ ok: false, error: 'Forbidden' }, { status: 403 });
+    }
 
     switch (action) {
       case 'upsert': {
