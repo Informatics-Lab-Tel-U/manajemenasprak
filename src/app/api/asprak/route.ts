@@ -67,17 +67,24 @@ export async function POST(req: Request) {
         return NextResponse.json({ ok: true, data: result });
       }
       case 'update-assignments': {
-        const { asprakId, term, praktikumIds } = body;
-        await asprakService.updateAsprakAssignments(asprakId, term, praktikumIds, supabase);
+        const { asprakId, term, praktikumIds, newKode, nim } = body;
+        await asprakService.updateAsprakAssignments(
+          asprakId,
+          term,
+          praktikumIds,
+          supabase,
+          newKode,
+          nim
+        );
         return NextResponse.json({ ok: true, data: null });
       }
       case 'check-nim': {
-          const exists = await asprakService.checkNimExists(body.nim, supabase);
-          return NextResponse.json({ ok: true, data: { exists } });
+        const exists = await asprakService.checkNimExists(body.nim, supabase);
+        return NextResponse.json({ ok: true, data: { exists } });
       }
       case 'generate-code': {
-          const result = await asprakService.generateUniqueCode(body.name, supabase);
-          return NextResponse.json({ ok: true, data: result });
+        const result = await asprakService.generateUniqueCode(body.name, supabase);
+        return NextResponse.json({ ok: true, data: result });
       }
       default:
         return NextResponse.json({ ok: false, error: 'Invalid action' }, { status: 400 });
@@ -111,4 +118,3 @@ export async function DELETE(req: Request) {
     return NextResponse.json({ ok: false, error: e.message }, { status: 500 });
   }
 }
-
