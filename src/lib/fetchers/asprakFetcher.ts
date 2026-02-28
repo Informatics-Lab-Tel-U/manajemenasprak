@@ -234,7 +234,7 @@ export async function bulkImportAspraks(
       return { ok: false, error: json.error };
     }
 
-    return { ok: true, data: json.result };
+    return { ok: true, data: json.data };
   } catch (e: any) {
     logger.error('Error bulk importing aspraks:', e);
     return { ok: false, error: e.message };
