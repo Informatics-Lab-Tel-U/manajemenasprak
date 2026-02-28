@@ -31,6 +31,7 @@ export async function getJadwalByTerm(
       mata_kuliah:mata_kuliah!inner (
         nama_lengkap,
         program_studi,
+        warna,
         praktikum:praktikum!inner (
           tahun_ajaran,
           nama
@@ -95,6 +96,7 @@ export async function getTodaySchedule(
       mata_kuliah:mata_kuliah!inner (
         nama_lengkap,
         program_studi,
+        warna,
         praktikum:praktikum!inner (
           tahun_ajaran,
           nama
@@ -277,7 +279,8 @@ export async function getAllJadwal(supabaseClient?: SupabaseClient): Promise<Jad
       *,
       mata_kuliah:mata_kuliah (
         nama_lengkap,
-        program_studi
+        program_studi,
+        warna
       )
       `
     )

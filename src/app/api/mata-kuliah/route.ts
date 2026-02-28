@@ -42,7 +42,8 @@ export async function POST(request: NextRequest) {
             id_praktikum: praktikumId,
             nama_lengkap: data.nama_lengkap,
             program_studi: data.program_studi,
-            dosen_koor: data.dosen_koor
+            dosen_koor: data.dosen_koor,
+            warna: data.warna,
         };
 
         const result = await createMataKuliah(payload, supabase);
@@ -79,7 +80,8 @@ export async function POST(request: NextRequest) {
                     id_praktikum: praktikum.id,
                     nama_lengkap: row.nama_lengkap,
                     program_studi: row.program_studi,
-                    dosen_koor: row.dosen_koor
+                    dosen_koor: row.dosen_koor,
+                    warna: row.warna,
                 });
             } catch (err: any) {
                 errors.push(`Failed to prepare ${row.mk_singkat}: ${err.message}`);
@@ -107,3 +109,46 @@ export async function POST(request: NextRequest) {
   }
 }
 
+export async function PUT(request: NextRequest) {
+  try {
+    await requireRole(['ADMIN', 'ASLAB']);
+    const supabase = await createClient();
+    const body = await request.json();
+    const { action, data } = body;
+
+    if (action === 'bulk-update-color') {
+      // Validate data is array of { id, warna }
+      if (!Array.isArray(data)) {
+        return NextResponse.json({ ok: false, error: 'Invalid data format' }, { status: 400 });
+      }
+
+      // Supabase has no direct bulk update, so we update sequentially
+      let updatedCount = 0;
+      const errors: string[] = [];
+
+      for (const item of data) {
+        if (!item.id || !item.warna) continue;
+        
+        const { error } = await supabase
+          .from('mata_kuliah')
+          .update({ warna: item.warna })
+          .eq('id', item.id);
+          
+        if (error) {
+          errors.push(`Failed to update ${item.id}: ${error.message}`);
+        } else {
+          updatedCount++;
+        }
+      }
+
+      return NextResponse.json({
+        ok: true,
+        data: { updated: updatedCount, errors },
+      });
+    }
+
+    return NextResponse.json({ ok: false, error: 'Invalid action' }, { status: 400 });
+  } catch (error: any) {
+    return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+  }
+}
