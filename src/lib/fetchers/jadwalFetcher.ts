@@ -112,9 +112,21 @@ export async function updateJadwal(input: UpdateJadwalInput): Promise<ServiceRes
   }
 }
 
-export async function deleteJadwal(id: number): Promise<ServiceResult<null>> {
+export async function deleteJadwal(id: string): Promise<ServiceResult<null>> {
   try {
     const res = await fetch(`/api/jadwal?id=${id}`, {
+      method: 'DELETE',
+    });
+    const result = await res.json();
+    return result;
+  } catch (error: any) {
+    return { ok: false, error: error.message };
+  }
+}
+
+export async function deleteJadwalByTerm(term: string): Promise<ServiceResult<null>> {
+  try {
+    const res = await fetch(`/api/jadwal?action=by-term&term=${encodeURIComponent(term)}`, {
       method: 'DELETE',
     });
     const result = await res.json();

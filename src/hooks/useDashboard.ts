@@ -46,7 +46,7 @@ export function useDashboard(
         if (statsJson?.ok && statsJson.data) {
           setStats(statsJson.data as DashboardStats);
         }
-      } catch (e) {
+      } catch (e: any) {
         // ignore parse errors; stats remain unchanged
       }
     } catch (err: unknown) {

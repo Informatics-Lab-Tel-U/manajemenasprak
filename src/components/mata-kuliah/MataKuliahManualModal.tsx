@@ -79,7 +79,7 @@ export default function MataKuliahManualModal({
                     setLocalValidPraktikums([]);
                 }
             }
-        } catch (e) {
+        } catch (e: any) {
             console.error(e);
         } finally {
             if (active) setFetchingPraktikums(false);
@@ -248,3 +248,4 @@ export default function MataKuliahManualModal({
     </Dialog>
   );
 }
+

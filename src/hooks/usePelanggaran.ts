@@ -202,3 +202,4 @@ export function usePelanggaranDetail(idPraktikum: string, initialViolations?: Pe
     finalize,
   };
 }
+

@@ -52,7 +52,7 @@ export default function PraktikumManualModal({
     try {
       const exists = await onCheckExists(nama, term);
       setStatus(exists ? 'exists' : 'available');
-    } catch (e) {
+    } catch (e: any) {
       setStatus('idle');
     }
   };
@@ -157,3 +157,4 @@ export default function PraktikumManualModal({
     </Dialog>
   );
 }
+

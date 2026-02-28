@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
@@ -11,15 +11,11 @@ import {
   X,
   Download,
   AlertTriangle,
-  Check,
   Loader2,
   ArrowLeft,
   Save,
-  Copy,
-  CopyX,
   CheckCircle,
 } from 'lucide-react';
-import { toast } from 'sonner';
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -36,19 +32,22 @@ import * as jadwalFetcher from '@/lib/fetchers/jadwalFetcher';
 
 interface RawCSVRow {
   kelas?: string;
-  mata_kuliah?: string;
+  nama_singkat?: string; // Replaced mata_kuliah with nama_singkat to match Excel
   hari?: string;
   sesi?: string | number;
   jam?: string;
   ruangan?: string;
   total_asprak?: string | number;
   dosen?: string;
+  // allow legacy column just in case
+  mata_kuliah?: string;
 }
 
 interface JadwalPreviewRow extends CreateJadwalInput {
   status: 'ok' | 'error' | 'warning';
   statusMessage: string;
-  mkName: string; // Original MK name from CSV for display
+  mkName: string; // Original MK name from CSV or derived for display
+  fromSystemLogic: boolean; // Tells UI if mkName was auto-matched
   selected: boolean;
 }
 
@@ -62,7 +61,7 @@ interface JadwalImportCSVModalProps {
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
-const REQUIRED_COLS = ['kelas', 'mata_kuliah', 'hari', 'sesi', 'jam', 'ruangan'];
+const REQUIRED_COLS = ['kelas', 'hari', 'sesi', 'jam', 'ruangan']; // removed mata_kuliah, checking nama_singkat dynamically
 const VALID_DAYS = ['SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU'];
 
 // ─── Component ───────────────────────────────────────────────────────────────
@@ -128,7 +127,7 @@ export default function JadwalImportCSVModal({
     // Second pass: Apply validations
     // We map to new objects to avoid mutating state directly if we were using it,
     // but here we are processing before setting state.
-    return rows.map((row, idx) => {
+    return rows.map((row) => {
       const newRow = { ...row };
 
       if (newRow.status === 'error') return newRow;
@@ -150,11 +149,21 @@ export default function JadwalImportCSVModal({
 
       // Check Internal Conflict
       if (newRow.ruangan) {
+        const isCurrentPJJ = newRow.kelas.toUpperCase().includes('PJJ');
         const key = getKey(newRow.hari, newRow.sesi, newRow.ruangan);
         const conflictingIndices = internalMap.get(key) || [];
-        if (conflictingIndices.length > 1) {
+
+        // Tabrakan Internal CSV: PJJ is ignored from tabrakan with regular classes,
+        // but can clash with another PJJ? Let's simply allow PJJ to overlap freely.
+        // We filter out conflicts where the OTHER class is PJJ.
+        const activeConflicts = conflictingIndices.filter(
+          (idx) => !rows[idx].kelas.toUpperCase().includes('PJJ')
+        );
+
+        // If the current is NOT PJJ and there's another regular class
+        if (!isCurrentPJJ && activeConflicts.length > 1) {
           newRow.status = 'error';
-          newRow.statusMessage = `Tabrakan Internal CSV (Baris ${conflictingIndices.map((i) => i + 1).join(', ')})`;
+          newRow.statusMessage = `Tabrakan Internal CSV (Baris ${activeConflicts.map((i) => i + 1).join(', ')})`;
           newRow.selected = false;
           return newRow;
         }
@@ -162,10 +171,14 @@ export default function JadwalImportCSVModal({
         // Check DB Conflict
         if (dbMap.has(key)) {
           const existing = dbMap.get(key);
-          newRow.status = 'error';
-          newRow.statusMessage = `Tabrakan Database: Ruangan ${newRow.ruangan} dipakai ${existing.mata_kuliah?.nama_lengkap || 'MK lain'} (${existing.kelas})`;
-          newRow.selected = false;
-          return newRow;
+          const isExistingPJJ = existing.kelas.toUpperCase().includes('PJJ');
+
+          if (!isCurrentPJJ && !isExistingPJJ) {
+            newRow.status = 'error';
+            newRow.statusMessage = `Tabrakan Database: Ruangan ${newRow.ruangan} dipakai ${existing.mata_kuliah?.nama_lengkap || 'MK lain'} (${existing.kelas})`;
+            newRow.selected = false;
+            return newRow;
+          }
         }
       }
 
@@ -203,7 +216,7 @@ export default function JadwalImportCSVModal({
 
           if (missingCols.length > 0) {
             setError(
-              `Kolom wajib tidak ditemukan: ${missingCols.join(', ')}. \nFormat yang diharapkan: Kelas, Mata Kuliah, Hari, Sesi, Jam, Ruangan, Total Asprak, Dosen`
+              `Kolom wajib tidak ditemukan: ${missingCols.join(', ')}. \nFormat yang diharapkan: Kelas, Nama Singkat (Atau Mata Kuliah), Hari, Sesi, Jam, Ruangan, Total Asprak, Dosen`
             );
             return;
           }
@@ -211,20 +224,31 @@ export default function JadwalImportCSVModal({
           // Build preview rows
           const preview: JadwalPreviewRow[] = [];
 
-          data.forEach((row, idx) => {
-            // 1. Resolve MK
-            const mkName = (row.mata_kuliah || '').trim();
+          data.forEach((row) => {
+            // 1. Resolve MK using logic identical to Excel Import
+            const mkName = (row.nama_singkat || row.mata_kuliah || '').trim();
+            const kelas = (row.kelas || '').trim();
+            const isPJJ = kelas.toUpperCase().includes('PJJ');
+            const prodi = kelas.split('-')[0].toUpperCase();
 
             // Filter candidates by term if available
             const candidates = term
               ? mataKuliahList.filter((mk) => mk.praktikum?.tahun_ajaran === term)
               : mataKuliahList;
 
-            const targetMK = candidates.find(
-              (mk) =>
-                mk.praktikum?.nama?.toLowerCase() === mkName.toLowerCase() ||
-                mk.nama_lengkap.toLowerCase() === mkName.toLowerCase()
-            );
+            // Helper to find exact MK matching name and prodi
+            const findMk = (searchProdi: string) => {
+              return candidates.find(
+                (mk) =>
+                  (mk.praktikum?.nama?.toLowerCase() === mkName.toLowerCase() ||
+                    mk.nama_lengkap.toLowerCase() === mkName.toLowerCase()) &&
+                  mk.program_studi?.toUpperCase() === searchProdi.toUpperCase()
+              );
+            };
+
+            let targetMK = findMk(prodi);
+            if (!targetMK && isPJJ) targetMK = findMk('IF-PJJ');
+            if (!targetMK) targetMK = findMk('IF') || findMk('SE') || findMk('IT') || findMk('DS');
 
             const mkId = targetMK?.id.toString() || '';
 
@@ -236,6 +260,8 @@ export default function JadwalImportCSVModal({
             const sesi = Number(row.sesi || 0);
             const totalAsprak = Number(row.total_asprak || 0);
 
+            const displayMkName = targetMK ? targetMK.nama_lengkap : mkName;
+
             let status: 'ok' | 'error' | 'warning' = 'ok';
             let statusMessage = '';
 
@@ -245,22 +271,30 @@ export default function JadwalImportCSVModal({
             } else if (!isValidDay) {
               status = 'error';
               statusMessage = `Hari "${hari}" tidak valid.`;
-            } else if (sesi <= 0) {
+            } else if (!isPJJ && sesi <= 0) {
+              // Bypass zero session check if it's PJJ (PJJ class validation relaxation)
               status = 'error';
-              statusMessage = 'Sesi harus > 0';
+              statusMessage = 'Sesi harus > 0 (Kecuali PJJ)';
+            }
+
+            // 4. Cleanup Ruangan
+            let ruanganClean = (row.ruangan || '').trim();
+            if (ruanganClean.includes('&')) {
+              ruanganClean = ruanganClean.split('&')[0].trim();
             }
 
             preview.push({
               id_mk: mkId,
-              kelas: (row.kelas || '').trim(),
+              kelas: kelas,
               hari: hari,
               sesi: sesi,
               jam: (row.jam || '').trim(),
-              ruangan: (row.ruangan || '').trim(),
+              ruangan: ruanganClean,
               total_asprak: totalAsprak,
               dosen: (row.dosen || '').trim(),
               // UI props
-              mkName: mkName,
+              mkName: displayMkName,
+              fromSystemLogic: !!targetMK,
               status,
               statusMessage,
               selected: status === 'ok',
@@ -287,17 +321,17 @@ export default function JadwalImportCSVModal({
     const data = [
       {
         Kelas: 'IF-45-01',
-        'Mata Kuliah': 'PBO',
+        'Nama Singkat': 'PBO',
         Hari: 'SENIN',
         Sesi: 1,
         Jam: '06:30',
-        Ruangan: 'TULT 0612',
+        Ruangan: 'TULT 0612 & 0613',
         'Total Asprak': 2,
         Dosen: 'ABC',
       },
       {
-        Kelas: 'IF-45-02',
-        'Mata Kuliah': 'JARKOM',
+        Kelas: 'SE-45-02',
+        'Nama Singkat': 'ALPRO',
         Hari: 'SELASA',
         Sesi: 2,
         Jam: '09:30',
@@ -470,7 +504,7 @@ export default function JadwalImportCSVModal({
                       <div className="flex flex-wrap gap-2 mb-1">
                         {[
                           'Kelas',
-                          'Mata Kuliah',
+                          'Nama Singkat',
                           'Hari',
                           'Sesi',
                           'Jam',
@@ -487,7 +521,8 @@ export default function JadwalImportCSVModal({
                         ))}
                       </div>
                       <p className="text-[10px] text-muted-foreground/60 mb-3">
-                        * Mata Kuliah harus sesuai detail praktikum (contoh: "PBO").
+                        * Nama Singkat (Atau Mata Kuliah) harus sesuai detail praktikum (contoh:
+                        "PBO"). Ruangan akan dipotong otomatis jika ada "&".
                       </p>
 
                       <div className="flex items-center gap-3 pt-2 border-t border-border/50">
@@ -609,7 +644,17 @@ export default function JadwalImportCSVModal({
                                   />
                                 </td>
                                 <td className="px-3 py-2 font-medium">
-                                  <div>{row.mkName}</div>
+                                  <div className="flex items-center gap-2">
+                                    <span>{row.mkName}</span>
+                                    {row.fromSystemLogic && (
+                                      <Badge
+                                        variant="outline"
+                                        className="text-[9px] h-4 px-1 py-0 shadow-none border-primary/20 text-primary"
+                                      >
+                                        Auto-Match
+                                      </Badge>
+                                    )}
+                                  </div>
                                   <div className="text-[10px] text-muted-foreground/60 font-mono hidden sm:block">
                                     ID: {row.id_mk || '-'}
                                   </div>

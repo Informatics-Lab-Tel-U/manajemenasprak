@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Suspense, useState, useEffect } from 'react';
@@ -27,133 +26,128 @@ function MataKuliahPageContent() {
   // Fetch Data
   useEffect(() => {
     async function fetchData() {
-        
-        try {
-            const [mkData, praktikumData] = await Promise.all([
-                getMataKuliahByTerm(selectedTerm),
-                getPraktikumByTerm(selectedTerm)
-            ]);
-            setGroupedData(mkData);
-            setValidPraktikums(praktikumData);
-        } catch (e) {
-            console.error(e);
-        }
+      try {
+        const [mkData, praktikumData] = await Promise.all([
+          getMataKuliahByTerm(selectedTerm),
+          getPraktikumByTerm(selectedTerm),
+        ]);
+        setGroupedData(mkData);
+        setValidPraktikums(praktikumData);
+      } catch (e: any) {
+        console.error(e);
+      }
     }
     fetchData();
   }, [selectedTerm, getMataKuliahByTerm, getPraktikumByTerm]);
 
   const handleManualAdd = async (data: any, term: string) => {
-      try {
-          await createMataKuliah(data, term);
-          toast.success('Mata Kuliah berhasil ditambahkan');
-          
-          if (term === selectedTerm) {
-              const newData = await getMataKuliahByTerm(selectedTerm);
-              setGroupedData(newData);
-          }
-      } catch (e: any) {
-          toast.error(e.message);
+    try {
+      await createMataKuliah(data, term);
+      toast.success('Mata Kuliah berhasil ditambahkan');
+
+      if (term === selectedTerm) {
+        const newData = await getMataKuliahByTerm(selectedTerm);
+        setGroupedData(newData);
       }
+    } catch (e: any) {
+      toast.error(e.message);
+    }
   };
 
   const handleImport = async (rows: any[], term: string) => {
-      try {
-          const res = await bulkImportMataKuliah(rows, term);
-          toast.success(`Import berhasil: ${res.inserted} data masuk.`);
-          if (res.errors.length > 0) {
-              toast.warning(`Beberapa data gagal: ${res.errors.length} kesalahan`);
-              console.error(res.errors);
-          }
-           // Refresh list if imported to current term
-           if (term === selectedTerm) {
-                const newData = await getMataKuliahByTerm(selectedTerm);
-                setGroupedData(newData);
-           }
-      } catch (e: any) {
-          toast.error(e.message);
+    try {
+      const res = await bulkImportMataKuliah(rows, term);
+      toast.success(`Import berhasil: ${res.inserted} data masuk.`);
+      if (res.errors.length > 0) {
+        toast.warning(`Beberapa data gagal: ${res.errors.length} kesalahan`);
+        console.error(res.errors);
       }
+      // Refresh list if imported to current term
+      if (term === selectedTerm) {
+        const newData = await getMataKuliahByTerm(selectedTerm);
+        setGroupedData(newData);
+      }
+    } catch (e: any) {
+      toast.error(e.message);
+    }
   };
 
   // Client-side filtering
-  const filteredData = (Array.isArray(groupedData) ? groupedData : []).filter(group => {
-      if (!searchQuery) return true;
-      const q = searchQuery.toLowerCase();
-      // Match group name or any item name/prodi
-      if (group.mk_singkat.toLowerCase().includes(q)) return true;
-      return group.items.some((item: any) => 
-          item.nama_lengkap.toLowerCase().includes(q) || 
-          item.program_studi.toLowerCase().includes(q)
-      );
+  const filteredData = (Array.isArray(groupedData) ? groupedData : []).filter((group) => {
+    if (!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    // Match group name or any item name/prodi
+    if (group.mk_singkat.toLowerCase().includes(q)) return true;
+    return group.items.some(
+      (item: any) =>
+        item.nama_lengkap.toLowerCase().includes(q) || item.program_studi.toLowerCase().includes(q)
+    );
   });
 
   return (
     <div className="container relative space-y-8">
-       {/* Header */}
-       <div className="flex justify-between items-center">
-         <div>
-           <h1 className="title-gradient text-3xl font-bold">Mata Kuliah</h1>
-           <p className="text-muted-foreground mt-2">
-             Kelola data mata kuliah, koordinator, dan varian prodi per tahun ajaran.
-           </p>
-         </div>
-         <div className="flex gap-3">
-            <Button variant="outline" onClick={() => setShowManualModal(true)}>
-                <Plus className="mr-2 h-4 w-4" /> Input Manual
-            </Button>
-            <Button onClick={() => setShowImportModal(true)}>
-                <Upload className="mr-2 h-4 w-4" /> Import CSV
-            </Button>
-         </div>
-       </div>
+      {/* Header */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="title-gradient text-3xl font-bold">Mata Kuliah</h1>
+          <p className="text-muted-foreground mt-2">
+            Kelola data mata kuliah, koordinator, dan varian prodi per tahun ajaran.
+          </p>
+        </div>
+        <div className="flex gap-3">
+          <Button variant="outline" onClick={() => setShowManualModal(true)}>
+            <Plus className="mr-2 h-4 w-4" /> Input Manual
+          </Button>
+          <Button onClick={() => setShowImportModal(true)}>
+            <Upload className="mr-2 h-4 w-4" /> Import CSV
+          </Button>
+        </div>
+      </div>
 
-       {/* Filters */}
-       <div className="card glass p-4">
-          <AsprakFilters
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-            terms={terms}
-            selectedTerm={selectedTerm}
-            onTermChange={setSelectedTerm}
-            hideSearch={false}
-          />
-       </div>
+      {/* Filters */}
+      <div className="card glass p-4">
+        <AsprakFilters
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          terms={terms}
+          selectedTerm={selectedTerm}
+          onTermChange={setSelectedTerm}
+          hideSearch={false}
+        />
+      </div>
 
-       {/* Content */}
-       <div className="min-h-[400px]">
-           <MataKuliahList 
-              groupedData={filteredData} 
-              loading={loading} 
-              onRefresh={() => {}} 
-           />
-       </div>
+      {/* Content */}
+      <div className="min-h-[400px]">
+        <MataKuliahList groupedData={filteredData} loading={loading} onRefresh={() => {}} />
+      </div>
 
-       {/* Modals */}
-       {showImportModal && (
-           <MataKuliahImportModal
-              open={showImportModal}
-              onClose={() => setShowImportModal(false)}
-              validPraktikums={validPraktikums}
-              onImport={handleImport}
-              defaultTerm={selectedTerm}
-           />
-       )}
-       
-       {showManualModal && (
-           <MataKuliahManualModal
-               open={showManualModal}
-               onClose={() => setShowManualModal(false)}
-               defaultTerm={selectedTerm}
-               onConfirm={handleManualAdd}
-           />
-       )}
+      {/* Modals */}
+      {showImportModal && (
+        <MataKuliahImportModal
+          open={showImportModal}
+          onClose={() => setShowImportModal(false)}
+          validPraktikums={validPraktikums}
+          onImport={handleImport}
+          defaultTerm={selectedTerm}
+        />
+      )}
+
+      {showManualModal && (
+        <MataKuliahManualModal
+          open={showManualModal}
+          onClose={() => setShowManualModal(false)}
+          defaultTerm={selectedTerm}
+          onConfirm={handleManualAdd}
+        />
+      )}
     </div>
   );
 }
 
 export default function MataKuliahPage() {
-    return (
-        <Suspense fallback={<div className="container py-10 text-center">Memuat...</div>}>
-            <MataKuliahPageContent />
-        </Suspense>
-    );
+  return (
+    <Suspense fallback={<div className="container py-10 text-center">Memuat...</div>}>
+      <MataKuliahPageContent />
+    </Suspense>
+  );
 }

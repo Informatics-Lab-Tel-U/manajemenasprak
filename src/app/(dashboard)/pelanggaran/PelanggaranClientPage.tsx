@@ -71,7 +71,7 @@ export default function PelanggaranClientPage({
       );
       setIsAddOpen(false);
       // router.refresh(); // Hook should handle refetch counts if implement properly, but refresh is safe
-    } catch (err: any) {
+    } catch (err : any) {
       toast.error(err.message ?? 'Gagal mencatat pelanggaran');
     } finally {
       setIsSubmitting(false);
@@ -172,3 +172,4 @@ export default function PelanggaranClientPage({
     </div>
   );
 }
+

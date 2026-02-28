@@ -1,8 +1,14 @@
-
 import { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
+} from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Asprak, Praktikum } from '@/types/database';
 import { usePraktikum } from '@/hooks/usePraktikum';
@@ -18,7 +24,6 @@ interface AsprakEditModalProps {
 
 export default function AsprakEditModal({
   asprak,
-  term,
   assignments,
   onSave,
   onClose,
@@ -36,6 +41,7 @@ export default function AsprakEditModal({
         setAvailablePraktikums(data);
       });
       // Initialize selection
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedPraktikumIds(assignments);
     }
   }, [open, getPraktikumByTerm, assignments]);
@@ -57,15 +63,15 @@ export default function AsprakEditModal({
 
   // Group praktikums by term
   const groupedPraktikums = useMemo(() => {
-      const groups: Record<string, Praktikum[]> = {};
-      availablePraktikums.forEach((p) => {
-          if (!groups[p.tahun_ajaran]) {
-              groups[p.tahun_ajaran] = [];
-          }
-          groups[p.tahun_ajaran].push(p);
-      });
-      // Sort terms descending (latest first)
-      return Object.entries(groups).sort((a, b) => b[0].localeCompare(a[0]));
+    const groups: Record<string, Praktikum[]> = {};
+    availablePraktikums.forEach((p) => {
+      if (!groups[p.tahun_ajaran]) {
+        groups[p.tahun_ajaran] = [];
+      }
+      groups[p.tahun_ajaran].push(p);
+    });
+    // Sort terms descending (latest first)
+    return Object.entries(groups).sort((a, b) => b[0].localeCompare(a[0]));
   }, [availablePraktikums]);
 
   return (
@@ -73,18 +79,21 @@ export default function AsprakEditModal({
       <DialogContent className="sm:max-w-lg max-h-[85vh] flex flex-col p-0 gap-0">
         <DialogHeader className="px-6 py-4 border-b">
           <DialogTitle>Edit Penugasan Asisten</DialogTitle>
+          <DialogDescription className="sr-only">
+            Edit penugasan asisten praktikum.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="px-6 py-4 grid gap-4 shrink-0">
           <div className="grid grid-cols-2 gap-4">
-             <div>
-                <Label className="text-muted-foreground text-xs">NIM</Label>
-                <div className="font-medium">{asprak.nim}</div>
-             </div>
-             <div>
-                <Label className="text-muted-foreground text-xs">Kode</Label>
-                <div className="font-medium font-mono">{asprak.kode}</div>
-             </div>
+            <div>
+              <Label className="text-muted-foreground text-xs">NIM</Label>
+              <div className="font-medium">{asprak.nim}</div>
+            </div>
+            <div>
+              <Label className="text-muted-foreground text-xs">Kode</Label>
+              <div className="font-medium font-mono">{asprak.kode}</div>
+            </div>
           </div>
           <div>
             <Label className="text-muted-foreground text-xs">Nama Lengkap</Label>
@@ -93,46 +102,51 @@ export default function AsprakEditModal({
         </div>
 
         <div className="px-6 py-2 flex-1 overflow-y-auto min-h-0 border-t">
-            {loadingPraktikum ? (
-                 <div className="text-sm text-muted-foreground py-4">Memuat praktikum...</div>
-            ) : availablePraktikums.length === 0 ? (
-                <div className="text-sm text-muted-foreground italic bg-muted/30 p-3 rounded my-2">
-                    Tidak ada data praktikum.
-                </div>
-            ) : (
-                <div className="space-y-6 pt-2 pb-4">
-                  {groupedPraktikums.map(([termKey, praktikums]) => (
-                      <div key={termKey} className="space-y-2">
-                          <h4 className="text-sm font-semibold text-muted-foreground bg-muted/40 px-2 py-1 rounded">
-                              Term {termKey}
-                          </h4>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pl-2">
-                              {praktikums.map((p) => (
-                                <div key={p.id} className="flex items-start space-x-2 border p-2 rounded hover:bg-muted/10 transition-colors">
-                                  <Checkbox 
-                                    id={p.id} 
-                                    checked={selectedPraktikumIds.includes(p.id)}
-                                    onCheckedChange={(c) => handleToggle(p.id, !!c)}
-                                  />
-                                  <div className="grid gap-1.5 leading-none pt-0.5">
-                                    <label
-                                      htmlFor={p.id}
-                                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                                    >
-                                      {p.nama}
-                                    </label>
-                                  </div>
-                                </div>
-                              ))}
-                          </div>
+          {loadingPraktikum ? (
+            <div className="text-sm text-muted-foreground py-4">Memuat praktikum...</div>
+          ) : availablePraktikums.length === 0 ? (
+            <div className="text-sm text-muted-foreground italic bg-muted/30 p-3 rounded my-2">
+              Tidak ada data praktikum.
+            </div>
+          ) : (
+            <div className="space-y-6 pt-2 pb-4">
+              {groupedPraktikums.map(([termKey, praktikums]) => (
+                <div key={termKey} className="space-y-2">
+                  <h4 className="text-sm font-semibold text-muted-foreground bg-muted/40 px-2 py-1 rounded">
+                    Term {termKey}
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pl-2">
+                    {praktikums.map((p) => (
+                      <div
+                        key={p.id}
+                        className="flex items-start space-x-2 border p-2 rounded hover:bg-muted/10 transition-colors"
+                      >
+                        <Checkbox
+                          id={p.id}
+                          checked={selectedPraktikumIds.includes(p.id)}
+                          onCheckedChange={(c) => handleToggle(p.id, !!c)}
+                        />
+                        <div className="grid gap-1.5 leading-none pt-0.5">
+                          <label
+                            htmlFor={p.id}
+                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                          >
+                            {p.nama}
+                          </label>
+                        </div>
                       </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-            )}
+              ))}
+            </div>
+          )}
         </div>
 
         <DialogFooter className="px-6 py-4 border-t mt-auto">
-          <Button variant="outline" onClick={onClose} disabled={saving}>Batal</Button>
+          <Button variant="outline" onClick={onClose} disabled={saving}>
+            Batal
+          </Button>
           <Button onClick={handleSave} disabled={saving}>
             {saving ? 'Menyimpan...' : 'Simpan Perubahan'}
           </Button>
