@@ -164,7 +164,7 @@ export default function DashboardCharts({
                               <div
                                 className="w-full h-full flex flex-col items-center justify-center p-1 transition-all hover:brightness-110 overflow-hidden hover:scale-105 hover:z-10 hover:shadow-lg origin-center"
                                 style={{
-                                  backgroundColor: getCourseColor(
+                                  backgroundColor: jadwal.mata_kuliah?.warna || getCourseColor(
                                     jadwal.mata_kuliah?.nama_lengkap || ''
                                   ),
                                 }}

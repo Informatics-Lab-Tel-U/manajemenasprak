@@ -11,10 +11,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Filter, X, Clock, MapPin, User, Users, ChevronRight, Plus, Upload } from 'lucide-react';
+import { Filter, X, Clock, MapPin, User, Users, ChevronRight, Plus, Upload, PaintBucket } from 'lucide-react';
 import { Jadwal } from '@/types/database';
 import { JadwalModal } from '@/components/jadwal/JadwalModal';
 import JadwalImportCSVModal from '@/components/jadwal/JadwalImportCSVModal';
+import { GroupColorModal } from '@/components/jadwal/GroupColorModal';
 import {
   CreateJadwalInput,
   UpdateJadwalInput,
@@ -50,6 +51,7 @@ export default function JadwalPage() {
   const [showSessionId, setShowSessionId] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [isColorModalOpen, setIsColorModalOpen] = useState(false);
   const [modalInitialData, setModalInitialData] = useState<Jadwal | null>(null);
 
   const handleOpenAdd = () => {
@@ -335,6 +337,9 @@ export default function JadwalPage() {
             <Upload size={18} className="mr-2" />
             Import CSV
           </Button>
+          <Button variant="secondary" onClick={() => setIsColorModalOpen(true)} title="Atur Warna Grup" className="px-3">
+            <PaintBucket size={18} />
+          </Button>
           <Select value={selectedModul} onValueChange={setSelectedModul}>
             <SelectTrigger className="w-full md:w-[180px]">
               <SelectValue placeholder="Select modul" />
@@ -448,7 +453,7 @@ export default function JadwalPage() {
                                 onClick={() => setSelectedJadwal(jadwal)}
                                 className="w-full h-full flex flex-col items-center justify-center p-1 cursor-pointer transition-all hover:brightness-110 overflow-hidden hover:scale-105 hover:z-10 hover:shadow-lg origin-center"
                                 style={{
-                                  backgroundColor: getCourseColor(
+                                  backgroundColor: jadwal.mata_kuliah?.warna || getCourseColor(
                                     jadwal.mata_kuliah?.nama_lengkap || ''
                                   ),
                                 }}
@@ -616,6 +621,12 @@ export default function JadwalPage() {
         onImport={handleImportCSV}
         mataKuliahList={mataKuliahList}
         term={selectedTerm}
+      />
+
+      <GroupColorModal
+        isOpen={isColorModalOpen}
+        onClose={() => setIsColorModalOpen(false)}
+        mataKuliahList={mataKuliahList.filter(mk => mk.praktikum?.tahun_ajaran === selectedTerm)}
       />
     </div>
   );

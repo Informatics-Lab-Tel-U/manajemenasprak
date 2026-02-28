@@ -50,6 +50,7 @@ export default function MataKuliahManualModal({
   const [namaLengkap, setNamaLengkap] = useState('');
   const [prodiBase, setProdiBase] = useState('IF');
   const [dosenKoor, setDosenKoor] = useState('');
+  const [warna, setWarna] = useState('#3a5edb');
   
   const [loading, setLoading] = useState(false);
   const [fetchingPraktikums, setFetchingPraktikums] = useState(false);
@@ -102,6 +103,7 @@ export default function MataKuliahManualModal({
       setNamaLengkap('');
       setProdiBase('IF');
       setDosenKoor('');
+      setWarna('#3a5edb');
     }
   }, [open, initialYear, initialSem]);
 
@@ -127,7 +129,8 @@ export default function MataKuliahManualModal({
         id_praktikum: isNew ? undefined : selectedPraktikumId,
         nama_lengkap: namaLengkap, 
         program_studi,
-        dosen_koor: dosenKoor.toUpperCase()
+        dosen_koor: dosenKoor.toUpperCase(),
+        warna
       }, term);
       
       onClose();
@@ -234,6 +237,20 @@ export default function MataKuliahManualModal({
               {dosenKoor.length > 0 && dosenKoor.length !== 3 && (
                   <p className="text-xs text-destructive mt-1">Harus 3 karakter</p>
               )}
+            </Field>
+
+            {/* Warna */}
+            <Field>
+              <FieldLabel>Warna Jadwal (Opsional)</FieldLabel>
+              <div className="flex items-center gap-3">
+                <Input 
+                  type="color"
+                  value={warna}
+                  onChange={e => setWarna(e.target.value)}
+                  className="w-12 h-10 p-1 cursor-pointer"
+                />
+                <div className="text-sm text-muted-foreground">{warna}</div>
+              </div>
             </Field>
           </FieldGroup>
 
