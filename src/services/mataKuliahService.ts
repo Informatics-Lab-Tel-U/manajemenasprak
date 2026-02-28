@@ -69,6 +69,7 @@ export interface CreateMataKuliahPayload {
   nama_lengkap: string;
   program_studi: string;
   dosen_koor: string;
+  warna?: string;
 }
 
 export async function createMataKuliah(
