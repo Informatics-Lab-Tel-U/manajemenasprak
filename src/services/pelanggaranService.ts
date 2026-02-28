@@ -314,22 +314,20 @@ export async function getExportData(
   supabaseClient?: SupabaseClient
 ): Promise<
   {
-    nim: string;
-    nama: string;
-    kode_asprak: string;
+    mk: string;
+    kode: string;
     modul: string;
     kelas: string;
-    pelanggaran: string;
+    jenis: string;
   }[]
 > {
   const records = await getPelanggaranByFilter(idPraktikum, tahunAjaran, supabaseClient);
   return records.map((p) => ({
-    nim: p.asprak?.nim ?? '',
-    nama: p.asprak?.nama_lengkap ?? '',
-    kode_asprak: p.asprak?.kode ?? '',
+    mk: p.jadwal?.mata_kuliah?.praktikum?.nama ?? '',
+    kode: p.asprak?.kode ?? '',
     modul: p.modul ? String(p.modul) : '',
     kelas: p.jadwal?.kelas ?? '',
-    pelanggaran: p.jenis ?? '',
+    jenis: p.jenis ?? '',
   }));
 }
 
