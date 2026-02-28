@@ -131,3 +131,17 @@ export async function fetchPraktikumDetail(id: string): Promise<ServiceResult<Pr
     return { ok: false, error: error.message };
   }
 }
+
+export async function unfinalizePelanggaran(idPraktikum: string): Promise<ServiceResult<void>> {
+  try {
+    const res = await fetch('/api/pelanggaran', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'unfinalize', id_praktikum: idPraktikum }),
+    });
+    const result = await res.json();
+    return result;
+  } catch (error: any) {
+    return { ok: false, error: error.message };
+  }
+}

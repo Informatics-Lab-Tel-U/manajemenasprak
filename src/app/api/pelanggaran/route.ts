@@ -68,34 +68,60 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    await requireRole(['ADMIN', 'ASLAB', 'ASPRAK_KOOR']);
-    const supabase = await createClient();
-    const body = await req.json();
-    const { action } = body;
-
-    // --- Finalize per praktikum ---
-    if (action === 'finalize') {
-      const { id_praktikum, id_mk } = body;
-
-      // Legacy: finalize by id_mk
-      if (id_mk) {
-        await pelanggaranService.finalizePelanggaranByMataKuliah(id_mk, supabase);
-        return NextResponse.json({ ok: true });
-      }
-
-      if (!id_praktikum) {
-        return NextResponse.json(
-          { ok: false, error: 'Missing id_praktikum' },
-          { status: 400 }
-        );
-      }
-      await pelanggaranService.finalizePelanggaranByPraktikum(id_praktikum, supabase);
+      const user = await requireRole(['ADMIN', 'ASLAB', 'ASPRAK_KOOR']);
+      const supabase = await createClient();
+      const body = await req.json();
+      const { action } = body;
+  
+      // --- Finalize per praktikum ---
+      if (action === 'finalize') {
+        const { id_praktikum, id_mk } = body;
+  
+        // Legacy: finalize by id_mk
+        if (id_mk) {
+          await pelanggaranService.finalizePelanggaranByMataKuliah(id_mk, user.id);
+          return NextResponse.json({ ok: true });
+        }
+  
+        if (!id_praktikum) {
+          return NextResponse.json(
+            { ok: false, error: 'Missing id_praktikum' },
+            { status: 400 }
+          );
+        }
+        await pelanggaranService.finalizePelanggaranByPraktikum(id_praktikum, user.id);
 
       const { createAuditLog } = await import('@/services/server/auditLogService');
       await createAuditLog('Pelanggaran', id_praktikum, 'FINALIZE_PRAKTIKUM');
 
       return NextResponse.json({ ok: true });
     }
+
+      // --- Unfinalize (RESET) ---
+      if (action === 'unfinalize') {
+        // Ensure strictly ADMIN
+        if (user.pengguna.role !== 'ADMIN') {
+          return NextResponse.json(
+            { ok: false, error: 'Hanya Admin yang dapat mereset finalisasi' },
+            { status: 403 }
+          );
+        }
+
+        const { id_praktikum } = body;
+        if (!id_praktikum) {
+          return NextResponse.json(
+            { ok: false, error: 'Missing id_praktikum' },
+            { status: 400 }
+          );
+        }
+
+        await pelanggaranService.unfinalizePelanggaranByPraktikum(id_praktikum);
+
+        const { createAuditLog } = await import('@/services/server/auditLogService');
+        await createAuditLog('Pelanggaran', id_praktikum, 'UNFINALIZE_PRAKTIKUM');
+
+        return NextResponse.json({ ok: true });
+      }
 
     // --- Create single or multiple pelanggaran ---
     const { id_asprak, id_jadwal, jenis, modul } = body;

@@ -186,7 +186,18 @@ export function usePelanggaranDetail(idPraktikum: string, initialViolations?: Pe
     return result;
   };
 
-  const isFinalized = violations.length > 0 && violations.every((v) => v.is_final);
+  const unfinalize = async () => {
+    const result = await pelanggaranFetcher.unfinalizePelanggaran(idPraktikum);
+    if (result.ok) {
+      toast.success('Finalisasi berhasil direset');
+      fetchDetail();
+    } else {
+      toast.error(`Gagal mereset: ${result.error}`);
+    }
+    return result;
+  };
+
+  const isFinalized = violations.length > 0 && violations.every((v: any) => v.is_final);
 
   return {
     violations,
@@ -200,5 +211,6 @@ export function usePelanggaranDetail(idPraktikum: string, initialViolations?: Pe
     addPelanggaran,
     deletePelanggaran,
     finalize,
+    unfinalize,
   };
 }
