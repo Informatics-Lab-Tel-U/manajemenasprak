@@ -230,9 +230,9 @@ export async function bulkCreatePelanggaran(
  */
 export async function finalizePelanggaranByPraktikum(
   idPraktikum: string,
-  supabaseClient?: SupabaseClient
+  finalizedBy: string
 ): Promise<void> {
-  const supabase = supabaseClient || globalAdmin;
+  const supabase = globalAdmin; // Use admin client to bypass RLS for state transition
 
   // Get all mata_kuliah IDs for this praktikum
   const { data: mks, error: mkError } = await supabase
@@ -259,6 +259,7 @@ export async function finalizePelanggaranByPraktikum(
     .update({
       is_final: true,
       finalized_at: new Date().toISOString(),
+      finalized_by: finalizedBy,
     })
     .in('id_jadwal', jadwalIds)
     .eq('is_final', false);
@@ -274,9 +275,9 @@ export async function finalizePelanggaranByPraktikum(
  */
 export async function finalizePelanggaranByMataKuliah(
   idMk: string,
-  supabaseClient?: SupabaseClient
+  finalizedBy: string
 ): Promise<void> {
-  const supabase = supabaseClient || globalAdmin;
+  const supabase = globalAdmin; // Bypassing RLS
 
   const { data: jadwals, error: jadwalError } = await supabase
     .from('jadwal')
@@ -293,6 +294,7 @@ export async function finalizePelanggaranByMataKuliah(
     .update({
       is_final: true,
       finalized_at: new Date().toISOString(),
+      finalized_by: finalizedBy,
     })
     .in('id_jadwal', jadwalIds)
     .eq('is_final', false);
@@ -370,4 +372,47 @@ export async function getJadwalForPelanggaran(
     ...j,
     id_praktikum: j.mata_kuliah?.id_praktikum ?? null,
   })) as (Jadwal & { id_praktikum?: string | null })[];
+}
+
+/**
+ * Reset finalization for a praktikum (Admin only).
+ * Sets is_final = false, and clears audit data.
+ */
+export async function unfinalizePelanggaranByPraktikum(idPraktikum: string): Promise<void> {
+  const supabase = globalAdmin; // Bypassing RLS for reset operation
+
+  // Get all mata_kuliah IDs for this praktikum
+  const { data: mks, error: mkError } = await supabase
+    .from('mata_kuliah')
+    .select('id')
+    .eq('id_praktikum', idPraktikum);
+
+  if (mkError) throw new Error(`Gagal mengambil mata kuliah: ${mkError.message}`);
+  const mkIds = (mks || []).map((m: any) => m.id);
+  if (mkIds.length === 0) return;
+
+  // Get all jadwal IDs for these mata_kuliah
+  const { data: jadwals, error: jadwalError } = await supabase
+    .from('jadwal')
+    .select('id')
+    .in('id_mk', mkIds);
+
+  if (jadwalError) throw new Error(`Gagal mengambil jadwal: ${jadwalError.message}`);
+  const jadwalIds = (jadwals || []).map((j: any) => j.id);
+  if (jadwalIds.length === 0) return;
+
+  const { error } = await supabase
+    .from('pelanggaran')
+    .update({
+      is_final: false,
+      finalized_at: null,
+      finalized_by: null,
+    })
+    .in('id_jadwal', jadwalIds)
+    .eq('is_final', true);
+
+  if (error) {
+    logger.error('Error unfinalizing pelanggaran:', error);
+    throw new Error(`Gagal mereset finalisasi pelanggaran: ${error.message}`);
+  }
 }
