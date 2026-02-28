@@ -54,7 +54,7 @@ export const ROLE_ALLOWED_PATHS: Record<Role, string[]> = {
 /**
  * Paths that are always public (no auth required).
  */
-export const PUBLIC_PATHS = ['/login', '/auth'];
+export const PUBLIC_PATHS = ['/login', '/auth', '/maintenance'];
 
 /**
  * The default redirect destination when a role tries to access a forbidden path.

@@ -38,7 +38,44 @@ export async function updateSession(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
-  // 1. If logged-in user tries to access /login, redirect to their default page.
+  // --- MAINTENANCE MODE CHECK ---
+  // Allow public paths (login, maintenance, etc.) and auth callbacks to be accessed regardless
+  if (!pathname.startsWith('/api/auth') && !isPublicPath(pathname)) {
+    const { data: maintenanceConfig } = await supabase
+      .from('system_config')
+      .select('value_bool')
+      .eq('key', 'maintenance_mode')
+      .single();
+
+    if (maintenanceConfig?.value_bool) {
+      // If maintenance is active, we check the user's role
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (user) {
+        const { data: pengguna } = await supabase
+          .from('pengguna')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+
+        // If NOT ADMIN, redirect to maintenance
+        if (pengguna?.role !== 'ADMIN') {
+          const url = request.nextUrl.clone();
+          url.pathname = '/maintenance';
+          return NextResponse.redirect(url);
+        }
+      } else {
+        // Not logged in and maintenance is ON -> redirect to maintenance
+        const url = request.nextUrl.clone();
+        url.pathname = '/maintenance';
+        return NextResponse.redirect(url);
+      }
+    }
+  }
+
+  // --- AUTH & RBAC LOGIC ---
   if (user && pathname === '/login') {
     const { data: pengguna } = await supabase
       .from('pengguna')
