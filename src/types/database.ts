@@ -45,6 +45,7 @@ export type MataKuliah = {
   nama_lengkap: string;
   program_studi: string;
   dosen_koor?: string;
+  warna?: string;
   created_at: string;
   updated_at: string;
   praktikum?: Pick<Praktikum, 'nama' | 'tahun_ajaran'>;
