@@ -63,7 +63,6 @@ export default function DatabasePage() {
 
   useEffect(() => {
     async function fetchInitialData() {
-      // 1. Fetch user role
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         const { data: profile } = await supabase
@@ -74,7 +73,6 @@ export default function DatabasePage() {
         if (profile) setUserRole(profile.role as Role);
       }
 
-      // 2. Fetch maintenance status
       try {
         const res = await fetch('/api/system/maintenance');
         const data = await res.json();
@@ -96,7 +94,6 @@ export default function DatabasePage() {
     }
   }, [tahunAjaranList, exportTerm, deleteTerm]);
 
-  // Modal states
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDeleteTermModalOpen, setIsDeleteTermModalOpen] = useState(false);
   const [confirmInput, setConfirmInput] = useState('');
@@ -162,9 +159,6 @@ export default function DatabasePage() {
         setStatus({ type: 'error', message: e.message || 'Impor gagal' });
       } finally {
         setLoading(false);
-        // Reset progress after a delay if successful, or immediately?
-        // Let's keep it at 100 for a moment, but loading=false will hide it if we condition on loading.
-        // We might want to keep showing it for a second.
         setTimeout(() => setProgress(0), 1000);
       }
     },
