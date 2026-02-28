@@ -86,7 +86,6 @@ export default function JadwalPage() {
           j.ruangan === ruangan
       );
     } else {
-      // Create effective schedule list merging base and substitutes
       const effectiveJadwal = rawJadwalList.map((j) => {
         const substitute = jadwalPengganti.find((jp) => Number(jp.id_jadwal) === Number(j.id));
         return substitute ? { ...j, ...substitute } : j;
@@ -110,7 +109,6 @@ export default function JadwalPage() {
       return;
     }
 
-    // Process submission
     const result =
       selectedModul !== 'Default'
         ? await upsertPengganti(input)
@@ -129,7 +127,7 @@ export default function JadwalPage() {
     const result = await jadwalFetcher.bulkImportJadwal(rows);
     if (result.ok) {
       toast.success(`Berhasil import ${result.data?.inserted} jadwal`);
-      window.location.reload(); // Simple reload to refresh data
+      window.location.reload();
     } else {
       toast.error(`Gagal import: ${result.error}`);
     }
@@ -162,7 +160,7 @@ export default function JadwalPage() {
             jam: substitute.jam,
             hari: substitute.hari,
             sesi: substitute.sesi,
-            tanggal: substitute.tanggal, // Map substitute date
+            tanggal: substitute.tanggal,
           };
         }
         return j;
@@ -174,11 +172,7 @@ export default function JadwalPage() {
         j.mata_kuliah?.program_studi?.toUpperCase().includes('PJJ') ||
         j.kelas?.toUpperCase().includes('PJJ');
 
-      if (programType === 'PJJ') {
-        return isPJJ;
-      } else {
-        return !isPJJ;
-      }
+      return programType === 'PJJ' ? isPJJ : !isPJJ;
     });
   }, [rawJadwalList, jadwalPengganti, selectedModul, programType]);
 
@@ -209,7 +203,6 @@ export default function JadwalPage() {
   const visibleDays = useMemo(() => {
     const days = new Set<string>();
 
-    // Base days
     if (programType === 'PJJ') {
       days.add('SABTU');
     } else {
@@ -221,7 +214,6 @@ export default function JadwalPage() {
       if (j.hari) days.add(j.hari.toUpperCase());
     });
 
-    // Sort days correctly: use a predefined order
     const dayOrder = ['SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU', 'MINGGU'];
     return Array.from(days).sort((a, b) => {
       const idxA = dayOrder.indexOf(a);
@@ -527,18 +519,12 @@ export default function JadwalPage() {
                 </span>
               </div>
 
-              <h2
-                className="text-xl md:text-2xl font-bold leading-tight mb-1"
-                // style={{
-                //   color: getCourseColor(selectedJadwal.mata_kuliah?.nama_lengkap || '')
-                // }}
-              >
+              <h2 className="text-xl md:text-2xl font-bold leading-tight mb-1">
                 {selectedJadwal.mata_kuliah?.nama_lengkap}
               </h2>
               <p className="text-lg font-medium text-foreground/80">Kelas {selectedJadwal.kelas}</p>
             </div>
 
-            {/* Body */}
             <div className="p-6 space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/30">

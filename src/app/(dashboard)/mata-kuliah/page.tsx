@@ -23,7 +23,7 @@ function MataKuliahPageContent() {
   const [showManualModal, setShowManualModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Fetch Data
+
   useEffect(() => {
     async function fetchData() {
       try {
@@ -72,7 +72,7 @@ function MataKuliahPageContent() {
     }
   };
 
-  // Client-side filtering
+
   const filteredData = (Array.isArray(groupedData) ? groupedData : []).filter((group) => {
     if (!searchQuery) return true;
     const q = searchQuery.toLowerCase();
@@ -86,7 +86,6 @@ function MataKuliahPageContent() {
 
   return (
     <div className="container relative space-y-8">
-      {/* Header */}
       <div className="flex justify-between items-center">
         <div>
           <h1 className="title-gradient text-3xl font-bold">Mata Kuliah</h1>
