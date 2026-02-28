@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { Trash2, Upload, FileSpreadsheet, Download } from 'lucide-react';
+import { Trash2, Upload, FileSpreadsheet, Download, ShieldAlert, Activity } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import * as importFetcher from '@/lib/fetchers/importFetcher';
 import * as XLSX from 'xlsx';
@@ -18,8 +18,13 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
+import { createClient } from '@/lib/supabase/client';
+import type { Role } from '@/config/rbac';
+import { toast } from 'sonner';
 
 import {
   Dialog,
@@ -46,6 +51,41 @@ export default function DatabasePage() {
 
   const { tahunAjaranList, loading: loadingTahunAjaran } = useTahunAjaran();
   const [exportTerm, setExportTerm] = useState('');
+
+  // Maintenance Mode States
+  const [isMaintenance, setIsMaintenance] = useState(false);
+  const [loadingMaintenance, setLoadingMaintenance] = useState(true);
+  const [userRole, setUserRole] = useState<Role | null>(null);
+
+  const supabase = createClient();
+
+  useEffect(() => {
+    async function fetchInitialData() {
+      // 1. Fetch user role
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from('pengguna')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+        if (profile) setUserRole(profile.role as Role);
+      }
+
+      // 2. Fetch maintenance status
+      try {
+        const res = await fetch('/api/system/maintenance');
+        const data = await res.json();
+        if (data.ok) setIsMaintenance(data.isMaintenance);
+      } catch (err) {
+        console.error('Failed to fetch maintenance status', err);
+      } finally {
+        setLoadingMaintenance(false);
+      }
+    }
+
+    fetchInitialData();
+  }, [supabase]);
 
   useEffect(() => {
     if (tahunAjaranList.length > 0 && !exportTerm) {
@@ -284,6 +324,28 @@ export default function DatabasePage() {
     XLSX.writeFile(wb, `${termStr}_TEMPLATE.xlsx`);
   };
 
+  const handleToggleMaintenance = async (checked: boolean) => {
+    setLoadingMaintenance(true);
+    try {
+      const res = await fetch('/api/system/maintenance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ active: checked }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setIsMaintenance(checked);
+        toast.success(checked ? 'Maintenance Mode Diaktifkan' : 'Maintenance Mode Dimatikan');
+      } else {
+        throw new Error(data.error);
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Gagal mengubah status maintenance');
+    } finally {
+      setLoadingMaintenance(false);
+    }
+  };
+
   return (
     <div className="container">
       <header className="mb-8">
@@ -452,31 +514,59 @@ export default function DatabasePage() {
           </CardContent>
         </Card>
 
-        {/* Danger Zone */}
-        <Card className="bg-card/80 backdrop-blur-sm shadow-md border-destructive/30">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-3 text-destructive">
-              <div className="p-3 rounded-xl bg-destructive/10">
-                <Trash2 size={24} />
+        {/* System Management - ADMIN ONLY */}
+        {userRole === 'ADMIN' && (
+          <Card className="bg-card/80 backdrop-blur-sm shadow-md border-chart-1/30">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-3">
+                <div className="p-3 rounded-xl bg-chart-1/10 text-chart-1">
+                  <Activity size={24} />
+                </div>
+                Data & System Control
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Maintenance Toggle */}
+              <div className="flex items-center justify-between p-4 rounded-lg bg-chart-1/5 border border-chart-1/10 transition-all">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <Label className="text-base font-semibold">Maintenance Mode</Label>
+                    {isMaintenance && (
+                      <Badge variant="destructive" className="animate-pulse px-1.5 py-0 text-[10px]">
+                        ACTIVE
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground max-w-[240px]">
+                    Kunci akses publik dan redirect user non-admin ke halaman pemeliharaan.
+                  </p>
+                </div>
+                <Switch
+                  checked={isMaintenance}
+                  onCheckedChange={handleToggleMaintenance}
+                  disabled={loadingMaintenance}
+                />
               </div>
-              Danger Zone
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              Tindakan ini tidak dapat dibatalkan. Pastikan Anda tahu apa yang Anda lakukan.
-            </p>
 
-            <Button
-              onClick={handleClearTrigger}
-              disabled={loading}
-              variant="destructive"
-              className="w-full"
-            >
-              Clear All Database Content
-            </Button>
-          </CardContent>
-        </Card>
+              <div className="pt-4 border-t border-border/50">
+                <h4 className="text-sm font-semibold text-destructive flex items-center gap-2 mb-3">
+                  <ShieldAlert size={16} /> Danger Zone
+                </h4>
+                <p className="text-xs text-muted-foreground mb-4">
+                  Tindakan ini tidak dapat dibatalkan. Pastikan Anda telah melakukan backup sebelum membersihkan database.
+                </p>
+                <Button
+                  onClick={handleClearTrigger}
+                  disabled={loading}
+                  variant="destructive"
+                  className="w-full"
+                >
+                  Clear All Database Content
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       {/* Confirmation Modal */}
