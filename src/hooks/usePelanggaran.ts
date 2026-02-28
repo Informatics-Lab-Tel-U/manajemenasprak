@@ -40,9 +40,7 @@ export function usePelanggaran(initialTahunAjaran?: string, isKoor: boolean = fa
 
       if (jadwalRes.ok) setJadwalList(jadwalRes.data as any || []);
 
-      // If we are Koor, we need to fetch specific praktikum list
-      // Otherwise it's usually passed or fetched generally (handled in page or separately)
-      // For now, we assume praktikumList might be passed or we fetch it if missing
+
     } catch (e: any) {
       setError(e);
     } finally {
@@ -122,7 +120,6 @@ export function usePelanggaranDetail(idPraktikum: string, initialViolations?: Pe
     setLoading(true);
     setError(null);
     try {
-      // Fetch violations, praktikum detail, and auxiliary data for Add Modal
       const [vResult, pResult, asprakRes, jadwalRes] = await Promise.all([
         pelanggaranFetcher.fetchPelanggaranByFilter(idPraktikum),
         pelanggaranFetcher.fetchPraktikumDetail(idPraktikum),
@@ -154,7 +151,7 @@ export function usePelanggaranDetail(idPraktikum: string, initialViolations?: Pe
 
   useEffect(() => {
     fetchDetail();
-  }, [idPraktikum]); // Fetch on mount or when id changes
+  }, [idPraktikum]);
 
   const addPelanggaran = async (input: CreatePelanggaranInput) => {
     const result = await pelanggaranFetcher.createPelanggaran(input);
