@@ -87,7 +87,14 @@ export async function getAllAsprak(
   }
 
   return (data || []).map((item: unknown) => {
-    const row = item as { id: string; nama_lengkap: string; nim: string; kode: string; angkatan: number; created_at: string };
+    const row = item as {
+      id: string;
+      nama_lengkap: string;
+      nim: string;
+      kode: string;
+      angkatan: number;
+      created_at: string;
+    };
     return {
       id: row.id,
       nama_lengkap: row.nama_lengkap,
@@ -423,9 +430,46 @@ export async function updateAsprakAssignments(
   asprakId: number | string,
   term: string,
   praktikumIds: string[],
-  supabaseClient?: SupabaseClient
+  supabaseClient?: SupabaseClient,
+  newKode?: string,
+  nim?: string
 ): Promise<void> {
   const supabase = supabaseClient || globalAdmin;
+
+  if (newKode && nim) {
+    // Check if the new code exists and belongs to someone else
+    const { data: codeOwner } = await supabase
+      .from('asprak')
+      .select('*')
+      .eq('kode', newKode)
+      .maybeSingle();
+
+    const conflictCheck = checkCodeConflict(codeOwner, nim);
+    if (conflictCheck.hasConflict && conflictCheck.existingOwner) {
+      throw new Error(generateConflictErrorMessage(newKode, conflictCheck.existingOwner));
+    }
+
+    // If there's an existing owner but it's inactive, expire their code
+    if (codeOwner && codeOwner.nim !== nim) {
+      await supabase
+        .from('asprak')
+        .update({
+          kode: `${codeOwner.kode}_EXPIRED_${codeOwner.id.substring(0, 4)}`,
+        })
+        .eq('id', codeOwner.id);
+    }
+
+    // Update the asprak's code in DB
+    const { error: updateError } = await supabase
+      .from('asprak')
+      .update({ kode: newKode })
+      .eq('id', asprakId);
+
+    if (updateError) {
+      throw new Error(`Gagal update kode: ${updateError.message}`);
+    }
+  }
+
   // Get ALL existing assignments first
   const { data: existingAll } = await supabase
     .from('asprak_praktikum')

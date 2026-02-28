@@ -100,7 +100,6 @@ function AsprakPageContent() {
     refreshCodesAndNims();
   }, []);
 
-
   const handleFormSubmit = async (data: UpsertAsprakInput) => {
     const result = await upsert(data);
 
@@ -112,7 +111,6 @@ function AsprakPageContent() {
     fetchAsprak();
     refreshCodesAndNims();
   };
-
 
   const handleCSVImport = async (
     rows: { nim: string; nama_lengkap: string; kode: string; angkatan: number }[],
@@ -187,11 +185,17 @@ function AsprakPageContent() {
     setShowEditModal(true);
   };
 
-  const handleSaveEdit = async (praktikumIds: string[]) => {
+  const handleSaveEdit = async (praktikumIds: string[], newKode: string) => {
     if (!editTarget) return;
 
     // Use 'all' to indicate global update
-    const result = await updateAssignments(editTarget.asprak.id, 'all', praktikumIds);
+    const result = await updateAssignments(
+      editTarget.asprak.id,
+      'all',
+      praktikumIds,
+      newKode,
+      editTarget.asprak.nim
+    );
 
     if (result.ok) {
       toast.success('Penugasan berhasil diperbarui');

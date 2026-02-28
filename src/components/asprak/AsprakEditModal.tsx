@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import {
   Dialog,
   DialogContent,
@@ -17,7 +18,7 @@ interface AsprakEditModalProps {
   asprak: Asprak;
   term: string; // The term being edited or 'all'
   assignments: string[]; // List of praktikum IDs currently assigned
-  onSave: (praktikumIds: string[]) => Promise<void>;
+  onSave: (praktikumIds: string[], newKode: string) => Promise<void>;
   onClose: () => void;
   open: boolean;
 }
@@ -32,6 +33,8 @@ export default function AsprakEditModal({
   const { getPraktikumByTerm, loading: loadingPraktikum } = usePraktikum();
   const [availablePraktikums, setAvailablePraktikums] = useState<Praktikum[]>([]);
   const [selectedPraktikumIds, setSelectedPraktikumIds] = useState<string[]>([]);
+  const [newKode, setNewKode] = useState<string>(asprak.kode);
+  const [kodeError, setKodeError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -43,12 +46,19 @@ export default function AsprakEditModal({
       // Initialize selection
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedPraktikumIds(assignments);
+      setNewKode(asprak.kode);
+      setKodeError(null);
     }
-  }, [open, getPraktikumByTerm, assignments]);
+  }, [open, getPraktikumByTerm, assignments, asprak.kode]);
 
   const handleSave = async () => {
+    if (newKode.length !== 3) {
+      setKodeError('Kode Asisten harus persis 3 huruf');
+      return;
+    }
+
     setSaving(true);
-    await onSave(selectedPraktikumIds);
+    await onSave(selectedPraktikumIds, newKode.toUpperCase());
     setSaving(false);
     onClose();
   };
@@ -91,8 +101,23 @@ export default function AsprakEditModal({
               <div className="font-medium">{asprak.nim}</div>
             </div>
             <div>
-              <Label className="text-muted-foreground text-xs">Kode</Label>
-              <div className="font-medium font-mono">{asprak.kode}</div>
+              <Label htmlFor="kode" className="text-muted-foreground text-xs">
+                Kode
+              </Label>
+              <Input
+                id="kode"
+                value={newKode}
+                onChange={(e) => {
+                  setNewKode(e.target.value.toUpperCase().slice(0, 3));
+                  setKodeError(null);
+                }}
+                className={`font-mono uppercase transition-colors h-8 ${
+                  kodeError ? 'border-red-500 focus-visible:ring-red-500' : ''
+                }`}
+                placeholder="ABC"
+                maxLength={3}
+              />
+              {kodeError && <p className="text-red-500 text-xs mt-1">{kodeError}</p>}
             </div>
           </div>
           <div>
