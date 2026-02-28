@@ -90,8 +90,8 @@ export default function JadwalImportCSVModal({
     const dbSchedule = dbResult.ok ? dbResult.data || [] : [];
 
     // Helper to generate key
-    const getKey = (hari: string, sesi: number | string, ruangan: string) =>
-      `${hari}-${sesi}-${ruangan}`;
+    const getKey = (hari: string, sesi: number | string, ruangan: string, jam: string) =>
+      `${hari}-${sesi}-${jam}-${ruangan}`;
     const getFullKey = (
       id_mk: string,
       kelas: string,
@@ -106,7 +106,7 @@ export default function JadwalImportCSVModal({
 
     dbSchedule.forEach((s: any) => {
       if (s.ruangan) {
-        dbMap.set(getKey(s.hari, s.sesi, s.ruangan), s);
+        dbMap.set(getKey(s.hari, s.sesi, s.ruangan, s.jam || ''), s);
         // Also track full check for duplicates
         dbFullMap.add(getFullKey(s.id_mk.toString(), s.kelas, s.hari, s.sesi, s.ruangan));
       }
@@ -118,7 +118,7 @@ export default function JadwalImportCSVModal({
     // First pass: Populate internal map
     rows.forEach((row, idx) => {
       if (row.status === 'error' || !row.ruangan) return;
-      const key = getKey(row.hari, row.sesi, row.ruangan);
+      const key = getKey(row.hari, row.sesi, row.ruangan, row.jam);
       if (!internalMap.has(key)) {
         internalMap.set(key, []);
       }
@@ -151,7 +151,7 @@ export default function JadwalImportCSVModal({
       // Check Internal Conflict
       if (newRow.ruangan) {
         const isCurrentPJJ = newRow.kelas.toUpperCase().includes('PJJ');
-        const key = getKey(newRow.hari, newRow.sesi, newRow.ruangan);
+        const key = getKey(newRow.hari, newRow.sesi, newRow.ruangan, newRow.jam);
         const conflictingIndices = internalMap.get(key) || [];
 
         // Tabrakan Internal CSV: PJJ is ignored from tabrakan with regular classes,
