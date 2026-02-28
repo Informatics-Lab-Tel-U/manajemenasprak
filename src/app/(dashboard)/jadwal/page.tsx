@@ -126,7 +126,6 @@ export default function JadwalPage() {
   const jadwalList = useMemo(() => {
     let combinedJadwal = rawJadwalList;
 
-    // Merge logic: If Modul is selected, override default jadwal with substitute
     if (selectedModul !== 'Default' && jadwalPengganti.length > 0) {
       combinedJadwal = rawJadwalList.map((j) => {
         const substitute = jadwalPengganti.find((jp) => jp.id_jadwal === j.id);
@@ -138,8 +137,6 @@ export default function JadwalPage() {
             hari: substitute.hari,
             sesi: substitute.sesi,
             tanggal: substitute.tanggal, // Map substitute date
-            // Substitute doesn't override mata kuliah, kelas, etc. based on requirements, usually just time/room
-            // But if it changes day/session, it moves in the matrix
           };
         }
         return j;

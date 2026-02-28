@@ -54,12 +54,12 @@ export async function requireAuth(redirectTo = '/login'): Promise<AuthUser> {
  * Redirects to `redirectTo` if the user does not have one of the allowed roles.
  * Automatically calls requireAuth first (redirects to /login if unauthenticated).
  */
-export async function requireRole(
-  allowedRoles: Role[],
-  redirectTo = '/'
-): Promise<AuthUser> {
+export async function requireRole(allowedRoles: Role[], redirectTo = '/'): Promise<AuthUser> {
   const user = await requireAuth();
   if (!allowedRoles.includes(user.pengguna.role)) {
+    allowedRoles.forEach((role) => {
+      console.warn(`Required role: ${role}`);
+    });
     redirect(redirectTo);
   }
   return user;
