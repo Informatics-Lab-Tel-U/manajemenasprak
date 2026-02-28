@@ -3,12 +3,26 @@
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import {
-  ArrowLeft, ArrowUpDown, CheckCircle2, Download, Lock, Plus, Search, Trash2,
+  ArrowLeft,
+  ArrowUpDown,
+  CheckCircle2,
+  Download,
+  Lock,
+  Plus,
+  Search,
+  Trash2,
+  RotateCcw,
 } from 'lucide-react';
 import {
-  useReactTable, getCoreRowModel, getPaginationRowModel,
-  getSortedRowModel, getFilteredRowModel,
-  flexRender, type ColumnDef, type SortingState, type ColumnFiltersState,
+  useReactTable,
+  getCoreRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  getFilteredRowModel,
+  flexRender,
+  type ColumnDef,
+  type SortingState,
+  type ColumnFiltersState,
 } from '@tanstack/react-table';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -16,11 +30,22 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import PelanggaranAddModal from '@/components/pelanggaran/PelanggaranAddModal';
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from '@/components/ui/table';
 import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import type { Pelanggaran, Praktikum } from '@/types/database';
 import type { Role } from '@/config/rbac';
@@ -37,7 +62,10 @@ interface Props {
 
 // ── Recap table: per-asprak breakdown ────────────────────────────
 function buildRecap(violations: Pelanggaran[]) {
-  const map = new Map<string, { kode: string; nama: string; counts: Record<string, number>; total: number }>();
+  const map = new Map<
+    string,
+    { kode: string; nama: string; counts: Record<string, number>; total: number }
+  >();
   for (const v of violations) {
     const id = v.id_asprak;
     if (!id) continue;
@@ -60,7 +88,8 @@ function buildRecap(violations: Pelanggaran[]) {
 function SortHeader({ column, label }: { column: any; label: string }) {
   return (
     <Button
-      variant="ghost" size="sm"
+      variant="ghost"
+      size="sm"
       onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
       className="-ml-3 h-8 gap-1 px-3"
     >
@@ -71,7 +100,11 @@ function SortHeader({ column, label }: { column: any; label: string }) {
 }
 
 export default function PelanggaranDetailClient({
-  praktikum: initialPraktikum, initialViolations, initialIsFinalized, role, idPraktikum,
+  praktikum: initialPraktikum,
+  initialViolations,
+  initialIsFinalized,
+  role,
+  idPraktikum,
 }: Props) {
   const router = useRouter();
   const {
@@ -86,6 +119,7 @@ export default function PelanggaranDetailClient({
     addPelanggaran,
     deletePelanggaran,
     finalize,
+    unfinalize,
   } = usePelanggaranDetail(idPraktikum, initialViolations, initialPraktikum);
 
   // Use praktikum from hook (which includes the one from props as initial state)
@@ -97,18 +131,24 @@ export default function PelanggaranDetailClient({
   const [isFinalizing, setIsFinalizing] = React.useState(false);
   const [isAddOpen, setIsAddOpen] = React.useState(false);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [showUnfinalize, setShowUnfinalize] = React.useState(false);
+  const [isUnfinalizing, setIsUnfinalizing] = React.useState(false);
 
   async function handleAddViolation(data: {
-    id_asprak: string[]; id_jadwal: string; jenis: string; modul: number;
+    id_asprak: string[];
+    id_jadwal: string;
+    jenis: string;
+    modul: number;
   }) {
     setIsSubmitting(true);
     try {
       const result = await addPelanggaran(data);
       if (!result.ok) throw new Error(result.error || 'Gagal mencatat pelanggaran');
-      
-      toast.success(data.id_asprak.length > 1
-        ? `${data.id_asprak.length} pelanggaran berhasil dicatat!`
-        : 'Pelanggaran berhasil dicatat!'
+
+      toast.success(
+        data.id_asprak.length > 1
+          ? `${data.id_asprak.length} pelanggaran berhasil dicatat!`
+          : 'Pelanggaran berhasil dicatat!'
       );
       setIsAddOpen(false);
       refresh();
@@ -119,7 +159,8 @@ export default function PelanggaranDetailClient({
     }
   }
 
-  const canFinalize = (role === 'ADMIN' || role === 'ASLAB' || role === 'ASPRAK_KOOR') && !isFinalized;
+  const canFinalize =
+    (role === 'ADMIN' || role === 'ASLAB' || role === 'ASPRAK_KOOR') && !isFinalized;
 
   // ── Violation log columns ─────────────────────────────────────
   const columns = React.useMemo<ColumnDef<Pelanggaran>[]>(
@@ -130,7 +171,9 @@ export default function PelanggaranDetailClient({
         cell: ({ row }) => (
           <span className="text-sm text-muted-foreground whitespace-nowrap">
             {new Date(row.original.created_at).toLocaleDateString('id-ID', {
-              day: 'numeric', month: 'short', year: 'numeric',
+              day: 'numeric',
+              month: 'short',
+              year: 'numeric',
             })}
           </span>
         ),
@@ -142,7 +185,9 @@ export default function PelanggaranDetailClient({
         cell: ({ row: { original: v } }) => (
           <div>
             <div className="font-medium">{v.asprak?.nama_lengkap ?? '—'}</div>
-            <div className="text-xs text-muted-foreground">{v.asprak?.kode} · {v.asprak?.nim}</div>
+            <div className="text-xs text-muted-foreground">
+              {v.asprak?.kode} · {v.asprak?.nim}
+            </div>
           </div>
         ),
       },
@@ -248,8 +293,25 @@ export default function PelanggaranDetailClient({
     }
   }
 
+  async function handleUnfinalize() {
+    setIsUnfinalizing(true);
+    try {
+      const result = await unfinalize();
+      if (!result.ok) throw new Error(result.error || 'Gagal reset finalisasi');
+      toast.success(`Berhasil mereset finalisasi ${praktikum?.nama}.`);
+    } catch (err: any) {
+      toast.error(err.message ?? 'Gagal reset finalisasi');
+    } finally {
+      setIsUnfinalizing(false);
+      setShowUnfinalize(false);
+    }
+  }
+
   function handleExport() {
-    const params = new URLSearchParams({ id_praktikum: idPraktikum, tahun_ajaran: praktikum?.tahun_ajaran || '' });
+    const params = new URLSearchParams({
+      id_praktikum: idPraktikum,
+      tahun_ajaran: praktikum?.tahun_ajaran || '',
+    });
     window.location.href = `/api/pelanggaran/export?${params}`;
   }
 
@@ -264,7 +326,8 @@ export default function PelanggaranDetailClient({
           <AlertDialogHeader>
             <AlertDialogTitle>Hapus Data Pelanggaran</AlertDialogTitle>
             <AlertDialogDescription>
-              Apakah Anda yakin ingin menghapus data pelanggaran ini? Tindakan ini tidak dapat dibatalkan.
+              Apakah Anda yakin ingin menghapus data pelanggaran ini? Tindakan ini tidak dapat
+              dibatalkan.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -287,11 +350,18 @@ export default function PelanggaranDetailClient({
           </Button>
           <div>
             <h1 className="title-gradient text-3xl font-bold">{praktikum?.nama}</h1>
-            <p className="text-muted-foreground text-sm">{praktikum?.tahun_ajaran} · {violations.length} pelanggaran</p>
+            <p className="text-muted-foreground text-sm">
+              {praktikum?.tahun_ajaran} · {violations.length} pelanggaran
+            </p>
           </div>
         </div>
         {!isFinalized && (
-          <Button onClick={() => setIsAddOpen(true)} size="sm" className="gap-1.5" disabled={loading}>
+          <Button
+            onClick={() => setIsAddOpen(true)}
+            size="sm"
+            className="gap-1.5"
+            disabled={loading}
+          >
             <Plus className="h-4 w-4" />
             Catat Pelanggaran
           </Button>
@@ -310,19 +380,46 @@ export default function PelanggaranDetailClient({
           />
         </div>
         <div className="flex items-center gap-2">
-          {loading && <div className="h-4 w-4 rounded-full border-2 border-primary border-t-transparent animate-spin mr-2" />}
-          <Button variant="outline" size="sm" onClick={handleExport} className="gap-1.5" disabled={loading}>
+          {loading && (
+            <div className="h-4 w-4 rounded-full border-2 border-primary border-t-transparent animate-spin mr-2" />
+          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExport}
+            className="gap-1.5"
+            disabled={loading}
+          >
             <Download className="h-4 w-4" /> Export
           </Button>
           {canFinalize && (
-            <Button size="sm" variant="outline" onClick={() => setShowFinalize(true)} className="gap-1.5" disabled={loading}>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setShowFinalize(true)}
+              className="gap-1.5"
+              disabled={loading}
+            >
               <Lock className="h-3.5 w-3.5" /> Finalisasi
             </Button>
           )}
           {isFinalized && (
-            <Badge className="gap-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-              <CheckCircle2 className="h-3 w-3" /> Terfinalisasi
-            </Badge>
+            <div className="flex items-center gap-2">
+              <Badge className="gap-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                <CheckCircle2 className="h-3 w-3" /> Terfinalisasi
+              </Badge>
+              {role === 'ADMIN' && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setShowUnfinalize(true)}
+                  className="gap-1.5 text-orange-600 border-orange-200 hover:bg-orange-50 hover:text-orange-700"
+                  disabled={loading}
+                >
+                  <RotateCcw className="h-3.5 w-3.5" /> Reset Finalisasi
+                </Button>
+              )}
+            </div>
           )}
         </div>
       </div>
@@ -331,7 +428,9 @@ export default function PelanggaranDetailClient({
       <div className="">
         {/* === Violation Log Table === */}
         <div className="card glass p-4 mb-6">
-          <h2 className="text-sm font-semibold mb-3 text-muted-foreground uppercase tracking-wide">Log Pelanggaran</h2>
+          <h2 className="text-sm font-semibold mb-3 text-muted-foreground uppercase tracking-wide">
+            Log Pelanggaran
+          </h2>
           <div className="rounded-md border overflow-x-auto">
             <Table>
               <TableHeader>
@@ -339,7 +438,9 @@ export default function PelanggaranDetailClient({
                   <TableRow key={hg.id}>
                     {hg.headers.map((h) => (
                       <TableHead key={h.id}>
-                        {h.isPlaceholder ? null : flexRender(h.column.columnDef.header, h.getContext())}
+                        {h.isPlaceholder
+                          ? null
+                          : flexRender(h.column.columnDef.header, h.getContext())}
                       </TableHead>
                     ))}
                   </TableRow>
@@ -358,7 +459,10 @@ export default function PelanggaranDetailClient({
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={columns.length} className="h-24 text-center text-muted-foreground">
+                    <TableCell
+                      colSpan={columns.length}
+                      className="h-24 text-center text-muted-foreground"
+                    >
                       {loading ? 'Memuat data...' : 'Belum ada pelanggaran.'}
                     </TableCell>
                   </TableRow>
@@ -372,10 +476,20 @@ export default function PelanggaranDetailClient({
             <span className="text-sm text-muted-foreground">
               Hal {table.getState().pagination.pageIndex + 1}/{Math.max(1, table.getPageCount())}
             </span>
-            <Button variant="outline" size="sm" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => table.previousPage()}
+              disabled={!table.getCanPreviousPage()}
+            >
               ‹ Prev
             </Button>
-            <Button variant="outline" size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => table.nextPage()}
+              disabled={!table.getCanNextPage()}
+            >
               Next ›
             </Button>
           </div>
@@ -383,7 +497,9 @@ export default function PelanggaranDetailClient({
 
         {/* === Recap Table === */}
         <div className="card glass p-4">
-          <h2 className="text-sm font-semibold mb-3 text-muted-foreground uppercase tracking-wide">Rekap per Asprak</h2>
+          <h2 className="text-sm font-semibold mb-3 text-muted-foreground uppercase tracking-wide">
+            Rekap per Asprak
+          </h2>
           <div className="rounded-md border overflow-x-auto">
             <Table>
               <TableHeader>
@@ -391,7 +507,9 @@ export default function PelanggaranDetailClient({
                   <TableHead>Kode</TableHead>
                   <TableHead>Nama</TableHead>
                   {activeJenis.map((j) => (
-                    <TableHead key={j} className="text-center text-xs whitespace-nowrap">{j}</TableHead>
+                    <TableHead key={j} className="text-center text-xs whitespace-nowrap">
+                      {j}
+                    </TableHead>
                   ))}
                   <TableHead className="text-center font-bold">Total</TableHead>
                 </TableRow>
@@ -412,7 +530,10 @@ export default function PelanggaranDetailClient({
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={3 + activeJenis.length} className="h-16 text-center text-muted-foreground text-sm">
+                    <TableCell
+                      colSpan={3 + activeJenis.length}
+                      className="h-16 text-center text-muted-foreground text-sm"
+                    >
                       Tidak ada data.
                     </TableCell>
                   </TableRow>
@@ -430,14 +551,46 @@ export default function PelanggaranDetailClient({
             <AlertDialogTitle>Finalisasi Pelanggaran</AlertDialogTitle>
             <AlertDialogDescription>
               Anda akan memfinalisasi semua pelanggaran untuk{' '}
-              <strong>{praktikum?.nama} ({praktikum?.tahun_ajaran})</strong>.
-              Setelah difinalisasi, data tidak dapat diubah lagi.
+              <strong>
+                {praktikum?.nama} ({praktikum?.tahun_ajaran})
+              </strong>
+              . Setelah difinalisasi, data tidak dapat diubah lagi.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isFinalizing}>Batal</AlertDialogCancel>
-            <AlertDialogAction onClick={handleFinalize} disabled={isFinalizing}>
+            <AlertDialogAction
+              variant={'destructive'}
+              onClick={handleFinalize}
+              disabled={isFinalizing}
+            >
               {isFinalizing ? 'Memfinalisasi...' : 'Ya, Finalisasi'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Reset Finalize dialog */}
+      <AlertDialog open={showUnfinalize} onOpenChange={(o) => !o && setShowUnfinalize(false)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reset Finalisasi Pelanggaran</AlertDialogTitle>
+            <AlertDialogDescription>
+              Apakah Anda yakin ingin mereset finalisasi untuk{' '}
+              <strong>
+                {praktikum?.nama} ({praktikum?.tahun_ajaran})
+              </strong>
+              ? Data pelanggaran akan menjadi aktif kembali dan perubahan dapat dilakukan.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isUnfinalizing}>Batal</AlertDialogCancel>
+            <AlertDialogAction
+              variant={'destructive'}
+              onClick={handleUnfinalize}
+              disabled={isUnfinalizing}
+            >
+              {isUnfinalizing ? 'Mereset...' : 'Ya, Reset Finalisasi'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
