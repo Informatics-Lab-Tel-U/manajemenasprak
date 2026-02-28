@@ -98,7 +98,14 @@ export default function AsprakImportCSVModal({
       Papa.parse<RawCSVRow>(file, {
         header: true,
         skipEmptyLines: true,
-        transformHeader: (header: string) => header.trim().toLowerCase().replace(/\s+/g, '_'),
+        transformHeader: (header: string) => {
+          const h = header.trim().toLowerCase();
+          if (h.includes('nama')) return 'nama_lengkap';
+          if (h.includes('nim')) return 'nim';
+          if (h.includes('kode')) return 'kode';
+          if (h.includes('angkatan') || h.includes('tahun')) return 'angkatan';
+          return h.replace(/[^a-z0-9]/g, '_');
+        },
         complete: (results) => {
           const { data, errors } = results;
 
