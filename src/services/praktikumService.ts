@@ -76,7 +76,7 @@ export async function getPraktikumByTerm(term?: string, supabaseClient?: Supabas
     return [];
   }
   
-  // Transform data to flatten count
+
   return (data || []).map((item: any) => ({
     ...item,
     asprak_count: item.asprak_praktikum?.[0]?.count || 0
@@ -85,7 +85,6 @@ export async function getPraktikumByTerm(term?: string, supabaseClient?: Supabas
 
 export async function getPraktikumDetails(praktikumId: string, supabaseClient?: SupabaseClient): Promise<PraktikumDetails> {
   const supabase = supabaseClient || globalAdmin;
-  // Query Mata_Kuliah related to praktikumId
   const { data: mks, error: mkError } = await supabase
     .from('mata_kuliah')
     .select('id')
@@ -97,7 +96,6 @@ export async function getPraktikumDetails(praktikumId: string, supabaseClient?: 
   
   const mkIds = mks.map(m => m.id);
   
-  // Query Jadwal related to mkIds
   const { data: jadwals, error: jadwalError } = await supabase
     .from('jadwal')
     .select('kelas, hari, jam, ruangan')
@@ -108,7 +106,6 @@ export async function getPraktikumDetails(praktikumId: string, supabaseClient?: 
       return { total_kelas: 0, classes: [] };
   }
   
-  // Group by Kelas
   const grouped: Record<string, any[]> = {};
   jadwals.forEach(j => {
       if (!grouped[j.kelas]) grouped[j.kelas] = [];

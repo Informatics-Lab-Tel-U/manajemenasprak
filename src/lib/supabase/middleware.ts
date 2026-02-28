@@ -38,8 +38,6 @@ export async function updateSession(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
-  // --- MAINTENANCE MODE CHECK ---
-  // Allow public paths (login, maintenance, etc.) and auth callbacks to be accessed regardless
   if (!pathname.startsWith('/api/auth') && !isPublicPath(pathname)) {
     const { data: maintenanceConfig } = await supabase
       .from('system_config')
@@ -48,11 +46,6 @@ export async function updateSession(request: NextRequest) {
       .single();
 
     if (maintenanceConfig?.value_bool) {
-      // If maintenance is active, we check the user's role
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
       if (user) {
         const { data: pengguna } = await supabase
           .from('pengguna')
@@ -60,14 +53,12 @@ export async function updateSession(request: NextRequest) {
           .eq('id', user.id)
           .single();
 
-        // If NOT ADMIN, redirect to maintenance
         if (pengguna?.role !== 'ADMIN') {
           const url = request.nextUrl.clone();
           url.pathname = '/maintenance';
           return NextResponse.redirect(url);
         }
       } else {
-        // Not logged in and maintenance is ON -> redirect to maintenance
         const url = request.nextUrl.clone();
         url.pathname = '/maintenance';
         return NextResponse.redirect(url);
@@ -75,7 +66,6 @@ export async function updateSession(request: NextRequest) {
     }
   }
 
-  // --- AUTH & RBAC LOGIC ---
   if (user && pathname === '/login') {
     const { data: pengguna } = await supabase
       .from('pengguna')
@@ -90,10 +80,6 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  // 2. API routes must never be redirected.
-  //    - Unauthenticated: return 401 JSON.
-  //    - Authenticated: pass through (API routes are not in ROLE_ALLOWED_PATHS,
-  //      but they are guarded by their own handlers / RLS).
   if (pathname.startsWith('/api/')) {
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -101,17 +87,14 @@ export async function updateSession(request: NextRequest) {
     return supabaseResponse;
   }
 
-  // 3. Public paths are always accessible.
   if (isPublicPath(pathname)) return supabaseResponse;
 
-  // 4. Unauthenticated users are redirected to /login.
   if (!user) {
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = '/login';
     return NextResponse.redirect(loginUrl);
   }
 
-  // 4. Fetch role from Pengguna table (needed for path-level guards).
   const { data: pengguna, error: penggunaError } = await supabase
     .from('pengguna')
     .select('role')
@@ -130,9 +113,7 @@ export async function updateSession(request: NextRequest) {
 
   const role = pengguna?.role as Role | undefined;
 
-  // 5. If we can't determine role, sign out and redirect to login.
   if (!role) {
-    console.error('[Middleware] No role found, signing out user:', user.email);
     await supabase.auth.signOut();
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = '/login';
@@ -140,7 +121,6 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // 6. Role-based path access guard.
   if (!hasAccess(role, pathname)) {
     const fallback = ROLE_DEFAULT_REDIRECT[role];
     const redirectUrl = request.nextUrl.clone();

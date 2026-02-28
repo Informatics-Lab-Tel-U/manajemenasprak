@@ -40,9 +40,6 @@ export type PelanggaranCountEntry = {
 
 export type PelanggaranCountMap = Record<string, PelanggaranCountEntry>;
 
-/**
- * Fetch all pelanggaran (ADMIN / ASLAB — server-side via separate server service).
- */
 export async function getAllPelanggaran(supabaseClient?: SupabaseClient): Promise<Pelanggaran[]> {
   const supabase = supabaseClient || globalAdmin;
   const { data, error } = await supabase
@@ -57,9 +54,6 @@ export async function getAllPelanggaran(supabaseClient?: SupabaseClient): Promis
   return data as Pelanggaran[];
 }
 
-/**
- * Fetch praktikum list for ASPRAK_KOOR user based on asprak_koordinator assignments.
- */
 export async function getKoorPraktikumList(
   userId: string,
   supabaseClient: SupabaseClient
@@ -89,10 +83,6 @@ export async function getKoorPraktikumList(
   return praktikumList;
 }
 
-/**
- * Fetch pelanggaran filtered by praktikum ID and tahun ajaran.
- * Used for the main page filter — RLS enforces role-based access on Supabase side.
- */
 export async function getPelanggaranByFilter(
   idPraktikum?: string,
   tahunAjaran?: string,
@@ -124,10 +114,6 @@ export async function getPelanggaranByFilter(
   });
 }
 
-/**
- * Fetch pelanggaran scoped to the mata kuliah coordinated by a given user.
- * Used for ASPRAK_KOOR role — RLS enforces the actual restriction on Supabase side.
- */
 export async function getPelanggaranByKoor(supabaseClient?: SupabaseClient): Promise<Pelanggaran[]> {
   const supabase = supabaseClient || globalAdmin;
   const { data, error } = await supabase
@@ -142,10 +128,6 @@ export async function getPelanggaranByKoor(supabaseClient?: SupabaseClient): Pro
   return data as Pelanggaran[];
 }
 
-/**
- * Aggregate pelanggaran counts per praktikum.
- * For ASPRAK_KOOR we use the RLS-protected supabase client, for others we fall back to admin.
- */
 export async function getPelanggaranCountsByPraktikum(
   isKoor: boolean,
   supabaseClient: SupabaseClient
@@ -182,9 +164,6 @@ export async function getPelanggaranCountsByPraktikum(
   return Object.fromEntries(countMap);
 }
 
-/**
- * Create a new pelanggaran record.
- */
 export async function createPelanggaran(
   input: CreatePelanggaranInput,
   supabaseClient?: SupabaseClient
@@ -203,9 +182,6 @@ export async function createPelanggaran(
   return data as Pelanggaran;
 }
 
-/**
- * Create multiple pelanggaran records in bulk (for multi-asprak selection).
- */
 export async function bulkCreatePelanggaran(
   inputs: CreatePelanggaranInput[],
   supabaseClient?: SupabaseClient
@@ -224,9 +200,7 @@ export async function bulkCreatePelanggaran(
 }
 
 /**
- * Finalize all pelanggaran for a specific praktikum in a given tahun ajaran.
- * Sets is_final = true for all non-final records in that scope.
- * Once finalized, records become read-only (enforced by RLS UPDATE policy).
+ * Finalize all pelanggaran for a specific praktikum.
  */
 export async function finalizePelanggaranByPraktikum(
   idPraktikum: string,
@@ -271,7 +245,7 @@ export async function finalizePelanggaranByPraktikum(
 }
 
 /**
- * Finalize all pelanggaran for a specific mata kuliah (legacy, kept for backward compat).
+ * Finalize all pelanggaran for a specific mata kuliah (Backward Compatibility).
  */
 export async function finalizePelanggaranByMataKuliah(
   idMk: string,
@@ -305,9 +279,6 @@ export async function finalizePelanggaranByMataKuliah(
   }
 }
 
-/**
- * Get pelanggaran data formatted for Excel export.
- */
 export async function getExportData(
   idPraktikum?: string,
   tahunAjaran?: string,
@@ -331,9 +302,6 @@ export async function getExportData(
   }));
 }
 
-/**
- * Delete a pelanggaran record (only non-final, enforced by RLS).
- */
 export async function deletePelanggaran(id: string, supabaseClient?: SupabaseClient): Promise<void> {
   const supabase = supabaseClient || globalAdmin;
   const { error } = await supabase.from('pelanggaran').delete().eq('id', id);
@@ -344,9 +312,6 @@ export async function deletePelanggaran(id: string, supabaseClient?: SupabaseCli
   }
 }
 
-/**
- * Fetch jadwal list with praktikum information for Pelanggaran modal.
- */
 export async function getJadwalForPelanggaran(
   supabaseClient?: SupabaseClient
 ): Promise<(Jadwal & { id_praktikum?: string | null })[]> {
@@ -372,10 +337,6 @@ export async function getJadwalForPelanggaran(
   })) as (Jadwal & { id_praktikum?: string | null })[];
 }
 
-/**
- * Reset finalization for a praktikum (Admin only).
- * Sets is_final = false, and clears audit data.
- */
 export async function unfinalizePelanggaranByPraktikum(idPraktikum: string): Promise<void> {
   const supabase = globalAdmin; // Bypassing RLS for reset operation
 
