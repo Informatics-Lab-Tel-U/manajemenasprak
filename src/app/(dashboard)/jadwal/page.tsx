@@ -42,6 +42,7 @@ export default function JadwalPage() {
     mataKuliahList,
     addJadwal,
     editJadwal,
+    removeJadwal,
     upsertPengganti,
   } = useJadwal();
 
@@ -65,7 +66,12 @@ export default function JadwalPage() {
   const handleModalSubmit = async (
     input: CreateJadwalInput | UpdateJadwalInput | CreateJadwalPenggantiInput
   ) => {
-    const { hari, sesi, ruangan, id_jadwal, id } = input as any;
+    const hari = 'hari' in input ? input.hari : '';
+    const sesi = 'sesi' in input ? input.sesi : null;
+    const ruangan = 'ruangan' in input ? input.ruangan : '';
+    const id_jadwal = 'id_jadwal' in input ? input.id_jadwal : undefined;
+    const id = 'id' in input ? input.id : undefined;
+
     const currentId = selectedModul !== 'Default' ? id_jadwal : id;
 
     // Check for scheduling conflicts
@@ -74,18 +80,24 @@ export default function JadwalPage() {
     if (selectedModul === 'Default') {
       conflict = rawJadwalList.find(
         (j) =>
-          j.id !== currentId && j.hari === hari && j.sesi === Number(sesi) && j.ruangan === ruangan
+          Number(j.id) !== Number(currentId) &&
+          j.hari === hari &&
+          j.sesi === Number(sesi) &&
+          j.ruangan === ruangan
       );
     } else {
       // Create effective schedule list merging base and substitutes
       const effectiveJadwal = rawJadwalList.map((j) => {
-        const substitute = jadwalPengganti.find((jp) => jp.id_jadwal === j.id);
+        const substitute = jadwalPengganti.find((jp) => Number(jp.id_jadwal) === Number(j.id));
         return substitute ? { ...j, ...substitute } : j;
       });
 
       conflict = effectiveJadwal.find(
         (j) =>
-          j.id !== currentId && j.hari === hari && j.sesi === Number(sesi) && j.ruangan === ruangan
+          Number(j.id) !== Number(currentId) &&
+          j.hari === hari &&
+          j.sesi === Number(sesi) &&
+          j.ruangan === ruangan
       );
     }
 
@@ -120,6 +132,20 @@ export default function JadwalPage() {
       window.location.reload(); // Simple reload to refresh data
     } else {
       toast.error(`Gagal import: ${result.error}`);
+    }
+  };
+
+  const handleDeleteJadwal = async (id: string) => {
+    try {
+      const result = await removeJadwal(id);
+      if (result.ok) {
+        toast.success('Jadwal berhasil dihapus');
+        setIsModalOpen(false);
+      } else {
+        toast.error(`Gagal menghapus jadwal: ${result.error}`);
+      }
+    } catch (e: any) {
+      toast.error(`Terjadi kesalahan: ${e.message}`);
     }
   };
 
@@ -165,22 +191,111 @@ export default function JadwalPage() {
   }, [jadwalList]);
 
   const scheduleMatrix = useMemo(() => {
-    const matrix: Record<string, Record<number, Record<string, Jadwal>>> = {};
+    const matrix: Record<string, Record<string, Record<string, Jadwal>>> = {};
     jadwalList.forEach((j) => {
-      if (!j.hari || !j.sesi || !j.ruangan) return;
-      if (!matrix[j.hari]) matrix[j.hari] = {};
-      if (!matrix[j.hari][j.sesi]) matrix[j.hari][j.sesi] = {};
-      matrix[j.hari][j.sesi][j.ruangan] = j;
+      if (!j.hari || !j.ruangan) return;
+
+      const rowKey =
+        j.sesi !== null && j.sesi !== undefined ? j.sesi.toString() : j.jam || 'Unknown';
+      const hari = j.hari.toUpperCase();
+
+      if (!matrix[hari]) matrix[hari] = {};
+      if (!matrix[hari][rowKey]) matrix[hari][rowKey] = {};
+      matrix[hari][rowKey][j.ruangan] = j;
     });
     return matrix;
   }, [jadwalList]);
 
   const visibleDays = useMemo(() => {
+    const days = new Set<string>();
+
+    // Base days
     if (programType === 'PJJ') {
-      return ['SABTU'];
+      days.add('SABTU');
+    } else {
+      DAYS.forEach((d) => days.add(d));
     }
-    return DAYS;
-  }, [programType]);
+
+    // Add dynamic days from active jadwal
+    jadwalList.forEach((j) => {
+      if (j.hari) days.add(j.hari.toUpperCase());
+    });
+
+    // Sort days correctly: use a predefined order
+    const dayOrder = ['SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU', 'MINGGU'];
+    return Array.from(days).sort((a, b) => {
+      const idxA = dayOrder.indexOf(a);
+      const idxB = dayOrder.indexOf(b);
+      // If not in dayOrder, put at end
+      if (idxA === -1 && idxB === -1) return a.localeCompare(b);
+      if (idxA === -1) return 1;
+      if (idxB === -1) return -1;
+      return idxA - idxB;
+    });
+  }, [programType, jadwalList]);
+
+  const dynamicSessionsByDay = useMemo(() => {
+    const result: Record<string, { sesi: number | null; jam: string; rowKey: string }[]> = {};
+
+    const parseTime = (jamStr: string) => {
+      const m = jamStr.match(/(\d{1,2}):(\d{2})/);
+      if (m) return parseInt(m[1]) * 60 + parseInt(m[2]);
+      return 9999;
+    };
+
+    visibleDays.forEach((day) => {
+      const staticForDay = STATIC_SESSIONS[day] || [];
+      const sessionsAsKeys = new Map<
+        string,
+        { sesi: number | null; jam: string; rowKey: string }
+      >();
+
+      staticForDay.forEach((s) => {
+        const rowKey = s.sesi !== null && s.sesi !== undefined ? s.sesi.toString() : s.jam;
+        sessionsAsKeys.set(rowKey, { sesi: s.sesi, jam: s.jam, rowKey });
+      });
+
+      const daySchedules = jadwalList.filter((j) => j.hari?.toUpperCase() === day);
+
+      daySchedules.forEach((j) => {
+        if (!j.jam && j.sesi === null) return;
+
+        const rowKey =
+          j.sesi !== null && j.sesi !== undefined ? j.sesi.toString() : j.jam || 'Unknown';
+        if (!sessionsAsKeys.has(rowKey)) {
+          sessionsAsKeys.set(rowKey, { sesi: j.sesi ?? null, jam: j.jam || '-', rowKey });
+        } else {
+          const existing = sessionsAsKeys.get(rowKey)!;
+          if (
+            !existing.jam ||
+            existing.jam === '-' ||
+            (j.sesi === null && existing.sesi === null)
+          ) {
+            sessionsAsKeys.set(rowKey, {
+              sesi: j.sesi ?? null,
+              jam: j.jam || existing.jam,
+              rowKey,
+            });
+          }
+        }
+      });
+
+      const sortedSessions = Array.from(sessionsAsKeys.values()).sort((a, b) => {
+        const timeA = parseTime(a.jam);
+        const timeB = parseTime(b.jam);
+        if (timeA !== 9999 || timeB !== 9999) {
+          return timeA - timeB;
+        }
+        const sa = a.sesi ?? 999;
+        const sb = b.sesi ?? 999;
+        return sa - sb;
+      });
+
+      result[day] = sortedSessions;
+    });
+
+    return result;
+  }, [visibleDays, jadwalList]);
 
   return (
     <div className="container relative space-y-8">
@@ -300,7 +415,7 @@ export default function JadwalPage() {
             </thead>
             <tbody>
               {visibleDays.map((day) => {
-                const daySessions = STATIC_SESSIONS[day] || [];
+                const daySessions = dynamicSessionsByDay[day] || [];
                 if (daySessions.length === 0) return null;
 
                 return daySessions.map((session, sessionIndex) => {
@@ -308,7 +423,7 @@ export default function JadwalPage() {
 
                   return (
                     <tr
-                      key={`${day}-${session.sesi}`}
+                      key={`${day}-${session.rowKey}`}
                       className="hover:bg-muted/30 transition-colors border-b border-border/50"
                     >
                       {isFirstRow && (
@@ -323,16 +438,17 @@ export default function JadwalPage() {
                       <td
                         className="p-2 border-r border-border text-center font-medium text-muted-foreground text-xs cursor-pointer hover:bg-muted/50"
                         onClick={() => setShowSessionId(!showSessionId)}
+                        title={showSessionId ? session.jam : `Sesi ${session.sesi ?? '-'}`}
                       >
-                        {showSessionId ? session.sesi : session.jam}
+                        {showSessionId ? (session.sesi ?? '-') : session.jam}
                       </td>
 
                       {uniqueRooms.map((room) => {
-                        const jadwal = scheduleMatrix[day]?.[session.sesi]?.[room];
+                        const jadwal = scheduleMatrix[day]?.[session.rowKey]?.[room];
 
                         return (
                           <td
-                            key={`${day}-${session.sesi}-${room}`}
+                            key={`${day}-${session.rowKey}-${room}`}
                             className="p-0 border-r border-border h-[60px] w-[120px] relative"
                           >
                             {jadwal ? (
@@ -470,7 +586,19 @@ export default function JadwalPage() {
             </div>
 
             <div className="p-4 bg-muted/20 border-t border-border/50 text-right">
-              <div className="flex gap-2 justify-end">
+              <div className="flex gap-2 justify-end items-center">
+                <Button
+                  variant="destructive"
+                  onClick={() => {
+                    if (confirm('Apakah Anda yakin ingin menghapus jadwal ini?')) {
+                      handleDeleteJadwal(selectedJadwal.id);
+                    }
+                  }}
+                  className="mr-auto"
+                >
+                  Hapus Jadwal
+                </Button>
+
                 <Button
                   variant="outline"
                   onClick={() => handleOpenEdit(selectedJadwal)}

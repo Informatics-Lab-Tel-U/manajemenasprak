@@ -25,6 +25,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Loader2 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface JadwalModalProps {
   isOpen: boolean;
@@ -65,11 +66,35 @@ export function JadwalModal({
     tanggal: '',
   });
 
+  const [selectedTerm, setSelectedTerm] = useState<string>('');
+  const [selectedPraktikum, setSelectedPraktikum] = useState<string>('');
+  const [isPJJ, setIsPJJ] = useState<boolean>(false);
+
+  // Extract unique terms
+  const availableTerms = Array.from(
+    new Set(mataKuliahList.map((mk) => mk.praktikum?.tahun_ajaran).filter(Boolean))
+  ) as string[];
+
+  // Filter available praktikum names based on the selected term
+  const availablePraktikum = Array.from(
+    new Set(
+      mataKuliahList
+        .filter((mk) => mk.praktikum?.tahun_ajaran === selectedTerm)
+        .map((mk) => mk.praktikum?.nama)
+        .filter(Boolean)
+    )
+  ) as string[];
+
+  // Filter valid Mata Kuliah based on both term and praktikum name
+  const filteredMataKuliah = mataKuliahList.filter(
+    (mk) => mk.praktikum?.tahun_ajaran === selectedTerm && mk.praktikum?.nama === selectedPraktikum
+  );
+
   // Reset form when modal opens or initialData changes
   useEffect(() => {
     if (isOpen) {
       if (initialData) {
-        setIsDetailsEditable(selectedModul !== 'Default' ? true : false); // If substitute, editable by default
+        // setIsDetailsEditable(selectedModul !== 'Default' ? true : false); // Handled by standard re-evaluation or derived logic if needed, but here it's fine just ignoring, or set via key/effect correctly without causing sync warnings. Actually, we can move this to a separate logic block.
         setFormData({
           id_mk: initialData.id_mk.toString(),
           kelas: initialData.kelas,
@@ -81,11 +106,20 @@ export function JadwalModal({
           dosen: initialData.dosen || '',
           // tanggal: initialData.tanggal || '',
         });
+
+        // Identify the associated term and praktikum name to pre-select
+        const currentMK = mataKuliahList.find((mk) => mk.id === initialData.id_mk);
+        if (currentMK?.praktikum) {
+          setSelectedTerm(currentMK.praktikum.tahun_ajaran || '');
+          setSelectedPraktikum(currentMK.praktikum.nama || '');
+        }
+
+        setIsPJJ(initialData.kelas.toUpperCase().includes('PJJ'));
       } else {
         // Default to Senin Sesi 1
         const defaultDay = 'SENIN';
         const defaultSession = STATIC_SESSIONS[defaultDay][0];
-        setIsDetailsEditable(true); // Default to editable for create
+        // setIsDetailsEditable(true); // Default to editable for create
         setFormData({
           id_mk: '',
           kelas: '',
@@ -97,6 +131,20 @@ export function JadwalModal({
           dosen: '',
           tanggal: '',
         });
+        setSelectedTerm('');
+        setSelectedPraktikum('');
+        setIsPJJ(false);
+      }
+    }
+  }, [isOpen, initialData, selectedModul, mataKuliahList]);
+
+  // Handle editability state sync separately without breaking the flow
+  useEffect(() => {
+    if (isOpen) {
+      if (initialData) {
+        setIsDetailsEditable(selectedModul !== 'Default');
+      } else {
+        setIsDetailsEditable(true);
       }
     }
   }, [isOpen, initialData, selectedModul]);
@@ -152,6 +200,10 @@ export function JadwalModal({
       sesi: Number(formData.sesi),
       total_asprak: Number(formData.total_asprak),
     };
+
+    if (baseInput.ruangan === 'tanpa_ruangan') {
+      baseInput.ruangan = '';
+    }
 
     const input: any = { ...baseInput };
 
@@ -212,20 +264,77 @@ export function JadwalModal({
           )}
 
           <div className="grid grid-cols-1 gap-4">
-            {/* Mata Kuliah */}
+            {/* 1. Tahun Ajaran */}
+            <div className="space-y-2">
+              <Label htmlFor="term">Tahun Ajaran</Label>
+              <Select
+                value={selectedTerm}
+                onValueChange={(val) => {
+                  setSelectedTerm(val);
+                  setSelectedPraktikum('');
+                  handleChange('id_mk', '');
+                }}
+                disabled={selectedModul !== 'Default' ? true : !isDetailsEditable}
+              >
+                <SelectTrigger className="w-full disabled:opacity-70 disabled:cursor-not-allowed">
+                  <SelectValue placeholder="Pilih Tahun Ajaran" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    {availableTerms.map((term) => (
+                      <SelectItem key={term} value={term}>
+                        {term}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* 2. Praktikum (Shows only if Term selected) */}
+            <div className="space-y-2">
+              <Label htmlFor="praktikum">Praktikum</Label>
+              <Select
+                value={selectedPraktikum}
+                onValueChange={(val) => {
+                  setSelectedPraktikum(val);
+                  handleChange('id_mk', '');
+                }}
+                disabled={
+                  !selectedTerm || (selectedModul !== 'Default' ? true : !isDetailsEditable)
+                }
+              >
+                <SelectTrigger className="w-full disabled:opacity-70 disabled:cursor-not-allowed">
+                  <SelectValue placeholder="Pilih Praktikum" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    {availablePraktikum.map((prak) => (
+                      <SelectItem key={prak} value={prak}>
+                        {prak}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* 3. Mata Kuliah (Shows only if Praktikum selected) */}
             <div className="space-y-2">
               <Label htmlFor="id_mk">Mata Kuliah</Label>
               <Select
                 value={formData.id_mk?.toString()}
                 onValueChange={(val) => handleChange('id_mk', val)}
-                disabled={selectedModul !== 'Default' ? true : !isDetailsEditable}
+                disabled={
+                  !selectedPraktikum || (selectedModul !== 'Default' ? true : !isDetailsEditable)
+                }
               >
                 <SelectTrigger className="w-full disabled:opacity-70 disabled:cursor-not-allowed">
                   <SelectValue placeholder="Pilih Mata Kuliah" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
-                    {mataKuliahList.map((mk) => (
+                    {filteredMataKuliah.map((mk) => (
                       <SelectItem key={mk.id} value={mk.id.toString()}>
                         {mk.nama_lengkap} ({mk.program_studi})
                       </SelectItem>
@@ -236,30 +345,60 @@ export function JadwalModal({
             </div>
 
             {/* Kelas & Ruangan */}
-            <div className="grid grid-cols-2 gap-4 w-full">
+            <div className="grid grid-cols-2 gap-4 w-full items-start">
               <div className="space-y-2 w-full">
                 <Label htmlFor="kelas">Kelas</Label>
-                <Input
-                  id="kelas"
-                  value={formData.kelas}
-                  onChange={(e) => handleChange('kelas', e.target.value)}
-                  placeholder="e.g. IF-45-01"
-                  required
-                  disabled={selectedModul !== 'Default' ? true : !isDetailsEditable}
-                  className="disabled:opacity-70 disabled:cursor-not-allowed"
-                />
+                <div className="flex items-center space-x-2">
+                  <Input
+                    id="kelas"
+                    value={formData.kelas}
+                    onChange={(e) => handleChange('kelas', e.target.value)}
+                    placeholder="e.g. IF-45-01"
+                    required
+                    disabled={isPJJ || (selectedModul !== 'Default' ? true : !isDetailsEditable)}
+                    className="disabled:opacity-70 disabled:cursor-not-allowed"
+                  />
+                  <div className="flex items-center space-x-2 shrink-0">
+                    <Checkbox
+                      id="is_pjj"
+                      checked={isPJJ}
+                      onCheckedChange={(checked) => {
+                        const isChecked = !!checked;
+                        setIsPJJ(isChecked);
+                        if (isChecked) {
+                          if (!formData.kelas?.endsWith('PJJ')) {
+                            setFormData((prev) => ({ ...prev, kelas: (prev.kelas || '') + 'PJJ' }));
+                          }
+                        } else {
+                          if (formData.kelas?.endsWith('PJJ')) {
+                            setFormData((prev) => ({
+                              ...prev,
+                              kelas: prev.kelas?.replace(/PJJ$/, ''),
+                            }));
+                          }
+                        }
+                      }}
+                      disabled={selectedModul !== 'Default' ? true : !isDetailsEditable}
+                    />
+                    <Label htmlFor="is_pjj">PJJ</Label>
+                  </div>
+                </div>
               </div>
               <div className="space-y-2 w-full">
                 <Label htmlFor="ruangan">Ruangan</Label>
                 <Select
-                  value={formData.ruangan}
+                  value={formData.ruangan || (isPJJ ? 'tanpa_ruangan' : '')}
                   onValueChange={(val) => handleChange('ruangan', val)}
+                  disabled={selectedModul !== 'Default' ? true : !isDetailsEditable}
                 >
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Pilih Ruangan" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
+                      {isPJJ && (
+                        <SelectItem value="tanpa_ruangan">Tanpa Ruangan (Online)</SelectItem>
+                      )}
                       {ROOMS.map((room) => (
                         <SelectItem key={room} value={room}>
                           {room}
@@ -349,18 +488,26 @@ export function JadwalModal({
             </div>
           </div>
 
-          <DialogFooter>
-            <Button variant="outline" type="button" onClick={onClose}>
-              Batal
-            </Button>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {selectedModul !== 'Default'
-                ? 'Simpan Jadwal Pengganti'
-                : isEdit
-                  ? 'Simpan Perubahan'
-                  : 'Tambah Jadwal'}
-            </Button>
+          <DialogFooter className="flex items-center sm:justify-between w-full">
+            <div className="flex w-full sm:w-auto items-center sm:hidden justify-end space-x-2 mb-2"></div>
+
+            <div className="flex w-full items-center justify-between sm:justify-start">
+              <div className="hidden sm:block"></div>
+
+              <div className="flex w-full sm:w-auto justify-end space-x-2">
+                <Button variant="outline" type="button" onClick={onClose} disabled={isLoading}>
+                  Batal
+                </Button>
+                <Button type="submit" disabled={isLoading}>
+                  {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {selectedModul !== 'Default'
+                    ? 'Simpan Jadwal Pengganti'
+                    : isEdit
+                      ? 'Simpan Perubahan'
+                      : 'Tambah Jadwal'}
+                </Button>
+              </div>
+            </div>
           </DialogFooter>
         </form>
       </DialogContent>

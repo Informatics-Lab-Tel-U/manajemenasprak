@@ -59,7 +59,7 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
 
       router.refresh();
       router.push('/');
-    } catch (err) {
+    } catch (err: any) {
       console.error('Login error:', err);
       setError('Terjadi kesalahan koneksi. Silakan coba lagi.');
       setIsLoading(false);

@@ -83,7 +83,6 @@ export default function AsprakImportCSVModal({
   const [previewRows, setPreviewRows] = useState<PreviewRow[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  
 
   // Derived
   const term = useMemo(() => buildTermString(termYear, termSem), [termYear, termSem]);
@@ -116,9 +115,7 @@ export default function AsprakImportCSVModal({
           // Validate required columns
           const firstRow = data[0];
           const requiredCols = ['nama_lengkap', 'nim'];
-          const missingCols = requiredCols.filter(
-            (col) => !(col in firstRow)
-          );
+          const missingCols = requiredCols.filter((col) => !(col in firstRow));
           if (missingCols.length > 0) {
             setError(
               `Kolom wajib tidak ditemukan: ${missingCols.join(', ')}. Kolom yang ada: ${Object.keys(firstRow).join(', ')}`
@@ -153,7 +150,10 @@ export default function AsprakImportCSVModal({
               const namaLengkap = String(row.nama_lengkap || '').trim();
               const nim = String(row.nim || '').trim();
               const rawAngkatan = row.angkatan;
-              let angkatan = typeof rawAngkatan === 'number' ? rawAngkatan : parseInt(String(rawAngkatan || '0'));
+              let angkatan =
+                typeof rawAngkatan === 'number'
+                  ? rawAngkatan
+                  : parseInt(String(rawAngkatan || '0'));
               if (angkatan > 0 && angkatan < 100) angkatan += 2000;
 
               const originalKode = row.kode ? String(row.kode).trim().toUpperCase() : '';
@@ -195,7 +195,9 @@ export default function AsprakImportCSVModal({
               // For duplicate rows, use the original CSV code as-is (the code generator
               // may have auto-generated a different code because the original is already
               // "taken" in the DB — but that's expected since it belongs to the same person)
-              const isDuplicate = (status === 'error' && statusMessage.includes('Duplikat')) || status === 'duplicate-csv';
+              const isDuplicate =
+                (status === 'error' && statusMessage.includes('Duplikat')) ||
+                status === 'duplicate-csv';
               const displayKode = isDuplicate && originalKode ? originalKode : generated.code;
 
               const finalRule = isDuplicate ? 'Duplikat' : generated.rule;
@@ -220,7 +222,7 @@ export default function AsprakImportCSVModal({
             setPreviewRows(preview);
             setStep('preview');
           } catch (e: any) {
-            setError(`Error saat generate kode: ${e.message}`);
+            setError(`Error saat generate kode: ${e instanceof Error ? e.message : String(e)}`);
           }
         },
         error: (err: Error) => {
@@ -260,81 +262,81 @@ export default function AsprakImportCSVModal({
 
   // ─── Inline Code Edit ─────────────────────────────────────────────────
 
-  const handleCodeEdit = useCallback((rowIndex: number, newCode: string) => {
-    setPreviewRows((prev) => {
-      const updated = [...prev];
-      const row = { ...updated[rowIndex] };
-      const uppercased = newCode.toUpperCase();
-      row.kode = uppercased;
+  const handleCodeEdit = useCallback(
+    (rowIndex: number, newCode: string) => {
+      setPreviewRows((prev) => {
+        const updated = [...prev];
+        const row = { ...updated[rowIndex] };
+        const uppercased = newCode.toUpperCase();
+        row.kode = uppercased;
 
-      // ── Tag revert: if user typed back the original code, revert tags ──
-      if (uppercased === row.originalKode) {
-        row.codeSource = row.originalCodeSource;
-        row.codeRule = row.originalCodeRule;
-      } else {
-        row.codeSource = 'csv';
-        row.codeRule = 'Manual edit';
-      }
-
-      // ── Real-time conflict check (only for complete 3-letter codes) ──
-      if (/^[A-Z]{3}$/.test(uppercased)) {
-        // Check if code is used by another row in this CSV
-        const conflictInCSV = updated.some(
-          (r, i) =>
-            i !== rowIndex &&
-            r.kode === uppercased &&
-            r.status !== 'error' &&
-            r.status !== 'duplicate-csv'
-        );
-
-        // Check if code exists in DB, but allow recycling if angkatan gap >= CODE_RECYCLE_YEARS
-        const conflictInDB = existingAspraks.some((a) => {
-          if (a.kode.toUpperCase() !== uppercased) return false;
-          // Allow recycling: if the existing asprak's angkatan is old enough
-          const gap = row.angkatan - a.angkatan;
-          return gap < CODE_RECYCLE_YEARS; // conflict only if gap < 5 years
-        });
-
-        if (conflictInCSV) {
-          row.status = 'warning';
-          row.statusMessage = `Kode "${uppercased}" sudah dipakai row lain di CSV ini`;
-        } else if (conflictInDB) {
-          row.status = 'warning';
-          row.statusMessage = `Kode "${uppercased}" sudah dipakai asprak lain di database (< ${CODE_RECYCLE_YEARS} tahun)`;
+        // ── Tag revert: if user typed back the original code, revert tags ──
+        if (uppercased === row.originalKode) {
+          row.codeSource = row.originalCodeSource;
+          row.codeRule = row.originalCodeRule;
         } else {
-          // Code is valid and available
-          row.status = 'ok';
-          row.statusMessage = '';
-        }
-        
-        // Auto-select if valid and was previously invalid/not selected? 
-        // Or just ensure it's selectable. Let's auto-select if it becomes OK/Warning.
-        if (row.status === 'ok' || row.status === 'warning') {
-          // You might choose to not auto-select if the user explicitly unchecked it, 
-          // but here we assume if they fix it, they want it.
-           if (!row.selected) row.selected = true;
-        } else {
-           row.selected = false;
+          row.codeSource = 'csv';
+          row.codeRule = 'Manual edit';
         }
 
-      } else if (uppercased.length > 0 && uppercased.length < 3) {
-        // Incomplete code -> ERROR
-        row.status = 'error';
-        row.statusMessage = 'Kode harus 3 huruf';
-        row.selected = false;
-      } else if (uppercased.length === 0) {
-        // Empty code -> ERROR
-        row.status = 'error';
-        row.statusMessage = 'Kode tidak boleh kosong';
-        row.selected = false;
-      }
+        // ── Real-time conflict check (only for complete 3-letter codes) ──
+        if (/^[A-Z]{3}$/.test(uppercased)) {
+          // Check if code is used by another row in this CSV
+          const conflictInCSV = updated.some(
+            (r, i) =>
+              i !== rowIndex &&
+              r.kode === uppercased &&
+              r.status !== 'error' &&
+              r.status !== 'duplicate-csv'
+          );
 
-      updated[rowIndex] = row;
-      return updated;
-    });
-  }, [existingAspraks]);
+          // Check if code exists in DB, but allow recycling if angkatan gap >= CODE_RECYCLE_YEARS
+          const conflictInDB = existingAspraks.some((a) => {
+            if (a.kode.toUpperCase() !== uppercased) return false;
+            // Allow recycling: if the existing asprak's angkatan is old enough
+            const gap = row.angkatan - a.angkatan;
+            return gap < CODE_RECYCLE_YEARS; // conflict only if gap < 5 years
+          });
 
+          if (conflictInCSV) {
+            row.status = 'warning';
+            row.statusMessage = `Kode "${uppercased}" sudah dipakai row lain di CSV ini`;
+          } else if (conflictInDB) {
+            row.status = 'warning';
+            row.statusMessage = `Kode "${uppercased}" sudah dipakai asprak lain di database (< ${CODE_RECYCLE_YEARS} tahun)`;
+          } else {
+            // Code is valid and available
+            row.status = 'ok';
+            row.statusMessage = '';
+          }
 
+          // Auto-select if valid and was previously invalid/not selected?
+          // Or just ensure it's selectable. Let's auto-select if it becomes OK/Warning.
+          if (row.status === 'ok' || row.status === 'warning') {
+            // You might choose to not auto-select if the user explicitly unchecked it,
+            // but here we assume if they fix it, they want it.
+            if (!row.selected) row.selected = true;
+          } else {
+            row.selected = false;
+          }
+        } else if (uppercased.length > 0 && uppercased.length < 3) {
+          // Incomplete code -> ERROR
+          row.status = 'error';
+          row.statusMessage = 'Kode harus 3 huruf';
+          row.selected = false;
+        } else if (uppercased.length === 0) {
+          // Empty code -> ERROR
+          row.status = 'error';
+          row.statusMessage = 'Kode tidak boleh kosong';
+          row.selected = false;
+        }
+
+        updated[rowIndex] = row;
+        return updated;
+      });
+    },
+    [existingAspraks]
+  );
 
   // ─── Template Download ──────────────────────────────────────────────────
 
@@ -384,8 +386,10 @@ export default function AsprakImportCSVModal({
 
   const handleConfirm = async () => {
     // Only import SELECTED rows
-    const selectedRows = previewRows.filter((r) => r.selected && (r.status === 'ok' || r.status === 'warning'));
-    
+    const selectedRows = previewRows.filter(
+      (r) => r.selected && (r.status === 'ok' || r.status === 'warning')
+    );
+
     if (selectedRows.length === 0) return;
 
     setSaving(true);
@@ -402,7 +406,8 @@ export default function AsprakImportCSVModal({
         term
       );
     } catch (e: any) {
-      setError(e.message || 'Gagal menyimpan data.');
+      const errMsg = e instanceof Error ? e.message : String(e);
+      setError(errMsg || 'Gagal menyimpan data.');
     } finally {
       setSaving(false);
     }
@@ -517,43 +522,51 @@ export default function AsprakImportCSVModal({
                       ) : (
                         <div className="space-y-1">
                           <p className="font-medium">Drag & drop file CSV di sini</p>
-                          <p className="text-xs text-muted-foreground">atau klik untuk pilih file</p>
+                          <p className="text-xs text-muted-foreground">
+                            atau klik untuk pilih file
+                          </p>
                         </div>
                       )}
                     </div>
 
                     <div className="space-y-4">
                       <div className="bg-muted/30 p-4 rounded-lg border border-border/50">
-                        <p className="text-xs text-muted-foreground mb-2 font-medium">Format Kolom:</p>
+                        <p className="text-xs text-muted-foreground mb-2 font-medium">
+                          Format Kolom:
+                        </p>
                         <div className="flex flex-wrap gap-2 mb-1">
                           {['nama_lengkap', 'nim', 'kode (opsional)', 'angkatan'].map((col) => (
-                            <span key={col} className="text-[10px] bg-background border px-1.5 py-0.5 rounded font-mono text-muted-foreground">
+                            <span
+                              key={col}
+                              className="text-[10px] bg-background border px-1.5 py-0.5 rounded font-mono text-muted-foreground"
+                            >
                               {col}
                             </span>
                           ))}
                         </div>
                         <p className="text-[10px] text-muted-foreground/60 mb-3">
-                          * Kolom <code className="text-[9px] bg-muted px-1 rounded">kode</code> boleh kosong (akan di-generate otomatis).
+                          * Kolom <code className="text-[9px] bg-muted px-1 rounded">kode</code>{' '}
+                          boleh kosong (akan di-generate otomatis).
                         </p>
-                        
+
                         <div className="flex items-center gap-3 pt-2 border-t border-border/50">
                           <span className="text-xs text-muted-foreground flex items-center gap-1.5">
                             <Download size={12} />
                             Download Template:
                           </span>
                           <div className="flex gap-2">
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
+                            <Button
+                              variant="outline"
+                              size="sm"
                               className="h-7 text-xs px-2 gap-1.5 bg-background"
                               onClick={() => handleDownloadTemplate('csv')}
                             >
                               <FileText size={12} className="text-sky-500" />
                               CSV
                             </Button>
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
+                            <Button
+                              variant="outline"
+                              size="sm"
                               className="h-7 text-xs px-2 gap-1.5 bg-background"
                               onClick={() => handleDownloadTemplate('xlsx')}
                             >
@@ -563,7 +576,6 @@ export default function AsprakImportCSVModal({
                           </div>
                         </div>
                       </div>
-
                     </div>
                   </div>
                 </div>

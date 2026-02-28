@@ -238,3 +238,4 @@ export async function bulkUpsertPraktikum(rows: { nama: string; tahun_ajaran: st
   }
   return result;
 }
+
