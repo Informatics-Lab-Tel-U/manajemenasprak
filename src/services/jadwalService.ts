@@ -1,7 +1,6 @@
 import 'server-only';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { createAdminClient } from '@/lib/supabase/admin';
-// Use server-side admin client to ensure API routes can access data when RLS is enabled
 const globalAdmin = createAdminClient();
 import { Jadwal, JadwalPengganti } from '@/types/database';
 import { logger } from '@/lib/logger';
@@ -235,7 +234,6 @@ export async function deleteJadwalByTerm(
 ): Promise<void> {
   const supabase = supabaseClient || globalAdmin;
 
-  // 1. Get all MK IDs associated with the term
   const { data: mkData, error: mkError } = await supabase
     .from('mata_kuliah')
     .select('id, praktikum!inner(tahun_ajaran)')
@@ -249,11 +247,9 @@ export async function deleteJadwalByTerm(
   const mkIds = mkData?.map((mk) => mk.id) || [];
 
   if (mkIds.length === 0) {
-    // Nothing to delete for this term
     return;
   }
 
-  // 2. Delete all jadwal items corresponding to those MK IDs
   const { error } = await supabase.from('jadwal').delete().in('id_mk', mkIds);
 
   if (error) {

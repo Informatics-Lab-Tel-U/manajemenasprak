@@ -64,7 +64,7 @@ export function useJadwal(initialTerm?: string) {
         setError(new Error(result.error || 'Failed to fetch jadwal'));
       }
 
-      // Fetch Jadwal Pengganti if a module is selected
+
       if (selectedModul !== 'Default') {
         const modulNum = parseInt(selectedModul.replace('Modul ', ''));
         const penggantiResult = await jadwalFetcher.fetchJadwalPengganti(modulNum);
