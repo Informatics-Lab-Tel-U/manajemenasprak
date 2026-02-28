@@ -74,7 +74,7 @@ export function useJadwal(initialTerm?: string) {
       } else {
         setJadwalPengganti([]);
       }
-    } catch (e) {
+    } catch (e: any) {
       setError(e as Error);
     } finally {
       setLoading(false);
@@ -114,7 +114,7 @@ export function useJadwal(initialTerm?: string) {
     return result;
   };
 
-  const removeJadwal = async (id: number) => {
+  const removeJadwal = async (id: string) => {
     setLoading(true);
     const result = await jadwalFetcher.deleteJadwal(id);
     if (result.ok) {

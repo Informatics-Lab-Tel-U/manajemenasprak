@@ -12,3 +12,4 @@ export async function fetchAvailableTahunAjaran(): Promise<ServiceResult<string[
     return { ok: false, error: error.message };
   }
 }
+

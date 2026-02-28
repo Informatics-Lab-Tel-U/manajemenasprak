@@ -4,6 +4,7 @@ import { useState, useCallback } from 'react';
 import { Trash2, Upload, FileSpreadsheet, Download } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import * as importFetcher from '@/lib/fetchers/importFetcher';
+import * as jadwalFetcher from '@/lib/fetchers/jadwalFetcher';
 import * as XLSX from 'xlsx';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -46,17 +47,22 @@ export default function DatabasePage() {
 
   const { tahunAjaranList, loading: loadingTahunAjaran } = useTahunAjaran();
   const [exportTerm, setExportTerm] = useState('');
+  const [deleteTerm, setDeleteTerm] = useState('');
 
   useEffect(() => {
-    if (tahunAjaranList.length > 0 && !exportTerm) {
-      setExportTerm(tahunAjaranList[0]);
+    if (tahunAjaranList.length > 0) {
+      if (!exportTerm) setExportTerm(tahunAjaranList[0]);
+      if (!deleteTerm) setDeleteTerm(tahunAjaranList[0]);
     }
-  }, [tahunAjaranList, exportTerm]);
+  }, [tahunAjaranList, exportTerm, deleteTerm]);
 
-  // Modal state
+  // Modal states
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isDeleteTermModalOpen, setIsDeleteTermModalOpen] = useState(false);
   const [confirmInput, setConfirmInput] = useState('');
+  const [confirmTermInput, setConfirmTermInput] = useState('');
   const CONFIRMATION_PHRASE = 'HAPUS SEMUA';
+  const CONFIRMATION_TERM_PHRASE = 'HAPUS JADWAL';
 
   const onDrop = useCallback(
     async (acceptedFiles: File[]) => {
@@ -98,7 +104,10 @@ export default function DatabasePage() {
               skipConflicts: true,
             });
             if (retryResult.ok) {
-              setStatus({ type: 'success', message: `Berhasil mengimpor ${file.name} (Konflik Dilewati)!` });
+              setStatus({
+                type: 'success',
+                message: `Berhasil mengimpor ${file.name} (Konflik Dilewati)!`,
+              });
             } else {
               setStatus({ type: 'error', message: retryResult.error || 'Gagal mencoba ulang' });
             }
@@ -152,12 +161,42 @@ export default function DatabasePage() {
     }
   };
 
+  const handleDeleteJadwalTermTrigger = () => {
+    if (!deleteTerm) return;
+    setIsDeleteTermModalOpen(true);
+    setConfirmTermInput('');
+  };
+
+  const handleExecuteDeleteJadwalTerm = async () => {
+    if (confirmTermInput !== CONFIRMATION_TERM_PHRASE) return;
+
+    setIsDeleteTermModalOpen(false);
+    setLoading(true);
+    setStatus({ type: 'info', message: `Menghapus jadwal angkatan ${deleteTerm}...` });
+
+    try {
+      const result = await jadwalFetcher.deleteJadwalByTerm(deleteTerm);
+      if (result.ok) {
+        setStatus({
+          type: 'success',
+          message: `Berhasil menghapus jadwal angkatan ${deleteTerm}!`,
+        });
+      } else {
+        setStatus({ type: 'error', message: result.error || 'Gagal menghapus jadwal' });
+      }
+    } catch (e: any) {
+      setStatus({ type: 'error', message: e.message || 'Gagal menghapus jadwal' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleExport = async () => {
     if (!exportTerm) {
       setStatus({ type: 'error', message: 'Silakan pilih tahun ajaran yang akan diexport' });
       return;
     }
-    
+
     setLoading(true);
     setStatus({ type: 'info', message: `Mengekspor data untuk angkatan: ${exportTerm}...` });
 
@@ -165,7 +204,7 @@ export default function DatabasePage() {
       const result = await importFetcher.exportExcelDataset(exportTerm);
       if (result.ok && result.data) {
         const wb = XLSX.utils.book_new();
-        
+
         // Add all 5 sheets
         const wsPraktikum = XLSX.utils.json_to_sheet(result.data.praktikum);
         XLSX.utils.book_append_sheet(wb, wsPraktikum, 'praktikum');
@@ -287,9 +326,7 @@ export default function DatabasePage() {
   return (
     <div className="container">
       <header className="mb-8">
-        <h1 className="title-gradient text-3xl font-bold">
-          Pengaturan
-        </h1>
+        <h1 className="title-gradient text-3xl font-bold">Pengaturan</h1>
         <p className="text-muted-foreground mt-2">Kelola impor dan pembersihan data</p>
       </header>
 
@@ -382,13 +419,14 @@ export default function DatabasePage() {
 
               {loading && (
                 <div className="mt-4 space-y-2">
-                   <Progress value={progress} className="h-2 w-full" />
-                   <p className="text-sm text-center text-muted-foreground">{progress}% Mengunggah & Memproses...</p>
+                  <Progress value={progress} className="h-2 w-full" />
+                  <p className="text-sm text-center text-muted-foreground">
+                    {progress}% Mengunggah & Memproses...
+                  </p>
                 </div>
               )}
             </div>
-
-            </CardContent>
+          </CardContent>
         </Card>
 
         {/* Export Section */}
@@ -404,13 +442,15 @@ export default function DatabasePage() {
           <CardContent className="space-y-6">
             <div className="space-y-2">
               <Label>Pilih Tahun Ajaran untuk Export</Label>
-              <Select 
-                value={exportTerm} 
+              <Select
+                value={exportTerm}
                 onValueChange={setExportTerm}
                 disabled={loading || loadingTahunAjaran}
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder={loadingTahunAjaran ? "Memuat..." : "Pilih Tahun Ajaran"} />
+                  <SelectValue
+                    placeholder={loadingTahunAjaran ? 'Memuat...' : 'Pilih Tahun Ajaran'}
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
@@ -479,6 +519,68 @@ export default function DatabasePage() {
         </Card>
       </div>
 
+      <div className="grid gap-8 grid-cols-1 mt-8">
+        <Card className="bg-card/80 backdrop-blur-sm shadow-md border-orange-500/30">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-3 text-orange-500">
+              <div className="p-3 rounded-xl bg-orange-500/10">
+                <Trash2 size={24} />
+              </div>
+              Hapus Jadwal Per Tahun Ajaran
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <p className="text-sm text-muted-foreground">
+              Fitur ini hanya menghapus data di tabel{' '}
+              <span className="font-mono bg-muted px-1 py-0.5 rounded text-secondary-foreground">
+                Jadwal
+              </span>{' '}
+              untuk tahun ajaran tertentu tanpa menghapus relasi Mata Kuliah dan Praktikum.
+            </p>
+
+            <div className="space-y-2">
+              <Label>Pilih Tahun Ajaran yang Jadwalnya Akan Dihapus</Label>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Select
+                  value={deleteTerm}
+                  onValueChange={setDeleteTerm}
+                  disabled={loading || loadingTahunAjaran}
+                >
+                  <SelectTrigger className="w-full sm:w-[50%]">
+                    <SelectValue
+                      placeholder={loadingTahunAjaran ? 'Memuat...' : 'Pilih Tahun Ajaran'}
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      {tahunAjaranList.map((term) => (
+                        <SelectItem key={term} value={term}>
+                          {term}
+                        </SelectItem>
+                      ))}
+                      {tahunAjaranList.length === 0 && !loadingTahunAjaran && (
+                        <SelectItem value="none" disabled>
+                          Tidak ada data di database
+                        </SelectItem>
+                      )}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+
+                <Button
+                  onClick={handleDeleteJadwalTermTrigger}
+                  disabled={loading || !deleteTerm}
+                  variant="destructive"
+                  className="w-full sm:w-[50%]"
+                >
+                  Hapus Jadwal (Term {deleteTerm || '...'})
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Confirmation Modal */}
       <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
         <DialogContent className="sm:max-w-md">
@@ -507,10 +609,7 @@ export default function DatabasePage() {
           </div>
 
           <DialogFooter className="sm:justify-between gap-2">
-             <Button
-              variant="outline"
-              onClick={() => setIsDeleteModalOpen(false)}
-            >
+            <Button variant="outline" onClick={() => setIsDeleteModalOpen(false)}>
               Batal
             </Button>
             <Button
@@ -519,6 +618,48 @@ export default function DatabasePage() {
               disabled={confirmInput !== CONFIRMATION_PHRASE || loading}
             >
               Ya, Hapus Semua
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Jadwal By Term Modal */}
+      <Dialog open={isDeleteTermModalOpen} onOpenChange={setIsDeleteTermModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-orange-500 flex items-center gap-2">
+              <Trash2 className="w-5 h-5" />
+              Hapus Data Jadwal "{deleteTerm}"?
+            </DialogTitle>
+            <DialogDescription>
+              Semua Jadwal untuk <strong>{deleteTerm}</strong> akan dihapus. Ini tidak dapat
+              dikembalikan.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3 py-2">
+            <Label className="text-sm">
+              Ketik <span className="font-bold text-orange-500">"{CONFIRMATION_TERM_PHRASE}"</span>{' '}
+              untuk konfirmasi:
+            </Label>
+            <Input
+              value={confirmTermInput}
+              onChange={(e) => setConfirmTermInput(e.target.value)}
+              placeholder={CONFIRMATION_TERM_PHRASE}
+              autoComplete="off"
+            />
+          </div>
+
+          <DialogFooter className="sm:justify-between gap-2">
+            <Button variant="outline" onClick={() => setIsDeleteTermModalOpen(false)}>
+              Batal
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleExecuteDeleteJadwalTerm}
+              disabled={confirmTermInput !== CONFIRMATION_TERM_PHRASE || loading}
+            >
+              Hapus Jadwal
             </Button>
           </DialogFooter>
         </DialogContent>

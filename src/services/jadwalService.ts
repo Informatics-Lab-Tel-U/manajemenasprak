@@ -19,7 +19,10 @@ export async function getAvailableTerms(supabaseClient?: SupabaseClient): Promis
     .reverse();
 }
 
-export async function getJadwalByTerm(term: string, supabaseClient?: SupabaseClient): Promise<Jadwal[]> {
+export async function getJadwalByTerm(
+  term: string,
+  supabaseClient?: SupabaseClient
+): Promise<Jadwal[]> {
   const supabase = supabaseClient || globalAdmin;
   const { data, error } = await supabase
     .from('jadwal')
@@ -70,7 +73,11 @@ export async function getScheduleForValidation(term: string, supabaseClient?: Su
   return data;
 }
 
-export async function getTodaySchedule(limit: number = 5, term?: string, supabaseClient?: SupabaseClient): Promise<Jadwal[]> {
+export async function getTodaySchedule(
+  limit: number = 5,
+  term?: string,
+  supabaseClient?: SupabaseClient
+): Promise<Jadwal[]> {
   const supabase = supabaseClient || globalAdmin;
   const dayIndex = new Date().getDay();
   const weekdays = ['SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU'];
@@ -124,7 +131,10 @@ export interface CreateJadwalInput {
   dosen?: string;
 }
 
-export async function createJadwal(input: CreateJadwalInput, supabaseClient?: SupabaseClient): Promise<Jadwal> {
+export async function createJadwal(
+  input: CreateJadwalInput,
+  supabaseClient?: SupabaseClient
+): Promise<Jadwal> {
   const supabase = supabaseClient || globalAdmin;
   const { id_mk, kelas, hari, sesi, jam, ruangan, total_asprak, dosen } = input;
   const cleanInput = { id_mk, kelas, hari, sesi, jam, ruangan, total_asprak, dosen };
@@ -155,7 +165,7 @@ export async function bulkCreateJadwal(
 }
 
 export interface UpdateJadwalInput {
-  id: number;
+  id: string;
   id_mk?: string;
   kelas?: string;
   hari?: string;
@@ -166,7 +176,10 @@ export interface UpdateJadwalInput {
   dosen?: string;
 }
 
-export async function updateJadwal(input: UpdateJadwalInput, supabaseClient?: SupabaseClient): Promise<Jadwal> {
+export async function updateJadwal(
+  input: UpdateJadwalInput,
+  supabaseClient?: SupabaseClient
+): Promise<Jadwal> {
   const supabase = supabaseClient || globalAdmin;
   const { id, id_mk, kelas, hari, sesi, jam, ruangan, total_asprak, dosen } = input;
 
@@ -194,7 +207,7 @@ export async function updateJadwal(input: UpdateJadwalInput, supabaseClient?: Su
   return data;
 }
 
-export async function deleteJadwal(id: number, supabaseClient?: SupabaseClient): Promise<void> {
+export async function deleteJadwal(id: string, supabaseClient?: SupabaseClient): Promise<void> {
   const supabase = supabaseClient || globalAdmin;
   const { error } = await supabase.from('jadwal').delete().eq('id', id);
   if (error) {
@@ -203,13 +216,49 @@ export async function deleteJadwal(id: number, supabaseClient?: SupabaseClient):
   }
 }
 
-export async function deleteJadwalByIds(ids: number[], supabaseClient?: SupabaseClient): Promise<void> {
+export async function deleteJadwalByIds(
+  ids: string[],
+  supabaseClient?: SupabaseClient
+): Promise<void> {
   const supabase = supabaseClient || globalAdmin;
   if (ids.length === 0) return;
   const { error } = await supabase.from('jadwal').delete().in('id', ids);
   if (error) {
     logger.error('Error deleting jadwal:', error);
     throw new Error(`Failed to delete: ${error.message}`);
+  }
+}
+
+export async function deleteJadwalByTerm(
+  term: string,
+  supabaseClient?: SupabaseClient
+): Promise<void> {
+  const supabase = supabaseClient || globalAdmin;
+
+  // 1. Get all MK IDs associated with the term
+  const { data: mkData, error: mkError } = await supabase
+    .from('mata_kuliah')
+    .select('id, praktikum!inner(tahun_ajaran)')
+    .eq('praktikum.tahun_ajaran', term);
+
+  if (mkError) {
+    logger.error('Error fetching MK for bulk delete:', mkError);
+    throw new Error(`Failed to fetch dependencies for deletion: ${mkError.message}`);
+  }
+
+  const mkIds = mkData?.map((mk) => mk.id) || [];
+
+  if (mkIds.length === 0) {
+    // Nothing to delete for this term
+    return;
+  }
+
+  // 2. Delete all jadwal items corresponding to those MK IDs
+  const { error } = await supabase.from('jadwal').delete().in('id_mk', mkIds);
+
+  if (error) {
+    logger.error('Error deleting jadwal by term:', error);
+    throw new Error(`Failed to bulk delete Jadwal: ${error.message}`);
   }
 }
 
@@ -246,7 +295,10 @@ export async function getAllJadwal(supabaseClient?: SupabaseClient): Promise<Jad
   return data as Jadwal[];
 }
 
-export async function getJadwalPengganti(modul: number, supabaseClient?: SupabaseClient): Promise<JadwalPengganti[]> {
+export async function getJadwalPengganti(
+  modul: number,
+  supabaseClient?: SupabaseClient
+): Promise<JadwalPengganti[]> {
   const supabase = supabaseClient || globalAdmin;
   if (modul <= 0) return [];
 
@@ -279,7 +331,7 @@ export async function upsertJadwalPengganti(
     .eq('modul', modul)
     .maybeSingle();
 
-  let query = supabase.from('jadwal_pengganti');
+  const query = supabase.from('jadwal_pengganti');
 
   if (existing) {
     const { data, error } = await query.update(cleanInput).eq('id', existing.id).select().single();

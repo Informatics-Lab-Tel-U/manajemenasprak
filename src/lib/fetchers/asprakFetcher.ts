@@ -13,8 +13,8 @@ export interface UpsertAsprakInput {
   kode: string;
   angkatan: number;
   assignments: {
-      term: string;
-      praktikumNames: string[];
+    term: string;
+    praktikumNames: string[];
   }[];
 }
 
@@ -28,19 +28,21 @@ export interface AsprakAssignment {
 }
 
 export interface AsprakPlottingData extends Asprak {
-    assignments: {
-        id: string; // Praktikum ID
-        nama: string;
-        tahun_ajaran: string;
-    }[];
+  assignments: {
+    id: string; // Praktikum ID
+    nama: string;
+    tahun_ajaran: string;
+  }[];
 }
 
-export async function fetchPlottingData(term?: string): Promise<ServiceResult<AsprakPlottingData[]>> {
+export async function fetchPlottingData(
+  term?: string
+): Promise<ServiceResult<AsprakPlottingData[]>> {
   try {
     const url = new URL('/api/asprak', window.location.origin);
     url.searchParams.append('action', 'plotting');
     if (term) url.searchParams.append('term', term);
-    
+
     const res = await fetch(url.toString());
     const json = await res.json();
 
@@ -108,7 +110,7 @@ export async function updateAssignments(
     const json = await res.json();
 
     if (!res.ok) {
-        return { ok: false, error: json.error };
+      return { ok: false, error: json.error };
     }
     return { ok: true, data: undefined };
   } catch (e: any) {
@@ -154,7 +156,7 @@ export async function fetchAsprakAssignments(
       return { ok: false, error: json.error };
     }
 
-    return { ok: true, data: json.assignments || [] };
+    return { ok: true, data: json.data || [] };
   } catch (e: any) {
     logger.error('Error fetching assignments:', e);
     return { ok: false, error: e.message };
@@ -170,7 +172,7 @@ export async function fetchExistingCodes(): Promise<ServiceResult<string[]>> {
       return { ok: false, error: json.error };
     }
 
-    return { ok: true, data: json.codes || [] };
+    return { ok: true, data: json.data || [] };
   } catch (e: any) {
     logger.error('Error fetching codes:', e);
     return { ok: false, error: e.message };
@@ -186,7 +188,7 @@ export async function fetchAvailableTerms(): Promise<ServiceResult<string[]>> {
       return { ok: false, error: json.error };
     }
 
-    return { ok: true, data: json.terms || [] };
+    return { ok: true, data: json.data || [] };
   } catch (e: any) {
     logger.error('Error fetching terms:', e);
     return { ok: false, error: e.message };
@@ -247,7 +249,9 @@ export async function checkNim(nim: string): Promise<ServiceResult<boolean>> {
   }
 }
 
-export async function generateCode(name: string): Promise<ServiceResult<{ code: string; rule: string }>> {
+export async function generateCode(
+  name: string
+): Promise<ServiceResult<{ code: string; rule: string }>> {
   try {
     const res = await fetch('/api/asprak', {
       method: 'POST',
@@ -261,3 +265,4 @@ export async function generateCode(name: string): Promise<ServiceResult<{ code: 
     return { ok: false, error: e.message };
   }
 }
+

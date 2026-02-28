@@ -111,7 +111,7 @@ export default function MataKuliahImportModal({
             setExistingMataKuliah([]);
           }
         }
-      } catch (e) {
+      } catch (e: any) {
         console.error(e);
       }
     }
@@ -518,3 +518,4 @@ export default function MataKuliahImportModal({
     </>
   );
 }
+
