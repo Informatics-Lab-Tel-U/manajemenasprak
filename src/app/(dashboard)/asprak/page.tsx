@@ -20,6 +20,7 @@ import AsprakFilters from '@/components/asprak/AsprakFilters';
 import AsprakTable from '@/components/asprak/AsprakTable';
 import AsprakAddModal from '@/components/asprak/AsprakAddModal';
 import AsprakImportCSVModal from '@/components/asprak/AsprakImportCSVModal';
+import AsprakExportModal from '@/components/asprak/AsprakExportModal';
 import AsprakDetailsModal from '@/components/asprak/AsprakDetailsModal';
 import AsprakEditModal from '@/components/asprak/AsprakEditModal';
 import PlottingImportModal from '@/components/plotting/PlottingImportModal';
@@ -44,7 +45,7 @@ interface AsprakWithAssignments extends Asprak {
 function AsprakPageContent() {
   const searchParams = useSearchParams();
   const activeTab = searchParams.get('tab') || 'data';
-  
+
   const {
     data: asprakList,
     loading,
@@ -67,12 +68,15 @@ function AsprakPageContent() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [showPlottingImportModal, setShowPlottingImportModal] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
-  
+
   // Edit State
   // Edit State
   const [showEditModal, setShowEditModal] = useState(false);
-  const [editTarget, setEditTarget] = useState<{ asprak: Asprak, assignments: string[] } | null>(null);
+  const [editTarget, setEditTarget] = useState<{ asprak: Asprak; assignments: string[] } | null>(
+    null
+  );
 
   // Delete State
   const [deleteTarget, setDeleteTarget] = useState<Asprak | null>(null);
@@ -81,7 +85,7 @@ function AsprakPageContent() {
   const refreshCodesAndNims = async () => {
     const [codesResult, allAsprakResult] = await Promise.all([
       fetchExistingCodes(),
-      fetchAllAsprak(),      // No term filter — gets ALL aspraks
+      fetchAllAsprak(), // No term filter — gets ALL aspraks
     ]);
     if (codesResult.ok && codesResult.data) {
       setExistingCodes(codesResult.data);
@@ -130,16 +134,22 @@ function AsprakPageContent() {
     toast.success('Import selesai!', {
       description: (
         <div className="mt-2 text-xs font-mono">
-          <p>✅ Inserted: <span className="font-bold">{data.inserted}</span></p>
-          <p>🔄 Updated: <span className="font-bold">{data.updated}</span></p>
+          <p>
+            ✅ Inserted: <span className="font-bold">{data.inserted}</span>
+          </p>
+          <p>
+            🔄 Updated: <span className="font-bold">{data.updated}</span>
+          </p>
           {data.skipped > 0 && <p className="text-amber-500">⚠️ Skipped: {data.skipped}</p>}
           {data.errors.length > 0 && (
             <div className="mt-2 pt-2 border-t border-border">
-               <p className="text-red-500 font-semibold mb-1">Errors:</p>
-               <ul className="list-disc pl-4 space-y-1">
-                 {data.errors.slice(0, 3).map((err, i) => <li key={i}>{err}</li>)}
-                 {data.errors.length > 3 && <li>...and {data.errors.length - 3} more</li>}
-               </ul>
+              <p className="text-red-500 font-semibold mb-1">Errors:</p>
+              <ul className="list-disc pl-4 space-y-1">
+                {data.errors.slice(0, 3).map((err, i) => (
+                  <li key={i}>{err}</li>
+                ))}
+                {data.errors.length > 3 && <li>...and {data.errors.length - 3} more</li>}
+              </ul>
             </div>
           )}
         </div>
@@ -163,53 +173,53 @@ function AsprakPageContent() {
   };
 
   const closeDetails = () => setSelectedAsprak(null);
-  
+
   // ─── Edit & Delete ────────────────────────────────────────────────────────
-  
+
   const handleEditAsprak = async (asprak: Asprak) => {
     setLoadingDetails(true);
     const result = await getAssignments(asprak.id);
-    
+
     // Map to IDs directly, getting all assignments across all terms
-    const currentAssignmentIds = result.map(a => a.praktikum.id);
-        
+    const currentAssignmentIds = result.map((a) => a.praktikum.id);
+
     setEditTarget({
-        asprak,
-        assignments: currentAssignmentIds
+      asprak,
+      assignments: currentAssignmentIds,
     });
     setLoadingDetails(false);
     setShowEditModal(true);
   };
-  
+
   const handleSaveEdit = async (praktikumIds: string[]) => {
-      if (!editTarget) return;
-      
-      // Use 'all' to indicate global update
-      const result = await updateAssignments(editTarget.asprak.id, 'all', praktikumIds);
-      
-      if (result.ok) {
-          toast.success("Penugasan berhasil diperbarui");
-          fetchAsprak(); // Refresh list
-      } else {
-          toast.error(`Gagal memperbarui: ${result.error}`);
-      }
+    if (!editTarget) return;
+
+    // Use 'all' to indicate global update
+    const result = await updateAssignments(editTarget.asprak.id, 'all', praktikumIds);
+
+    if (result.ok) {
+      toast.success('Penugasan berhasil diperbarui');
+      fetchAsprak(); // Refresh list
+    } else {
+      toast.error(`Gagal memperbarui: ${result.error}`);
+    }
   };
 
   const handleDeleteClick = (asprak: Asprak) => {
-      setDeleteTarget(asprak);
+    setDeleteTarget(asprak);
   };
-  
+
   const handleConfirmDelete = async () => {
-     if (!deleteTarget) return;
-     
-     const result = await deleteAsprak(deleteTarget.id);
-     if (result.ok) {
-       toast.success(`Berhasil menghapus ${deleteTarget.nama_lengkap}`);
-       refreshCodesAndNims();
-     } else {
-       toast.error(`Gagal menghapus: ${result.error}`);
-     }
-     setDeleteTarget(null);
+    if (!deleteTarget) return;
+
+    const result = await deleteAsprak(deleteTarget.id);
+    if (result.ok) {
+      toast.success(`Berhasil menghapus ${deleteTarget.nama_lengkap}`);
+      refreshCodesAndNims();
+    } else {
+      toast.error(`Gagal menghapus: ${result.error}`);
+    }
+    setDeleteTarget(null);
   };
 
   // ─── Filter ──────────────────────────────────────────────────────────────
@@ -227,8 +237,6 @@ function AsprakPageContent() {
     );
   }, [asprakList, searchQuery]);
 
-
-
   // ... (rest of the hooks)
 
   return (
@@ -236,9 +244,7 @@ function AsprakPageContent() {
       {/* Header */}
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="title-gradient text-3xl font-bold">
-            Data Asisten Praktikum
-          </h1>
+          <h1 className="title-gradient text-3xl font-bold">Data Asisten Praktikum</h1>
           <p className="text-muted-foreground mt-2">Kelola daftar asisten praktikum</p>
         </div>
         <div className="flex gap-3 items-center">
@@ -257,7 +263,9 @@ function AsprakPageContent() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-52">
-              <DropdownMenuLabel className="text-xs text-muted-foreground font-normal">Pilih jenis import</DropdownMenuLabel>
+              <DropdownMenuLabel className="text-xs text-muted-foreground font-normal">
+                Pilih jenis import
+              </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => setShowImportModal(true)}>
                 <Users size={15} className="mr-2 text-blue-500" />
@@ -270,16 +278,20 @@ function AsprakPageContent() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <Button variant="outline" onClick={() => toast.info('Fitur Export akan segera hadir')}>
+          <Button variant="outline" onClick={() => setShowExportModal(true)}>
             <Download size={18} />
             Export Data
           </Button>
           <Button
-            variant={isEditMode ? "secondary" : "ghost"}
+            variant={isEditMode ? 'secondary' : 'ghost'}
             size="icon"
             onClick={() => setIsEditMode(!isEditMode)}
-            className={isEditMode ? "bg-amber-100 text-amber-600 hover:bg-amber-200" : "text-muted-foreground"}
-            title={isEditMode ? "Keluar Mode Edit" : "Aktifkan Mode Edit"}
+            className={
+              isEditMode
+                ? 'bg-amber-100 text-amber-600 hover:bg-amber-200'
+                : 'text-muted-foreground'
+            }
+            title={isEditMode ? 'Keluar Mode Edit' : 'Aktifkan Mode Edit'}
           >
             {isEditMode ? <X size={20} /> : <Pencil size={20} />}
           </Button>
@@ -298,9 +310,9 @@ function AsprakPageContent() {
               onTermChange={setSelectedTerm}
             />
 
-            <AsprakTable 
-              data={filteredList} 
-              loading={loading} 
+            <AsprakTable
+              data={filteredList}
+              loading={loading}
               onViewDetails={handleView}
               isEditMode={isEditMode}
               onEdit={handleEditAsprak}
@@ -339,9 +351,16 @@ function AsprakPageContent() {
       <PlottingImportModal
         open={showPlottingImportModal}
         onOpenChange={setShowPlottingImportModal}
-        onSuccess={() => { /* plotting tidak ditampilkan di page ini, cukup toast */ }}
+        onSuccess={() => {
+          /* plotting tidak ditampilkan di page ini, cukup toast */
+        }}
         terms={terms}
       />
+
+      {/* Export Modal */}
+      {showExportModal && (
+        <AsprakExportModal onClose={() => setShowExportModal(false)} open={showExportModal} />
+      )}
 
       {/* Details Modal */}
       {selectedAsprak && (
@@ -364,7 +383,7 @@ function AsprakPageContent() {
           open={showEditModal}
         />
       )}
-      
+
       {/* Delete Dialog */}
       <AsprakDeleteDialog
         open={!!deleteTarget}
