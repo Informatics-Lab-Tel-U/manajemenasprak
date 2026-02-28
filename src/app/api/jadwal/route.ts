@@ -29,16 +29,17 @@ export async function GET(req: Request) {
     }
 
     if (action === 'validation') {
-        const term = searchParams.get('term');
-        if (!term) return NextResponse.json({ ok: false, error: 'Missing term param' }, { status: 400 });
-        const result = await jadwalService.getScheduleForValidation(term, supabase);
-        return NextResponse.json({ ok: true, data: result });
+      const term = searchParams.get('term');
+      if (!term)
+        return NextResponse.json({ ok: false, error: 'Missing term param' }, { status: 400 });
+      const result = await jadwalService.getScheduleForValidation(term, supabase);
+      return NextResponse.json({ ok: true, data: result });
     }
 
     if (action === 'pengganti') {
-        const modul = parseInt(searchParams.get('modul') || '0');
-        const jadwal = await jadwalService.getJadwalPengganti(modul, supabase);
-        return NextResponse.json({ ok: true, data: jadwal });
+      const modul = parseInt(searchParams.get('modul') || '0');
+      const jadwal = await jadwalService.getJadwalPengganti(modul, supabase);
+      return NextResponse.json({ ok: true, data: jadwal });
     }
 
     // Default action: get all jadwal
@@ -60,13 +61,13 @@ export async function POST(req: Request) {
     const body = await req.json();
 
     if (action === 'upsert-pengganti') {
-        const result = await jadwalService.upsertJadwalPengganti(body, supabase);
-        return NextResponse.json({ ok: true, data: result });
+      const result = await jadwalService.upsertJadwalPengganti(body, supabase);
+      return NextResponse.json({ ok: true, data: result });
     }
 
     if (action === 'bulk-import') {
-        const result = await jadwalService.bulkCreateJadwal(body, supabase);
-        return NextResponse.json({ ok: true, data: result });
+      const result = await jadwalService.bulkCreateJadwal(body, supabase);
+      return NextResponse.json({ ok: true, data: result });
     }
 
     const jadwal = await jadwalService.createJadwal(body, supabase);
@@ -100,12 +101,22 @@ export async function DELETE(req: Request) {
     const supabase = await createClient();
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');
+    const action = searchParams.get('action');
+    const term = searchParams.get('term');
+
+    if (action === 'by-term') {
+      if (!term) {
+        return NextResponse.json({ ok: false, error: 'Missing term parameter' }, { status: 400 });
+      }
+      await jadwalService.deleteJadwalByTerm(term, supabase);
+      return NextResponse.json({ ok: true, data: null });
+    }
 
     if (!id) {
       return NextResponse.json({ ok: false, error: 'Missing id parameter' }, { status: 400 });
     }
 
-    await jadwalService.deleteJadwal(parseInt(id), supabase);
+    await jadwalService.deleteJadwal(id, supabase);
     return NextResponse.json({ ok: true, data: null });
   } catch (error: any) {
     logger.error('API Error in DELETE /api/jadwal:', error);

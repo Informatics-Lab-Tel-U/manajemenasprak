@@ -131,3 +131,4 @@ export async function fetchPraktikumDetail(id: string): Promise<ServiceResult<Pr
     return { ok: false, error: error.message };
   }
 }
+

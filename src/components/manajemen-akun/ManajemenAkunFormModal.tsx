@@ -129,7 +129,7 @@ export function ManajemenAkunFormModal({ open, onOpenChange, mode, user, onSucce
           setSelectedTahun(existingTahun);
           setSelectedPraktikumId(existingPraktikumId);
         }
-      } catch (e) {
+      } catch (e: any) {
         if (!cancelled) toast.error('Gagal memuat data praktikum');
       } finally {
         if (!cancelled) setLoadingPraktikum(false);
@@ -431,3 +431,4 @@ export function ManajemenAkunFormModal({ open, onOpenChange, mode, user, onSucce
     </Dialog>
   );
 }
+
