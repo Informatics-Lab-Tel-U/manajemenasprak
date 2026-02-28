@@ -86,12 +86,8 @@ export async function getAllAsprak(
     throw new Error(`Failed to fetch asprak: ${error.message}`);
   }
 
-  // Type for the raw Supabase row response
-  type RawAsprakRow = Omit<Asprak, 'created_at'> & { created_at: string };
-
-  // Clean up the result to match Asprak type (remove the joined tables)
   return (data || []).map((item: unknown) => {
-    const row = item as RawAsprakRow;
+    const row = item as { id: string; nama_lengkap: string; nim: string; kode: string; angkatan: number; created_at: string };
     return {
       id: row.id,
       nama_lengkap: row.nama_lengkap,
