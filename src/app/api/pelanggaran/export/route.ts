@@ -24,20 +24,19 @@ export async function GET(request: NextRequest) {
 
     // Build worksheet
     const wsData = [
-      ['NIM', 'NAMA', 'KODE ASPRAK', 'MODUL', 'KELAS', 'PELANGGARAN'],
-      ...rows.map((r) => [r.nim, r.nama, r.kode_asprak, r.modul, r.kelas, r.pelanggaran]),
+      ['MK', 'KODE', 'MODUL', 'KELAS', 'JENIS'],
+      ...rows.map((r) => [r.mk, r.kode, r.modul, r.kelas, r.jenis]),
     ];
 
     const ws = XLSX.utils.aoa_to_sheet(wsData);
 
     // Set column widths
     ws['!cols'] = [
-      { wch: 18 }, // NIM
-      { wch: 30 }, // NAMA
-      { wch: 14 }, // KODE ASPRAK
+      { wch: 30 }, // MK
+      { wch: 14 }, // KODE
       { wch: 10 }, // MODUL
       { wch: 10 }, // KELAS
-      { wch: 26 }, // PELANGGARAN
+      { wch: 20 }, // JENIS
     ];
 
     const wb = XLSX.utils.book_new();

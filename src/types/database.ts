@@ -92,7 +92,9 @@ export type Pelanggaran = {
   updated_at: string;
   asprak?: Pick<Asprak, 'nama_lengkap' | 'nim' | 'kode'>;
   jadwal?: Pick<Jadwal, 'hari' | 'jam' | 'kelas'> & {
-    mata_kuliah?: Pick<MataKuliah, 'id' | 'nama_lengkap' | 'program_studi'>;
+    mata_kuliah?: Pick<MataKuliah, 'id' | 'nama_lengkap' | 'program_studi'> & {
+      praktikum?: Pick<Praktikum, 'id' | 'nama' | 'tahun_ajaran'>;
+    };
   };
 };
 
