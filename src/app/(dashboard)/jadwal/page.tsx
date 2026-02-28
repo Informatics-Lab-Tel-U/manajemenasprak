@@ -626,7 +626,7 @@ export default function JadwalPage() {
       <GroupColorModal
         isOpen={isColorModalOpen}
         onClose={() => setIsColorModalOpen(false)}
-        mataKuliahList={mataKuliahList.filter(mk => mk.praktikum?.tahun_ajaran === selectedTerm)}
+        mataKuliahList={mataKuliahList}
       />
     </div>
   );

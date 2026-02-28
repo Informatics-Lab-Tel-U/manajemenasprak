@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { getMataKuliahByTerm, createMataKuliah, bulkCreateMataKuliah } from '@/services/mataKuliahService';
+import { getMataKuliahByTerm, createMataKuliah, bulkCreateMataKuliah, updateMataKuliahColorByPraktikumName } from '@/services/mataKuliahService';
 import { getOrCreatePraktikum } from '@/services/praktikumService';
 import { requireRole } from '@/lib/auth';
 
@@ -13,8 +13,11 @@ export async function GET(request: NextRequest) {
 
     const data = await getMataKuliahByTerm(term, supabase);
     return NextResponse.json({ ok: true, data });
-  } catch (error: any) {
-    return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json(
+      { ok: false, error: error instanceof Error ? error.message : 'Internal server error' },
+      { status: 500 }
+    );
   }
 }
 
@@ -83,8 +86,8 @@ export async function POST(request: NextRequest) {
                     dosen_koor: row.dosen_koor,
                     warna: row.warna,
                 });
-            } catch (err: any) {
-                errors.push(`Failed to prepare ${row.mk_singkat}: ${err.message}`);
+            } catch (err: unknown) {
+                errors.push(`Failed to prepare ${row.mk_singkat}: ${err instanceof Error ? err.message : 'Unknown error'}`);
             }
         }
         
@@ -147,8 +150,41 @@ export async function PUT(request: NextRequest) {
       });
     }
 
+    if (action === 'bulk-update-global-color') {
+      if (!Array.isArray(data)) {
+        return NextResponse.json({ ok: false, error: 'Invalid data format' }, { status: 400 });
+      }
+
+      let totalUpdated = 0;
+      const errors: string[] = [];
+
+      for (const item of data) {
+        if (!item.nama || !item.warna) continue;
+
+        try {
+          const count = await updateMataKuliahColorByPraktikumName(item.nama, item.warna, supabase);
+          totalUpdated += count;
+        } catch (err: unknown) {
+          errors.push(`Failed to update global color for ${item.nama}: ${err instanceof Error ? err.message : 'Unknown error'}`);
+        }
+      }
+
+      const { createAuditLog } = await import('@/services/server/auditLogService');
+      await createAuditLog('Mata_Kuliah', 'GLOBAL', 'COLOR_UPDATE', {
+        updated_count: totalUpdated,
+      });
+
+      return NextResponse.json({
+        ok: true,
+        data: { updated: totalUpdated, errors },
+      });
+    }
+
     return NextResponse.json({ ok: false, error: 'Invalid action' }, { status: 400 });
-  } catch (error: any) {
-    return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json(
+      { ok: false, error: error instanceof Error ? error.message : 'Internal server error' },
+      { status: 500 }
+    );
   }
 }
