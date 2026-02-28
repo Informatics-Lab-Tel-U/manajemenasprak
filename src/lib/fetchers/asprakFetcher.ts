@@ -98,13 +98,22 @@ export async function upsertAsprak(input: UpsertAsprakInput): Promise<ServiceRes
 export async function updateAssignments(
   asprakId: number | string,
   term: string,
-  praktikumIds: string[]
+  praktikumIds: string[],
+  newKode?: string,
+  nim?: string
 ): Promise<ServiceResult<void>> {
   try {
     const res = await fetch('/api/asprak', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'update-assignments', asprakId, term, praktikumIds }),
+      body: JSON.stringify({
+        action: 'update-assignments',
+        asprakId,
+        term,
+        praktikumIds,
+        newKode,
+        nim,
+      }),
     });
 
     const json = await res.json();
@@ -265,4 +274,3 @@ export async function generateCode(
     return { ok: false, error: e.message };
   }
 }
-
