@@ -49,6 +49,7 @@ interface JadwalPreviewRow extends CreateJadwalInput {
   mkName: string; // Original MK name from CSV or derived for display
   fromSystemLogic: boolean; // Tells UI if mkName was auto-matched
   selected: boolean;
+  originalRow?: number;
 }
 
 interface JadwalImportCSVModalProps {
@@ -89,8 +90,8 @@ export default function JadwalImportCSVModal({
     const dbSchedule = dbResult.ok ? dbResult.data || [] : [];
 
     // Helper to generate key
-    const getKey = (hari: string, sesi: number | string, ruangan: string) =>
-      `${hari}-${sesi}-${ruangan}`;
+    const getKey = (hari: string, sesi: number | string, ruangan: string, jam: string) =>
+      `${hari}-${sesi}-${jam}-${ruangan}`;
     const getFullKey = (
       id_mk: string,
       kelas: string,
@@ -105,7 +106,7 @@ export default function JadwalImportCSVModal({
 
     dbSchedule.forEach((s: any) => {
       if (s.ruangan) {
-        dbMap.set(getKey(s.hari, s.sesi, s.ruangan), s);
+        dbMap.set(getKey(s.hari, s.sesi, s.ruangan, s.jam || ''), s);
         // Also track full check for duplicates
         dbFullMap.add(getFullKey(s.id_mk.toString(), s.kelas, s.hari, s.sesi, s.ruangan));
       }
@@ -117,7 +118,7 @@ export default function JadwalImportCSVModal({
     // First pass: Populate internal map
     rows.forEach((row, idx) => {
       if (row.status === 'error' || !row.ruangan) return;
-      const key = getKey(row.hari, row.sesi, row.ruangan);
+      const key = getKey(row.hari, row.sesi, row.ruangan, row.jam);
       if (!internalMap.has(key)) {
         internalMap.set(key, []);
       }
@@ -150,7 +151,7 @@ export default function JadwalImportCSVModal({
       // Check Internal Conflict
       if (newRow.ruangan) {
         const isCurrentPJJ = newRow.kelas.toUpperCase().includes('PJJ');
-        const key = getKey(newRow.hari, newRow.sesi, newRow.ruangan);
+        const key = getKey(newRow.hari, newRow.sesi, newRow.ruangan, newRow.jam);
         const conflictingIndices = internalMap.get(key) || [];
 
         // Tabrakan Internal CSV: PJJ is ignored from tabrakan with regular classes,
@@ -163,7 +164,7 @@ export default function JadwalImportCSVModal({
         // If the current is NOT PJJ and there's another regular class
         if (!isCurrentPJJ && activeConflicts.length > 1) {
           newRow.status = 'error';
-          newRow.statusMessage = `Tabrakan Internal CSV (Baris ${activeConflicts.map((i) => i + 1).join(', ')})`;
+          newRow.statusMessage = `Tabrakan Internal CSV (Baris ${activeConflicts.map((i) => rows[i].originalRow).join(', ')})`;
           newRow.selected = false;
           return newRow;
         }
@@ -298,6 +299,7 @@ export default function JadwalImportCSVModal({
               status,
               statusMessage,
               selected: status === 'ok',
+              originalRow: preview.length + 2, // 1-indexed plus header
             });
           });
 
@@ -602,6 +604,9 @@ export default function JadwalImportCSVModal({
                                 disabled={selectableRows.length === 0}
                               />
                             </th>
+                            <th className="px-3 py-2.5 text-center text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border w-[50px]">
+                              No
+                            </th>
                             <th className="px-3 py-2.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border">
                               Mata Kuliah
                             </th>
@@ -642,6 +647,9 @@ export default function JadwalImportCSVModal({
                                     disabled={isDisabled}
                                     className={isDisabled ? 'opacity-50 cursor-not-allowed' : ''}
                                   />
+                                </td>
+                                <td className="px-3 py-2 text-center text-xs font-medium text-muted-foreground">
+                                  {row.originalRow}
                                 </td>
                                 <td className="px-3 py-2 font-medium">
                                   <div className="flex items-center gap-2">
