@@ -13,7 +13,10 @@ export interface DashboardStats {
   jadwalByDay: { name: string; count: number }[];
 }
 
-export async function getStats(initialTerm?: string, supabaseClient?: SupabaseClient): Promise<DashboardStats> {
+export async function getStats(
+  initialTerm?: string,
+  supabaseClient?: SupabaseClient
+): Promise<DashboardStats> {
   const supabase = supabaseClient || globalAdmin;
   initialTerm = initialTerm || '2425-1';
   const [asprakRes, jadwalRes, pelanggaranRes, asprakRaw, jadwalRaw] = await Promise.all([
@@ -89,9 +92,12 @@ export async function clearAllData(supabaseClient?: SupabaseClient) {
   logger.info('Clearing all database data...');
 
   const tables = [
+    'audit_log',
     'pelanggaran',
     'jadwal_pengganti',
     'asprak_praktikum',
+    'asprak_koordinator',
+    'jadwal_pengganti',
     'jadwal',
     'mata_kuliah',
     'asprak',

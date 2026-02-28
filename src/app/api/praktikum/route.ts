@@ -6,7 +6,7 @@ import { requireRole } from '@/lib/auth';
 
 export async function GET(req: Request) {
   try {
-    await requireRole(['ADMIN', 'ASLAB']);
+    await requireRole(['ADMIN', 'ASLAB', 'ASPRAK_KOOR']);
     const supabase = await createClient();
     const { searchParams } = new URL(req.url);
     const action = searchParams.get('action');
