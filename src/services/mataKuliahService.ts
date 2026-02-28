@@ -134,3 +134,37 @@ export async function checkMataKuliahExists(
 
   return (count || 0) > 0;
 }
+
+export async function updateMataKuliahColorByPraktikumName(
+  nama: string,
+  warna: string,
+  supabaseClient?: SupabaseClient
+): Promise<number> {
+  const supabase = supabaseClient || globalAdmin;
+
+  // 1. Get all praktikum IDs with this name
+  const { data: praktikums, error: pError } = await supabase
+    .from('praktikum')
+    .select('id')
+    .eq('nama', nama);
+
+  if (pError || !praktikums || praktikums.length === 0) {
+    return 0;
+  }
+
+  const pIds = praktikums.map((p) => p.id);
+
+  // 2. Update all mata_kuliah with these praktikum IDs
+  const { data, error: mkError } = await supabase
+    .from('mata_kuliah')
+    .update({ warna })
+    .in('id_praktikum', pIds)
+    .select();
+
+  if (mkError) {
+    logger.error(`Error updating colors for praktikum ${nama}:`, mkError);
+    throw mkError;
+  }
+
+  return data?.length || 0;
+}
