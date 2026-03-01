@@ -69,6 +69,7 @@ export function JadwalModal({
   const [selectedTerm, setSelectedTerm] = useState<string>('');
   const [selectedPraktikum, setSelectedPraktikum] = useState<string>('');
   const [isPJJ, setIsPJJ] = useState<boolean>(false);
+  const [isCustomJam, setIsCustomJam] = useState<boolean>(false);
 
   // Extract unique terms
   const availableTerms = Array.from(
@@ -104,7 +105,7 @@ export function JadwalModal({
           ruangan: initialData.ruangan || '',
           total_asprak: initialData.total_asprak,
           dosen: initialData.dosen || '',
-          // tanggal: initialData.tanggal || '',
+          tanggal: (initialData as any).tanggal || '',
         });
 
         // Identify the associated term and praktikum name to pre-select
@@ -115,6 +116,7 @@ export function JadwalModal({
         }
 
         setIsPJJ(initialData.kelas.toUpperCase().includes('PJJ'));
+        setIsCustomJam(!initialData.sesi || initialData.sesi === 0);
       } else {
         // Default to Senin Sesi 1
         const defaultDay = 'SENIN';
@@ -134,6 +136,7 @@ export function JadwalModal({
         setSelectedTerm('');
         setSelectedPraktikum('');
         setIsPJJ(false);
+        setIsCustomJam(false);
       }
     }
   }, [isOpen, initialData, selectedModul, mataKuliahList]);
@@ -153,8 +156,8 @@ export function JadwalModal({
     setFormData((prev) => {
       const newData = { ...prev, [field]: value };
 
-      // Auto-update jam when hari or sesi changes
-      if (field === 'hari' || field === 'sesi') {
+      // Auto-update jam when hari or sesi changes and not in custom jam mode
+      if ((field === 'hari' || field === 'sesi') && !isCustomJam) {
         const currentDay = field === 'hari' ? value : newData.hari;
         // If day changed, reset session to first available session of that day
         let currentSessionId =
@@ -164,12 +167,11 @@ export function JadwalModal({
               ? value
               : newData.sesi;
 
-        // Ensure session exists for the day (e.g., if switching from Senin to Jumat, Sesi 2 might not exist/be valid if we strictly follow the array, but here we just need to find the session object)
-        // Actually, better logic: find the session object.
+        // Ensure session exists for the day
         const daySessions = STATIC_SESSIONS[currentDay];
         let sessionObj = daySessions.find((s) => s.sesi === currentSessionId);
 
-        // If not found (e.g. switching day and old session ID doesn't exist in new day), default to first session of new day
+        // If not found, default to first session of new day
         if (!sessionObj) {
           sessionObj = daySessions[0];
           currentSessionId = sessionObj.sesi;
@@ -185,7 +187,7 @@ export function JadwalModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.id_mk || !formData.kelas || !formData.hari || !formData.sesi || !formData.jam) {
+    if (!formData.id_mk || !formData.kelas || !formData.hari || formData.sesi === undefined || formData.sesi === null || !formData.jam) {
       toast.error('Mohon isi semua field yang wajib');
       return;
     }
@@ -197,7 +199,7 @@ export function JadwalModal({
 
     const baseInput = {
       ...formData,
-      sesi: Number(formData.sesi),
+      sesi: formData.sesi ? Number(formData.sesi) : 0,
       total_asprak: Number(formData.total_asprak),
     };
 
@@ -430,24 +432,67 @@ export function JadwalModal({
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="sesi">Sesi</Label>
-                <Select
-                  value={formData.sesi?.toString()}
-                  onValueChange={(val) => handleChange('sesi', parseInt(val))}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Pilih Sesi" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      {(STATIC_SESSIONS[formData.hari || 'SENIN'] || []).map((s) => (
-                        <SelectItem key={s.sesi} value={s.sesi.toString()}>
-                          Sesi {s.sesi} ({s.jam})
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
+                <div className="flex justify-between items-center mb-1">
+                  <Label htmlFor="sesi" className="leading-none">Sesi & Jam</Label>
+                  <div className="flex items-center space-x-2">
+                    <Label htmlFor="custom-jam" className="text-[10px] text-muted-foreground font-medium cursor-pointer">Custom Jam</Label>
+                    <Switch
+                      id="custom-jam"
+                      checked={isCustomJam}
+                      onCheckedChange={(checked) => {
+                        setIsCustomJam(checked);
+                        if (checked) {
+                          setFormData((prev) => ({ ...prev, sesi: 0 }));
+                        } else {
+                          const sObj = STATIC_SESSIONS[formData.hari || 'SENIN'][0];
+                          setFormData((prev) => ({ ...prev, sesi: sObj.sesi, jam: sObj.jam }));
+                        }
+                      }}
+                      className="scale-75 origin-right"
+                    />
+                  </div>
+                </div>
+                
+                {!isCustomJam ? (
+                  <Select
+                    value={formData.sesi?.toString() || '1'}
+                    onValueChange={(val) => handleChange('sesi', parseInt(val))}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Pilih Sesi" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        {(STATIC_SESSIONS[formData.hari || 'SENIN'] || []).map((s) => (
+                          <SelectItem key={s.sesi} value={s.sesi.toString()}>
+                            Sesi {s.sesi} ({s.jam})
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <Select
+                    value={formData.jam?.split(':')[0] || '06'}
+                    onValueChange={(val) => setFormData((prev) => ({ ...prev, jam: `${val}:30`, sesi: 0 }))}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Pilih Jam" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        {Array.from({ length: 16 }, (_, i) => i + 6).map((h) => {
+                          const hourStr = h.toString().padStart(2, '0');
+                          return (
+                            <SelectItem key={hourStr} value={hourStr}>
+                              {hourStr}:30
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
             </div>
 
