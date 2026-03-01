@@ -27,17 +27,20 @@ export async function validateJadwalConflicts(
   const dbFullMap = new Set<string>();
 
   dbSchedule.forEach((s: any) => {
-    if (s.ruangan) {
-      dbMap.set(getKey(s.hari, s.sesi, s.ruangan, s.jam || ''), s);
-      dbFullMap.add(getFullKey(s.id_mk.toString(), s.kelas, s.hari, s.sesi, s.ruangan));
-    }
+    const ruanganKey = s.ruangan || 'Tanpa Ruangan';
+    dbMap.set(getKey(s.hari, s.sesi, ruanganKey, s.jam || ''), s);
+    dbFullMap.add(getFullKey(s.id_mk.toString(), s.kelas, s.hari, s.sesi, ruanganKey));
   });
 
   const internalMap = new Map<string, number[]>();
 
   rows.forEach((row, idx) => {
-    if (row.status === 'error' || !row.ruangan) return;
-    const key = getKey(row.hari, row.sesi, row.ruangan, row.jam);
+    if (row.status === 'error') return;
+    
+    const isPJJ = row.kelas.toUpperCase().includes('PJJ');
+    if (!row.ruangan && !isPJJ) return; // Drop empty rooms IF NOT PJJ (this is handled later as error anyway)
+
+    const key = getKey(row.hari, row.sesi, row.ruangan || 'Tanpa Ruangan', row.jam);
     if (!internalMap.has(key)) {
       internalMap.set(key, []);
     }
@@ -49,12 +52,13 @@ export async function validateJadwalConflicts(
 
     if (newRow.status === 'error') return newRow;
 
+    const isCurrentPJJ = newRow.kelas.toUpperCase().includes('PJJ');
     const fullKey = getFullKey(
       newRow.id_mk,
       newRow.kelas,
       newRow.hari,
       newRow.sesi,
-      newRow.ruangan || ''
+      newRow.ruangan || 'Tanpa Ruangan'
     );
     if (dbFullMap.has(fullKey)) {
       newRow.status = 'error';
@@ -63,9 +67,9 @@ export async function validateJadwalConflicts(
       return newRow;
     }
 
-    if (newRow.ruangan) {
-      const isCurrentPJJ = newRow.kelas.toUpperCase().includes('PJJ');
-      const key = getKey(newRow.hari, newRow.sesi, newRow.ruangan, newRow.jam);
+    if (newRow.ruangan || isCurrentPJJ) {
+      const ruanganKey = newRow.ruangan || 'Tanpa Ruangan';
+      const key = getKey(newRow.hari, newRow.sesi, ruanganKey, newRow.jam);
       const conflictingIndices = internalMap.get(key) || [];
 
       const activeConflicts = conflictingIndices.filter(
@@ -85,10 +89,18 @@ export async function validateJadwalConflicts(
 
         if (!isCurrentPJJ && !isExistingPJJ) {
           newRow.status = 'error';
-          newRow.statusMessage = `Tabrakan Database: Ruangan ${newRow.ruangan} dipakai ${existing.mata_kuliah?.nama_lengkap || 'MK lain'} (${existing.kelas})`;
+          newRow.statusMessage = `Tabrakan Database: Ruangan ${ruanganKey} dipakai ${existing.mata_kuliah?.nama_lengkap || 'MK lain'} (${existing.kelas})`;
           newRow.selected = false;
           return newRow;
         }
+      }
+    } else {
+      // If ruangan is empty but it's not PJJ, mark as error
+      if (!newRow.kelas.toUpperCase().includes('PJJ')) {
+        newRow.status = 'error';
+        newRow.statusMessage = 'Ruangan tidak boleh kosong (Kecuali PJJ)';
+        newRow.selected = false;
+        return newRow;
       }
     }
 
@@ -122,7 +134,8 @@ export function buildJadwalPreviewRows(
       );
     };
 
-    let targetMK = findMk(prodi);
+    let targetMK = isPJJ ? findMk(`${prodi}-PJJ`) : null;
+    if (!targetMK) targetMK = findMk(prodi);
     if (!targetMK && isPJJ) targetMK = findMk('IF-PJJ');
     if (!targetMK) targetMK = findMk('IF') || findMk('SE') || findMk('IT') || findMk('DS');
 

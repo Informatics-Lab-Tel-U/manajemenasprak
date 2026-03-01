@@ -73,6 +73,8 @@ export default function JadwalPage() {
     const ruangan = 'ruangan' in input ? input.ruangan : '';
     const id_jadwal = 'id_jadwal' in input ? input.id_jadwal : undefined;
     const id = 'id' in input ? input.id : undefined;
+    const inputKelas = 'kelas' in input ? (input.kelas as string) : '';
+    const isEditingPJJ = inputKelas.toUpperCase().includes('PJJ');
 
     const currentId = selectedModul !== 'Default' ? id_jadwal : id;
 
@@ -81,11 +83,15 @@ export default function JadwalPage() {
 
     if (selectedModul === 'Default') {
       conflict = rawJadwalList.find(
-        (j) =>
-          Number(j.id) !== Number(currentId) &&
-          j.hari === hari &&
-          j.sesi === Number(sesi) &&
-          j.ruangan === ruangan
+        (j) => {
+          const isExistingPJJ = j.kelas?.toUpperCase().includes('PJJ');
+          if (isEditingPJJ || isExistingPJJ) return false;
+          
+          return Number(j.id) !== Number(currentId) &&
+            j.hari === hari &&
+            j.sesi === Number(sesi) &&
+            j.ruangan === ruangan;
+        }
       );
     } else {
       const effectiveJadwal = rawJadwalList.map((j) => {
@@ -94,19 +100,25 @@ export default function JadwalPage() {
       });
 
       conflict = effectiveJadwal.find(
-        (j) =>
-          Number(j.id) !== Number(currentId) &&
-          j.hari === hari &&
-          j.sesi === Number(sesi) &&
-          j.ruangan === ruangan
+        (j) => {
+          const isExistingPJJ = j.kelas?.toUpperCase().includes('PJJ');
+          if (isEditingPJJ || isExistingPJJ) return false;
+
+          return Number(j.id) !== Number(currentId) &&
+            j.hari === hari &&
+            j.sesi === Number(sesi) &&
+            j.ruangan === ruangan;
+        }
       );
     }
 
+    const conflictName = conflict?.mata_kuliah?.nama_lengkap || 'Unknown Course';
+    const conflictClass = conflict?.kelas || 'Unknown Class';
+
+    // Conflict exists and both are not PJJ
     if (conflict) {
-      const conflictName = conflict.mata_kuliah?.nama_lengkap || 'Unknown Course';
-      const conflictClass = conflict.kelas || 'Unknown Class';
       toast.error(
-        `Gagal: Jadwal bentrok dengan mata kuliah "${conflictName}" (${conflictClass}) di ${ruangan}, ${hari} Sesi ${sesi}.`
+        `Gagal: Jadwal bentrok dengan mata kuliah "${conflictName}" (${conflictClass}) di ${ruangan}, ${hari} Sesi ${sesi || input.jam}.`
       );
       return;
     }
@@ -163,6 +175,7 @@ export default function JadwalPage() {
             hari: substitute.hari,
             sesi: substitute.sesi,
             tanggal: substitute.tanggal,
+            __is_pengganti: true,
           };
         }
         return j;
@@ -180,24 +193,50 @@ export default function JadwalPage() {
 
   const uniqueRooms = useMemo(() => {
     const rooms = new Set<string>();
+    let hasEmptyRoom = false;
     jadwalList.forEach((j) => {
-      if (j.ruangan) rooms.add(j.ruangan);
+      if (j.ruangan) {
+        rooms.add(j.ruangan);
+      } else {
+        hasEmptyRoom = true;
+      }
     });
-    return Array.from(rooms).sort();
+    const sortedRooms = Array.from(rooms).sort();
+    // Add "Tanpa Ruangan" at the end if there are schedules without rooms
+    if (hasEmptyRoom) {
+      sortedRooms.push('Tanpa Ruangan');
+    }
+    return sortedRooms;
   }, [jadwalList]);
 
   const scheduleMatrix = useMemo(() => {
-    const matrix: Record<string, Record<string, Record<string, Jadwal>>> = {};
+    const matrix: Record<string, Record<string, Record<string, Jadwal[]>>> = {};
     jadwalList.forEach((j) => {
-      if (!j.hari || !j.ruangan) return;
+      if (!j.hari) return;
+      
+      const hari = j.hari.toUpperCase();
+      const staticForDay = STATIC_SESSIONS[hari] || [];
+      const staticJamToSesi = new Map<string, number>();
+      staticForDay.forEach(s => staticJamToSesi.set(s.jam, s.sesi));
+
+      let jamStr = j.jam || '';
+      if (jamStr.split(':').length === 3) jamStr = jamStr.split(':').slice(0, 2).join(':');
+
+      let sesi = j.sesi;
+      if (!sesi || sesi === 0) {
+        if (jamStr && staticJamToSesi.has(jamStr)) sesi = staticJamToSesi.get(jamStr)!;
+      }
 
       const rowKey =
-        j.sesi !== null && j.sesi !== undefined ? j.sesi.toString() : j.jam || 'Unknown';
-      const hari = j.hari.toUpperCase();
+        sesi !== null && sesi !== undefined && sesi !== 0 ? sesi.toString() : jamStr || 'Unknown';
+      const roomKey = j.ruangan || 'Tanpa Ruangan';
 
       if (!matrix[hari]) matrix[hari] = {};
       if (!matrix[hari][rowKey]) matrix[hari][rowKey] = {};
-      matrix[hari][rowKey][j.ruangan] = j;
+      if (!matrix[hari][rowKey][roomKey]) matrix[hari][rowKey][roomKey] = [];
+      
+      const normalizedJ = { ...j, jam: jamStr, sesi: sesi ?? undefined };
+      matrix[hari][rowKey][roomKey].push(normalizedJ as Jadwal);
     });
     return matrix;
   }, [jadwalList]);
@@ -239,6 +278,11 @@ export default function JadwalPage() {
 
     visibleDays.forEach((day) => {
       const staticForDay = STATIC_SESSIONS[day] || [];
+      const staticJamToSesi = new Map<string, number>();
+      staticForDay.forEach((s) => {
+        staticJamToSesi.set(s.jam, s.sesi);
+      });
+
       const sessionsAsKeys = new Map<
         string,
         { sesi: number | null; jam: string; rowKey: string }
@@ -254,20 +298,29 @@ export default function JadwalPage() {
       daySchedules.forEach((j) => {
         if (!j.jam && j.sesi === null) return;
 
+        let jamStr = j.jam || '';
+        if (jamStr.split(':').length === 3) jamStr = jamStr.split(':').slice(0, 2).join(':');
+
+        let sesi = j.sesi;
+        if (!sesi || sesi === 0) {
+          if (jamStr && staticJamToSesi.has(jamStr)) sesi = staticJamToSesi.get(jamStr)!;
+        }
+
         const rowKey =
-          j.sesi !== null && j.sesi !== undefined ? j.sesi.toString() : j.jam || 'Unknown';
+          sesi !== null && sesi !== undefined && sesi !== 0 ? sesi.toString() : jamStr || 'Unknown';
+          
         if (!sessionsAsKeys.has(rowKey)) {
-          sessionsAsKeys.set(rowKey, { sesi: j.sesi ?? null, jam: j.jam || '-', rowKey });
+          sessionsAsKeys.set(rowKey, { sesi: sesi || null, jam: jamStr || '-', rowKey });
         } else {
           const existing = sessionsAsKeys.get(rowKey)!;
           if (
             !existing.jam ||
             existing.jam === '-' ||
-            (j.sesi === null && existing.sesi === null)
+            (!sesi && existing.sesi === null)
           ) {
             sessionsAsKeys.set(rowKey, {
-              sesi: j.sesi ?? null,
-              jam: j.jam || existing.jam,
+              sesi: sesi || existing.sesi,
+              jam: jamStr || existing.jam,
               rowKey,
             });
           }
@@ -441,40 +494,47 @@ export default function JadwalPage() {
                       </td>
 
                       {uniqueRooms.map((room) => {
-                        const jadwal = scheduleMatrix[day]?.[session.rowKey]?.[room];
+                        const jadwals = scheduleMatrix[day]?.[session.rowKey]?.[room] || [];
 
                         return (
                           <td
                             key={`${day}-${session.rowKey}-${room}`}
-                            className="p-0 border-r border-border h-[60px] w-[120px] relative"
+                            className="p-0 border-r border-border align-top relative min-w-[120px]"
                           >
-                            {jadwal ? (
-                              <div
-                                onClick={() => setSelectedJadwal(jadwal)}
-                                className="w-full h-full flex flex-col items-center justify-center p-1 cursor-pointer transition-all hover:brightness-110 overflow-hidden hover:scale-105 hover:z-10 hover:shadow-lg origin-center"
-                                style={{
-                                  backgroundColor: jadwal.mata_kuliah?.warna || getCourseColor(
-                                    jadwal.mata_kuliah?.nama_lengkap || ''
-                                  ),
-                                }}
-                                title="Click for details"
-                              >
-                                <div className="text-center leading-tight">
-                                  <div className="font-bold text-[10px] sm:text-xs text-white drop-shadow-md truncate w-full px-1">
-                                    {/* Use the name from Praktikum relation (short name) OR fallback to full name */}
-                                    {jadwal.mata_kuliah?.praktikum?.nama ||
-                                      jadwal.mata_kuliah?.nama_lengkap ||
-                                      'Unknown'}
-                                  </div>
-                                  <div className="text-[9px] sm:text-[10px] text-white/90">
-                                    {jadwal.kelas}
-                                  </div>
-                                  <div className="text-[8px] sm:text-[9px] text-white/80 truncate px-1">
-                                    {(jadwal.dosen || '-').split(' ')[0]}
+                            <div className="flex flex-col w-full h-full min-h-[60px]">
+                              {jadwals.map((jadwal, idx) => (
+                                <div
+                                  key={jadwal.id || idx}
+                                  onClick={() => setSelectedJadwal(jadwal)}
+                                  className={`w-full flex-1 flex flex-col items-center justify-center p-1 cursor-pointer transition-all hover:brightness-110 overflow-hidden hover:scale-105 hover:z-20 hover:shadow-lg origin-center min-h-[60px] ${
+                                    (jadwal as any).__is_pengganti ? 'ring-4 ring-inset ring-yellow-400 z-10' : ''
+                                  } ${
+                                    idx < jadwals.length - 1 ? 'border-b border-border/50' : ''
+                                  }`}
+                                  style={{
+                                    backgroundColor: jadwal.mata_kuliah?.warna || getCourseColor(
+                                      jadwal.mata_kuliah?.nama_lengkap || ''
+                                    ),
+                                  }}
+                                  title="Click for details"
+                                >
+                                  <div className="text-center leading-tight">
+                                    <div className="font-bold text-[10px] sm:text-xs text-white drop-shadow-md truncate w-full px-1">
+                                      {/* Use the name from Praktikum relation (short name) OR fallback to full name */}
+                                      {jadwal.mata_kuliah?.praktikum?.nama ||
+                                        jadwal.mata_kuliah?.nama_lengkap ||
+                                        'Unknown'}
+                                    </div>
+                                    <div className="text-[9px] sm:text-[10px] text-white/90">
+                                      {jadwal.kelas}
+                                    </div>
+                                    <div className="text-[8px] sm:text-[9px] text-white/80 truncate px-1">
+                                      {(jadwal.dosen || '-').split(' ')[0]}
+                                    </div>
                                   </div>
                                 </div>
-                              </div>
-                            ) : null}
+                              ))}
+                            </div>
                           </td>
                         );
                       })}
@@ -520,7 +580,7 @@ export default function JadwalPage() {
                   {selectedJadwal.mata_kuliah?.program_studi || 'N/A'}
                 </span>
                 <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-secondary text-secondary-foreground">
-                  Sesi {selectedJadwal.sesi}
+                  {selectedJadwal.sesi ? `Sesi ${selectedJadwal.sesi}` : 'Non-Sesi'}
                 </span>
               </div>
 
@@ -550,7 +610,7 @@ export default function JadwalPage() {
                     <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
                       Ruangan
                     </p>
-                    <p className="text-sm font-semibold">{selectedJadwal.ruangan}</p>
+                    <p className="text-sm font-semibold">{!selectedJadwal.ruangan || selectedJadwal.ruangan === 'Tanpa Ruangan' ? '-' : selectedJadwal.ruangan}</p>
                   </div>
                 </div>
 
