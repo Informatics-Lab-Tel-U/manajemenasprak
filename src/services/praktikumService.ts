@@ -207,32 +207,49 @@ export async function bulkUpsertPraktikum(rows: { nama: string; tahun_ajaran: st
   const supabase = supabaseClient || globalAdmin;
   const result: BulkImportPraktikumResult = { inserted: 0, skipped: 0, errors: [] };
 
-  for (const row of rows) {
-    try {
-      const { data: existing } = await supabase
-        .from('praktikum')
-        .select('id')
-        .eq('nama', row.nama)
-        .eq('tahun_ajaran', row.tahun_ajaran)
-        .maybeSingle();
+  if (rows.length === 0) return result;
 
-      if (existing) {
-        result.skipped++;
-      } else {
-        const { error } = await supabase
-          .from('praktikum')
-          .insert({ nama: row.nama, tahun_ajaran: row.tahun_ajaran });
-        
-        if (error) {
-           result.errors.push(`Failed to insert ${row.nama}: ${error.message}`);
-        } else {
-           result.inserted++;
+  try {
+    const terms = Array.from(new Set(rows.map(r => r.tahun_ajaran)));
+    
+    // Fetch existing entries to skip
+    const { data: existing } = await supabase
+      .from('praktikum')
+      .select('nama, tahun_ajaran')
+      .in('tahun_ajaran', terms);
+      
+    const existingSet = new Set((existing || []).map(e => `${e.nama}_${e.tahun_ajaran}`));
+    
+    // Filter duplicates against database
+    const toInsert = rows.filter(r => !existingSet.has(`${r.nama}_${r.tahun_ajaran}`));
+    result.skipped = rows.length - toInsert.length;
+
+    if (toInsert.length > 0) {
+      // Deduplicate payload internally
+      const uniquePayload = [];
+      const seen = new Set();
+      for (const row of toInsert) {
+        const key = `${row.nama}_${row.tahun_ajaran}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          uniquePayload.push(row);
         }
       }
-    } catch (e: any) {
-      result.errors.push(`Error processing ${row.nama}: ${e.message}`);
+      
+      result.skipped += (toInsert.length - uniquePayload.length);
+
+      const { data, error } = await supabase.from('praktikum').insert(uniquePayload).select();
+      
+      if (error) {
+        result.errors.push(`Bulk insert err: ${error.message}`);
+      } else {
+        result.inserted = data?.length || 0;
+      }
     }
+  } catch (e: any) {
+    result.errors.push(`Process err: ${e.message}`);
   }
+
   return result;
 }
 

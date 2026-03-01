@@ -25,6 +25,7 @@ interface PlottingCSVPreviewProps {
   onToggleSelect: (rowIndex: number) => void;
   onToggleAll: (checked: boolean) => void;
   loading: boolean;
+  onSkip?: () => void;
 }
 
 export default function PlottingCSVPreview({
@@ -36,6 +37,7 @@ export default function PlottingCSVPreview({
   onToggleSelect,
   onToggleAll,
   loading,
+  onSkip,
 }: PlottingCSVPreviewProps) {
   const totalValid = rows.filter(r => r.status === 'valid').length;
   // Resolved ambiguous rows count as valid for saving purposes?
@@ -194,10 +196,17 @@ export default function PlottingCSVPreview({
          <Button variant="outline" onClick={onBack} disabled={loading}>
              <ArrowLeft size={16} className="mr-1" /> Back
          </Button>
-         <Button onClick={onConfirm} disabled={loading || validAssignmentsCount === 0} variant="default">
-             <Save size={16} className="mr-1" />
-             {loading ? 'Saving...' : `Save ${validAssignmentsCount} Assignments`}
-         </Button>
+         <div className="flex gap-2">
+           {onSkip && (
+              <Button type="button" variant="secondary" onClick={onSkip} disabled={loading}>
+                 Lewati Langkah Ini
+              </Button>
+           )}
+           <Button onClick={onConfirm} disabled={loading || validAssignmentsCount === 0} variant="default">
+               <Save size={16} className="mr-1" />
+               {loading ? 'Saving...' : `Save ${validAssignmentsCount} Assignments`}
+           </Button>
+         </div>
       </div>
     </div>
   );

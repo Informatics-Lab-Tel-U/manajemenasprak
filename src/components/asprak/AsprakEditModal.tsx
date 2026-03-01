@@ -11,6 +11,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Switch } from '@/components/ui/switch';
 import { Asprak, Praktikum } from '@/types/database';
 import { usePraktikum } from '@/hooks/usePraktikum';
 
@@ -18,7 +19,7 @@ interface AsprakEditModalProps {
   asprak: Asprak;
   term: string; // The term being edited or 'all'
   assignments: string[]; // List of praktikum IDs currently assigned
-  onSave: (praktikumIds: string[], newKode: string) => Promise<void>;
+  onSave: (praktikumIds: string[], newKode: string, forceOverride: boolean) => Promise<void>;
   onClose: () => void;
   open: boolean;
 }
@@ -35,7 +36,9 @@ export default function AsprakEditModal({
   const [selectedPraktikumIds, setSelectedPraktikumIds] = useState<string[]>([]);
   const [newKode, setNewKode] = useState<string>(asprak.kode);
   const [kodeError, setKodeError] = useState<string | null>(null);
+  const [forceOverride, setForceOverride] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [existingAspraks, setExistingAspraks] = useState<{kode: string, angkatan: number}[]>([]);
 
   useEffect(() => {
     if (open) {
@@ -43,22 +46,77 @@ export default function AsprakEditModal({
       getPraktikumByTerm('all').then((data) => {
         setAvailablePraktikums(data);
       });
+      fetch('/api/asprak?action=all-info')
+        .then((res) => res.json())
+        .then((json) => {
+           if (json.ok && json.data) {
+               setExistingAspraks(json.data);
+           }
+        });
+
       // Initialize selection
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedPraktikumIds(assignments);
       setNewKode(asprak.kode);
       setKodeError(null);
+      setForceOverride(false);
     }
   }, [open, getPraktikumByTerm, assignments, asprak.kode]);
 
+  const validateKodeMatch = (up: string, force: boolean) => {
+      const safeUp = up || '';
+      if (safeUp.length === 0) {
+          setKodeError('Kode tidak boleh kosong');
+          return;
+      }
+      if (safeUp.length !== 3) {
+          setKodeError('Kode Asisten harus persis 3 huruf');
+          return;
+      }
+
+      if (!force) {
+          let calculatedAngkatan = asprak.angkatan || 0;
+          if (calculatedAngkatan > 0 && calculatedAngkatan < 100) calculatedAngkatan += 2000;
+
+          const conflictInDB = existingAspraks.some((a) => {
+              if (a.kode.toUpperCase() !== up) return false;
+              // Ignore self match
+              if (a.kode.toUpperCase() === asprak.kode.toUpperCase()) return false;
+              
+              const gap = calculatedAngkatan - a.angkatan;
+              return gap < 5; // CODE_RECYCLE_YEARS
+          });
+
+          if (conflictInDB) {
+              setKodeError('Kode sudah digunakan (< 5 tahun)');
+              return;
+          }
+      }
+
+      setKodeError(null);
+  };
+
+  const handleKodeChange = (val: string) => {
+      const up = val.toUpperCase().slice(0, 3);
+      setNewKode(up);
+      validateKodeMatch(up, forceOverride);
+  };
+
+  // React to force override changes
+  useEffect(() => {
+      if (open && newKode) {
+          validateKodeMatch(newKode, forceOverride);
+      }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [forceOverride, open, existingAspraks]);
+
   const handleSave = async () => {
-    if (newKode.length !== 3) {
-      setKodeError('Kode Asisten harus persis 3 huruf');
+    if (newKode.length !== 3 || kodeError) {
       return;
     }
 
     setSaving(true);
-    await onSave(selectedPraktikumIds, newKode.toUpperCase());
+    await onSave(selectedPraktikumIds, newKode.toUpperCase(), forceOverride);
     setSaving(false);
     onClose();
   };
@@ -107,10 +165,7 @@ export default function AsprakEditModal({
               <Input
                 id="kode"
                 value={newKode}
-                onChange={(e) => {
-                  setNewKode(e.target.value.toUpperCase().slice(0, 3));
-                  setKodeError(null);
-                }}
+                onChange={(e) => handleKodeChange(e.target.value)}
                 className={`font-mono uppercase transition-colors h-8 ${
                   kodeError ? 'border-red-500 focus-visible:ring-red-500' : ''
                 }`}
@@ -119,6 +174,20 @@ export default function AsprakEditModal({
               />
               {kodeError && <p className="text-red-500 text-xs mt-1">{kodeError}</p>}
             </div>
+          </div>
+          <div className="flex items-center space-x-2 mt-2 bg-muted/30 p-2 rounded-md border border-border/50">
+            <Switch
+              id="force-override"
+              checked={forceOverride}
+              onCheckedChange={setForceOverride}
+              disabled={saving}
+            />
+            <Label htmlFor="force-override" className="text-xs font-medium leading-tight">
+              Paksa gunakan Kode ini
+              <p className="text-[10px] text-muted-foreground font-normal mt-0.5">
+                Mengabaikan peringatan bentrok kode (&gt; 5 tahun) dari database.
+              </p>
+            </Label>
           </div>
           <div>
             <Label className="text-muted-foreground text-xs">Nama Lengkap</Label>

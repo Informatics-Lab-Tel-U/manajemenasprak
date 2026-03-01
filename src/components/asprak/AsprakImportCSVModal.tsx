@@ -18,6 +18,16 @@ import * as XLSX from 'xlsx';
 import { FileSpreadsheet, Upload, FileText, X, Download } from 'lucide-react';
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -25,8 +35,7 @@ import { cn } from '@/lib/utils';
 
 import TermInput, { buildTermString } from './TermInput';
 import AsprakCSVPreview, { PreviewRow } from './AsprakCSVPreview';
-import { batchGenerateCodes } from '@/utils/asprakCodeGenerator';
-import { json } from 'stream/consumers';
+import { validateAsprakData, validateAsprakCodeEdit } from '@/utils/validation/asprakValidation';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -80,9 +89,12 @@ export default function AsprakImportCSVModal({
 
   // CSV state
   const [fileName, setFileName] = useState<string | null>(null);
+  const [parsedData, setParsedData] = useState<any[]>([]);
   const [previewRows, setPreviewRows] = useState<PreviewRow[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [forceOverride, setForceOverride] = useState(false);
+  const [showOverrideConfirm, setShowOverrideConfirm] = useState(false);
 
   // Derived
   const term = useMemo(() => buildTermString(termYear, termSem), [termYear, termSem]);
@@ -132,101 +144,7 @@ export default function AsprakImportCSVModal({
 
           // Build preview rows with code generation
           try {
-            const usedCodes = new Set(existingCodes.map((c) => c.toUpperCase()));
-            const existingNimSet = new Set(existingNims);
-
-            // Prepare rows for batch code generation
-            const rowsForCodeGen = data.map((row) => ({
-              nama_lengkap: String(row.nama_lengkap || '').trim(),
-              kode: row.kode ? String(row.kode).trim() : undefined,
-            }));
-
-            const generatedCodes = batchGenerateCodes(
-              rowsForCodeGen.map((r) => ({
-                nama_lengkap: r.nama_lengkap,
-                kode: r.kode,
-              })),
-              usedCodes
-            );
-
-            const preview: PreviewRow[] = [];
-            const seenNimsInCSV = new Set<string>();
-
-            for (let idx = 0; idx < data.length; idx++) {
-              const row = data[idx];
-              const namaLengkap = String(row.nama_lengkap || '').trim();
-              const nim = String(row.nim || '').trim();
-              const rawAngkatan = row.angkatan;
-              let angkatan =
-                typeof rawAngkatan === 'number'
-                  ? rawAngkatan
-                  : parseInt(String(rawAngkatan || '0'));
-              if (angkatan > 0 && angkatan < 100) angkatan += 2000;
-
-              const originalKode = row.kode ? String(row.kode).trim().toUpperCase() : '';
-              const generated = generatedCodes[idx];
-
-              // Determine status
-              let status: PreviewRow['status'] = 'ok';
-              let statusMessage = '';
-
-              if (!namaLengkap) {
-                status = 'error';
-                statusMessage = 'Nama kosong';
-              } else if (!nim) {
-                status = 'error';
-                statusMessage = 'NIM kosong';
-              } else if (existingNimSet.has(nim)) {
-                status = 'error';
-                statusMessage = 'Duplikat — NIM sudah ada di database';
-              } else if (seenNimsInCSV.has(nim)) {
-                status = 'duplicate-csv';
-                statusMessage = 'Duplikat dalam CSV — NIM sama dengan row sebelumnya';
-              } else if (angkatan <= 0) {
-                status = 'warning';
-                statusMessage = 'Angkatan tidak valid';
-              }
-
-              // Check if code generation failed
-              if (generated.rule === 'FAILED' && !originalKode && status === 'ok') {
-                status = 'error';
-                statusMessage = 'Kode gagal di-generate — isi manual di kolom kode';
-              }
-
-              // Track this NIM as seen in current CSV
-              if (nim) seenNimsInCSV.add(nim);
-
-              // Code source: 'csv' if the kode was provided in CSV, 'generated' if auto-generated
-              const codeSource: PreviewRow['codeSource'] = originalKode ? 'csv' : 'generated';
-
-              // For duplicate rows, use the original CSV code as-is (the code generator
-              // may have auto-generated a different code because the original is already
-              // "taken" in the DB — but that's expected since it belongs to the same person)
-              const isDuplicate =
-                (status === 'error' && statusMessage.includes('Duplikat')) ||
-                status === 'duplicate-csv';
-              const displayKode = isDuplicate && originalKode ? originalKode : generated.code;
-
-              const finalRule = isDuplicate ? 'Duplikat' : generated.rule;
-
-              preview.push({
-                nama_lengkap: namaLengkap.toUpperCase(),
-                nim,
-                kode: displayKode,
-                angkatan,
-                codeRule: finalRule,
-                codeSource,
-                status,
-                statusMessage,
-                // Track originals for tag revert on edit
-                originalKode: displayKode,
-                originalCodeRule: finalRule,
-                originalCodeSource: codeSource,
-                selected: status === 'ok' || status === 'warning',
-              });
-            }
-
-            setPreviewRows(preview);
+            setParsedData(data);
             setStep('preview');
           } catch (e: any) {
             setError(`Error saat generate kode: ${e instanceof Error ? e.message : String(e)}`);
@@ -239,6 +157,17 @@ export default function AsprakImportCSVModal({
     },
     [existingCodes, existingNims]
   );
+
+  // Re-run validation when data or forceOverride changes
+  useEffect(() => {
+    if (parsedData.length === 0) return;
+    try {
+      const preview = validateAsprakData(parsedData, existingCodes, existingNims, forceOverride);
+      setPreviewRows(preview);
+    } catch (e: any) {
+      setError(`Error saat menyiapkan data: ${e.message}`);
+    }
+  }, [parsedData, existingCodes, existingNims, forceOverride]);
 
   // ─── Selection Handlers ────────────────────────────────────────────────
 
@@ -271,79 +200,28 @@ export default function AsprakImportCSVModal({
 
   const handleCodeEdit = useCallback(
     (rowIndex: number, newCode: string) => {
-      setPreviewRows((prev) => {
-        const updated = [...prev];
-        const row = { ...updated[rowIndex] };
-        const uppercased = newCode.toUpperCase();
-        row.kode = uppercased;
-
-        // ── Tag revert: if user typed back the original code, revert tags ──
-        if (uppercased === row.originalKode) {
-          row.codeSource = row.originalCodeSource;
-          row.codeRule = row.originalCodeRule;
-        } else {
-          row.codeSource = 'csv';
-          row.codeRule = 'Manual edit';
-        }
-
-        // ── Real-time conflict check (only for complete 3-letter codes) ──
-        if (/^[A-Z]{3}$/.test(uppercased)) {
-          // Check if code is used by another row in this CSV
-          const conflictInCSV = updated.some(
-            (r, i) =>
-              i !== rowIndex &&
-              r.kode === uppercased &&
-              r.status !== 'error' &&
-              r.status !== 'duplicate-csv'
-          );
-
-          // Check if code exists in DB, but allow recycling if angkatan gap >= CODE_RECYCLE_YEARS
-          const conflictInDB = existingAspraks.some((a) => {
-            if (a.kode.toUpperCase() !== uppercased) return false;
-            // Allow recycling: if the existing asprak's angkatan is old enough
-            const gap = row.angkatan - a.angkatan;
-            return gap < CODE_RECYCLE_YEARS; // conflict only if gap < 5 years
-          });
-
-          if (conflictInCSV) {
-            row.status = 'warning';
-            row.statusMessage = `Kode "${uppercased}" sudah dipakai row lain di CSV ini`;
-          } else if (conflictInDB) {
-            row.status = 'warning';
-            row.statusMessage = `Kode "${uppercased}" sudah dipakai asprak lain di database (< ${CODE_RECYCLE_YEARS} tahun)`;
-          } else {
-            // Code is valid and available
-            row.status = 'ok';
-            row.statusMessage = '';
-          }
-
-          // Auto-select if valid and was previously invalid/not selected?
-          // Or just ensure it's selectable. Let's auto-select if it becomes OK/Warning.
-          if (row.status === 'ok' || row.status === 'warning') {
-            // You might choose to not auto-select if the user explicitly unchecked it,
-            // but here we assume if they fix it, they want it.
-            if (!row.selected) row.selected = true;
-          } else {
-            row.selected = false;
-          }
-        } else if (uppercased.length > 0 && uppercased.length < 3) {
-          // Incomplete code -> ERROR
-          row.status = 'error';
-          row.statusMessage = 'Kode harus 3 huruf';
-          row.selected = false;
-        } else if (uppercased.length === 0) {
-          // Empty code -> ERROR
-          row.status = 'error';
-          row.statusMessage = 'Kode tidak boleh kosong';
-          row.selected = false;
-        }
-
-        updated[rowIndex] = row;
-        return updated;
-      });
+      setPreviewRows((prev) => validateAsprakCodeEdit(rowIndex, newCode, prev, existingAspraks, forceOverride));
     },
-    [existingAspraks]
+    [existingAspraks, forceOverride]
   );
+
+  const handleForceOverrideToggle = useCallback((checked: boolean) => {
+      if (checked) {
+          setShowOverrideConfirm(true);
+      } else {
+          setForceOverride(false);
+      }
+  }, []);
+
+  const confirmOverride = () => {
+      setForceOverride(true);
+      setShowOverrideConfirm(false);
+  };
+
+  const cancelOverride = () => {
+      setForceOverride(false);
+      setShowOverrideConfirm(false);
+  };
 
   // ─── Template Download ──────────────────────────────────────────────────
 
@@ -425,8 +303,10 @@ export default function AsprakImportCSVModal({
   const handleBack = () => {
     setStep('upload');
     setPreviewRows([]);
+    setParsedData([]);
     setFileName(null);
     setError(null);
+    setForceOverride(false);
   };
 
   // ─── Reset on close ─────────────────────────────────────────────────────
@@ -434,9 +314,11 @@ export default function AsprakImportCSVModal({
   const handleClose = () => {
     setStep('upload');
     setPreviewRows([]);
+    setParsedData([]);
     setFileName(null);
     setError(null);
     setSaving(false);
+    setForceOverride(false);
     onClose();
   };
 
@@ -598,12 +480,31 @@ export default function AsprakImportCSVModal({
                   onToggleSelect={handleToggleSelect}
                   onToggleAll={handleToggleAll}
                   loading={saving}
+                  forceOverride={forceOverride}
+                  onForceOverrideChange={handleForceOverrideToggle}
                 />
               )}
             </div>
           </ScrollArea>
         </DialogHeader>
       </DialogContent>
+
+      <AlertDialog open={showOverrideConfirm} onOpenChange={setShowOverrideConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Konfirmasi Pemaksaan Kode</AlertDialogTitle>
+            <AlertDialogDescription>
+              Apakah Anda yakin ingin memaksakan kode dari CSV?
+              <br /><br />
+              <span className="font-semibold text-destructive">Perhatian:</span> Ini akan mengabaikan peringatan bentrok kode dari database, termasuk kode yang baru saja dipakai dalam selisih kurang dari 5 tahun. Tindakan ini akan me-refresh ulang preview data serta mereset input kode manual yang telah Anda ubah.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={cancelOverride}>Batal</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmOverride} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Ya, Paksa Gunakan</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 }

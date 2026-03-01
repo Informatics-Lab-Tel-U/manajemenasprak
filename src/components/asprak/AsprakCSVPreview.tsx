@@ -12,6 +12,8 @@ import { CheckCircle, AlertTriangle, Sparkles, ArrowLeft, Save, Copy, FileCheck,
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 
 export interface PreviewRow {
   nama_lengkap: string;
@@ -38,6 +40,9 @@ interface AsprakCSVPreviewProps {
   onToggleSelect: (rowIndex: number) => void;
   onToggleAll: (checked: boolean) => void;
   loading: boolean;
+  onSkip?: () => void;
+  forceOverride?: boolean;
+  onForceOverrideChange?: (val: boolean) => void;
 }
 
 export default function AsprakCSVPreview({
@@ -49,6 +54,9 @@ export default function AsprakCSVPreview({
   onToggleSelect,
   onToggleAll,
   loading,
+  onSkip,
+  forceOverride = false,
+  onForceOverrideChange
 }: AsprakCSVPreviewProps) {
   const totalOk = rows.filter((r) => r.status === 'ok').length;
   const totalWarning = rows.filter((r) => r.status === 'warning').length;
@@ -128,6 +136,23 @@ export default function AsprakCSVPreview({
           </Badge>
         )}
       </div>
+
+      {onForceOverrideChange !== undefined && (
+        <div className="flex items-center space-x-2 bg-muted/30 p-3 rounded-md border border-border/50">
+          <Switch 
+            id="force-override" 
+            checked={forceOverride}
+            onCheckedChange={onForceOverrideChange}
+            disabled={loading}
+          />
+          <Label htmlFor="force-override" className="text-sm font-medium leading-tight">
+            Paksa gunakan Kode dari CSV
+            <p className="text-xs text-muted-foreground font-normal mt-0.5">
+              Jika diaktifkan, kode yang ada di CSV tidak akan diubah/di-generate ulang, mengabaikan aturan bentrok 5 tahun di database. (Bentrok dalam satu file CSV tetap akan diperingatkan).
+            </p>
+          </Label>
+        </div>
+      )}
 
       {/* Preview Table */}
       <div className="rounded-lg border border-border overflow-hidden">
@@ -296,6 +321,11 @@ export default function AsprakCSVPreview({
             <p className="text-xs text-amber-500">
               {totalError + totalDuplicateCSV} row(s) bermasalah akan di-skip saat import.
             </p>
+          )}
+          {onSkip && (
+              <Button type="button" variant="secondary" onClick={onSkip} disabled={loading}>
+                 Lewati Langkah Ini
+              </Button>
           )}
           <Button
             onClick={onConfirm}
