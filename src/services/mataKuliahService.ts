@@ -99,17 +99,26 @@ export async function bulkCreateMataKuliah(
   const supabase = supabaseClient || globalAdmin;
   const result: BulkImportMataKuliahResult = { inserted: 0, errors: [] };
 
-  // Insert sequentially to handle errors individually (safer) or bulk if confident
-  // Using sequential for better error reporting per row
+  if (payloads.length === 0) return result;
+
+  // Deduplicate payload internally as a safety measure
+  const uniquePayloads = [];
+  const seen = new Set();
   for (const p of payloads) {
-    const { error } = await supabase.from('mata_kuliah').insert(p);
-    if (error) {
-      result.errors.push(
-        `Failed to insert ${p.nama_lengkap} (${p.program_studi}): ${error.message}`
-      );
-    } else {
-      result.inserted++;
+    const key = `${p.id_praktikum}_${p.program_studi}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      uniquePayloads.push(p);
     }
+  }
+
+  // Perform a single bulk insert
+  const { data, error } = await supabase.from('mata_kuliah').insert(uniquePayloads).select();
+
+  if (error) {
+    result.errors.push(`Bulk insert err: ${error.message}`);
+  } else {
+    result.inserted = data?.length || 0;
   }
 
   return result;

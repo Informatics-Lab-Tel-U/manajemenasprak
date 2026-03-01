@@ -11,6 +11,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Switch } from '@/components/ui/switch';
 import { Card, CardContent } from '@/components/ui/card';
 import { Loader2, Plus, Trash2, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -46,6 +47,7 @@ export default function AsprakForm({ onSubmit, onCancel }: AsprakFormProps) {
   const [nim, setNim] = useState('');
   const [kode, setKode] = useState('');
   const [angkatan, setAngkatan] = useState<string>('2023');
+  const [forceOverride, setForceOverride] = useState(false);
   
   // Validation States
   const [nimStatus, setNimStatus] = useState<'idle' | 'checking' | 'valid' | 'taken'>('idle');
@@ -56,6 +58,7 @@ export default function AsprakForm({ onSubmit, onCancel }: AsprakFormProps) {
   const [assignments, setAssignments] = useState<AssignmentBlock[]>([]);
   const [availableTerms, setAvailableTerms] = useState<string[]>([]);
   const [existingCodes, setExistingCodes] = useState<Set<string>>(new Set());
+  const [existingAspraks, setExistingAspraks] = useState<{kode: string, angkatan: number}[]>([]);
   const [loadingTerms, setLoadingTerms] = useState(false);
   const [submitLoading, setSubmitLoading] = useState(false);
 
@@ -67,16 +70,17 @@ export default function AsprakForm({ onSubmit, onCancel }: AsprakFormProps) {
   useEffect(() => {
     async function loadData() {
       setLoadingTerms(true);
-      const [termsRes, codesRes] = await Promise.all([
+      const [termsRes, allInfoRes] = await Promise.all([
           fetchAvailableTerms(),
-          fetchExistingCodes()
+          fetch('/api/asprak?action=all-info').then(r => r.json())
       ]);
       
       if (termsRes.ok && termsRes.data) {
         setAvailableTerms(termsRes.data);
       }
-      if (codesRes.ok && codesRes.data) {
-          setExistingCodes(new Set(codesRes.data));
+      if (allInfoRes.ok && allInfoRes.data) {
+          setExistingAspraks(allInfoRes.data);
+          setExistingCodes(new Set(allInfoRes.data.map((a: any) => a.kode)));
       }
       setLoadingTerms(false);
     }
@@ -119,10 +123,11 @@ export default function AsprakForm({ onSubmit, onCancel }: AsprakFormProps) {
         if (res.ok && res.data) {
             setKode(res.data.code);
             setRuleInfo(res.data.rule);
-            if (existingCodes.has(res.data.code)) {
-                setCodeStatus('taken');
+            
+            if (res.data.rule === 'FAILED') {
+                setCodeStatus('invalid_length');
             } else {
-                setCodeStatus('valid');
+                validateKodeMatch(res.data.code, forceOverride, angkatan);
             }
         } else {
             setCodeStatus('idle');
@@ -131,26 +136,49 @@ export default function AsprakForm({ onSubmit, onCancel }: AsprakFormProps) {
     gen();
   }, [debouncedNama]); // Removed existingCodes dependency to avoid loops, though it's stable.
 
-  // Manual Code Validation
+  const validateKodeMatch = useCallback((up: string, force: boolean, currentAngkatanStr: string) => {
+      const safeUp = up || '';
+      if (safeUp.length === 0) {
+          setCodeStatus('idle');
+          return;
+      }
+      if (safeUp.length !== 3) {
+          setCodeStatus('invalid_length');
+          return;
+      }
+
+      if (!force) {
+          const formAngkatan = parseInt(currentAngkatanStr, 10) || 0;
+          let calculatedAngkatan = formAngkatan;
+          if (calculatedAngkatan > 0 && calculatedAngkatan < 100) calculatedAngkatan += 2000;
+
+          const conflictInDB = existingAspraks.some((a) => {
+              if (a.kode.toUpperCase() !== up) return false;
+              const gap = calculatedAngkatan - a.angkatan;
+              return gap < 5; // CODE_RECYCLE_YEARS
+          });
+
+          if (conflictInDB) {
+              setCodeStatus('taken');
+              return;
+          }
+      }
+
+      setCodeStatus('valid');
+  }, [existingAspraks]);
+
+  // Handle manual input change
   const handleCodeChange = (val: string) => {
       const up = val.toUpperCase().replace(/[^A-Z]/g, '');
       setKode(up);
       setRuleInfo('Manual Input');
-      
-      if (up.length === 0) {
-          setCodeStatus('idle');
-          return;
-      }
-      if (up.length !== 3) {
-          setCodeStatus('invalid_length');
-          return;
-      }
-      if (existingCodes.has(up)) {
-          setCodeStatus('taken');
-          return;
-      }
-      setCodeStatus('valid');
+      validateKodeMatch(up, forceOverride, angkatan);
   };
+
+  // Re-run validation constraints when forceOverride or angkatan changes
+  useEffect(() => {
+      if (kode) validateKodeMatch(kode, forceOverride, angkatan);
+  }, [forceOverride, kode, angkatan, validateKodeMatch]);
 
   // Assignment Logic
   const addAssignmentBlock = () => {
@@ -235,7 +263,8 @@ export default function AsprakForm({ onSubmit, onCancel }: AsprakFormProps) {
             assignments: assignments.map(a => ({
                 term: a.term,
                 praktikumNames: a.selectedCourseNames
-            })).filter(a => a.term && a.praktikumNames.length > 0)
+            })).filter(a => a.term && a.praktikumNames.length > 0),
+            forceOverride
         };
         
         await onSubmit(payload);
@@ -260,7 +289,7 @@ export default function AsprakForm({ onSubmit, onCancel }: AsprakFormProps) {
              <Label htmlFor="nama">Nama Lengkap</Label>
              <Input 
                id="nama" 
-               value={nama} 
+               value={nama || ''}
                onChange={e => setNama(e.target.value)} 
                placeholder="Contoh: Muhammad Farhan"
                required
@@ -275,11 +304,15 @@ export default function AsprakForm({ onSubmit, onCancel }: AsprakFormProps) {
                 <div className="relative">
                     <Input 
                       id="nim" 
-                      value={nim} 
+                      value={nim || ''} 
                       onChange={e => {
                           const val = e.target.value;
                           setNim(val);
-                          if(nimStatus === 'taken') setNimStatus('checking');
+                          if(val.length < 5) {
+                              setNimStatus('idle');
+                          } else {
+                              setNimStatus('checking');
+                          }
                       }} 
                       placeholder="1301..."
                       className={`h-9 ${nimStatus === 'taken' ? 'border-destructive focus-visible:ring-destructive' : nimStatus === 'valid' ? 'border-green-500' : ''}`}
@@ -298,7 +331,7 @@ export default function AsprakForm({ onSubmit, onCancel }: AsprakFormProps) {
                  <div className="relative">
                      <Input 
                         id="kode"
-                        value={kode}
+                        value={kode || ''}
                         onChange={e => handleCodeChange(e.target.value)}
                         maxLength={3}
                         className={`h-9 uppercase font-mono tracking-wider ${
@@ -314,6 +347,21 @@ export default function AsprakForm({ onSubmit, onCancel }: AsprakFormProps) {
                  {codeStatus === 'taken' && <p className="text-[10px] text-destructive mt-1">Kode sudah digunakan.</p>}
                  {codeStatus === 'invalid_length' && <p className="text-[10px] text-destructive mt-1">Harus pas 3 huruf.</p>}
                  {codeStatus === 'valid' && ruleInfo && <p className="text-[10px] text-muted-foreground mt-1">OK ({ruleInfo})</p>}
+                 
+                 <div className="flex items-start space-x-2 bg-muted/30 p-2 rounded-md border mt-2">
+                    <Switch
+                        id="form-force-override"
+                        checked={forceOverride}
+                        onCheckedChange={setForceOverride}
+                        className="scale-90"
+                    />
+                    <Label htmlFor="form-force-override" className="text-[10px] leading-tight cursor-pointer font-medium">
+                        Paksa gunakan kode
+                        <p className="text-muted-foreground font-normal mt-0.5">
+                           Abaikan peringatan bentrok (kode &gt; 5 thn)
+                        </p>
+                    </Label>
+                 </div>
               </div>
            </div>
 
@@ -323,7 +371,7 @@ export default function AsprakForm({ onSubmit, onCancel }: AsprakFormProps) {
               <Input 
                  id="angkatan"
                  type="number"
-                 value={angkatan}
+                 value={angkatan || ''}
                  onChange={e => setAngkatan(e.target.value)}
                  min={2000}
                  max={2099}
@@ -436,7 +484,8 @@ export default function AsprakForm({ onSubmit, onCancel }: AsprakFormProps) {
             className="h-8"
             disabled={
                 submitLoading || 
-                nimStatus === 'taken' || 
+                nimStatus === 'taken' ||
+                nimStatus === 'checking' || 
                 codeStatus === 'invalid_length' || 
                 codeStatus === 'taken' || 
                 codeStatus === 'generating'

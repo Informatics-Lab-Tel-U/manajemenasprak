@@ -243,6 +243,7 @@ export interface UpsertAsprakInput {
     term: string;
     praktikumNames: string[];
   }[];
+  forceOverride?: boolean;
 }
 
 export async function upsertAsprak(
@@ -260,7 +261,7 @@ export async function upsertAsprak(
     .maybeSingle();
 
   const conflictCheck = checkCodeConflict(codeOwner, input.nim);
-  if (conflictCheck.hasConflict && conflictCheck.existingOwner) {
+  if (conflictCheck.hasConflict && conflictCheck.existingOwner && !input.forceOverride) {
     throw new Error(generateConflictErrorMessage(input.kode, conflictCheck.existingOwner));
   }
 
@@ -371,56 +372,74 @@ export async function bulkUpsertAspraks(
   const supabase = supabaseClient || globalAdmin;
   const result: BulkUpsertResult = { inserted: 0, updated: 0, skipped: 0, errors: [] };
 
-  for (const row of rows) {
-    try {
+  if (rows.length === 0) return result;
+
+  try {
+    const nims = rows.map((r) => r.nim);
+
+    // Fetch existing aspraks by NIM to determine PK for upsert
+    const { data: existing } = await supabase
+      .from('asprak')
+      .select('id, nim')
+      .in('nim', nims);
+
+    const existingMap = new Map((existing || []).map((e) => [e.nim, e.id]));
+
+    const upsertPayload = []; // for existing users (includes ID)
+    const insertPayload = []; // for new users (no ID)
+    const seenNim = new Set();
+    
+    for (const row of rows) {
+      if (seenNim.has(row.nim)) {
+          result.skipped++;
+          continue;
+      }
+      seenNim.add(row.nim);
+
       let angkatan = row.angkatan;
       if (angkatan > 0 && angkatan < 100) angkatan += 2000;
 
-      // Check if asprak already exists by NIM
-      const { data: existing } = await supabase
-        .from('asprak')
-        .select('id, kode')
-        .eq('nim', row.nim)
-        .maybeSingle();
-
-      if (existing) {
-        // Update existing asprak
-        const { error: upError } = await supabase
-          .from('asprak')
-          .update({
-            nama_lengkap: row.nama_lengkap,
-            kode: row.kode,
-            angkatan: angkatan,
-          })
-          .eq('id', existing.id);
-
-        if (upError) {
-          result.errors.push(`Update ${row.nim}: ${upError.message}`);
-          result.skipped++;
-        } else {
-          result.updated++;
-        }
-      } else {
-        // Insert new asprak
-        const { error: inError } = await supabase.from('asprak').insert({
+      const existingId = existingMap.get(row.nim);
+      if (existingId) {
+        upsertPayload.push({
+          id: existingId,
           nim: row.nim,
           nama_lengkap: row.nama_lengkap,
           kode: row.kode,
           angkatan: angkatan,
         });
-
-        if (inError) {
-          result.errors.push(`Insert ${row.nim}: ${inError.message}`);
-          result.skipped++;
-        } else {
-          result.inserted++;
-        }
+      } else {
+        insertPayload.push({
+          nim: row.nim,
+          nama_lengkap: row.nama_lengkap,
+          kode: row.kode,
+          angkatan: angkatan,
+        });
       }
-    } catch (e: any) {
-      const errMsg = e instanceof Error ? e.message : String(e);
-      result.errors.push(`${row.nim}: ${errMsg}`);
-      result.skipped++;
     }
+
+    // 1. Process updates (upsert with IDs)
+    if (upsertPayload.length > 0) {
+      const { error } = await supabase.from('asprak').upsert(upsertPayload);
+      if (error) {
+        result.errors.push(`Bulk updates err: ${error.message}`);
+      } else {
+        result.updated = upsertPayload.length;
+      }
+    }
+
+    // 2. Process inserts (insert without IDs)
+    if (insertPayload.length > 0) {
+      const { error } = await supabase.from('asprak').insert(insertPayload);
+      if (error) {
+        result.errors.push(`Bulk inserts err: ${error.message}`);
+      } else {
+        result.inserted = insertPayload.length;
+      }
+    }
+  } catch (e: any) {
+    const errMsg = e instanceof Error ? e.message : String(e);
+    result.errors.push(`Process err: ${errMsg}`);
   }
 
   return result;
@@ -432,7 +451,8 @@ export async function updateAsprakAssignments(
   praktikumIds: string[],
   supabaseClient?: SupabaseClient,
   newKode?: string,
-  nim?: string
+  nim?: string,
+  forceOverride: boolean = false
 ): Promise<void> {
   const supabase = supabaseClient || globalAdmin;
 
@@ -445,7 +465,7 @@ export async function updateAsprakAssignments(
       .maybeSingle();
 
     const conflictCheck = checkCodeConflict(codeOwner, nim);
-    if (conflictCheck.hasConflict && conflictCheck.existingOwner) {
+    if (conflictCheck.hasConflict && conflictCheck.existingOwner && !forceOverride) {
       throw new Error(generateConflictErrorMessage(newKode, conflictCheck.existingOwner));
     }
 

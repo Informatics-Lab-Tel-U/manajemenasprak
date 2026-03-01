@@ -185,7 +185,7 @@ function AsprakPageContent() {
     setShowEditModal(true);
   };
 
-  const handleSaveEdit = async (praktikumIds: string[], newKode: string) => {
+  const handleSaveEdit = async (praktikumIds: string[], newKode: string, forceOverride: boolean) => {
     if (!editTarget) return;
 
     // Use 'all' to indicate global update
@@ -194,7 +194,8 @@ function AsprakPageContent() {
       'all',
       praktikumIds,
       newKode,
-      editTarget.asprak.nim
+      editTarget.asprak.nim,
+      forceOverride
     );
 
     if (result.ok) {

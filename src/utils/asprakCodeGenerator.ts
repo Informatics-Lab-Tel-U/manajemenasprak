@@ -247,10 +247,11 @@ export function generateAsprakCode(
   else if (n === 2) standardCandidates = rulesFor2Words(words);
   else standardCandidates = rulesFor3Words(words);
 
+  const rulePrefix = Math.min(n, 3);
   for (let i = 0; i < standardCandidates.length; i++) {
     const code = standardCandidates[i].toUpperCase();
     if (isValidCode(code) && !usedCodes.has(code)) {
-      return { code, rule: `Standard ${n}.${i + 1}` };
+      return { code, rule: `Standard ${rulePrefix}.${i + 1}` };
     }
   }
 

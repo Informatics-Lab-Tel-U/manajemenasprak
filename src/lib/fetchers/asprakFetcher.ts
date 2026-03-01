@@ -16,6 +16,7 @@ export interface UpsertAsprakInput {
     term: string;
     praktikumNames: string[];
   }[];
+  forceOverride?: boolean;
 }
 
 export interface AsprakAssignment {
@@ -100,7 +101,8 @@ export async function updateAssignments(
   term: string,
   praktikumIds: string[],
   newKode?: string,
-  nim?: string
+  nim?: string,
+  forceOverride?: boolean
 ): Promise<ServiceResult<void>> {
   try {
     const res = await fetch('/api/asprak', {
@@ -113,6 +115,7 @@ export async function updateAssignments(
         praktikumIds,
         newKode,
         nim,
+        forceOverride,
       }),
     });
 
@@ -252,7 +255,7 @@ export async function checkNim(nim: string): Promise<ServiceResult<boolean>> {
     });
     const json = await res.json();
     if (!res.ok) return { ok: false, error: json.error };
-    return { ok: true, data: json.exists };
+    return { ok: true, data: json.data?.exists || false };
   } catch (e: any) {
     return { ok: false, error: e.message };
   }
