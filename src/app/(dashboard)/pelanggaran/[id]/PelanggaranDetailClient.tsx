@@ -29,6 +29,16 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import PelanggaranAddModal from '@/components/pelanggaran/PelanggaranAddModal';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  SelectGroup,
+  SelectLabel,
+} from '@/components/ui/select';
 import {
   Table,
   TableBody,
@@ -115,11 +125,14 @@ export default function PelanggaranDetailClient({
     loading,
     error,
     isFinalized,
+    selectedModul,
+    setSelectedModul,
+    finalizedModules,
     refresh,
     addPelanggaran,
     deletePelanggaran,
-    finalize,
-    unfinalize,
+    finalizeModul,
+    unfinalizeModul,
   } = usePelanggaranDetail(idPraktikum, initialViolations, initialPraktikum);
 
   // Use praktikum from hook (which includes the one from props as initial state)
@@ -133,6 +146,17 @@ export default function PelanggaranDetailClient({
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [showUnfinalize, setShowUnfinalize] = React.useState(false);
   const [isUnfinalizing, setIsUnfinalizing] = React.useState(false);
+
+  // ── Hydration fix ──
+  const [mounted, setMounted] = React.useState(false);
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Filter violations by selected module
+  const filteredViolations = React.useMemo(() => {
+    return violations.filter((v) => v.modul === Number(selectedModul));
+  }, [violations, selectedModul]);
 
   async function handleAddViolation(data: {
     id_asprak: string[];
@@ -243,21 +267,21 @@ export default function PelanggaranDetailClient({
     ],
     []
   );
-
+  // ── Sorting & Filtering ─────────────────────────────────────
   const table = useReactTable({
-    data: violations,
+    data: filteredViolations,
     columns,
+    state: { sorting, columnFilters },
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
-    state: { sorting, columnFilters },
     initialState: { pagination: { pageSize: 15 } },
   });
 
-  const recap = React.useMemo(() => buildRecap(violations), [violations]);
+  const recap = React.useMemo(() => buildRecap(filteredViolations), [filteredViolations]);
 
   const activeJenis = React.useMemo(() => {
     const set = new Set<string>();
@@ -282,28 +306,28 @@ export default function PelanggaranDetailClient({
   async function handleFinalize() {
     setIsFinalizing(true);
     try {
-      const result = await finalize();
-      if (!result.ok) throw new Error(result.error || 'Gagal finalisasi');
-      toast.success(`Pelanggaran ${praktikum?.nama} berhasil difinalisasi.`);
+      const res = await finalizeModul(Number(selectedModul));
+      if (res.ok) {
+        setShowFinalize(false);
+      }
     } catch (err: any) {
-      toast.error(err.message ?? 'Gagal finalisasi');
+      toast.error(err.message || 'Gagal memfinalisasi');
     } finally {
       setIsFinalizing(false);
-      setShowFinalize(false);
     }
   }
 
   async function handleUnfinalize() {
     setIsUnfinalizing(true);
     try {
-      const result = await unfinalize();
-      if (!result.ok) throw new Error(result.error || 'Gagal reset finalisasi');
-      toast.success(`Berhasil mereset finalisasi ${praktikum?.nama}.`);
+      const res = await unfinalizeModul(Number(selectedModul));
+      if (res.ok) {
+        setShowUnfinalize(false);
+      }
     } catch (err: any) {
-      toast.error(err.message ?? 'Gagal reset finalisasi');
+      toast.error(err.message || 'Gagal mereset finalisasi');
     } finally {
       setIsUnfinalizing(false);
-      setShowUnfinalize(false);
     }
   }
 
@@ -315,8 +339,20 @@ export default function PelanggaranDetailClient({
     window.location.href = `/api/pelanggaran/export?${params}`;
   }
 
+  if (!mounted) {
+    return (
+      <div className="container py-8 space-y-6">
+        <div className="flex justify-between items-center">
+          <Skeleton className="h-10 w-64" />
+          <Skeleton className="h-10 w-32" />
+        </div>
+        <Skeleton className="h-[400px] w-full" />
+      </div>
+    );
+  }
+
   return (
-    <div className="container">
+    <div className="container py-8 space-y-8">
       {/* Delete confirmation dialog */}
       <AlertDialog
         open={!!violationToDelete}
@@ -343,29 +379,106 @@ export default function PelanggaranDetailClient({
         </AlertDialogContent>
       </AlertDialog>
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => router.push('/pelanggaran')}>
-            <ArrowLeft />
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => router.push('/pelanggaran')}
+            className="hover:bg-accent/50"
+          >
+            <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
-            <h1 className="title-gradient text-3xl font-bold">{praktikum?.nama}</h1>
-            <p className="text-muted-foreground text-sm">
-              {praktikum?.tahun_ajaran} · {violations.length} pelanggaran
+            <div className="flex items-center gap-2">
+              <h1 className="title-gradient text-3xl font-bold">{praktikum?.nama ?? 'Detail Praktikum'}</h1>
+              {isFinalized && (
+                <Badge className="bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/10 border-emerald-200/50 gap-1.5 py-0.5 px-2">
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  Finalized
+                </Badge>
+              )}
+            </div>
+            <p className="text-muted-foreground mt-1">
+              {praktikum?.tahun_ajaran} · Detail log pelanggaran per asisten
             </p>
           </div>
         </div>
-        {!isFinalized && (
+
+        <div className="flex items-center gap-2">
+          {/* Module Selector */}
+          <Select value={selectedModul} onValueChange={setSelectedModul}>
+            <SelectTrigger className="w-[180px] h-9 bg-background/50 backdrop-blur-sm border-white/20">
+              <SelectValue placeholder="Pilih Modul" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectLabel>Daftar Modul</SelectLabel>
+                {Array.from({ length: 14 }, (_, i) => {
+                  const m = i + 1;
+                  const isModulFinal = finalizedModules.includes(m);
+                  return (
+                    <SelectItem key={m} value={String(m)}>
+                      <div className="flex items-center gap-2">
+                        <span>Modul {m}</span>
+                        {isModulFinal && <Lock className="h-3 w-3 text-muted-foreground" />}
+                      </div>
+                    </SelectItem>
+                  );
+                })}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+
+          {!isFinalized && role !== 'ASPRAK_KOOR' && (
+            <Button
+              onClick={() => setIsAddOpen(true)}
+              size="sm"
+              className="h-9 gap-2 shadow-sm"
+              disabled={loading}
+            >
+              <Plus className="h-4 w-4" />
+              <span>Catat Pelanggaran</span>
+            </Button>
+          )}
+
+          {canFinalize && (
+            <Button
+              onClick={() => setShowFinalize(true)}
+              size="sm"
+              variant="outline"
+              className="h-9 gap-2 border-emerald-200 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-300"
+              disabled={loading}
+            >
+              <CheckCircle2 className="h-4 w-4" />
+              <span>Finalisasi Modul {selectedModul}</span>
+            </Button>
+          )}
+
+          {isFinalized && role === 'ADMIN' && (
+            <Button
+              onClick={() => setShowUnfinalize(true)}
+              size="sm"
+              variant="outline"
+              className="h-9 gap-2 text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700"
+              disabled={loading}
+            >
+              <RotateCcw className="h-4 w-4" />
+              <span>Reset Finalisasi</span>
+            </Button>
+          )}
+
           <Button
-            onClick={() => setIsAddOpen(true)}
+            variant="outline"
             size="sm"
-            className="gap-1.5"
-            disabled={loading}
+            onClick={handleExport}
+            className="h-9 gap-2 border-primary/20 hover:border-primary/40"
+            disabled={loading || violations.length === 0}
           >
-            <Plus className="h-4 w-4" />
-            Catat Pelanggaran
+            <Download className="h-4 w-4" />
+            <span>Export</span>
           </Button>
-        )}
+        </div>
       </div>
 
       {/* Search filter */}
@@ -382,44 +495,6 @@ export default function PelanggaranDetailClient({
         <div className="flex items-center gap-2">
           {loading && (
             <div className="h-4 w-4 rounded-full border-2 border-primary border-t-transparent animate-spin mr-2" />
-          )}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleExport}
-            className="gap-1.5"
-            disabled={loading}
-          >
-            <Download className="h-4 w-4" /> Export
-          </Button>
-          {canFinalize && (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setShowFinalize(true)}
-              className="gap-1.5"
-              disabled={loading}
-            >
-              <Lock className="h-3.5 w-3.5" /> Finalisasi
-            </Button>
-          )}
-          {isFinalized && (
-            <div className="flex items-center gap-2">
-              <Badge className="gap-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                <CheckCircle2 className="h-3 w-3" /> Terfinalisasi
-              </Badge>
-              {role === 'ADMIN' && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setShowUnfinalize(true)}
-                  className="gap-1.5 text-orange-600 border-orange-200 hover:bg-orange-50 hover:text-orange-700"
-                  disabled={loading}
-                >
-                  <RotateCcw className="h-3.5 w-3.5" /> Reset Finalisasi
-                </Button>
-              )}
-            </div>
           )}
         </div>
       </div>
@@ -544,59 +619,6 @@ export default function PelanggaranDetailClient({
         </div>
       </div>
 
-      {/* Finalize dialog */}
-      <AlertDialog open={showFinalize} onOpenChange={(o) => !o && setShowFinalize(false)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Finalisasi Pelanggaran</AlertDialogTitle>
-            <AlertDialogDescription>
-              Anda akan memfinalisasi semua pelanggaran untuk{' '}
-              <strong>
-                {praktikum?.nama} ({praktikum?.tahun_ajaran})
-              </strong>
-              . Setelah difinalisasi, data tidak dapat diubah lagi.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isFinalizing}>Batal</AlertDialogCancel>
-            <AlertDialogAction
-              variant={'destructive'}
-              onClick={handleFinalize}
-              disabled={isFinalizing}
-            >
-              {isFinalizing ? 'Memfinalisasi...' : 'Ya, Finalisasi'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Reset Finalize dialog */}
-      <AlertDialog open={showUnfinalize} onOpenChange={(o) => !o && setShowUnfinalize(false)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Reset Finalisasi Pelanggaran</AlertDialogTitle>
-            <AlertDialogDescription>
-              Apakah Anda yakin ingin mereset finalisasi untuk{' '}
-              <strong>
-                {praktikum?.nama} ({praktikum?.tahun_ajaran})
-              </strong>
-              ? Data pelanggaran akan menjadi aktif kembali dan perubahan dapat dilakukan.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isUnfinalizing}>Batal</AlertDialogCancel>
-            <AlertDialogAction
-              variant={'destructive'}
-              onClick={handleUnfinalize}
-              disabled={isUnfinalizing}
-            >
-              {isUnfinalizing ? 'Mereset...' : 'Ya, Reset Finalisasi'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Add Modal */}
       <PelanggaranAddModal
         open={isAddOpen}
         onClose={() => setIsAddOpen(false)}
@@ -606,7 +628,60 @@ export default function PelanggaranDetailClient({
         tahunAjaranList={praktikum ? [praktikum.tahun_ajaran] : []}
         asprakList={asprakList}
         jadwalList={jadwalList}
+        initialTahunAjaran={praktikum?.tahun_ajaran}
+        initialPraktikumId={praktikum?.id}
       />
+
+      {/* AlertDialogs for Module Finalization */}
+      <AlertDialog open={showFinalize} onOpenChange={setShowFinalize}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Finalisasi Modul {selectedModul}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tindakan ini akan mengunci semua data pelanggaran pada modul ini. 
+              Pastikan data sudah benar.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isFinalizing}>Batal</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleFinalize();
+              }}
+              disabled={isFinalizing}
+              className="bg-emerald-600 hover:bg-emerald-700 font-medium"
+            >
+              {isFinalizing ? 'Memproses...' : 'Finalisasi'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={showUnfinalize} onOpenChange={setShowUnfinalize}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reset Finalisasi Modul {selectedModul}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tindakan ini akan membuka kembali penguncian data pada modul ini. 
+              Gunakan hanya jika diperlukan perbaikan data.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isUnfinalizing}>Batal</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleUnfinalize();
+              }}
+              disabled={isUnfinalizing}
+              className="bg-amber-600 hover:bg-amber-700 font-medium"
+            >
+              {isUnfinalizing ? 'Memproses...' : 'Reset'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

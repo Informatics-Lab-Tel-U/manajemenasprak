@@ -46,6 +46,19 @@ export async function GET(req: Request) {
       return NextResponse.json({ ok: true, data: jadwalList });
     }
 
+    // Check for 'summary' BEFORE the generic tahunAjaran filter
+    if (action === 'summary') {
+      await requireRole(['ADMIN', 'ASLAB']);
+      if (!tahunAjaran) {
+        return NextResponse.json({ ok: false, error: 'Missing tahunAjaran' }, { status: 400 });
+      }
+      const minCount = searchParams.get('minCount') ? Number(searchParams.get('minCount')) : 1;
+      const modulParam = searchParams.get('modul') ? Number(searchParams.get('modul')) : undefined;
+      
+      const summary = await pelanggaranService.getPelanggaranSummary(tahunAjaran, modulParam, minCount, supabase);
+      return NextResponse.json({ ok: true, data: summary });
+    }
+
     // Use already declared search parameters if no action above matched
     const finalIdPraktikum = idPraktikum || undefined;
     const finalTahunAjaran = tahunAjaran || undefined;
@@ -122,6 +135,35 @@ export async function POST(req: Request) {
 
         return NextResponse.json({ ok: true });
       }
+
+    if (action === 'finalize-modul') {
+      const { id_praktikum, modul } = body;
+      if (!id_praktikum || modul === undefined) {
+        return NextResponse.json({ ok: false, error: 'Missing id_praktikum or modul' }, { status: 400 });
+      }
+      await pelanggaranService.finalizePelanggaranByModul(id_praktikum, Number(modul), user.id);
+      
+      const { createAuditLog } = await import('@/services/server/auditLogService');
+      await createAuditLog('Pelanggaran', id_praktikum, 'FINALIZE_MODUL', { modul: Number(modul) });
+      
+      return NextResponse.json({ ok: true });
+    }
+
+    if (action === 'unfinalize-modul') {
+      if (user.pengguna.role !== 'ADMIN') {
+        return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 403 });
+      }
+      const { id_praktikum, modul } = body;
+      if (!id_praktikum || modul === undefined) {
+        return NextResponse.json({ ok: false, error: 'Missing id_praktikum or modul' }, { status: 400 });
+      }
+      await pelanggaranService.unfinalizePelanggaranByModul(id_praktikum, Number(modul));
+
+      const { createAuditLog } = await import('@/services/server/auditLogService');
+      await createAuditLog('Pelanggaran', id_praktikum, 'UNFINALIZE_MODUL', { modul: Number(modul) });
+
+      return NextResponse.json({ ok: true });
+    }
 
     // --- Create single or multiple pelanggaran ---
     const { id_asprak, id_jadwal, jenis, modul } = body;

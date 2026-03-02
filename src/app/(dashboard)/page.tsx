@@ -5,11 +5,13 @@ import DashboardClient from '@/components/DashboardClient';
 export const revalidate = 0;
 
 export default async function Home() {
-  // Fetch initial data on server
-  const [initialStats, initialSchedule, initialTerms] = await Promise.all([
-    getStats(), // You might want to pass a default term if logic requires, but service handles default
-    getTodaySchedule(100), // Get all for today
-    fetchAvailableTerms(),
+  // Fetch terms first so we can use the latest term for all other queries
+  const initialTerms = await fetchAvailableTerms();
+  const latestTerm = initialTerms[0] ?? '';
+
+  const [initialStats, initialSchedule] = await Promise.all([
+    getStats(latestTerm),
+    getTodaySchedule(100, latestTerm),
   ]);
 
   return (

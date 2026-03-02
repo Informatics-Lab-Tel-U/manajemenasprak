@@ -1,6 +1,6 @@
 import type { Pelanggaran, Praktikum, Jadwal } from '@/types/database';
 import type { ServiceResult, CreatePelanggaranInput } from '@/types/api';
-import type { PelanggaranCountMap } from '@/services/pelanggaranService';
+import type { PelanggaranCountMap, PelanggaranSummaryEntry } from '@/services/pelanggaranService';
 
 export async function fetchAllPelanggaran(): Promise<ServiceResult<Pelanggaran[]>> {
   try {
@@ -138,6 +138,74 @@ export async function unfinalizePelanggaran(idPraktikum: string): Promise<Servic
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'unfinalize', id_praktikum: idPraktikum }),
+    });
+    const result = await res.json();
+    return result;
+  } catch (error: any) {
+    return { ok: false, error: error.message };
+  }
+}
+
+export async function fetchFinalizedModules(idPraktikum: string): Promise<ServiceResult<number[]>> {
+  try {
+    const res = await fetch(`/api/pelanggaran?action=finalized-modules&idPraktikum=${idPraktikum}`);
+    const result = await res.json();
+    return result;
+  } catch (error: any) {
+    return { ok: false, error: error.message };
+  }
+}
+
+export async function finalizePelanggaranByModul(
+  idPraktikum: string,
+  modul: number
+): Promise<ServiceResult<void>> {
+  try {
+    const res = await fetch('/api/pelanggaran', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'finalize-modul', id_praktikum: idPraktikum, modul }),
+    });
+    const result = await res.json();
+    return result;
+  } catch (error: any) {
+    return { ok: false, error: error.message };
+  }
+}
+
+export async function unfinalizePelanggaranByModul(
+  idPraktikum: string,
+  modul: number
+): Promise<ServiceResult<void>> {
+  try {
+    const res = await fetch('/api/pelanggaran', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'unfinalize-modul', id_praktikum: idPraktikum, modul }),
+    });
+    const result = await res.json();
+    return result;
+  } catch (error: any) {
+    return { ok: false, error: error.message };
+  }
+}
+
+export async function fetchPelanggaranSummary(
+  tahunAjaran: string,
+  modul?: number,
+  minCount: number = 1
+): Promise<ServiceResult<PelanggaranSummaryEntry[]>> {
+  try {
+    const url = new URL('/api/pelanggaran', window.location.origin);
+    url.searchParams.append('action', 'summary');
+    url.searchParams.append('tahunAjaran', tahunAjaran);
+    if (modul) url.searchParams.append('modul', String(modul));
+    if (minCount > 1) url.searchParams.append('minCount', String(minCount));
+
+    const res = await fetch(url.toString(), {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      cache: 'no-store',
     });
     const result = await res.json();
     return result;

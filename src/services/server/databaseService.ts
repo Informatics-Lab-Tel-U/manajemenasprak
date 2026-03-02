@@ -3,18 +3,27 @@ import { DashboardStats } from '@/services/databaseService'; // Import interface
 
 export async function getStats(initialTerm?: string): Promise<DashboardStats> {
   const supabase = await createClient();
-  initialTerm = initialTerm || '2425-1';
-  
+
+  // If no term provided, fetch the latest one dynamically
+  if (!initialTerm) {
+    const { data: termData } = await supabase
+      .from('praktikum')
+      .select('tahun_ajaran')
+      .order('tahun_ajaran', { ascending: false })
+      .limit(1)
+      .single();
+    initialTerm = termData?.tahun_ajaran || '';
+  }
+
   const [asprakRes, jadwalRes, pelanggaranRes, asprakRaw, jadwalRaw] = await Promise.all([
     supabase
       .from('asprak_praktikum')
       .select(
-        `*, 
+        `id_asprak, 
           praktikum:praktikum!inner (
               tahun_ajaran
         )
-        `,
-        { count: 'exact', head: true }
+        `
       )
       .eq('praktikum.tahun_ajaran', initialTerm),
     supabase
@@ -75,8 +84,10 @@ export async function getStats(initialTerm?: string): Promise<DashboardStats> {
   });
   const jadwalByDay = Object.entries(jadwalMap).map(([name, count]) => ({ name, count }));
 
+  const uniqueAsprakIds = new Set((asprakRes.data as any[])?.map((d) => d.id_asprak));
+
   return {
-    asprakCount: asprakRes.count || 0,
+    asprakCount: uniqueAsprakIds.size,
     jadwalCount: jadwalRes.count || 0,
     pelanggaranCount: pelanggaranRes.count || 0,
     asprakByAngkatan,

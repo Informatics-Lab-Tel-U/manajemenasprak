@@ -375,3 +375,211 @@ export async function unfinalizePelanggaranByPraktikum(idPraktikum: string): Pro
     throw new Error(`Gagal mereset finalisasi pelanggaran: ${error.message}`);
   }
 }
+
+/**
+ * Finalize all pelanggaran for a specific praktikum and modul.
+ */
+export async function finalizePelanggaranByModul(
+  idPraktikum: string,
+  modul: number,
+  finalizedBy: string
+): Promise<void> {
+  const supabase = globalAdmin;
+
+  // Get all mata_kuliah IDs for this praktikum
+  const { data: mks, error: mkError } = await supabase
+    .from('mata_kuliah')
+    .select('id')
+    .eq('id_praktikum', idPraktikum);
+
+  if (mkError) throw new Error(`Gagal mengambil mata kuliah: ${mkError.message}`);
+  const mkIds = (mks || []).map((m: any) => m.id);
+  if (mkIds.length === 0) return;
+
+  // Get all jadwal IDs for these mata_kuliah
+  const { data: jadwals, error: jadwalError } = await supabase
+    .from('jadwal')
+    .select('id')
+    .in('id_mk', mkIds);
+
+  if (jadwalError) throw new Error(`Gagal mengambil jadwal: ${jadwalError.message}`);
+  const jadwalIds = (jadwals || []).map((j: any) => j.id);
+  if (jadwalIds.length === 0) return;
+
+  const { error } = await supabase
+    .from('pelanggaran')
+    .update({
+      is_final: true,
+      finalized_at: new Date().toISOString(),
+      finalized_by: finalizedBy,
+    })
+    .in('id_jadwal', jadwalIds)
+    .eq('modul', modul)
+    .eq('is_final', false);
+
+  if (error) {
+    logger.error('Error finalizing pelanggaran modul:', error);
+    throw new Error(`Gagal memfinalisasi pelanggaran modul: ${error.message}`);
+  }
+}
+
+/**
+ * Get list of finalized modules for a praktikum.
+ */
+export async function getFinalizedModules(idPraktikum: string): Promise<number[]> {
+  const supabase = globalAdmin;
+
+  const { data: mks } = await supabase
+    .from('mata_kuliah')
+    .select('id')
+    .eq('id_praktikum', idPraktikum);
+
+  const mkIds = (mks || []).map((m: any) => m.id);
+  if (mkIds.length === 0) return [];
+
+  const { data: jadwals } = await supabase.from('jadwal').select('id').in('id_mk', mkIds);
+
+  const jadwalIds = (jadwals || []).map((j: any) => j.id);
+  if (jadwalIds.length === 0) return [];
+
+  // A module is considered finalized if all violations in it are final, 
+  // AND there is at least one violation OR we have a better way to track it.
+  // In our scheme, we only track finalization ON the violations themselves.
+  // Requirement: "jika sudah terfinalisasi, tampilkan juga di dropdown modul mana yg sudah terfinalisasi"
+  // Since we don't have a "ModuleStatus" table, we check if violations exist and are all final for that modul.
+  
+  const { data: violations } = await supabase
+    .from('pelanggaran')
+    .select('modul, is_final')
+    .in('id_jadwal', jadwalIds);
+
+  if (!violations || violations.length === 0) return [];
+
+  const moduleStatus = new Map<number, { allFinal: boolean }>();
+  for (const v of violations) {
+    if (!moduleStatus.has(v.modul)) {
+      moduleStatus.set(v.modul, { allFinal: true });
+    }
+    if (!v.is_final) {
+      moduleStatus.get(v.modul)!.allFinal = false;
+    }
+  }
+
+  return Array.from(moduleStatus.entries())
+    .filter(([_, status]) => status.allFinal)
+    .map(([modul]) => modul);
+}
+
+/**
+ * Unfinalize (reset) all pelanggaran for a specific praktikum and modul.
+ */
+export async function unfinalizePelanggaranByModul(
+  idPraktikum: string,
+  modul: number
+): Promise<void> {
+  const supabase = globalAdmin;
+
+  // Get all mata_kuliah IDs for this praktikum
+  const { data: mks, error: mkError } = await supabase
+    .from('mata_kuliah')
+    .select('id')
+    .eq('id_praktikum', idPraktikum);
+
+  if (mkError) throw new Error(`Gagal mengambil mata kuliah: ${mkError.message}`);
+  const mkIds = (mks || []).map((m: any) => m.id);
+  if (mkIds.length === 0) return;
+
+  // Get all jadwal IDs for these mata_kuliah
+  const { data: jadwals, error: jadwalError } = await supabase
+    .from('jadwal')
+    .select('id')
+    .in('id_mk', mkIds);
+
+  if (jadwalError) throw new Error(`Gagal mengambil jadwal: ${jadwalError.message}`);
+  const jadwalIds = (jadwals || []).map((j: any) => j.id);
+  if (jadwalIds.length === 0) return;
+
+  const { error } = await supabase
+    .from('pelanggaran')
+    .update({
+      is_final: false,
+      finalized_at: null,
+      finalized_by: null,
+    })
+    .in('id_jadwal', jadwalIds)
+    .eq('modul', modul)
+    .eq('is_final', true);
+
+  if (error) {
+    logger.error('Error unfinalizing pelanggaran modul:', error);
+    throw new Error(`Gagal mereset finalisasi pelanggaran modul: ${error.message}`);
+  }
+}
+
+/**
+ * Summary entry for aggregated violation reports.
+ */
+export type PelanggaranSummaryEntry = {
+  id_asprak: string;
+  nama_asprak: string;
+  kode_asprak: string;
+  nim_asprak: string;
+  total_pelanggaran: number;
+  violations: Pelanggaran[];
+};
+
+/**
+ * Get aggregated summary of violations across all asprak for a given year/module.
+ */
+export async function getPelanggaranSummary(
+  tahunAjaran: string,
+  modul?: number,
+  minCount: number = 1,
+  supabaseClient?: SupabaseClient
+): Promise<PelanggaranSummaryEntry[]> {
+  const supabase = supabaseClient || globalAdmin;
+
+  let query = supabase
+    .from('pelanggaran')
+    .select(PELANGGARAN_SELECT);
+
+  if (modul) {
+    query = query.eq('modul', modul);
+  }
+
+  const { data, error } = await query;
+  if (error) {
+    logger.error('Error fetching violation summary:', error);
+    return [];
+  }
+
+  // Client-side filter for tahun_ajaran as it's deep in relations
+  const violations = (data as Pelanggaran[]).filter((p) => {
+    const mk = p.jadwal?.mata_kuliah as any;
+    return mk?.praktikum?.tahun_ajaran === tahunAjaran;
+  });
+
+  const summaryMap = new Map<string, PelanggaranSummaryEntry>();
+
+  for (const v of violations) {
+    const asprakId = v.id_asprak;
+    if (!asprakId) continue;
+    if (!summaryMap.has(asprakId)) {
+      summaryMap.set(asprakId, {
+        id_asprak: asprakId,
+        nama_asprak: v.asprak?.nama_lengkap ?? '—',
+        kode_asprak: v.asprak?.kode ?? '—',
+        nim_asprak: v.asprak?.nim ?? '—',
+        total_pelanggaran: 0,
+        violations: [],
+      });
+    }
+    const entry = summaryMap.get(asprakId)!;
+    entry.total_pelanggaran += 1;
+    entry.violations.push(v);
+  }
+
+  return Array.from(summaryMap.values())
+    .filter((entry) => entry.total_pelanggaran >= minCount)
+    .sort((a, b) => b.total_pelanggaran - a.total_pelanggaran);
+}
