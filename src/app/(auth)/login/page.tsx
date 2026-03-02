@@ -5,13 +5,13 @@ import Image from 'next/image';
 
 export default function Page() {
   return (
-    <div className="flex min-h-svh w-full items-center justify-center">
-      <div className="w-full h-dvh relative">
+    <div className="md:flex md:min-h-svh w-full items-center justify-center ">
+      <div className="w-full md:h-dvh relative">
         <LightWavesBackground />
         <div className="flex flex-col h-full">
           <h2 className="w-full p-6 text-xl font-semibold">Informatics Laboratory</h2>
           <div className=" h-full flex items-center justify-center">
-            <div className="size-52 relative p-12 rounded-lg">
+            <div className="size-[8vh] md:size-52 relative p-12 rounded-lg">
               <Image
                 src="/iflab.png"
                 alt="Informatics Laboratory"
@@ -22,8 +22,8 @@ export default function Page() {
           </div>
         </div>
       </div>
-      <div className="w-full h-dvh bg-background flex items-center justify-center">
-        <div className="w-[50%]">
+      <div className="w-full md:h-dvh bg-background flex md:items-center justify-center">
+        <div className="p-6 md:w-[50%]">
           <Suspense>
             <LoginForm />
           </Suspense>
