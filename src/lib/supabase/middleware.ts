@@ -38,31 +38,37 @@ export async function updateSession(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
-  if (!pathname.startsWith('/api/auth') && !isPublicPath(pathname)) {
-    const { data: maintenanceConfig } = await supabase
-      .from('system_config')
-      .select('value_bool')
-      .eq('key', 'maintenance_mode')
-      .single();
+  // 1. Check Maintenance Mode
+  const { data: maintenanceConfig } = await supabase
+    .from('system_config')
+    .select('value_bool')
+    .eq('key', 'maintenance_mode')
+    .single();
+  const isMaintenanceMode = !!maintenanceConfig?.value_bool;
 
-    if (maintenanceConfig?.value_bool) {
-      if (user) {
-        const { data: pengguna } = await supabase
-          .from('pengguna')
-          .select('role')
-          .eq('id', user.id)
-          .single();
+  // 2. Redirect away from /maintenance if mode is OFF
+  if (!isMaintenanceMode && pathname === '/maintenance') {
+    const url = request.nextUrl.clone();
+    url.pathname = '/';
+    return NextResponse.redirect(url);
+  }
 
-        if (pengguna?.role !== 'ADMIN') {
-          const url = request.nextUrl.clone();
-          url.pathname = '/maintenance';
-          return NextResponse.redirect(url);
-        }
-      } else {
-        const url = request.nextUrl.clone();
-        url.pathname = '/maintenance';
-        return NextResponse.redirect(url);
-      }
+  // 3. Redirect to /maintenance if mode is ON (except for ADMINs & login page)
+  if (isMaintenanceMode && !pathname.startsWith('/api/auth')) {
+    let isAdmin = false;
+    if (user) {
+      const { data: pengguna } = await supabase
+        .from('pengguna')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+      isAdmin = pengguna?.role === 'ADMIN';
+    }
+
+    if (!isAdmin && pathname !== '/maintenance' && pathname !== '/login') {
+      const url = request.nextUrl.clone();
+      url.pathname = '/maintenance';
+      return NextResponse.redirect(url);
     }
   }
 
