@@ -49,7 +49,7 @@ export default function DashboardCharts({
   const todayDate = new Date();
   const days = ['MINGGU', 'SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU'];
   const currentDayName = days[todayDate.getDay()];
-  const currentDaySessions = STATIC_SESSIONS[currentDayName] || [];
+
 
   const uniqueRooms = useMemo(() => {
     // We can use the global ROOMS constant or derive from today's schedule
@@ -83,6 +83,14 @@ export default function DashboardCharts({
     });
     return matrix;
   }, [filteredSchedule]);
+
+  const allSessions = STATIC_SESSIONS[currentDayName] || [];
+  const visibleSessions = useMemo(() => {
+    if (allSessions.length === 0) return allSessions;
+    const lastSession = allSessions[allSessions.length - 1];
+    const hasLastSessionSchedule = scheduleMatrix[lastSession.sesi] !== undefined;
+    return hasLastSessionSchedule ? allSessions : allSessions.slice(0, -1);
+  }, [allSessions, scheduleMatrix]);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -144,20 +152,20 @@ export default function DashboardCharts({
                   </tr>
                 </thead>
                 <tbody>
-                  {currentDaySessions.map((session) => (
+                  {visibleSessions.map((session, sessionIndex) => (
                     <tr
-                      key={session.sesi}
+                      key={session.sesi ?? sessionIndex + 1}
                       className="hover:bg-muted/30 transition-colors border-b border-border/50"
                     >
                       <td className="p-2 border-r border-border text-center font-medium text-muted-foreground text-xs">
-                        <div className="font-bold">Sesi {session.sesi}</div>
+                        <div className="font-bold">Sesi {session.sesi ?? sessionIndex + 1}</div>
                         <div className="text-[10px] opacity-80">{session.jam}</div>
                       </td>
                       {uniqueRooms.map((room) => {
-                        const jadwal = scheduleMatrix[session.sesi]?.[room];
+                        const jadwal = scheduleMatrix[session.sesi ?? sessionIndex + 1]?.[room];
                         return (
                           <td
-                            key={`${session.sesi}-${room}`}
+                            key={`${session.sesi ?? sessionIndex + 1}-${room}`}
                             className="p-0 border-r border-border h-[60px] w-[120px] relative"
                           >
                             {jadwal ? (
