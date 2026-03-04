@@ -176,7 +176,7 @@ export default function AsprakImportCSVModal({
       const updated = [...prev];
       const row = { ...updated[rowIndex] };
       // Only toggle if not disabled
-      if (row.status !== 'error' && row.status !== 'duplicate-csv') {
+      if (row.status !== 'error' && row.status !== 'duplicate-csv' && row.status !== 'warning') {
         row.selected = !row.selected;
         updated[rowIndex] = row;
       }
@@ -188,7 +188,7 @@ export default function AsprakImportCSVModal({
     setPreviewRows((prev) => {
       return prev.map((row) => {
         // Only modify selectable rows
-        if (row.status !== 'error' && row.status !== 'duplicate-csv') {
+        if (row.status !== 'error' && row.status !== 'duplicate-csv' && row.status !== 'warning') {
           return { ...row, selected: checked };
         }
         return row;
