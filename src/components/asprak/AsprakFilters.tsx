@@ -16,6 +16,7 @@ interface AsprakFiltersProps {
   selectedTerm: string;
   onTermChange: (term: string) => void;
   hideSearch?: boolean;
+  hideAllOption?: boolean;
 }
 
 export default function AsprakFilters({
@@ -25,6 +26,7 @@ export default function AsprakFilters({
   selectedTerm,
   onTermChange,
   hideSearch = false,
+  hideAllOption = false,
 }: AsprakFiltersProps) {
   return (
     <div className={`flex flex-col sm:flex-row gap-4 border-border items-center ${hideSearch ? 'justify-end' : ''}`}>
@@ -51,7 +53,7 @@ export default function AsprakFilters({
           </SelectTrigger>
           <SelectContent>
             <SelectGroup>
-              <SelectItem value="all">Semua Angkatan</SelectItem>
+              {!hideAllOption && <SelectItem value="all">Semua Angkatan</SelectItem>}
               {terms.map((term) => (
                 <SelectItem key={term} value={term}>
                   {term}

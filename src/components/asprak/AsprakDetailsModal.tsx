@@ -4,6 +4,8 @@ import { useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Button } from '@/components/ui/button';
+import { Pencil, Trash } from 'lucide-react';
 
 interface AsprakWithAssignments extends Asprak {
   assignments?: AsprakAssignment[];
@@ -12,6 +14,8 @@ interface AsprakWithAssignments extends Asprak {
 interface AsprakDetailsModalProps {
   asprak: AsprakWithAssignments;
   loading: boolean;
+  onEdit: (asprak: Asprak) => void;
+  onDelete: (asprak: Asprak) => void;
   onClose: () => void;
   open: boolean;
 }
@@ -19,6 +23,8 @@ interface AsprakDetailsModalProps {
 export default function AsprakDetailsModal({
   asprak,
   loading,
+  onEdit,
+  onDelete,
   onClose,
   open,
 }: AsprakDetailsModalProps) {
@@ -96,6 +102,32 @@ export default function AsprakDetailsModal({
               </div>
             </div>
           </ScrollArea>
+          <div className="border-t px-6 py-4 bg-muted/10 flex justify-between items-center rounded-b-lg">
+            <Button
+              variant="destructive"
+              onClick={() => {
+                onClose();
+                onDelete(asprak);
+              }}
+            >
+              <Trash size={16} className="mr-2" />
+              Hapus
+            </Button>
+            <div className="flex gap-2 items-center">
+              <Button variant="outline" onClick={onClose}>
+                Tutup
+              </Button>
+              <Button
+                onClick={() => {
+                  onClose();
+                  onEdit(asprak);
+                }}
+              >
+                <Pencil size={16} className="mr-2" />
+                Edit
+              </Button>
+            </div>
+          </div>
         </DialogHeader>
       </DialogContent>
     </Dialog>

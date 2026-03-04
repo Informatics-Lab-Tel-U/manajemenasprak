@@ -289,8 +289,10 @@ export default function JadwalPage() {
       >();
 
       staticForDay.forEach((s) => {
-        const rowKey = s.sesi !== null && s.sesi !== undefined ? s.sesi.toString() : s.jam;
-        sessionsAsKeys.set(rowKey, { sesi: s.sesi, jam: s.jam, rowKey });
+        if (s.sesi !== 5) {
+          const rowKey = s.sesi !== null && s.sesi !== undefined ? s.sesi.toString() : s.jam;
+          sessionsAsKeys.set(rowKey, { sesi: s.sesi, jam: s.jam, rowKey });
+        }
       });
 
       const daySchedules = jadwalList.filter((j) => j.hari?.toUpperCase() === day);
@@ -529,7 +531,7 @@ export default function JadwalPage() {
                                       {jadwal.kelas}
                                     </div>
                                     <div className="text-[8px] sm:text-[9px] text-white/80 truncate px-1">
-                                      {(jadwal.dosen || '-').split(' ')[0]}
+                                      {jadwal.total_asprak || 0} asprak
                                     </div>
                                   </div>
                                 </div>

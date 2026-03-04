@@ -129,7 +129,7 @@ export function validateAsprakData(
       originalKode: finalDisplayKode,
       originalCodeRule: finalCodeRule,
       originalCodeSource: finalCodeSource,
-      selected: finalStatus === 'ok' || finalStatus === 'warning',
+      selected: finalStatus === 'ok',
     });
   }
 
@@ -193,7 +193,7 @@ export function validateAsprakCodeEdit(
       }
     }
 
-    if (row.status === 'ok' || row.status === 'warning') {
+    if (row.status === 'ok') {
       if (!row.selected) row.selected = true;
     } else {
       row.selected = false;

@@ -68,8 +68,8 @@ export default function AsprakCSVPreview({
   const totalManualEdit = rows.filter((r) => r.codeRule === 'Manual edit' && (r.status === 'ok' || r.status === 'warning')).length;
   const totalFromCSV = rows.filter((r) => r.codeSource === 'csv' && r.codeRule !== 'Manual edit' && r.status === 'ok').length;
   
-  // Count selectable rows (OK or Warning)
-  const selectableRows = rows.filter(r => r.status === 'ok' || r.status === 'warning');
+  // Count selectable rows (OK)
+  const selectableRows = rows.filter(r => r.status === 'ok');
   const selectedCount = selectableRows.filter(r => r.selected).length;
   const allSelected = selectableRows.length > 0 && selectedCount === selectableRows.length;
   const isIndeterminate = selectedCount > 0 && selectedCount < selectableRows.length;
@@ -195,7 +195,7 @@ export default function AsprakCSVPreview({
                 const isDuplicateDB = row.status === 'error' && row.statusMessage?.includes('Duplikat');
                 const isDuplicateCSV = row.status === 'duplicate-csv';
                 const isDuplicate = isDuplicateDB || isDuplicateCSV;
-                const isDisabled = row.status === 'error' || row.status === 'duplicate-csv';
+                const isDisabled = row.status === 'error' || row.status === 'duplicate-csv' || row.status === 'warning';
                 
                 return (
                 <tr
@@ -205,14 +205,14 @@ export default function AsprakCSVPreview({
                     ${isDuplicateDB ? 'bg-red-500/10' : ''}
                     ${isDuplicateCSV ? 'bg-orange-500/10' : ''}
                     ${row.status === 'error' && !isDuplicate ? 'bg-red-500/5' : ''}
-                    ${row.status === 'warning' ? 'bg-amber-500/5' : ''}
+                    ${row.status === 'warning' ? 'bg-amber-500/10 opacity-75' : ''}
                     ${!isDisabled && row.selected ? 'bg-muted/40' : ''}
                     hover:bg-muted/60
                   `}
                 >
                   <td className="px-3 py-2 text-center">
                     <Checkbox 
-                      checked={row.selected}
+                      checked={row.selected && !isDisabled}
                       onCheckedChange={() => onToggleSelect(idx)}
                       disabled={isDisabled}
                       className={isDisabled ? "opacity-50 cursor-not-allowed" : ""}

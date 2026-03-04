@@ -17,7 +17,7 @@ import PraktikumDetailsModal from '@/components/praktikum/PraktikumDetailsModal'
 import { PraktikumWithStats } from '@/services/praktikumService';
 
 function PraktikumPageContent() {
-  const { terms, selectedTerm, setSelectedTerm } = useAsprak();
+  const { terms, selectedTerm, setSelectedTerm } = useAsprak(undefined, true);
   const { getPraktikumByTerm, bulkImport, getOrCreate, loading: praktikumLoading } = usePraktikum();
 
   const [praktikumList, setPraktikumList] = useState<PraktikumWithStats[]>([]);
@@ -29,7 +29,7 @@ function PraktikumPageContent() {
 
   useEffect(() => {
     async function fetchPraktikums() {
-      if (selectedTerm === undefined) return;
+      if (!selectedTerm) return;
 
       setLoadingList(true);
       const data = await getPraktikumByTerm(selectedTerm);
@@ -117,6 +117,7 @@ function PraktikumPageContent() {
           selectedTerm={selectedTerm}
           onTermChange={setSelectedTerm}
           hideSearch={true}
+          hideAllOption={true}
         />
 
         <div className="mt-6">
