@@ -247,10 +247,11 @@ export function generateAsprakCode(
   else if (n === 2) standardCandidates = rulesFor2Words(words);
   else standardCandidates = rulesFor3Words(words);
 
+  const rulePrefix = Math.min(n, 3);
   for (let i = 0; i < standardCandidates.length; i++) {
     const code = standardCandidates[i].toUpperCase();
     if (isValidCode(code) && !usedCodes.has(code)) {
-      return { code, rule: `Standard ${n}.${i + 1}` };
+      return { code, rule: `Standard ${rulePrefix}.${i + 1}` };
     }
   }
 
@@ -292,29 +293,36 @@ export function batchGenerateCodes(
   existingCodes: Set<string>
 ): CodeGenerationResult[] {
   const allUsed = new Set(existingCodes);
-  const results: CodeGenerationResult[] = [];
+  const results: (CodeGenerationResult | null)[] = new Array(rows.length).fill(null);
 
-  for (const row of rows) {
-    // If the row already has a valid code that's not taken, keep it
+  // ── Phase 1: Claim explicitly provided codes ──
+  // We process these first so auto-generated codes don't "steal" a code
+  // that was explicitly requested by a later row in the CSV.
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
     if (row.kode) {
       const normalized = row.kode.toUpperCase().trim();
       if (isValidCode(normalized) && !allUsed.has(normalized)) {
         allUsed.add(normalized);
-        results.push({ code: normalized, rule: 'Provided (CSV)' });
-        continue;
+        results[i] = { code: normalized, rule: 'Provided (CSV)' };
       }
-      // If code is provided but invalid or already taken, auto-generate
-    }
-
-    try {
-      const result = generateAsprakCode(row.nama_lengkap, allUsed);
-      allUsed.add(result.code);
-      results.push(result);
-    } catch {
-      // Graceful failure — code could not be generated, user must fill manually
-      results.push({ code: '', rule: 'FAILED' });
     }
   }
 
-  return results;
+  // ── Phase 2: Auto-generate the remaining rows ──
+  for (let i = 0; i < rows.length; i++) {
+    if (results[i] !== null) continue;
+
+    const row = rows[i];
+    try {
+      const result = generateAsprakCode(row.nama_lengkap, allUsed);
+      allUsed.add(result.code);
+      results[i] = result;
+    } catch {
+      // Graceful failure — code could not be generated, user must fill manually
+      results[i] = { code: '', rule: 'FAILED' };
+    }
+  }
+
+  return results as CodeGenerationResult[];
 }

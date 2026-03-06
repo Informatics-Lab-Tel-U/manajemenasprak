@@ -33,6 +33,7 @@ import { cn } from '@/lib/utils'; // Ensure utility exists or use standard class
 
 import TermInput, { buildTermString } from '@/components/asprak/TermInput';
 import MataKuliahCSVPreview, { MataKuliahCSVRow } from './MataKuliahCSVPreview';
+import { validateMataKuliahData } from '@/utils/validation/mataKuliahValidation';
 import type { MataKuliahGrouped } from '@/services/mataKuliahService';
 
 interface MataKuliahImportModalProps {
@@ -149,57 +150,7 @@ export default function MataKuliahImportModal({
             return;
           }
 
-          const transformed: MataKuliahCSVRow[] = rows.map((r: any) => {
-            const mk_singkat = r.mk_singkat?.trim() || '';
-            const nama_lengkap = r.nama_lengkap?.trim() || '';
-            const program_studi = r.program_studi?.trim() || '';
-            const dosen_koor = r.dosen_koor?.trim() || '';
-
-            // Use localValidPraktikums for validation
-            const isMkKnown = localValidPraktikums.some((p) => p.nama === mk_singkat);
-            const isProdiValid = isValidProdi(program_studi);
-            const isKoorValid = dosen_koor.length === 3;
-
-            let status: 'ok' | 'warning' | 'error' = 'ok';
-            let statusMessage = '';
-
-            // Check Duplicates
-            // existingMataKuliah is grouped by mk_singkat
-            const existingGroup = existingMataKuliah.find((g) => g.mk_singkat === mk_singkat);
-            const isDuplicate = existingGroup?.items.some(
-              (item) =>
-                item.nama_lengkap === nama_lengkap &&
-                item.program_studi === program_studi &&
-                item.dosen_koor === dosen_koor
-            );
-
-            if (isDuplicate) {
-              status = 'error';
-              statusMessage = 'Data Duplikat di Database';
-            } else if (!isKoorValid || !isProdiValid) {
-              status = 'error';
-              statusMessage = 'Data Tidak Valid (Prodi/Dosen)';
-            } else if (!isMkKnown) {
-              // Allow unknown MK - it will be created automatically by backend
-              status = 'ok';
-              statusMessage = 'Praktikum baru akan dibuat otomatis';
-            } else if (!mk_singkat || !nama_lengkap) {
-              status = 'error';
-              statusMessage = 'Field Wajib Kurang';
-            }
-
-            return {
-              mk_singkat,
-              nama_lengkap,
-              program_studi,
-              dosen_koor,
-              status,
-              statusMessage,
-              originalMkSingkat: mk_singkat,
-              selected: status !== 'error', // Default select valid rows
-            };
-          });
-
+          const transformed = validateMataKuliahData(rows, localValidPraktikums, existingMataKuliah);
           setParsedRows(transformed);
           setStep('preview');
         },

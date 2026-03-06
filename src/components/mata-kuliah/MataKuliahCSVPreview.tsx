@@ -37,6 +37,7 @@ interface MataKuliahCSVPreviewProps {
   onUpdateRow: (index: number, updates: Partial<MataKuliahCSVRow>) => void;
   onToggleSelect: (index: number) => void;
   onToggleAll: (checked: boolean) => void;
+  onSkip?: () => void;
 }
 
 export default function MataKuliahCSVPreview({
@@ -48,7 +49,8 @@ export default function MataKuliahCSVPreview({
   onBack,
   onUpdateRow,
   onToggleSelect,
-  onToggleAll
+  onToggleAll,
+  onSkip
 }: MataKuliahCSVPreviewProps) {
   const totalOk = rows.filter((r) => r.status === 'ok').length;
   const totalError = rows.filter((r) => r.status === 'error').length;
@@ -343,6 +345,11 @@ export default function MataKuliahCSVPreview({
             <span className="text-xs text-destructive font-medium mr-3 text-right hidden lg:inline-block">
               {totalError} data bermasalah & akan dilewati
             </span>
+          )}
+          {onSkip && (
+              <Button type="button" variant="secondary" onClick={onSkip} disabled={loading} className="shrink-0 min-w-[140px]">
+                 Lewati Langkah Ini
+              </Button>
           )}
           <Button onClick={onConfirm} disabled={loading || selectedCount === 0} className="shrink-0 min-w-[160px] bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm">
             <Save className="mr-2 h-4 w-4" />

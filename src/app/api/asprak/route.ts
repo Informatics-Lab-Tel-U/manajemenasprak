@@ -67,14 +67,15 @@ export async function POST(req: Request) {
         return NextResponse.json({ ok: true, data: result });
       }
       case 'update-assignments': {
-        const { asprakId, term, praktikumIds, newKode, nim } = body;
+        const { asprakId, term, praktikumIds, newKode, nim, forceOverride } = body;
         await asprakService.updateAsprakAssignments(
           asprakId,
           term,
           praktikumIds,
           supabase,
           newKode,
-          nim
+          nim,
+          forceOverride
         );
         return NextResponse.json({ ok: true, data: null });
       }

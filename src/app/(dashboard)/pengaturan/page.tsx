@@ -27,6 +27,12 @@ import { createClient } from '@/lib/supabase/client';
 import type { Role } from '@/config/rbac';
 import { toast } from 'sonner';
 
+import StepPraktikum from '@/components/pengaturan/excel-steps/StepPraktikum';
+import StepMataKuliah from '@/components/pengaturan/excel-steps/StepMataKuliah';
+import StepAsprak from '@/components/pengaturan/excel-steps/StepAsprak';
+import StepPlotting from '@/components/pengaturan/excel-steps/StepPlotting';
+import StepJadwal from '@/components/pengaturan/excel-steps/StepJadwal';
+
 import {
   Dialog,
   DialogContent,
@@ -59,6 +65,17 @@ export default function DatabasePage() {
   const [loadingMaintenance, setLoadingMaintenance] = useState(true);
   const [userRole, setUserRole] = useState<Role | null>(null);
 
+  // Wizard States
+  const [wizardStep, setWizardStep] = useState<number>(0);
+  const [excelData, setExcelData] = useState<{
+      praktikum: any[];
+      mataKuliah: any[];
+      asprak: any[];
+      plotting: any[];
+      jadwal: any[];
+  } | null>(null);
+  const [activeTerm, setActiveTerm] = useState<string>('');
+  
   const supabase = createClient();
 
   useEffect(() => {
@@ -111,9 +128,8 @@ export default function DatabasePage() {
 
       setLoading(true);
       setProgress(0);
-      setStatus({ type: 'info', message: `Memproses ${file.name} untuk angkatan: ${term}...` });
+      setStatus({ type: 'info', message: `Memproses ${file.name}...` });
 
-      // Simulate progress since we don't have real upload progress from fetch
       const interval = setInterval(() => {
         setProgress((prev) => {
           if (prev >= 90) return prev;
@@ -122,41 +138,36 @@ export default function DatabasePage() {
       }, 500);
 
       try {
-        const result = await importFetcher.uploadExcel(file, term);
+        const ab = await file.arrayBuffer();
+        const wb = XLSX.read(ab);
+        
+        // Expected Sheets: praktikum, mata_kuliah, asprak, jadwal, asprak_praktikum
+        const getSheetData = (name: string) => {
+             const sheet = wb.Sheets[name] || wb.Sheets[name.replace('_', ' ')] || null;
+             if (!sheet) return [];
+             return XLSX.utils.sheet_to_json(sheet);
+        };
+
+        const data = {
+             praktikum: getSheetData('praktikum'),
+             mataKuliah: getSheetData('mata_kuliah'),
+             asprak: getSheetData('asprak'),
+             jadwal: getSheetData('jadwal'),
+             plotting: getSheetData('asprak_praktikum')
+        };
+
+        setExcelData(data);
+        setActiveTerm(term);
+        
         clearInterval(interval);
         setProgress(100);
+        setStatus(null); // Clear status, enter wizard
+        setWizardStep(1); // Step 1: Praktikum
 
-        if (result.ok) {
-          setStatus({
-            type: 'success',
-            message: result.message || `Berhasil mengimpor ${file.name}!`,
-          });
-        } else if (result.error?.includes('CONFLICT:')) {
-          const userWantsToSkip = confirm(
-            `${result.error}\n\nApakah Anda ingin MELEWATI asprak yang konflik ini dan melanjutkan dengan yang lain?`
-          );
-          if (userWantsToSkip) {
-            setStatus({ type: 'info', message: `Mencoba ulang (Melewati Konflik)...` });
-            const retryResult = await importFetcher.uploadExcel(file, term, {
-              skipConflicts: true,
-            });
-            if (retryResult.ok) {
-              setStatus({
-                type: 'success',
-                message: `Berhasil mengimpor ${file.name} (Konflik Dilewati)!`,
-              });
-            } else {
-              setStatus({ type: 'error', message: retryResult.error || 'Gagal mencoba ulang' });
-            }
-          } else {
-            setStatus({ type: 'error', message: result.error });
-          }
-        } else {
-          setStatus({ type: 'error', message: result.error || 'Impor gagal' });
-        }
       } catch (e: any) {
         clearInterval(interval);
-        setStatus({ type: 'error', message: e.message || 'Impor gagal' });
+        setProgress(100);
+        setStatus({ type: 'error', message: e.message || 'Gagal membaca file Excel' });
       } finally {
         setLoading(false);
         setTimeout(() => setProgress(0), 1000);
@@ -400,88 +411,203 @@ export default function DatabasePage() {
       )}
 
       <div className="grid gap-8 grid-cols-1 lg:grid-cols-2">
-        {/* Import Section - Dropzone */}
-        <Card className="bg-card/80 backdrop-blur-sm shadow-md">
+        {/* Import Section - Dropzone / Wizard */}
+        <Card className={cn("bg-card/80 backdrop-blur-sm shadow-md", wizardStep > 0 && "lg:col-span-2")}>
           <CardHeader>
             <CardTitle className="flex items-center gap-3">
               <div className="p-3 rounded-xl bg-chart-2/10 text-chart-2">
                 <Upload size={24} />
               </div>
-              Import Excel Dataset
+              {wizardStep === 0 ? "Import Excel Dataset" : `Import Wizard (Langkah ${wizardStep}/5)`}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="space-y-2">
-              <Label>Tahun Ajaran</Label>
-              <div className="flex items-center gap-2">
-                <Input
-                  required
-                  type="number"
-                  min="10"
-                  max="99"
-                  placeholder="YY"
-                  value={termYear}
-                  onChange={(e) => setTermYear(e.target.value)}
-                  className="w-20 text-center"
-                />
+             {wizardStep === 0 && (
+                <div className="space-y-4">
+                 <div className="space-y-2">
+                   <Label>Tahun Ajaran</Label>
+                   <div className="flex items-center gap-2">
+                     <Input
+                       required
+                       type="number"
+                       min="10"
+                       max="99"
+                       placeholder="YY"
+                       value={termYear}
+                       onChange={(e) => setTermYear(e.target.value)}
+                       className="w-20 text-center"
+                     />
+     
+                     <span className="text-muted-foreground">/</span>
+     
+                     <div className="w-20 px-3 py-2 bg-muted/30 rounded-md text-muted-foreground text-center text-sm">
+                       {termYear ? parseInt(termYear) + 1 : 'YY'}
+                     </div>
+     
+                     <span className="text-muted-foreground">-</span>
+     
+                     <Select value={termSem} onValueChange={(val) => setTermSem(val as '1' | '2')}>
+                       <SelectTrigger className="flex-1">
+                         <SelectValue />
+                       </SelectTrigger>
+                       <SelectContent>
+                         <SelectGroup>
+                           <SelectItem value="1">1 (Ganjil)</SelectItem>
+                           <SelectItem value="2">2 (Genap)</SelectItem>
+                         </SelectGroup>
+                       </SelectContent>
+                     </Select>
+                   </div>
+                   <p className="text-xs text-muted-foreground">
+                     Isi ini untuk otomatis mengisi tahun ajaran jika di Excel kosong.
+                   </p>
+                 </div>
+     
+                 <div
+                   {...getRootProps()}
+                   className={cn(
+                     'border-2 border-dashed rounded-lg p-12 text-center cursor-pointer transition-all',
+                     isDragActive
+                       ? 'border-chart-2 bg-chart-2/5'
+                       : 'border-border bg-transparent hover:border-chart-2/50'
+                   )}
+                 >
+                   <input {...getInputProps()} />
+                   <FileSpreadsheet size={48} className="text-muted-foreground mb-4 mx-auto" />
+                   {isDragActive ? (
+                     <p className="text-chart-2 font-semibold">Letakkan file Excel di sini...</p>
+                   ) : (
+                     <div className="space-y-2">
+                       <p className="font-medium">Tarik & letakkan dataset .xlsx di sini</p>
+                       <p className="text-sm text-muted-foreground">atau klik untuk memilih file</p>
+                       <p className="text-xs text-muted-foreground mt-4">
+                         Harus berisi sheet: praktikum, mata_kuliah, asprak, jadwal, asprak_praktikum
+                       </p>
+                     </div>
+                   )}
+     
+                   {loading && (
+                     <div className="mt-4 space-y-2">
+                       <Progress value={progress} className="h-2 w-full" />
+                       <p className="text-sm text-center text-muted-foreground">
+                         {progress}% Mengunggah & Memproses...
+                       </p>
+                     </div>
+                   )}
+                 </div>
+               </div>
+             )}
 
-                <span className="text-muted-foreground">/</span>
-
-                <div className="w-20 px-3 py-2 bg-muted/30 rounded-md text-muted-foreground text-center text-sm">
-                  {termYear ? parseInt(termYear) + 1 : 'YY'}
+             {wizardStep === 1 && excelData && (
+                <div>
+                  <div className="mb-4">
+                     <h3 className="font-semibold text-lg">Langkah 1: Praktikum</h3>
+                     <p className="text-sm text-muted-foreground">Tinjau dan simpan data Praktikum</p>
+                  </div>
+                  <StepPraktikum 
+                    data={excelData.praktikum} 
+                    onNext={() => setWizardStep(2)}
+                    onPrev={() => setWizardStep(0)}
+                    onImport={async (rows) => {
+                       await fetch('/api/praktikum', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ action: 'bulk-import', rows })
+                       }).then(res => {
+                          if (!res.ok) throw new Error("Gagal import praktikum");
+                       });
+                    }}
+                  />
                 </div>
+             )}
 
-                <span className="text-muted-foreground">-</span>
-
-                <Select value={termSem} onValueChange={(val) => setTermSem(val as '1' | '2')}>
-                  <SelectTrigger className="flex-1">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectItem value="1">1 (Ganjil)</SelectItem>
-                      <SelectItem value="2">2 (Genap)</SelectItem>
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Isi ini untuk otomatis mengisi tahun ajaran jika di Excel kosong.
-              </p>
-            </div>
-
-            <div
-              {...getRootProps()}
-              className={cn(
-                'border-2 border-dashed rounded-lg p-12 text-center cursor-pointer transition-all',
-                isDragActive
-                  ? 'border-chart-2 bg-chart-2/5'
-                  : 'border-border bg-transparent hover:border-chart-2/50'
-              )}
-            >
-              <input {...getInputProps()} />
-              <FileSpreadsheet size={48} className="text-muted-foreground mb-4 mx-auto" />
-              {isDragActive ? (
-                <p className="text-chart-2 font-semibold">Letakkan file Excel di sini...</p>
-              ) : (
-                <div className="space-y-2">
-                  <p className="font-medium">Tarik & letakkan dataset .xlsx di sini</p>
-                  <p className="text-sm text-muted-foreground">atau klik untuk memilih file</p>
-                  <p className="text-xs text-muted-foreground mt-4">
-                    Harus berisi sheet: praktikum, mata_kuliah, asprak, jadwal, asprak_praktikum
-                  </p>
+             {wizardStep === 2 && excelData && (
+                <div>
+                  <div className="mb-4">
+                     <h3 className="font-semibold text-lg">Langkah 2: Mata Kuliah</h3>
+                     <p className="text-sm text-muted-foreground">Tinjau dan simpan data Mata Kuliah ({activeTerm})</p>
+                  </div>
+                  <StepMataKuliah
+                    data={excelData.mataKuliah} 
+                    term={activeTerm}
+                    onNext={() => setWizardStep(3)}
+                    onPrev={() => setWizardStep(1)}
+                    onImport={async (rows, t) => {
+                       await fetch(`/api/mata-kuliah`, {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ action: 'bulk', data: rows, term: t })
+                       }).then(res => {
+                          if (!res.ok) throw new Error("Gagal import MK");
+                       });
+                    }}
+                  />
                 </div>
-              )}
+             )}
 
-              {loading && (
-                <div className="mt-4 space-y-2">
-                  <Progress value={progress} className="h-2 w-full" />
-                  <p className="text-sm text-center text-muted-foreground">
-                    {progress}% Mengunggah & Memproses...
-                  </p>
+             {wizardStep === 3 && excelData && (
+                <div>
+                  <div className="mb-4">
+                     <h3 className="font-semibold text-lg">Langkah 3: Asisten Praktikum</h3>
+                     <p className="text-sm text-muted-foreground">Tinjau dan simpan data Asprak</p>
+                  </div>
+                  <StepAsprak
+                    data={excelData.asprak} 
+                    term={activeTerm}
+                    onNext={() => setWizardStep(4)}
+                    onPrev={() => setWizardStep(2)}
+                    onImport={async (rows, t) => {
+                       const res = await fetch('/api/asprak', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ action: 'bulk-import', rows: rows })
+                       });
+                       const data = await res.json();
+                       if (!res.ok) throw new Error(data.error || "Gagal import Asprak");
+                    }}
+                  />
                 </div>
-              )}
-            </div>
+             )}
+
+             {wizardStep === 4 && excelData && (
+                <div>
+                  <div className="mb-4">
+                     <h3 className="font-semibold text-lg">Langkah 4: Penugasan (Plotting)</h3>
+                     <p className="text-sm text-muted-foreground">Tinjau dan simpan Plotting Asprak ({activeTerm})</p>
+                  </div>
+                  <StepPlotting
+                    data={excelData.plotting} 
+                    term={activeTerm}
+                    onNext={() => setWizardStep(5)}
+                    onPrev={() => setWizardStep(3)}
+                    onSuccess={() => {}}
+                  />
+                </div>
+             )}
+
+             {wizardStep === 5 && excelData && (
+                <div>
+                  <div className="mb-4">
+                     <h3 className="font-semibold text-lg">Langkah 5: Jadwal</h3>
+                     <p className="text-sm text-muted-foreground">Tinjau dan simpan data Jadwal ({activeTerm})</p>
+                  </div>
+                  <StepJadwal
+                    data={excelData.jadwal} 
+                    term={activeTerm}
+                    onPrev={() => setWizardStep(4)}
+                    onNext={() => {
+                        setWizardStep(0);
+                        setExcelData(null);
+                        setStatus({ type: 'success', message: 'Import Excel selesai dengan sukses!' });
+                    }}
+                    onImport={async (rows) => {
+                       const res = await jadwalFetcher.bulkImportJadwal(rows);
+                       if (!res.ok) throw new Error(res.error || "Gagal import jadwal");
+                    }}
+                  />
+                </div>
+             )}
+
           </CardContent>
         </Card>
 

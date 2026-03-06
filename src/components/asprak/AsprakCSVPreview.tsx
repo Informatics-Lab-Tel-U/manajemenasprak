@@ -12,6 +12,8 @@ import { CheckCircle, AlertTriangle, Sparkles, ArrowLeft, Save, Copy, FileCheck,
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 
 export interface PreviewRow {
   nama_lengkap: string;
@@ -38,6 +40,9 @@ interface AsprakCSVPreviewProps {
   onToggleSelect: (rowIndex: number) => void;
   onToggleAll: (checked: boolean) => void;
   loading: boolean;
+  onSkip?: () => void;
+  forceOverride?: boolean;
+  onForceOverrideChange?: (val: boolean) => void;
 }
 
 export default function AsprakCSVPreview({
@@ -49,6 +54,9 @@ export default function AsprakCSVPreview({
   onToggleSelect,
   onToggleAll,
   loading,
+  onSkip,
+  forceOverride = false,
+  onForceOverrideChange
 }: AsprakCSVPreviewProps) {
   const totalOk = rows.filter((r) => r.status === 'ok').length;
   const totalWarning = rows.filter((r) => r.status === 'warning').length;
@@ -60,8 +68,8 @@ export default function AsprakCSVPreview({
   const totalManualEdit = rows.filter((r) => r.codeRule === 'Manual edit' && (r.status === 'ok' || r.status === 'warning')).length;
   const totalFromCSV = rows.filter((r) => r.codeSource === 'csv' && r.codeRule !== 'Manual edit' && r.status === 'ok').length;
   
-  // Count selectable rows (OK or Warning)
-  const selectableRows = rows.filter(r => r.status === 'ok' || r.status === 'warning');
+  // Count selectable rows (OK)
+  const selectableRows = rows.filter(r => r.status === 'ok');
   const selectedCount = selectableRows.filter(r => r.selected).length;
   const allSelected = selectableRows.length > 0 && selectedCount === selectableRows.length;
   const isIndeterminate = selectedCount > 0 && selectedCount < selectableRows.length;
@@ -129,6 +137,23 @@ export default function AsprakCSVPreview({
         )}
       </div>
 
+      {onForceOverrideChange !== undefined && (
+        <div className="flex items-center space-x-2 bg-muted/30 p-3 rounded-md border border-border/50">
+          <Switch 
+            id="force-override" 
+            checked={forceOverride}
+            onCheckedChange={onForceOverrideChange}
+            disabled={loading}
+          />
+          <Label htmlFor="force-override" className="text-sm font-medium leading-tight">
+            Paksa gunakan Kode dari CSV
+            <p className="text-xs text-muted-foreground font-normal mt-0.5">
+              Jika diaktifkan, kode yang ada di CSV tidak akan diubah/di-generate ulang, mengabaikan aturan bentrok 5 tahun di database. (Bentrok dalam satu file CSV tetap akan diperingatkan).
+            </p>
+          </Label>
+        </div>
+      )}
+
       {/* Preview Table */}
       <div className="rounded-lg border border-border overflow-hidden">
         <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
@@ -170,7 +195,7 @@ export default function AsprakCSVPreview({
                 const isDuplicateDB = row.status === 'error' && row.statusMessage?.includes('Duplikat');
                 const isDuplicateCSV = row.status === 'duplicate-csv';
                 const isDuplicate = isDuplicateDB || isDuplicateCSV;
-                const isDisabled = row.status === 'error' || row.status === 'duplicate-csv';
+                const isDisabled = row.status === 'error' || row.status === 'duplicate-csv' || row.status === 'warning';
                 
                 return (
                 <tr
@@ -180,14 +205,14 @@ export default function AsprakCSVPreview({
                     ${isDuplicateDB ? 'bg-red-500/10' : ''}
                     ${isDuplicateCSV ? 'bg-orange-500/10' : ''}
                     ${row.status === 'error' && !isDuplicate ? 'bg-red-500/5' : ''}
-                    ${row.status === 'warning' ? 'bg-amber-500/5' : ''}
+                    ${row.status === 'warning' ? 'bg-amber-500/10 opacity-75' : ''}
                     ${!isDisabled && row.selected ? 'bg-muted/40' : ''}
                     hover:bg-muted/60
                   `}
                 >
                   <td className="px-3 py-2 text-center">
                     <Checkbox 
-                      checked={row.selected}
+                      checked={row.selected && !isDisabled}
                       onCheckedChange={() => onToggleSelect(idx)}
                       disabled={isDisabled}
                       className={isDisabled ? "opacity-50 cursor-not-allowed" : ""}
@@ -296,6 +321,11 @@ export default function AsprakCSVPreview({
             <p className="text-xs text-amber-500">
               {totalError + totalDuplicateCSV} row(s) bermasalah akan di-skip saat import.
             </p>
+          )}
+          {onSkip && (
+              <Button type="button" variant="secondary" onClick={onSkip} disabled={loading}>
+                 Lewati Langkah Ini
+              </Button>
           )}
           <Button
             onClick={onConfirm}

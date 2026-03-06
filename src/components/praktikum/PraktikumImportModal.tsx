@@ -13,8 +13,10 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
 
-// Import the Preview Component we just created
+// Import the Preview Component
 import PraktikumCSVPreview, { PraktikumPreviewRow } from './PraktikumCSVPreview';
+// Import Validation Logic
+import { validatePraktikumData } from '@/utils/validation/praktikumValidation';
 
 // We reuse TermInput to set the term globally? 
 // Or do we read term from CSV?
@@ -73,42 +75,7 @@ export default function PraktikumImportModal({
           // User said: "kolom nama_singkat, tahun_ajaran".
           // I will look for 'nama_singkat' OR 'nama'.
           
-          const preview: PraktikumPreviewRow[] = [];
-          
-          data.forEach((row: any) => {
-            const nama = (row.nama_singkat || row.nama || '').trim().toUpperCase();
-            const tahunAjaran = (row.tahun_ajaran || '').trim();
-            
-            let status: PraktikumPreviewRow['status'] = 'ok';
-            let statusMessage = '';
-            let selected = true;
-
-            if (!nama) {
-                status = 'error';
-                statusMessage = 'Nama kosong';
-                selected = false;
-            } else if (!tahunAjaran) {
-                status = 'error';
-                statusMessage = 'Tahun Ajaran kosong';
-                selected = false;
-            } else {
-                // Check exist
-                const exists = existingPraktikums.some(p => p.nama === nama && p.tahun_ajaran === tahunAjaran);
-                if (exists) {
-                    status = 'skipped';
-                    statusMessage = 'Sudah ada di database';
-                    selected = false;
-                }
-            }
-            
-            preview.push({
-                nama,
-                tahun_ajaran: tahunAjaran,
-                status,
-                statusMessage,
-                selected
-            });
-          });
+          const preview = validatePraktikumData(data, existingPraktikums);
 
           setPreviewRows(preview);
           setStep('preview');

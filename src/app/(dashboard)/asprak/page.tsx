@@ -69,7 +69,6 @@ function AsprakPageContent() {
   const [showImportModal, setShowImportModal] = useState(false);
   const [showPlottingImportModal, setShowPlottingImportModal] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
-  const [isEditMode, setIsEditMode] = useState(false);
 
   const [showEditModal, setShowEditModal] = useState(false);
   const [editTarget, setEditTarget] = useState<{ asprak: Asprak; assignments: string[] } | null>(
@@ -185,7 +184,7 @@ function AsprakPageContent() {
     setShowEditModal(true);
   };
 
-  const handleSaveEdit = async (praktikumIds: string[], newKode: string) => {
+  const handleSaveEdit = async (praktikumIds: string[], newKode: string, forceOverride: boolean) => {
     if (!editTarget) return;
 
     // Use 'all' to indicate global update
@@ -194,7 +193,8 @@ function AsprakPageContent() {
       'all',
       praktikumIds,
       newKode,
-      editTarget.asprak.nim
+      editTarget.asprak.nim,
+      forceOverride
     );
 
     if (result.ok) {
@@ -280,19 +280,6 @@ function AsprakPageContent() {
             <Download size={18} />
             Export Data
           </Button>
-          <Button
-            variant={isEditMode ? 'secondary' : 'ghost'}
-            size="icon"
-            onClick={() => setIsEditMode(!isEditMode)}
-            className={
-              isEditMode
-                ? 'bg-amber-100 text-amber-600 hover:bg-amber-200'
-                : 'text-muted-foreground'
-            }
-            title={isEditMode ? 'Keluar Mode Edit' : 'Aktifkan Mode Edit'}
-          >
-            {isEditMode ? <X size={20} /> : <Pencil size={20} />}
-          </Button>
         </div>
       </div>
 
@@ -312,9 +299,6 @@ function AsprakPageContent() {
               data={filteredList}
               loading={loading}
               onViewDetails={handleView}
-              isEditMode={isEditMode}
-              onEdit={handleEditAsprak}
-              onDelete={handleDeleteClick}
             />
           </div>
         </TabsContent>
@@ -365,6 +349,8 @@ function AsprakPageContent() {
         <AsprakDetailsModal
           asprak={selectedAsprak}
           loading={loadingDetails}
+          onEdit={handleEditAsprak}
+          onDelete={handleDeleteClick}
           onClose={closeDetails}
           open={!!selectedAsprak}
         />

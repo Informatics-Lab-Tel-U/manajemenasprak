@@ -9,26 +9,38 @@ import { useState, useEffect, useCallback } from 'react';
 import { Asprak } from '@/types/database';
 import * as asprakFetcher from '@/lib/fetchers/asprakFetcher';
 
-export function useAsprak(initialTerm?: string) {
+export function useAsprak(initialTerm?: string, defaultToLatest: boolean = false) {
   const [data, setData] = useState<Asprak[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const [terms, setTerms] = useState<string[]>([]);
-  const [selectedTerm, setSelectedTerm] = useState(initialTerm || 'all');
+  const [selectedTerm, setSelectedTerm] = useState(initialTerm || (defaultToLatest ? '' : 'all'));
+  const [hasInitializedLatest, setHasInitializedLatest] = useState(false);
 
   const fetchTerms = useCallback(async () => {
     const result = await asprakFetcher.fetchAvailableTerms();
     if (result.ok && result.data) {
       setTerms(result.data);
+      if (defaultToLatest && !hasInitializedLatest && result.data.length > 0) {
+        setSelectedTerm(result.data[0]);
+        setHasInitializedLatest(true);
+      }
     }
-  }, [selectedTerm, initialTerm]);
+  }, [defaultToLatest, hasInitializedLatest]);
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
     setError(null);
 
-    const termToFetch = selectedTerm === 'all' ? undefined : selectedTerm;
+    // If "all" or empty (waiting for latest) is selected, pass undefined or handle appropriately.
+    // We shouldn't fetch asprak if we're still waiting for the latest term initialization
+    if (defaultToLatest && !hasInitializedLatest) {
+      setLoading(false);
+      return;
+    }
+
+    const termToFetch = selectedTerm === 'all' || selectedTerm === '' ? undefined : selectedTerm;
     const result = await asprakFetcher.fetchAllAsprak(termToFetch);
 
     if (result.ok) {

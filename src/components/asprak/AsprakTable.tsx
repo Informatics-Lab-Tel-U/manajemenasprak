@@ -8,7 +8,7 @@ import {
   flexRender,
   ColumnDef,
 } from '@tanstack/react-table';
-import { ArrowUpRight, ChevronLeft, ChevronRight, Pencil, Trash, X } from 'lucide-react';
+import { ArrowUpRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Asprak } from '@/types/database';
 import {
   Table,
@@ -34,18 +34,12 @@ interface AsprakTableProps {
   data: Asprak[];
   loading: boolean;
   onViewDetails: (asprak: Asprak) => void;
-  isEditMode?: boolean;
-  onEdit?: (asprak: Asprak) => void;
-  onDelete?: (asprak: Asprak) => void;
 }
 
 export default function AsprakTable({
   data,
   loading,
   onViewDetails,
-  isEditMode = false,
-  onEdit,
-  onDelete,
 }: AsprakTableProps) {
   const columns = useMemo<ColumnDef<Asprak>[]>(
     () => [
@@ -70,36 +64,13 @@ export default function AsprakTable({
         id: 'actions',
         header: 'Aksi',
         cell: ({ row }) => (
-          isEditMode ? (
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-8 w-8 text-amber-500 hover:text-amber-600 hover:bg-amber-50"
-                onClick={() => onEdit?.(row.original)}
-                title="Edit"
-              >
-                <Pencil size={14} />
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                onClick={() => onDelete?.(row.original)}
-                title="Hapus"
-              >
-                <Trash size={14} />
-              </Button>
-            </div>
-          ) : (
             <Button variant="ghost" size="sm" onClick={() => onViewDetails(row.original)}>
               Lihat <ArrowUpRight className="ml-1" size={14} />
             </Button>
-          )
         ),
       },
     ],
-    [onViewDetails, isEditMode, onEdit, onDelete]
+    [onViewDetails]
   );
 
   const table = useReactTable({

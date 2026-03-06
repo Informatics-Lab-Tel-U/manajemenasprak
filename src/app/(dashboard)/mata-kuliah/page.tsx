@@ -13,7 +13,7 @@ import MataKuliahManualModal from '@/components/mata-kuliah/MataKuliahManualModa
 import { toast } from 'sonner';
 
 function MataKuliahPageContent() {
-  const { terms, selectedTerm, setSelectedTerm } = useAsprak();
+  const { terms, selectedTerm, setSelectedTerm } = useAsprak(undefined, true);
   const { getMataKuliahByTerm, createMataKuliah, bulkImportMataKuliah, loading } = useMataKuliah();
   const { getPraktikumByTerm } = usePraktikum();
 
@@ -26,6 +26,7 @@ function MataKuliahPageContent() {
 
   useEffect(() => {
     async function fetchData() {
+      if (!selectedTerm) return;
       try {
         const [mkData, praktikumData] = await Promise.all([
           getMataKuliahByTerm(selectedTerm),

@@ -129,6 +129,19 @@ export async function validatePlottingImport(
     praktikumMap.set(p.nama.toUpperCase(), p.id); // keys uppercase
   });
 
+  const praktikumIds = Array.from(praktikumMap.values());
+  const existingAssignments = new Set<string>();
+  if (praktikumIds.length > 0) {
+     const { data: existingPlotting } = await supabase
+       .from('asprak_praktikum')
+       .select('id_asprak, id_praktikum')
+       .in('id_praktikum', praktikumIds);
+       
+     existingPlotting?.forEach(p => {
+         existingAssignments.add(`${p.id_asprak}_${p.id_praktikum}`);
+     });
+  }
+
   const result: ValidationResult = {
     validRows: [],
     ambiguousRows: [],
@@ -152,11 +165,15 @@ export async function validatePlottingImport(
     // Check Asprak
     // If user provided selected_asprak_id (manual resolution), valid.
     if (row.selected_asprak_id) {
-      result.validRows.push({
-        asprak_id: row.selected_asprak_id,
-        praktikum_id: praktikumId,
-        original: row,
-      });
+      if (existingAssignments.has(`${row.selected_asprak_id}_${praktikumId}`)) {
+         result.invalidRows.push({ original: row, reason: `Sudah terdaftar di Praktikum ini` });
+      } else {
+         result.validRows.push({
+           asprak_id: row.selected_asprak_id,
+           praktikum_id: praktikumId,
+           original: row,
+         });
+      }
       continue;
     }
 
@@ -165,19 +182,37 @@ export async function validatePlottingImport(
     if (!candidates || candidates.length === 0) {
       result.invalidRows.push({ original: row, reason: `Asprak code '${code}' not found` });
     } else if (candidates.length === 1) {
-      result.validRows.push({
-        asprak_id: candidates[0].id,
-        praktikum_id: praktikumId,
-        original: row,
-      });
+      const asprakId = candidates[0].id;
+      if (existingAssignments.has(`${asprakId}_${praktikumId}`)) {
+         result.invalidRows.push({ original: row, reason: `Sudah terdaftar di Praktikum ini` });
+      } else {
+         result.validRows.push({
+           asprak_id: asprakId,
+           praktikum_id: praktikumId,
+           original: row,
+         });
+      }
     } else {
       // Ambiguous
-      result.ambiguousRows.push({
-        original: row,
-        candidates: candidates,
-        reason: `Multiple aspraks found with code '${code}'`,
-        praktikum_id: praktikumId,
-      });
+      // Filter out candidates that are already registered
+      const availableCandidates = candidates.filter(c => !existingAssignments.has(`${c.id}_${praktikumId}`));
+      
+      if (availableCandidates.length === 0) {
+         result.invalidRows.push({ original: row, reason: `Semua kandidat untuk kode '${code}' sudah terdaftar di Praktikum ini` });
+      } else if (availableCandidates.length === 1) {
+         result.validRows.push({
+           asprak_id: availableCandidates[0].id,
+           praktikum_id: praktikumId,
+           original: row,
+         });
+      } else {
+         result.ambiguousRows.push({
+           original: row,
+           candidates: availableCandidates,
+           reason: `Multiple aspraks found with code '${code}'`,
+           praktikum_id: praktikumId,
+         });
+      }
     }
   }
 
