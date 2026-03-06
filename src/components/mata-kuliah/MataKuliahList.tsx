@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useAsprak } from '@/hooks/useAsprak';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Card } from '@/components/ui/card';
 import MataKuliahCard from './MataKuliahCard';
 import type { MataKuliahGrouped } from '@/services/mataKuliahService';
 
@@ -9,12 +9,47 @@ interface MataKuliahListProps {
   onRefresh: () => void;
 }
 
+function MataKuliahCardSkeleton() {
+  return (
+    <Card className="relative overflow-hidden transition-all duration-300 border bg-white/60 dark:bg-zinc-900/60 rounded-xl border-primary/20 dark:border-primary/20">
+      <div className="p-5 flex flex-col h-[184px] relative z-10">
+        <div className="flex justify-between items-start mb-3">
+          <Skeleton className="h-6 w-32 rounded-md" />
+        </div>
+        <div className="flex-grow mb-4">
+          <Skeleton className="h-5 w-full rounded-md mt-1" />
+          <Skeleton className="h-3 w-24 rounded-md mt-2" />
+        </div>
+        <div className="mt-auto pt-3 border-t border-dashed border-border/60 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-7 w-7 rounded-sm" />
+            <div className="flex flex-col gap-1">
+              <Skeleton className="h-2 w-16" />
+              <Skeleton className="h-3 w-24" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
 export default function MataKuliahList({ groupedData, loading, onRefresh }: MataKuliahListProps) {
   if (loading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-pulse">
-        {[1, 2, 3].map((i) => (
-          <div key={i} className="h-40 bg-muted rounded-xl" />
+      <div className="space-y-8 animate-pulse">
+        {[1, 2].map((groupIndex) => (
+          <div key={groupIndex} className="space-y-4">
+            <div className="flex items-center gap-2 border-b pb-2">
+              <Skeleton className="h-7 w-48" />
+              <Skeleton className="h-4 w-16 rounded-full" />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {[1, 2, 3, 4].map((i) => (
+                <MataKuliahCardSkeleton key={i} />
+              ))}
+            </div>
+          </div>
         ))}
       </div>
     );

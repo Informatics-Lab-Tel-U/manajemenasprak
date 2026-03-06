@@ -2,6 +2,7 @@ import { LucideIcon } from 'lucide-react';
 import { Card, CardContent, CardHeader } from './card';
 import { Badge } from './badge';
 import { cn } from '@/lib/utils';
+import { Skeleton } from './skeleton';
 
 interface StatCardProps {
   title: string;
@@ -10,6 +11,7 @@ interface StatCardProps {
   icon: LucideIcon;
   trend?: string;
   color: 'purple' | 'blue' | 'green' | 'red';
+  loading?: boolean;
 }
 
 const colorClasses: Record<string, { icon: string; badge: string; border: string; gradient: string }> = {
@@ -39,7 +41,7 @@ const colorClasses: Record<string, { icon: string; badge: string; border: string
   },
 };
 
-export function StatCard({ title, value, subtitle, icon: Icon, trend, color }: StatCardProps) {
+export function StatCard({ title, value, subtitle, icon: Icon, trend, color, loading }: StatCardProps) {
   const style = colorClasses[color];
 
   return (
@@ -57,7 +59,11 @@ export function StatCard({ title, value, subtitle, icon: Icon, trend, color }: S
       <CardHeader className="flex items-start justify-between space-y-0 pb-3 relative z-10">
         <div className="space-y-1 flex-1">
           <p className="text-sm font-medium text-muted-foreground group-hover:text-foreground/70 transition-colors uppercase tracking-wider text-[10px]">{title}</p>
-          <h3 className="text-3xl font-bold tracking-tight text-foreground/90 dark:text-foreground">{value}</h3>
+          {loading ? (
+            <Skeleton className="h-9 w-16 mt-1" />
+          ) : (
+            <h3 className="text-3xl font-bold tracking-tight text-foreground/90 dark:text-foreground">{value}</h3>
+          )}
         </div>
         <div className={cn('rounded-lg p-2.5 shrink-0 shadow-sm transition-transform group-hover:scale-110 duration-300', style.icon)}>
           <Icon size={20} strokeWidth={2.5} />

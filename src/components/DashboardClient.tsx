@@ -19,6 +19,7 @@ import { Jadwal } from '@/types/database';
 import { useDashboard } from '@/hooks/useDashboard';
 import { Button } from './ui/button';
 import { Card, CardHeader, CardContent } from './ui/card';
+import { Skeleton } from './ui/skeleton';
 
 interface DashboardClientProps {
   initialStats: DashboardStats;
@@ -44,47 +45,54 @@ export default function DashboardClient({
           </p>
         </div>
         <div>
-          <Select value={selectedTerm} onValueChange={setSelectedTerm}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Pilih Angkatan" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectLabel>Angkatan</SelectLabel>
-                {terms.map((term) => (
-                  <SelectItem key={term} value={term}>
-                    {term}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
+          {loading && terms.length === 0 ? (
+            <Skeleton className="h-10 w-[180px]" />
+          ) : (
+            <Select value={selectedTerm} onValueChange={setSelectedTerm}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Pilih Angkatan" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel>Angkatan</SelectLabel>
+                  {terms.map((term) => (
+                    <SelectItem key={term} value={term}>
+                      {term}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          )}
         </div>
       </header>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
         <StatCard
           title="Total Asprak"
-          value={loading ? '...' : stats.asprakCount}
+          value={stats.asprakCount}
           subtitle="Terdaftar pada term ini"
           icon={Users}
           trend="Aktif"
           color="purple"
+          loading={loading}
         />
         <StatCard
           title="Total Jadwal"
-          value={loading ? '...' : stats.jadwalCount}
+          value={stats.jadwalCount}
           subtitle="Kelas terjadwal"
           icon={BookOpen}
           color="blue"
+          loading={loading}
         />
         <StatCard
           title="Pelanggaran"
-          value={loading ? '...' : stats.pelanggaranCount}
+          value={stats.pelanggaranCount}
           subtitle="Total tercatat"
           icon={AlertTriangle}
           trend="Perlu tinjauan"
           color="red"
+          loading={loading}
         />
 
         <StatCard
@@ -93,6 +101,7 @@ export default function DashboardClient({
           subtitle="Sesi hari ini"
           icon={Calendar}
           color="green"
+          loading={loading}
         />
       </div>
 
@@ -102,6 +111,7 @@ export default function DashboardClient({
           jadwalByDay={stats.jadwalByDay}
           todaySchedule={todaySchedule}
           selectedTerm={selectedTerm}
+          loading={loading}
         />
       </div>
     </>

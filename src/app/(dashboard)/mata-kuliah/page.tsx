@@ -3,6 +3,7 @@
 import { Suspense, useState, useEffect } from 'react';
 import { useAsprak } from '@/hooks/useAsprak';
 import { useMataKuliah } from '@/hooks/useMataKuliah';
+import { Skeleton } from '@/components/ui/skeleton';
 import { usePraktikum } from '@/hooks/usePraktikum';
 import { Button } from '@/components/ui/button';
 import { Plus, Upload, BookOpen } from 'lucide-react';
@@ -13,21 +14,34 @@ import MataKuliahManualModal from '@/components/mata-kuliah/MataKuliahManualModa
 import { toast } from 'sonner';
 
 function MataKuliahPageContent() {
-  const { terms, selectedTerm, setSelectedTerm } = useAsprak(undefined, true);
+  const { terms, selectedTerm, setSelectedTerm, loading: asprakLoading } = useAsprak(undefined, true);
   const { getMataKuliahByTerm, createMataKuliah, bulkImportMataKuliah, loading } = useMataKuliah();
   const { getPraktikumByTerm } = usePraktikum();
 
   const [groupedData, setGroupedData] = useState<any[]>([]);
   const [validPraktikums, setValidPraktikums] = useState<any[]>([]);
+  const [loadingData, setLoadingData] = useState(true);
+  const [mounted, setMounted] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [showManualModal, setShowManualModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
 
   useEffect(() => {
     async function fetchData() {
-      if (!selectedTerm) return;
+      if (!selectedTerm) {
+        if (terms.length === 0 && !asprakLoading) {
+          setLoadingData(false);
+        }
+        return;
+      }
+
       try {
+        setLoadingData(true);
         const [mkData, praktikumData] = await Promise.all([
           getMataKuliahByTerm(selectedTerm),
           getPraktikumByTerm(selectedTerm),
@@ -36,10 +50,14 @@ function MataKuliahPageContent() {
         setValidPraktikums(praktikumData);
       } catch (e: any) {
         console.error(e);
+      } finally {
+        setLoadingData(false);
       }
     }
     fetchData();
-  }, [selectedTerm, getMataKuliahByTerm, getPraktikumByTerm]);
+  }, [selectedTerm, getMataKuliahByTerm, getPraktikumByTerm, terms.length, asprakLoading]);
+
+  const isLoading = loading || loadingData || asprakLoading;
 
   const handleManualAdd = async (data: any, term: string) => {
     try {
@@ -85,6 +103,36 @@ function MataKuliahPageContent() {
     );
   });
 
+  if (!mounted) {
+    return (
+      <div className="container relative space-y-8 py-8">
+        <div className="flex justify-between items-center">
+          <div className="space-y-2">
+            <Skeleton className="h-10 w-64" />
+            <Skeleton className="h-4 w-48" />
+          </div>
+          <div className="flex gap-3">
+            <Skeleton className="h-10 w-32" />
+            <Skeleton className="h-10 w-32" />
+          </div>
+        </div>
+        <Skeleton className="h-20 w-full rounded-xl" />
+        <div className="space-y-8">
+          {[1, 2].map((i) => (
+            <div key={i} className="space-y-4">
+              <Skeleton className="h-7 w-48" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {Array.from({ length: 4 }).map((_, j) => (
+                  <div key={j} className="h-[184px] rounded-xl border bg-card animate-pulse" />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container relative space-y-8">
       <div className="flex justify-between items-center">
@@ -118,7 +166,7 @@ function MataKuliahPageContent() {
 
       {/* Content */}
       <div className="min-h-[400px]">
-        <MataKuliahList groupedData={filteredData} loading={loading} onRefresh={() => {}} />
+        <MataKuliahList groupedData={filteredData} loading={isLoading} onRefresh={() => {}} />
       </div>
 
       {/* Modals */}
@@ -146,7 +194,7 @@ function MataKuliahPageContent() {
 
 export default function MataKuliahPage() {
   return (
-    <Suspense fallback={<div className="container py-10 text-center">Memuat...</div>}>
+    <Suspense>
       <MataKuliahPageContent />
     </Suspense>
   );
