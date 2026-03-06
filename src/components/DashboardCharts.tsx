@@ -12,17 +12,20 @@ import { Jadwal } from '@/types/database';
 import { ROOMS, STATIC_SESSIONS } from '@/constants';
 import { getCourseColor } from '@/utils/colorUtils';
 import React, { useMemo } from 'react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function DashboardCharts({
   asprakByAngkatan,
   jadwalByDay,
   todaySchedule,
   selectedTerm,
+  loading,
 }: {
   asprakByAngkatan: { name: string; count: number }[];
   jadwalByDay: { name: string; count: number }[];
   todaySchedule: Jadwal[];
   selectedTerm: string;
+  loading: boolean;
 }) {
   const dataAsprak = [...asprakByAngkatan].sort((a, b) => parseInt(a.name) - parseInt(b.name));
 
@@ -129,7 +132,43 @@ export default function DashboardCharts({
           </div>
         </CardHeader>
         <CardContent>
-          {filteredSchedule.length === 0 ? (
+          {loading ? (
+            <div className="space-y-4">
+              <div className="overflow-x-auto rounded-lg border border-border bg-card/50">
+                <table className="w-full border-collapse text-sm">
+                  <thead>
+                    <tr className="bg-muted/50 border-b border-border">
+                      <th className="p-2 border-r border-border min-w-[60px]"><Skeleton className="h-4 w-8 mx-auto" /></th>
+                      {Array.from({ length: 4 }).map((_, i) => (
+                        <th key={i} className="p-2 border-r border-border min-w-[120px]">
+                          <Skeleton className="h-4 w-16 mx-auto" />
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {Array.from({ length: 4 }).map((_, i) => (
+                      <tr key={i} className="border-b border-border/50 h-[60px]">
+                        <td className="p-2 border-r border-border text-center">
+                          <div className="space-y-1">
+                            <Skeleton className="h-3 w-8 mx-auto" />
+                            <Skeleton className="h-2 w-10 mx-auto" />
+                          </div>
+                        </td>
+                        {Array.from({ length: 4 }).map((_, j) => (
+                          <td key={j} className="p-2 border-r border-border align-middle">
+                            {i % 2 === 0 && j % 2 === 0 && (
+                              <Skeleton className="h-10 w-full" />
+                            )}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ) : filteredSchedule.length === 0 ? (
             <div className="flex flex-col items-center justify-center p-8 text-muted-foreground bg-muted/20 rounded-lg border border-dashed">
               <p>Tidak ada jadwal praktikum untuk hari ini.</p>
             </div>
@@ -211,15 +250,23 @@ export default function DashboardCharts({
           <CardDescription>Distribusi asisten praktikum berdasarkan angkatan</CardDescription>
         </CardHeader>
         <CardContent>
-          <ChartContainer config={chartConfigAsprak} className="h-[300px] w-full">
-            <BarChart data={dataAsprak} accessibilityLayer>
-              <CartesianGrid vertical={false} />
-              <XAxis dataKey="name" tickLine={false} tickMargin={10} axisLine={false} />
-              <YAxis tickLine={false} axisLine={false} tickMargin={10} />
-              <ChartTooltip content={<ChartTooltipContent />} />
-              <Bar dataKey="count" fill="var(--color-count)" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ChartContainer>
+          {loading ? (
+            <div className="h-[300px] w-full flex items-end gap-2 pb-4">
+              {Array.from({ length: 7 }).map((_, i) => (
+                <Skeleton key={i} className="flex-1" style={{ height: `${20 + (i * 17) % 60}%` }} />
+              ))}
+            </div>
+          ) : (
+            <ChartContainer config={chartConfigAsprak} className="h-[300px] w-full">
+              <BarChart data={dataAsprak} accessibilityLayer>
+                <CartesianGrid vertical={false} />
+                <XAxis dataKey="name" tickLine={false} tickMargin={10} axisLine={false} />
+                <YAxis tickLine={false} axisLine={false} tickMargin={10} />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Bar dataKey="count" fill="var(--color-count)" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ChartContainer>
+          )}
         </CardContent>
       </Card>
 
@@ -230,15 +277,23 @@ export default function DashboardCharts({
           <CardDescription>Jumlah kelas praktikum per hari dalam seminggu</CardDescription>
         </CardHeader>
         <CardContent>
-          <ChartContainer config={chartConfigJadwal} className="h-[300px] w-full">
-            <BarChart data={dataJadwal} accessibilityLayer>
-              <CartesianGrid vertical={false} />
-              <XAxis dataKey="name" tickLine={false} tickMargin={10} axisLine={false} />
-              <YAxis tickLine={false} axisLine={false} tickMargin={10} />
-              <ChartTooltip content={<ChartTooltipContent />} />
-              <Bar dataKey="count" fill="var(--color-count)" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ChartContainer>
+          {loading ? (
+            <div className="h-[300px] w-full flex items-end gap-2 pb-4">
+              {Array.from({ length: 7 }).map((_, i) => (
+                <Skeleton key={i} className="flex-1" style={{ height: `${30 + (i * 10) % 50}%` }} />
+              ))}
+            </div>
+          ) : (
+            <ChartContainer config={chartConfigJadwal} className="h-[300px] w-full">
+              <BarChart data={dataJadwal} accessibilityLayer>
+                <CartesianGrid vertical={false} />
+                <XAxis dataKey="name" tickLine={false} tickMargin={10} axisLine={false} />
+                <YAxis tickLine={false} axisLine={false} tickMargin={10} />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Bar dataKey="count" fill="var(--color-count)" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ChartContainer>
+          )}
         </CardContent>
       </Card>
 

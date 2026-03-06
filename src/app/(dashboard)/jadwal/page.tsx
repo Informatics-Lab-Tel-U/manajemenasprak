@@ -54,7 +54,7 @@ function JadwalTableSkeleton() {
             {Array.from({ length: 4 }).map((_, j) => (
               <td key={j} className="p-2 border-r border-border align-top">
                 <div className="flex flex-col gap-1 w-full min-h-[60px] justify-center">
-                  {Math.random() > 0.6 && (
+                  {(i + j) % 3 === 0 && (
                     <Skeleton className="h-14 w-full rounded-sm" />
                   )}
                 </div>
