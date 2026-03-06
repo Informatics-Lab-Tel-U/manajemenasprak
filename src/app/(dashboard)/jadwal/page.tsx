@@ -340,11 +340,22 @@ export default function JadwalPage() {
         return sa - sb;
       });
 
-      result[day] = sortedSessions;
+      // Sesi terakhir dari STATIC_SESSIONS (sesi 5) hanya ditampilkan jika ada jadwal
+      const lastStaticSession = staticForDay.length > 0 ? staticForDay[staticForDay.length - 1] : null;
+      const filteredSessions = lastStaticSession
+        ? sortedSessions.filter((s) => {
+            if (s.sesi !== lastStaticSession.sesi) return true; // bukan sesi terakhir, selalu tampil
+            // sesi terakhir hanya tampil jika ada jadwal di scheduleMatrix
+            const dayMatrix = scheduleMatrix[day];
+            return dayMatrix && dayMatrix[s.rowKey] && Object.keys(dayMatrix[s.rowKey]).length > 0;
+          })
+        : sortedSessions;
+
+      result[day] = filteredSessions;
     });
 
     return result;
-  }, [visibleDays, jadwalList]);
+  }, [visibleDays, jadwalList, scheduleMatrix]);
 
   return (
     <div className="container relative space-y-8">
@@ -492,7 +503,7 @@ export default function JadwalPage() {
                         onClick={() => setShowSessionId(!showSessionId)}
                         title={showSessionId ? session.jam : `Sesi ${session.sesi ?? '-'}`}
                       >
-                        {showSessionId ? (session.sesi ?? '-') : session.jam}
+                        {showSessionId ? (session.sesi ?? sessionIndex + 1) : session.jam}
                       </td>
 
                       {uniqueRooms.map((room) => {
