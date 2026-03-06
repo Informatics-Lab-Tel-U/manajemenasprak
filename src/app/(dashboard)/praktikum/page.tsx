@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect, Suspense } from 'react';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Download, Plus, Upload, BookOpen } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -17,11 +18,17 @@ import PraktikumDetailsModal from '@/components/praktikum/PraktikumDetailsModal'
 import { PraktikumWithStats } from '@/services/praktikumService';
 
 function PraktikumPageContent() {
-  const { terms, selectedTerm, setSelectedTerm } = useAsprak(undefined, true);
+  const { terms, selectedTerm, setSelectedTerm, loading: asprakLoading } = useAsprak(undefined, true);
   const { getPraktikumByTerm, bulkImport, getOrCreate, loading: praktikumLoading } = usePraktikum();
 
   const [praktikumList, setPraktikumList] = useState<PraktikumWithStats[]>([]);
-  const [loadingList, setLoadingList] = useState(false);
+  const [loadingList, setLoadingList] = useState(true);
+  const [mounted, setMounted] = useState(false);
+  
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [showImportModal, setShowImportModal] = useState(false);
   const [showManualModal, setShowManualModal] = useState(false);
@@ -29,15 +36,25 @@ function PraktikumPageContent() {
 
   useEffect(() => {
     async function fetchPraktikums() {
-      if (!selectedTerm) return;
+      if (!selectedTerm) {
+        if (terms.length === 0 && !asprakLoading) {
+          setLoadingList(false);
+        }
+        return;
+      }
 
       setLoadingList(true);
-      const data = await getPraktikumByTerm(selectedTerm);
-      setPraktikumList(data);
-      setLoadingList(false);
+      try {
+        const data = await getPraktikumByTerm(selectedTerm);
+        setPraktikumList(data);
+      } catch (e: any) {
+        console.error(e);
+      } finally {
+        setLoadingList(false);
+      }
     }
     fetchPraktikums();
-  }, [selectedTerm, getPraktikumByTerm]);
+  }, [selectedTerm, getPraktikumByTerm, terms.length, asprakLoading]);
 
   const filteredList = useMemo(() => {
     if (!searchQuery) return praktikumList;
@@ -87,6 +104,33 @@ function PraktikumPageContent() {
     const data = await getPraktikumByTerm(tahunAjaran);
     return data.some((p) => p.nama === nama);
   };
+
+  if (!mounted) {
+    return (
+      <div className="container relative space-y-8 py-8">
+        <header>
+          <div className="flex justify-between items-center">
+            <div className="space-y-2">
+              <Skeleton className="h-10 w-64" />
+              <Skeleton className="h-4 w-48" />
+            </div>
+            <div className="flex gap-3">
+              <Skeleton className="h-10 w-32" />
+              <Skeleton className="h-10 w-32" />
+            </div>
+          </div>
+        </header>
+        <div className="space-y-4">
+          <Skeleton className="h-20 w-full rounded-xl" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="h-[152px] rounded-xl border bg-card animate-pulse" />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container relative space-y-8">
@@ -160,7 +204,7 @@ function PraktikumPageContent() {
 
 export default function PraktikumPage() {
   return (
-    <Suspense fallback={<div className="container py-10 text-center">Memuat...</div>}>
+    <Suspense>
       <PraktikumPageContent />
     </Suspense>
   );
