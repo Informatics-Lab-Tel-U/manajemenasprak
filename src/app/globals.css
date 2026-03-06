@@ -122,10 +122,10 @@
 
 @layer components {
   .card {
-    @apply bg-card text-card-foreground rounded-lg;
+    @apply bg-card text-card-foreground rounded-xl;
   }
 
   .glass {
-    @apply backdrop-blur-sm bg-muted/30;
+    @apply backdrop-blur-sm bg-muted/30 rounded-xl;
   }
 }
