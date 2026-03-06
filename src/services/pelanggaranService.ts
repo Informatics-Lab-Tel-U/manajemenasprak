@@ -134,31 +134,45 @@ export async function getPelanggaranCountsByPraktikum(
 ): Promise<PelanggaranCountMap> {
   const client = isKoor ? supabaseClient : globalAdmin;
 
-  const { data, error } = await client
+  // 1. Get total violations per praktikum
+  const { data: violations, error: vError } = await client
     .from('pelanggaran')
-    .select('jadwal:jadwal(mata_kuliah:mata_kuliah(id_praktikum, praktikum:praktikum(tahun_ajaran))), is_final');
+    .select('jadwal:jadwal(mata_kuliah:mata_kuliah(id_praktikum))');
 
-  if (error) {
-    logger.error('Error fetching pelanggaran counts:', error);
+  if (vError) {
+    logger.error('Error fetching pelanggaran counts:', vError);
+    return {};
+  }
+
+  // 2. Get finalized modules per praktikum
+  const { data: status, error: sError } = await client
+    .from('pelanggaran_status')
+    .select('id_praktikum, is_finalized')
+    .eq('is_finalized', true);
+
+  if (sError) {
+    logger.error('Error fetching finalized status:', sError);
     return {};
   }
 
   const countMap = new Map<string, PelanggaranCountEntry>();
 
-  for (const row of data ?? []) {
-    const mk = (row as any).jadwal?.mata_kuliah;
-    const id = mk?.id_praktikum;
+  // Count violations
+  for (const row of violations ?? []) {
+    const id = (row as any).jadwal?.mata_kuliah?.id_praktikum;
     if (!id) continue;
     if (!countMap.has(id)) {
-      countMap.set(id, { total: 0, allFinal: true, finalized: false });
+      countMap.set(id, { total: 0, allFinal: false, finalized: false });
     }
-    const entry = countMap.get(id)!;
-    entry.total += 1;
-    if (!(row as any).is_final) entry.allFinal = false;
+    countMap.get(id)!.total += 1;
   }
 
-  for (const [, entry] of countMap) {
-    entry.finalized = entry.total > 0 && entry.allFinal;
+  // Mark practicals as finalized if ANY module is finalized (or according to your definition)
+  // Here we keep it simple: shown as 'finalized' if there's at least one finalized status entry for it
+  for (const s of status ?? []) {
+    if (countMap.has(s.id_praktikum)) {
+      countMap.get(s.id_praktikum)!.finalized = true;
+    }
   }
 
   return Object.fromEntries(countMap);
@@ -200,83 +214,38 @@ export async function bulkCreatePelanggaran(
 }
 
 /**
- * Finalize all pelanggaran for a specific praktikum.
+ * Finalize all modules for a specific praktikum.
  */
 export async function finalizePelanggaranByPraktikum(
-  idPraktikum: string,
+  id_praktikum: string,
   finalizedBy: string
 ): Promise<void> {
-  const supabase = globalAdmin; // Use admin client to bypass RLS for state transition
+  const supabase = globalAdmin;
 
-  // Get all mata_kuliah IDs for this praktikum
-  const { data: mks, error: mkError } = await supabase
-    .from('mata_kuliah')
-    .select('id')
-    .eq('id_praktikum', idPraktikum);
-
-  if (mkError) throw new Error(`Gagal mengambil mata kuliah: ${mkError.message}`);
-  const mkIds = (mks || []).map((m: any) => m.id);
-  if (mkIds.length === 0) return;
-
-  // Get all jadwal IDs for these mata_kuliah
-  const { data: jadwals, error: jadwalError } = await supabase
-    .from('jadwal')
-    .select('id')
-    .in('id_mk', mkIds);
-
-  if (jadwalError) throw new Error(`Gagal mengambil jadwal: ${jadwalError.message}`);
-  const jadwalIds = (jadwals || []).map((j: any) => j.id);
-  if (jadwalIds.length === 0) return;
+  // We finalize all 14 modules
+  const inserts = Array.from({ length: 14 }, (_, i) => ({
+    id_praktikum,
+    modul: i + 1,
+    is_finalized: true,
+    finalized_at: new Date().toISOString(),
+    finalized_by: finalizedBy,
+  }));
 
   const { error } = await supabase
-    .from('pelanggaran')
-    .update({
-      is_final: true,
-      finalized_at: new Date().toISOString(),
-      finalized_by: finalizedBy,
-    })
-    .in('id_jadwal', jadwalIds)
-    .eq('is_final', false);
+    .from('pelanggaran_status')
+    .upsert(inserts, { onConflict: 'id_praktikum, modul' });
 
   if (error) {
-    logger.error('Error finalizing pelanggaran:', error);
-    throw new Error(`Gagal memfinalisasi pelanggaran: ${error.message}`);
+    logger.error('Error finalizing praktikum:', error);
+    throw new Error(`Gagal memfinalisasi praktikum: ${error.message}`);
   }
 }
 
 /**
- * Finalize all pelanggaran for a specific mata kuliah (Backward Compatibility).
+ * Finalize all pelanggaran for a specific mata kuliah (No longer supported with centralized status).
  */
-export async function finalizePelanggaranByMataKuliah(
-  idMk: string,
-  finalizedBy: string
-): Promise<void> {
-  const supabase = globalAdmin; // Bypassing RLS
-
-  const { data: jadwals, error: jadwalError } = await supabase
-    .from('jadwal')
-    .select('id')
-    .eq('id_mk', idMk);
-
-  if (jadwalError) throw new Error(`Gagal mengambil jadwal: ${jadwalError.message}`);
-
-  const jadwalIds = (jadwals || []).map((j: any) => j.id);
-  if (jadwalIds.length === 0) return;
-
-  const { error } = await supabase
-    .from('pelanggaran')
-    .update({
-      is_final: true,
-      finalized_at: new Date().toISOString(),
-      finalized_by: finalizedBy,
-    })
-    .in('id_jadwal', jadwalIds)
-    .eq('is_final', false);
-
-  if (error) {
-    logger.error('Error finalizing pelanggaran:', error);
-    throw new Error(`Gagal memfinalisasi pelanggaran: ${error.message}`);
-  }
+export async function finalizePelanggaranByMataKuliah(): Promise<void> {
+  throw new Error('Finalisasi per mata kuliah tidak lagi didukung. Gunakan finalisasi per modul.');
 }
 
 export async function getExportData(
@@ -338,41 +307,16 @@ export async function getJadwalForPelanggaran(
 }
 
 export async function unfinalizePelanggaranByPraktikum(idPraktikum: string): Promise<void> {
-  const supabase = globalAdmin; // Bypassing RLS for reset operation
-
-  // Get all mata_kuliah IDs for this praktikum
-  const { data: mks, error: mkError } = await supabase
-    .from('mata_kuliah')
-    .select('id')
-    .eq('id_praktikum', idPraktikum);
-
-  if (mkError) throw new Error(`Gagal mengambil mata kuliah: ${mkError.message}`);
-  const mkIds = (mks || []).map((m: any) => m.id);
-  if (mkIds.length === 0) return;
-
-  // Get all jadwal IDs for these mata_kuliah
-  const { data: jadwals, error: jadwalError } = await supabase
-    .from('jadwal')
-    .select('id')
-    .in('id_mk', mkIds);
-
-  if (jadwalError) throw new Error(`Gagal mengambil jadwal: ${jadwalError.message}`);
-  const jadwalIds = (jadwals || []).map((j: any) => j.id);
-  if (jadwalIds.length === 0) return;
+  const supabase = globalAdmin;
 
   const { error } = await supabase
-    .from('pelanggaran')
-    .update({
-      is_final: false,
-      finalized_at: null,
-      finalized_by: null,
-    })
-    .in('id_jadwal', jadwalIds)
-    .eq('is_final', true);
+    .from('pelanggaran_status')
+    .delete()
+    .eq('id_praktikum', idPraktikum);
 
   if (error) {
-    logger.error('Error unfinalizing pelanggaran:', error);
-    throw new Error(`Gagal mereset finalisasi pelanggaran: ${error.message}`);
+    logger.error('Error unfinalizing praktikum:', error);
+    throw new Error(`Gagal mereset finalisasi praktikum: ${error.message}`);
   }
 }
 
@@ -380,46 +324,25 @@ export async function unfinalizePelanggaranByPraktikum(idPraktikum: string): Pro
  * Finalize all pelanggaran for a specific praktikum and modul.
  */
 export async function finalizePelanggaranByModul(
-  idPraktikum: string,
+  id_praktikum: string,
   modul: number,
   finalizedBy: string
 ): Promise<void> {
   const supabase = globalAdmin;
 
-  // Get all mata_kuliah IDs for this praktikum
-  const { data: mks, error: mkError } = await supabase
-    .from('mata_kuliah')
-    .select('id')
-    .eq('id_praktikum', idPraktikum);
-
-  if (mkError) throw new Error(`Gagal mengambil mata kuliah: ${mkError.message}`);
-  const mkIds = (mks || []).map((m: any) => m.id);
-  if (mkIds.length === 0) return;
-
-  // Get all jadwal IDs for these mata_kuliah
-  const { data: jadwals, error: jadwalError } = await supabase
-    .from('jadwal')
-    .select('id')
-    .in('id_mk', mkIds);
-
-  if (jadwalError) throw new Error(`Gagal mengambil jadwal: ${jadwalError.message}`);
-  const jadwalIds = (jadwals || []).map((j: any) => j.id);
-  if (jadwalIds.length === 0) return;
-
   const { error } = await supabase
-    .from('pelanggaran')
-    .update({
-      is_final: true,
+    .from('pelanggaran_status')
+    .upsert({
+      id_praktikum,
+      modul,
+      is_finalized: true,
       finalized_at: new Date().toISOString(),
       finalized_by: finalizedBy,
-    })
-    .in('id_jadwal', jadwalIds)
-    .eq('modul', modul)
-    .eq('is_final', false);
+    }, { onConflict: 'id_praktikum, modul' });
 
   if (error) {
     logger.error('Error finalizing pelanggaran modul:', error);
-    throw new Error(`Gagal memfinalisasi pelanggaran modul: ${error.message}`);
+    throw new Error(`Gagal memfinalisasi modul: ${error.message}`);
   }
 }
 
@@ -429,90 +352,34 @@ export async function finalizePelanggaranByModul(
 export async function getFinalizedModules(idPraktikum: string): Promise<number[]> {
   const supabase = globalAdmin;
 
-  const { data: mks } = await supabase
-    .from('mata_kuliah')
-    .select('id')
-    .eq('id_praktikum', idPraktikum);
+  const { data, error } = await supabase
+    .from('pelanggaran_status')
+    .select('modul')
+    .eq('id_praktikum', idPraktikum)
+    .eq('is_finalized', true);
 
-  const mkIds = (mks || []).map((m: any) => m.id);
-  if (mkIds.length === 0) return [];
-
-  const { data: jadwals } = await supabase.from('jadwal').select('id').in('id_mk', mkIds);
-
-  const jadwalIds = (jadwals || []).map((j: any) => j.id);
-  if (jadwalIds.length === 0) return [];
-
-  // A module is considered finalized if all violations in it are final, 
-  // AND there is at least one violation OR we have a better way to track it.
-  // In our scheme, we only track finalization ON the violations themselves.
-  // Requirement: "jika sudah terfinalisasi, tampilkan juga di dropdown modul mana yg sudah terfinalisasi"
-  // Since we don't have a "ModuleStatus" table, we check if violations exist and are all final for that modul.
-  
-  const { data: violations } = await supabase
-    .from('pelanggaran')
-    .select('modul, is_final')
-    .in('id_jadwal', jadwalIds);
-
-  if (!violations || violations.length === 0) return [];
-
-  const moduleStatus = new Map<number, { allFinal: boolean }>();
-  for (const v of violations) {
-    if (!moduleStatus.has(v.modul)) {
-      moduleStatus.set(v.modul, { allFinal: true });
-    }
-    if (!v.is_final) {
-      moduleStatus.get(v.modul)!.allFinal = false;
-    }
-  }
-
-  return Array.from(moduleStatus.entries())
-    .filter(([_, status]) => status.allFinal)
-    .map(([modul]) => modul);
+  if (error || !data) return [];
+  return data.map((d) => d.modul);
 }
 
 /**
  * Unfinalize (reset) all pelanggaran for a specific praktikum and modul.
  */
 export async function unfinalizePelanggaranByModul(
-  idPraktikum: string,
+  id_praktikum: string,
   modul: number
 ): Promise<void> {
   const supabase = globalAdmin;
 
-  // Get all mata_kuliah IDs for this praktikum
-  const { data: mks, error: mkError } = await supabase
-    .from('mata_kuliah')
-    .select('id')
-    .eq('id_praktikum', idPraktikum);
-
-  if (mkError) throw new Error(`Gagal mengambil mata kuliah: ${mkError.message}`);
-  const mkIds = (mks || []).map((m: any) => m.id);
-  if (mkIds.length === 0) return;
-
-  // Get all jadwal IDs for these mata_kuliah
-  const { data: jadwals, error: jadwalError } = await supabase
-    .from('jadwal')
-    .select('id')
-    .in('id_mk', mkIds);
-
-  if (jadwalError) throw new Error(`Gagal mengambil jadwal: ${jadwalError.message}`);
-  const jadwalIds = (jadwals || []).map((j: any) => j.id);
-  if (jadwalIds.length === 0) return;
-
   const { error } = await supabase
-    .from('pelanggaran')
-    .update({
-      is_final: false,
-      finalized_at: null,
-      finalized_by: null,
-    })
-    .in('id_jadwal', jadwalIds)
-    .eq('modul', modul)
-    .eq('is_final', true);
+    .from('pelanggaran_status')
+    .delete()
+    .eq('id_praktikum', id_praktikum)
+    .eq('modul', modul);
 
   if (error) {
-    logger.error('Error unfinalizing pelanggaran modul:', error);
-    throw new Error(`Gagal mereset finalisasi pelanggaran modul: ${error.message}`);
+    logger.error('Error unfinalizing modul:', error);
+    throw new Error(`Gagal mereset finalisasi modul: ${error.message}`);
   }
 }
 

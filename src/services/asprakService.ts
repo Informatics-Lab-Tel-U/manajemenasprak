@@ -23,7 +23,6 @@ export async function generateUniqueCode(
   supabaseClient?: SupabaseClient
 ): Promise<{ code: string; rule: string }> {
   const supabase = supabaseClient || globalAdmin;
-  // Fetch ALL existing codes to ensure uniqueness
   const existingCodes = await getExistingCodes(supabase);
   const usedCodesSet = new Set(existingCodes);
 
@@ -31,7 +30,6 @@ export async function generateUniqueCode(
     const result = generateAsprakCode(nama, usedCodesSet);
     return result;
   } catch {
-    // If generation fails, return empty
     return { code: '', rule: 'Manual Input Required' };
   }
 }
@@ -44,7 +42,6 @@ export async function getAllAsprak(
 
   let query;
   if (term && term !== 'all') {
-    // 1. Get praktikum IDs belonging to this term
     const { data: praktikums } = await supabase
       .from('praktikum')
       .select('id')
@@ -55,8 +52,6 @@ export async function getAllAsprak(
     }
 
     const pIds = praktikums.map((p) => p.id);
-
-    // 2. Get asprak IDs that have those praktikum assignments
     const { data: apData } = await supabase
       .from('asprak_praktikum')
       .select('id_asprak')
@@ -68,14 +63,12 @@ export async function getAllAsprak(
 
     const asprakIds = Array.from(new Set(apData.map((ap) => ap.id_asprak)));
 
-    // 3. Fetch asprak details
     query = supabase
       .from('asprak')
       .select('*')
       .in('id', asprakIds)
       .order('nim', { ascending: true });
   } else {
-    // Default: fetch all
     query = supabase.from('asprak').select('*').order('nim', { ascending: true });
   }
 
@@ -108,7 +101,7 @@ export async function getAllAsprak(
 
 export interface AsprakWithMap extends Asprak {
   assignments: {
-    id: string; // Praktikum ID
+    id: string;
     nama: string;
     tahun_ajaran: string;
   }[];
@@ -153,7 +146,7 @@ export async function getAspraksWithAssignments(
     const row = item as RawAssignmentRow;
     const allAssignments = (row.asprak_praktikum || [])
       .map((ap) => ap.praktikum)
-      .filter((p) => !!p); // Filter nulls if any
+      .filter((p) => !!p);
 
     const filteredAssignments =
       term && term !== 'all'
@@ -376,7 +369,6 @@ export async function bulkUpsertAspraks(
       let angkatan = row.angkatan;
       if (angkatan > 0 && angkatan < 100) angkatan += 2000;
 
-      // Check if asprak already exists by NIM
       const { data: existing } = await supabase
         .from('asprak')
         .select('id, kode')
@@ -384,7 +376,6 @@ export async function bulkUpsertAspraks(
         .maybeSingle();
 
       if (existing) {
-        // Update existing asprak
         const { error: upError } = await supabase
           .from('asprak')
           .update({
@@ -401,7 +392,6 @@ export async function bulkUpsertAspraks(
           result.updated++;
         }
       } else {
-        // Insert new asprak
         const { error: inError } = await supabase.from('asprak').insert({
           nim: row.nim,
           nama_lengkap: row.nama_lengkap,
@@ -437,7 +427,6 @@ export async function updateAsprakAssignments(
   const supabase = supabaseClient || globalAdmin;
 
   if (newKode && nim) {
-    // Check if the new code exists and belongs to someone else
     const { data: codeOwner } = await supabase
       .from('asprak')
       .select('*')
@@ -449,7 +438,6 @@ export async function updateAsprakAssignments(
       throw new Error(generateConflictErrorMessage(newKode, conflictCheck.existingOwner));
     }
 
-    // If there's an existing owner but it's inactive, expire their code
     if (codeOwner && codeOwner.nim !== nim) {
       await supabase
         .from('asprak')
@@ -459,7 +447,6 @@ export async function updateAsprakAssignments(
         .eq('id', codeOwner.id);
     }
 
-    // Update the asprak's code in DB
     const { error: updateError } = await supabase
       .from('asprak')
       .update({ kode: newKode })
@@ -470,7 +457,6 @@ export async function updateAsprakAssignments(
     }
   }
 
-  // Get ALL existing assignments first
   const { data: existingAll } = await supabase
     .from('asprak_praktikum')
     .select('id, id_praktikum')
@@ -479,7 +465,6 @@ export async function updateAsprakAssignments(
   const allExisting = existingAll || [];
   let existingInScope = allExisting;
 
-  // Filter scope if term is specific
   if (term && term !== 'all') {
     const { data: termPraktikums } = await supabase
       .from('praktikum')
@@ -492,12 +477,9 @@ export async function updateAsprakAssignments(
     }
   }
 
-  // Determine what to delete (items in scope that are NOT in the new list)
   const newSet = new Set(praktikumIds);
   const toDelete = existingInScope.filter((a) => !newSet.has(a.id_praktikum)).map((a) => a.id);
 
-  // Determine what to insert (items in new list that are NOT in existing scope)
-  // And filter against ALL existing to avoid duplicates (unique constraint safety)
   const existingAllPids = new Set(allExisting.map((a) => a.id_praktikum));
   const toInsert = praktikumIds.filter((pid) => !existingAllPids.has(pid));
 

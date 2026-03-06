@@ -28,7 +28,6 @@ export function useAsprak(initialTerm?: string) {
     setLoading(true);
     setError(null);
 
-    // If "all" is selected, pass undefined to fetch all
     const termToFetch = selectedTerm === 'all' ? undefined : selectedTerm;
     const result = await asprakFetcher.fetchAllAsprak(termToFetch);
 
@@ -44,7 +43,7 @@ export function useAsprak(initialTerm?: string) {
   const upsert = async (input: asprakFetcher.UpsertAsprakInput) => {
     const result = await asprakFetcher.upsertAsprak(input);
     if (result.ok) {
-      await fetchAll(); // Refresh list
+      await fetchAll();
     }
     return result;
   };
@@ -67,8 +66,6 @@ export function useAsprak(initialTerm?: string) {
   }, [fetchTerms]);
 
   useEffect(() => {
-    // Only fetch if selectedTerm is set OR if we are okay with empty term (fetching all)
-    // Here we fetch whenever selectedTerm changes.
     fetchAll();
   }, [fetchAll, selectedTerm]);
 

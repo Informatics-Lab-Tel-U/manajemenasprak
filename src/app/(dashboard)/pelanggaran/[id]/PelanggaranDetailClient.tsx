@@ -246,7 +246,7 @@ export default function PelanggaranDetailClient({
         header: 'Aksi',
         cell: ({ row: { original: v } }) => (
           <div className="flex items-center gap-2">
-            {v.is_final ? (
+            {isFinalized ? (
               <Badge className="gap-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
                 <CheckCircle2 className="h-3 w-3" /> Final
               </Badge>

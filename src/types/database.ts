@@ -4,6 +4,7 @@ export type Pengguna = {
   id: string;
   nama_lengkap: string;
   role: Role;
+  deleted_at?: string;
   created_at: string;
   updated_at: string;
 };
@@ -86,9 +87,6 @@ export type Pelanggaran = {
   id_jadwal: string;
   modul: number;
   jenis: string;
-  is_final: boolean;
-  finalized_by?: string;
-  finalized_at?: string;
   created_at: string;
   updated_at: string;
   asprak?: Pick<Asprak, 'nama_lengkap' | 'nim' | 'kode'>;

@@ -103,23 +103,17 @@ export async function updateSession(request: NextRequest) {
 
   const { data: pengguna, error: penggunaError } = await supabase
     .from('pengguna')
-    .select('role')
+    .select('role, deleted_at')
     .eq('id', user.id)
-    .single();
+    .maybeSingle();
 
   if (penggunaError) {
-    console.error('[Middleware] Pengguna query failed:', {
-      userId: user.id,
-      email: user.email,
-      error: penggunaError.message,
-      code: penggunaError.code,
-      hint: penggunaError.hint,
-    });
+    console.error('[Middleware] Pengguna query failed:', penggunaError);
   }
 
   const role = pengguna?.role as Role | undefined;
 
-  if (!role) {
+  if (!role || pengguna?.deleted_at) {
     await supabase.auth.signOut();
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = '/login';

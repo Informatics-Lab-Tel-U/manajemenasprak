@@ -19,14 +19,19 @@ export default async function ManajemenAkunPage() {
 
   const profileMap = new Map((profiles ?? []).map((p: any) => [p.id, p]));
 
-  const users: UserWithEmail[] = (authUsers?.users ?? []).map((u) => ({
-    id: u.id,
-    email: u.email ?? '',
-    nama_lengkap: profileMap.get(u.id)?.nama_lengkap ?? '—',
-    role: profileMap.get(u.id)?.role ?? 'ASPRAK_KOOR',
-    created_at: u.created_at,
-    updated_at: profileMap.get(u.id)?.updated_at ?? u.created_at,
-  }));
+  const users: UserWithEmail[] = (authUsers?.users ?? [])
+    .filter((u: any) => {
+      const profile = profileMap.get(u.id);
+      return profile && !profile.deleted_at;
+    })
+    .map((u: any) => ({
+      id: u.id,
+      email: u.email ?? '',
+      nama_lengkap: profileMap.get(u.id)?.nama_lengkap ?? '—',
+      role: profileMap.get(u.id)?.role ?? 'ASPRAK_KOOR',
+      created_at: u.created_at,
+      updated_at: profileMap.get(u.id)?.updated_at ?? u.created_at,
+    }));
 
   return <ManajemenAkunClientPage users={users} />;
 }

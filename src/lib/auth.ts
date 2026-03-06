@@ -29,7 +29,7 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
     .eq('id', user.id)
     .single();
 
-  if (profileError || !pengguna) return null;
+  if (profileError || !pengguna || pengguna.deleted_at) return null;
 
   return {
     id: user.id,

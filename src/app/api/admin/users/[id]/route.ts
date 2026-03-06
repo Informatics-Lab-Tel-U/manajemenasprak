@@ -97,7 +97,10 @@ export async function DELETE(
     const { id } = await params;
     const admin = createAdminClient();
 
-    const { error } = await admin.auth.admin.deleteUser(id);
+    const { error } = await admin
+      .from('pengguna')
+      .update({ deleted_at: new Date().toISOString() })
+      .eq('id', id);
     if (error) throw error;
 
     const { createAuditLog } = await import('@/services/server/auditLogService');

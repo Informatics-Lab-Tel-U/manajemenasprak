@@ -46,6 +46,11 @@ export async function GET(req: Request) {
       return NextResponse.json({ ok: true, data: jadwalList });
     }
 
+    if (action === 'finalized-modules' && idPraktikum) {
+      const modules = await pelanggaranService.getFinalizedModules(idPraktikum);
+      return NextResponse.json({ ok: true, data: modules });
+    }
+
     // Check for 'summary' BEFORE the generic tahunAjaran filter
     if (action === 'summary') {
       await requireRole(['ADMIN', 'ASLAB']);
@@ -88,13 +93,7 @@ export async function POST(req: Request) {
   
       // --- Finalize per praktikum ---
       if (action === 'finalize') {
-        const { id_praktikum, id_mk } = body;
-  
-        // Legacy: finalize by id_mk
-        if (id_mk) {
-          await pelanggaranService.finalizePelanggaranByMataKuliah(id_mk, user.id);
-          return NextResponse.json({ ok: true });
-        }
+        const { id_praktikum } = body;
   
         if (!id_praktikum) {
           return NextResponse.json(
