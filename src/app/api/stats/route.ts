@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
     await requireRole(['ADMIN', 'ASLAB', 'ASPRAK_KOOR']);
     const supabase = await createClient();
     const { searchParams } = new URL(request.url);
-    const term = searchParams.get('term') || '2425-1';
+    const term = searchParams.get('term') || undefined;
 
     const stats = await getStats(term, supabase);
 

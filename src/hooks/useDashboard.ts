@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Jadwal } from '@/types/database';
 import * as jadwalFetcher from '@/lib/fetchers/jadwalFetcher';
 import type { DashboardStats } from '@/services/databaseService';
@@ -20,34 +20,36 @@ export function useDashboard(
   initialStats: DashboardStats,
   initialSchedule: Jadwal[]
 ): UseDashboardResult {
-  const [terms, setTerms] = useState<string[]>(initialTerms);
+  // initialTerms is already sorted descending by fetchAvailableTerms (latest first)
+  const [terms] = useState<string[]>(initialTerms);
   const [todaySchedule, setTodaySchedule] = useState<Jadwal[]>(initialSchedule);
-  const [selectedTerm, setSelectedTerm] = useState(initialTerms[0] || '2425-1');
+  // Use initialTerms[0] which is guaranteed to be the latest term
+  const [selectedTerm, setSelectedTerm] = useState(initialTerms[0] || '');
   const [stats, setStats] = useState<DashboardStats>(initialStats);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
-  const fetchDashboardData = useCallback(async () => {
-    if (!selectedTerm) return;
+  // Track whether this is the initial mount — initial data is already
+  // correctly scoped from the server, so we skip the first refetch.
+  const [hasMounted, setHasMounted] = useState(false);
+
+  const fetchDashboardData = useCallback(async (term: string) => {
+    if (!term) return;
 
     setLoading(true);
     try {
       const [scheduleResult, statsRes] = await Promise.all([
-        jadwalFetcher.fetchTodaySchedule(100, selectedTerm),
-        fetch(`/api/stats?term=${encodeURIComponent(selectedTerm)}`),
+        jadwalFetcher.fetchTodaySchedule(100, term),
+        fetch(`/api/stats?term=${encodeURIComponent(term)}`),
       ]);
 
       if (scheduleResult.ok && scheduleResult.data) {
         setTodaySchedule(scheduleResult.data);
       }
 
-      try {
-        const statsJson = await statsRes.json();
-        if (statsJson?.ok && statsJson.data) {
-          setStats(statsJson.data as DashboardStats);
-        }
-      } catch (e: any) {
-        // ignore parse errors; stats remain unchanged
+      const statsJson = await statsRes.json();
+      if (statsJson?.ok && statsJson.data) {
+        setStats(statsJson.data as DashboardStats);
       }
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -58,17 +60,17 @@ export function useDashboard(
     } finally {
       setLoading(false);
     }
-  }, [selectedTerm]);
-
-  const isFirstRun = useRef(true);
+  }, []);
 
   useEffect(() => {
-    if (isFirstRun.current) {
-      isFirstRun.current = false;
+    if (!hasMounted) {
+      // First render: SSR data is already correct for this term — skip refetch
+      setHasMounted(true);
       return;
     }
-    fetchDashboardData();
-  }, [fetchDashboardData]);
+    // User changed the term selector: refetch
+    fetchDashboardData(selectedTerm);
+  }, [selectedTerm]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return {
     terms,

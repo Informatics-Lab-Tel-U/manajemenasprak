@@ -253,3 +253,14 @@ export async function bulkUpsertPraktikum(rows: { nama: string; tahun_ajaran: st
   return result;
 }
 
+
+export async function getTahunAjaranList(supabaseClient?: SupabaseClient): Promise<string[]> {
+  const supabase = supabaseClient || globalAdmin;
+  const { data, error } = await supabase.from('praktikum').select('tahun_ajaran');
+  if (error) {
+    logger.error('Error fetching tahun ajaran list:', error);
+    return [];
+  }
+  const years = Array.from(new Set(data.map((p: any) => p.tahun_ajaran)));
+  return years.sort((a, b) => b.localeCompare(a));
+}

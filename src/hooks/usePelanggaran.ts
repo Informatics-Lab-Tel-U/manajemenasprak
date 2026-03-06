@@ -116,15 +116,19 @@ export function usePelanggaranDetail(idPraktikum: string, initialViolations?: Pe
   const [loading, setLoading] = useState(!initialViolations || !initialPraktikum);
   const [error, setError] = useState<string | null>(null);
 
+  const [selectedModul, setSelectedModul] = useState<string>('1');
+  const [finalizedModules, setFinalizedModules] = useState<number[]>([]);
+
   const fetchDetail = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const [vResult, pResult, asprakRes, jadwalRes] = await Promise.all([
+      const [vResult, pResult, asprakRes, jadwalRes, fResult] = await Promise.all([
         pelanggaranFetcher.fetchPelanggaranByFilter(idPraktikum),
         pelanggaranFetcher.fetchPraktikumDetail(idPraktikum),
         asprakFetcher.fetchPlottingData(),
         pelanggaranFetcher.fetchJadwalForPelanggaran(),
+        pelanggaranFetcher.fetchFinalizedModules(idPraktikum),
       ]);
 
       if (vResult.ok) setViolations(vResult.data || []);
@@ -142,6 +146,8 @@ export function usePelanggaranDetail(idPraktikum: string, initialViolations?: Pe
       }
 
       if (jadwalRes.ok) setJadwalList(jadwalRes.data as any || []);
+      
+      if (fResult.ok) setFinalizedModules(fResult.data || []);
     } catch (err: any) {
       setError(err.message || 'Terjadi kesalahan saat memuat data');
     } finally {
@@ -194,7 +200,29 @@ export function usePelanggaranDetail(idPraktikum: string, initialViolations?: Pe
     return result;
   };
 
-  const isFinalized = violations.length > 0 && violations.every((v: any) => v.is_final);
+  const finalizeModul = async (modul: number) => {
+    const result = await pelanggaranFetcher.finalizePelanggaranByModul(idPraktikum, modul);
+    if (result.ok) {
+      toast.success(`Modul ${modul} berhasil difinalisasi`);
+      fetchDetail();
+    } else {
+      toast.error(`Gagal memfinalisasi Modul ${modul}: ${result.error}`);
+    }
+    return result;
+  };
+
+  const unfinalizeModul = async (modul: number) => {
+    const result = await pelanggaranFetcher.unfinalizePelanggaranByModul(idPraktikum, modul);
+    if (result.ok) {
+      toast.success(`Finalisasi Modul ${modul} berhasil direset`);
+      fetchDetail();
+    } else {
+      toast.error(`Gagal mereset finalisasi Modul ${modul}: ${result.error}`);
+    }
+    return result;
+  };
+
+  const isFinalized = finalizedModules.includes(Number(selectedModul));
 
   return {
     violations,
@@ -204,11 +232,16 @@ export function usePelanggaranDetail(idPraktikum: string, initialViolations?: Pe
     loading,
     error,
     isFinalized,
+    selectedModul,
+    setSelectedModul,
+    finalizedModules,
     refresh: fetchDetail,
     addPelanggaran,
     deletePelanggaran,
     finalize,
     unfinalize,
+    finalizeModul,
+    unfinalizeModul,
   };
 }
 

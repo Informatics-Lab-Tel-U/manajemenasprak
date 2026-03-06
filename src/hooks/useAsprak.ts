@@ -55,7 +55,7 @@ export function useAsprak(initialTerm?: string, defaultToLatest: boolean = false
   const upsert = async (input: asprakFetcher.UpsertAsprakInput) => {
     const result = await asprakFetcher.upsertAsprak(input);
     if (result.ok) {
-      await fetchAll(); // Refresh list
+      await fetchAll();
     }
     return result;
   };
@@ -78,8 +78,6 @@ export function useAsprak(initialTerm?: string, defaultToLatest: boolean = false
   }, [fetchTerms]);
 
   useEffect(() => {
-    // Only fetch if selectedTerm is set OR if we are okay with empty term (fetching all)
-    // Here we fetch whenever selectedTerm changes.
     fetchAll();
   }, [fetchAll, selectedTerm]);
 

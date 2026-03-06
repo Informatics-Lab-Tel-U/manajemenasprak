@@ -64,9 +64,9 @@ export default function DashboardClient({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
         <StatCard
-          title="Total Asprak Default"
+          title="Total Asprak"
           value={loading ? '...' : stats.asprakCount}
-          subtitle="Terdaftar di sistem"
+          subtitle="Terdaftar pada term ini"
           icon={Users}
           trend="Aktif"
           color="purple"

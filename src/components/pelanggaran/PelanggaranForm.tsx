@@ -55,6 +55,8 @@ interface PelanggaranFormProps {
   tahunAjaranList: string[];
   asprakList: (Asprak & { praktikum_ids?: string[] })[];
   jadwalList: (Jadwal & { id_praktikum?: string })[];
+  initialTahunAjaran?: string;
+  initialPraktikumId?: string;
 }
 
 export default function PelanggaranForm({
@@ -65,10 +67,18 @@ export default function PelanggaranForm({
   tahunAjaranList,
   asprakList,
   jadwalList,
+  initialTahunAjaran = '',
+  initialPraktikumId = '',
 }: PelanggaranFormProps) {
   // ── Context filters ──
-  const [selectedTahunAjaran, setSelectedTahunAjaran] = useState('');
-  const [selectedPraktikumId, setSelectedPraktikumId] = useState('');
+  const [selectedTahunAjaran, setSelectedTahunAjaran] = useState(initialTahunAjaran);
+  const [selectedPraktikumId, setSelectedPraktikumId] = useState(initialPraktikumId);
+
+  // Sync state if initial props change (e.g. after data fetch in parent)
+  useEffect(() => {
+    if (initialTahunAjaran) setSelectedTahunAjaran(initialTahunAjaran);
+    if (initialPraktikumId) setSelectedPraktikumId(initialPraktikumId);
+  }, [initialTahunAjaran, initialPraktikumId]);
 
   // ── Violation fields ──
   const [selectedAsprakIds, setSelectedAsprakIds] = useState<string[]>([]);
@@ -297,7 +307,7 @@ export default function PelanggaranForm({
                   }}
                 >
                   <div className="text-sm font-medium">
-                    {j.mata_kuliah?.nama_lengkap ?? '—'} — Kelas {j.kelas}
+                    {j.kelas}
                   </div>
                   <div className="text-xs text-muted-foreground mt-0.5">
                     {j.hari} · {j.jam}
@@ -332,57 +342,59 @@ export default function PelanggaranForm({
           {/* ── LEFT: Form ── */}
           <div className="flex flex-col flex-1 min-w-0 min-h-0">
             <FieldGroup className="flex-1 overflow-y-auto px-6 py-4">
-              <div className="rounded-lg border border-border/60 bg-muted/30 p-4 space-y-3">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                  Konteks Pelanggaran
-                </p>
-                <div className="grid grid-cols-2 gap-3">
-                  <Field>
-                    <Label>Tahun Ajaran *</Label>
-                    <Select
-                      value={selectedTahunAjaran}
-                      onValueChange={(v) => {
-                        setSelectedTahunAjaran(v);
-                        setSelectedPraktikumId('');
-                        resetViolationFields();
-                      }}
-                    >
-                      <SelectTrigger className="w-full h-9">
-                        <SelectValue placeholder="Pilih Tahun Ajaran" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {tahunAjaranList.map((t) => (
-                          <SelectItem key={t} value={t}>
-                            {t}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </Field>
-                  <Field>
-                    <Label>Nama Praktikum *</Label>
-                    <Select
-                      value={selectedPraktikumId}
-                      onValueChange={(v) => {
-                        setSelectedPraktikumId(v);
-                        resetViolationFields();
-                      }}
-                      disabled={!selectedTahunAjaran}
-                    >
-                      <SelectTrigger className="w-full h-9">
-                        <SelectValue placeholder="Pilih Praktikum" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {filteredPraktikumList.map((p) => (
-                          <SelectItem key={p.id} value={p.id}>
-                            {p.nama}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </Field>
+              {(!initialTahunAjaran || !initialPraktikumId) && (
+                <div className="rounded-lg border border-border/60 bg-muted/30 p-4 space-y-3 mb-6">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                    Konteks Pelanggaran
+                  </p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Field>
+                      <Label>Tahun Ajaran *</Label>
+                      <Select
+                        value={selectedTahunAjaran}
+                        onValueChange={(v) => {
+                          setSelectedTahunAjaran(v);
+                          setSelectedPraktikumId('');
+                          resetViolationFields();
+                        }}
+                      >
+                        <SelectTrigger className="w-full h-9">
+                          <SelectValue placeholder="Pilih Tahun Ajaran" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {tahunAjaranList.map((t) => (
+                            <SelectItem key={t} value={t}>
+                              {t}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </Field>
+                    <Field>
+                      <Label>Nama Praktikum *</Label>
+                      <Select
+                        value={selectedPraktikumId}
+                        onValueChange={(v) => {
+                          setSelectedPraktikumId(v);
+                          resetViolationFields();
+                        }}
+                        disabled={!selectedTahunAjaran}
+                      >
+                        <SelectTrigger className="w-full h-9">
+                          <SelectValue placeholder="Pilih Praktikum" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {filteredPraktikumList.map((p) => (
+                            <SelectItem key={p.id} value={p.id}>
+                              {p.nama}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </Field>
+                  </div>
                 </div>
-              </div>
+              )}
 
               <FieldGroup
                 className={`transition-opacity ${
@@ -442,6 +454,24 @@ export default function PelanggaranForm({
                 </Field>
 
                 <Field>
+                  <Label>Modul *</Label>
+                  <Select value={modul} onValueChange={setModul}>
+                    <SelectTrigger className="w-full h-9">
+                      <SelectValue placeholder="Pilih Modul" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        {Array.from({ length: 16 }, (_, i) => (
+                          <SelectItem key={i + 1} value={String(i + 1)}>
+                            Modul {i + 1}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </Field>
+
+                <Field>
                   <Label>Kelas / Jadwal *</Label>
                   <button
                     type="button"
@@ -461,14 +491,13 @@ export default function PelanggaranForm({
                       <Calendar className="h-4 w-4 flex-shrink-0" />
                       <span className="truncate">
                         {selectedJadwal
-                          ? `${selectedJadwal.mata_kuliah?.nama_lengkap ?? ''} — ${selectedJadwal.kelas} (${selectedJadwal.hari})`
+                          ? `${selectedJadwal.kelas} (${selectedJadwal.hari})`
                           : 'Pilih Jadwal / Kelas...'}
                       </span>
                     </span>
                     <ChevronRight className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
                   </button>
                 </Field>
-
                 <Field>
                   <Label>Jenis Pelanggaran *</Label>
                   <Select value={jenis} onValueChange={setJenis}>
@@ -480,24 +509,6 @@ export default function PelanggaranForm({
                         {VIOLATION_TYPES.map((type) => (
                           <SelectItem key={type} value={type}>
                             {type}
-                          </SelectItem>
-                        ))}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                </Field>
-
-                <Field>
-                  <Label>Modul *</Label>
-                  <Select value={modul} onValueChange={setModul}>
-                    <SelectTrigger className="w-full h-9">
-                      <SelectValue placeholder="Pilih Modul" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        {Array.from({ length: 16 }, (_, i) => (
-                          <SelectItem key={i + 1} value={String(i + 1)}>
-                            Modul {i + 1}
                           </SelectItem>
                         ))}
                       </SelectGroup>

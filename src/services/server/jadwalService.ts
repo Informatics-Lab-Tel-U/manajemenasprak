@@ -29,6 +29,7 @@ export async function getTodaySchedule(limit: number = 5, term?: string): Promis
       mata_kuliah:mata_kuliah!inner (
         nama_lengkap,
         program_studi,
+        warna,
         praktikum:praktikum!inner (
           tahun_ajaran,
           nama
@@ -37,15 +38,10 @@ export async function getTodaySchedule(limit: number = 5, term?: string): Promis
     `
     )
     .eq('hari', dayIndo)
-    .order('jam', { ascending: true })
-    .limit(limit);
+    .order('jam', { ascending: true });
 
-  if (term) {
-    query = query.eq('mata_kuliah.praktikum.tahun_ajaran', term);
-  }
-
-
-
+  // Fetch more rows and filter in memory to reliably filter by term
+  // Supabase nested relation .eq() is unreliable for filtering
   const { data, error } = await query;
 
   if (error) {
@@ -53,7 +49,16 @@ export async function getTodaySchedule(limit: number = 5, term?: string): Promis
     return [];
   }
 
-  return data as Jadwal[];
+  let results = data as Jadwal[];
+
+  // Filter by term in memory if provided
+  if (term) {
+    results = results.filter(
+      (j) => (j.mata_kuliah as any)?.praktikum?.tahun_ajaran === term
+    );
+  }
+
+  return results.slice(0, limit);
 }
 
 export async function fetchAvailableTerms(): Promise<string[]> {
@@ -68,7 +73,8 @@ export async function fetchAvailableTerms(): Promise<string[]> {
     return [];
   }
 
-  // extract unique terms
+  // extract unique terms - already ordered descending, so [0] = latest
   const terms = Array.from(new Set(data.map((item) => item.tahun_ajaran)));
   return terms;
 }
+

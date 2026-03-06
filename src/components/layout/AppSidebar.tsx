@@ -68,7 +68,15 @@ const ALL_NAV_ITEMS: NavItem[] = [
     ],
   },
   { label: 'Jadwal Praktikum', href: '/jadwal', icon: Calendar },
-  { label: 'Pelanggaran', href: '/pelanggaran', icon: AlertTriangle },
+  {
+    label: 'Pelanggaran',
+    href: '#',
+    icon: AlertTriangle,
+    items: [
+      { label: 'Kelola Pelanggaran', href: '/pelanggaran' },
+      { label: 'Lihat Pelanggaran', href: '/pelanggaran-rekap' },
+    ],
+  },
   { label: 'Manajemen Akun', href: '/manajemen-akun', icon: Notebook },
   { label: 'Audit Logs', href: '/audit-logs', icon: Logs },
   { label: 'Panduan Sistem', href: '/panduan', icon: HelpCircle },

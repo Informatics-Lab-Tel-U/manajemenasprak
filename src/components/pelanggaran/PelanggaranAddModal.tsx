@@ -25,6 +25,8 @@ interface PelanggaranAddModalProps {
   tahunAjaranList: string[];
   asprakList: (Asprak & { praktikum_ids?: string[] })[];
   jadwalList: (Jadwal & { id_praktikum?: string })[];
+  initialTahunAjaran?: string;
+  initialPraktikumId?: string;
 }
 
 export default function PelanggaranAddModal({
@@ -36,6 +38,8 @@ export default function PelanggaranAddModal({
   tahunAjaranList,
   asprakList,
   jadwalList,
+  initialTahunAjaran,
+  initialPraktikumId,
 }: PelanggaranAddModalProps) {
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -47,6 +51,8 @@ export default function PelanggaranAddModal({
         tahunAjaranList={tahunAjaranList}
         asprakList={asprakList}
         jadwalList={jadwalList}
+        initialTahunAjaran={initialTahunAjaran}
+        initialPraktikumId={initialPraktikumId}
       />
     </Dialog>
   );
