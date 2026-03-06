@@ -341,12 +341,24 @@ export default function PelanggaranDetailClient({
 
   if (!mounted) {
     return (
-      <div className="container py-8 space-y-6">
-        <div className="flex justify-between items-center">
-          <Skeleton className="h-10 w-64" />
-          <Skeleton className="h-10 w-32" />
+      <div className="container py-8 space-y-8">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <Skeleton className="h-10 w-10 rounded-md" />
+            <div className="space-y-2">
+              <Skeleton className="h-8 w-48" />
+              <Skeleton className="h-4 w-64" />
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-9 w-40" />
+            <Skeleton className="h-9 w-32" />
+          </div>
         </div>
-        <Skeleton className="h-[400px] w-full" />
+        <div className="card glass p-4 mb-6 space-y-4">
+          <Skeleton className="h-4 w-32" />
+          <Skeleton className="h-[300px] w-full" />
+        </div>
       </div>
     );
   }
@@ -532,13 +544,34 @@ export default function PelanggaranDetailClient({
                       ))}
                     </TableRow>
                   ))
+                ) : loading ? (
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <TableRow key={i}>
+                      <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          <Skeleton className="h-4 w-32" />
+                          <Skeleton className="h-3 w-20" />
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          <Skeleton className="h-4 w-32" />
+                          <Skeleton className="h-3 w-20" />
+                        </div>
+                      </TableCell>
+                      <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                      <TableCell><Skeleton className="h-5 w-24 rounded-full" /></TableCell>
+                      <TableCell><Skeleton className="h-8 w-8 rounded-md" /></TableCell>
+                    </TableRow>
+                  ))
                 ) : (
                   <TableRow>
                     <TableCell
                       colSpan={columns.length}
                       className="h-24 text-center text-muted-foreground"
                     >
-                      {loading ? 'Memuat data...' : 'Belum ada pelanggaran.'}
+                      Belum ada pelanggaran.
                     </TableCell>
                   </TableRow>
                 )}
@@ -603,6 +636,15 @@ export default function PelanggaranDetailClient({
                       <TableCell className="text-center font-bold">{r.total}</TableCell>
                     </TableRow>
                   ))
+                ) : loading ? (
+                  Array.from({ length: 3 }).map((_, i) => (
+                    <TableRow key={i}>
+                      <TableCell><Skeleton className="h-4 w-12" /></TableCell>
+                      <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                      <TableCell><Skeleton className="h-4 w-8 mx-auto" /></TableCell>
+                      <TableCell><Skeleton className="h-4 w-8 mx-auto" /></TableCell>
+                    </TableRow>
+                  ))
                 ) : (
                   <TableRow>
                     <TableCell
@@ -630,6 +672,7 @@ export default function PelanggaranDetailClient({
         jadwalList={jadwalList}
         initialTahunAjaran={praktikum?.tahun_ajaran}
         initialPraktikumId={praktikum?.id}
+        initialModul={selectedModul}
       />
 
       {/* AlertDialogs for Module Finalization */}

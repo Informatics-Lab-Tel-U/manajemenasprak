@@ -289,7 +289,7 @@ export async function getJadwalForPelanggaran(
   const { data, error } = await supabase
     .from('jadwal')
     .select(
-      '*, mata_kuliah:mata_kuliah(id, nama_lengkap, program_studi, id_praktikum, praktikum:praktikum(id, nama, tahun_ajaran))'
+      '*, mata_kuliah:mata_kuliah(id, nama_lengkap, program_studi, id_praktikum, praktikum:praktikum(id, nama, tahun_ajaran)), jadwal_pengganti(*)'
     )
     .order('kelas', { ascending: true });
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useJadwal } from '@/hooks/useJadwal';
 import {
   Select,
@@ -24,11 +24,58 @@ import {
 import * as jadwalFetcher from '@/lib/fetchers/jadwalFetcher';
 import { DAYS, STATIC_SESSIONS } from '@/constants';
 import { toast } from 'sonner';
+import { Skeleton } from '@/components/ui/skeleton';
+
+function JadwalTableSkeleton() {
+  return (
+    <table className="w-full border-collapse text-sm">
+      <thead>
+        <tr className="bg-muted/50 border-b border-border">
+          <th className="p-2 border-r border-border text-center min-w-[60px]"><Skeleton className="h-4 w-8 mx-auto" /></th>
+          <th className="p-2 border-r border-border text-center min-w-[60px]"><Skeleton className="h-4 w-8 mx-auto" /></th>
+          {Array.from({ length: 4 }).map((_, i) => (
+            <th key={i} className="p-2 border-r border-border text-center min-w-[120px]">
+              <Skeleton className="h-4 w-16 mx-auto" />
+            </th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {Array.from({ length: 15 }).map((_, i) => (
+          <tr key={i} className="border-b border-border/50">
+            {i % 3 === 0 && (
+              <td rowSpan={3} className="p-2 border-r border-border bg-muted/5 text-center">
+                <Skeleton className="h-4 w-12 mx-auto" />
+              </td>
+            )}
+            <td className="p-2 border-r border-border text-center">
+              <Skeleton className="h-3 w-10 mx-auto" />
+            </td>
+            {Array.from({ length: 4 }).map((_, j) => (
+              <td key={j} className="p-2 border-r border-border align-top">
+                <div className="flex flex-col gap-1 w-full min-h-[60px] justify-center">
+                  {Math.random() > 0.6 && (
+                    <Skeleton className="h-14 w-full rounded-sm" />
+                  )}
+                </div>
+              </td>
+            ))}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
 
 import { getCourseColor } from '@/utils/colorUtils';
 
 export default function JadwalPage() {
   const [programType, setProgramType] = useState<'REGULER' | 'PJJ'>('REGULER');
+  const [mounted, setMounted] = useState(false);
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
 
   const {
     data: rawJadwalList,
@@ -357,6 +404,31 @@ export default function JadwalPage() {
     return result;
   }, [visibleDays, jadwalList, scheduleMatrix]);
 
+  if (!mounted) {
+    return (
+      <div className="container relative space-y-8 py-8">
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-4">
+            <div className="space-y-2">
+              <Skeleton className="h-10 w-64" />
+              <Skeleton className="h-4 w-48" />
+            </div>
+            <Skeleton className="h-10 w-32 rounded-lg" />
+          </div>
+          <div className="flex gap-3 items-center">
+            <Skeleton className="h-10 w-32" />
+            <Skeleton className="h-10 w-32" />
+            <Skeleton className="h-10 w-[180px]" />
+            <Skeleton className="h-10 w-[180px]" />
+          </div>
+        </div>
+        <div className="overflow-x-auto rounded-lg border border-border bg-card/50 min-h-[400px]">
+          <JadwalTableSkeleton />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container relative space-y-8">
       <div className="flex justify-between items-center">
@@ -440,9 +512,8 @@ export default function JadwalPage() {
 
       <div className="overflow-x-auto rounded-lg border border-border shadow-sm bg-card/50 backdrop-blur-sm min-h-[400px]">
         {loading && (
-          <div className="flex flex-col items-center justify-center h-[400px] gap-2 text-muted-foreground animate-pulse">
-            <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-            <span>Loading schedule data...</span>
+          <div className="animate-pulse">
+            <JadwalTableSkeleton />
           </div>
         )}
 
