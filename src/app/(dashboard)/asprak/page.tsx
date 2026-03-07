@@ -240,12 +240,23 @@ function AsprakPageContent() {
 
     if (!searchQuery) return list;
     const lowerQ = searchQuery.toLowerCase();
-    return list.filter(
-      (a) =>
+    return list.filter((a) => {
+      let roleText: string = a.role || 'ASPRAK';
+      if (roleText === 'ASLAB') {
+        const angkatan = a.angkatan || 0;
+        const start = (angkatan + 3) % 100;
+        const end = (angkatan + 4) % 100;
+        const term = `${start.toString().padStart(2, '0')}${end.toString().padStart(2, '0')}`;
+        roleText = `ASLAB ${term}`;
+      }
+
+      return (
         a.nama_lengkap.toLowerCase().includes(lowerQ) ||
         a.nim.includes(lowerQ) ||
-        a.kode.toLowerCase().includes(lowerQ)
-    );
+        a.kode.toLowerCase().includes(lowerQ) ||
+        roleText.toLowerCase().includes(lowerQ)
+      );
+    });
   }, [asprakList, searchQuery]);
 
   return (

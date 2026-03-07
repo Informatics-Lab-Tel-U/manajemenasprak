@@ -316,7 +316,7 @@ export default function AsprakCSVPreview({
                     >
                       {onRoleEdit ? (
                         <select
-                          className="bg-background border border-border text-xs rounded px-1 py-1 w-full"
+                          className="bg-background border border-border text-xs rounded px-1 py-1 w-min min-w-[75px]"
                           value={row.role}
                           onChange={(e) => onRoleEdit(idx, e.target.value as 'ASPRAK' | 'ASLAB')}
                         >

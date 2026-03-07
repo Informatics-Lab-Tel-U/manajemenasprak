@@ -36,11 +36,14 @@ interface AsprakTableProps {
   onViewDetails: (asprak: Asprak) => void;
 }
 
-export default function AsprakTable({
-  data,
-  loading,
-  onViewDetails,
-}: AsprakTableProps) {
+function getAslabTerm(angkatan?: number): string {
+  if (!angkatan || isNaN(angkatan)) return '';
+  const start = (angkatan + 3) % 100;
+  const end = (angkatan + 4) % 100;
+  return `${start.toString().padStart(2, '0')}${end.toString().padStart(2, '0')}`;
+}
+
+export default function AsprakTable({ data, loading, onViewDetails }: AsprakTableProps) {
   const columns = useMemo<ColumnDef<Asprak>[]>(
     () => [
       {
@@ -52,9 +55,32 @@ export default function AsprakTable({
         header: 'Nama Lengkap',
       },
       {
+        accessorKey: 'role',
+        header: 'Role',
+        cell: ({ row }) => {
+          const role = row.original.role;
+          if (role === 'ASLAB') {
+            return (
+              <Badge className="bg-slate-900 text-white hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200 font-bold px-2 py-0.5">
+                ASLAB {getAslabTerm(row.original.angkatan)}
+              </Badge>
+            );
+          }
+          return (
+            <span className="text-muted-foreground font-medium text-xs border border-border px-2 py-1 rounded bg-muted/20">
+              {role || 'ASPRAK'}
+            </span>
+          );
+        },
+      },
+      {
         accessorKey: 'kode',
         header: 'Kode',
-        cell: ({ row }) => <Badge variant="default">{row.original.kode}</Badge>,
+        cell: ({ row }) => (
+          <Badge variant="default" className="font-mono">
+            {row.original.kode}
+          </Badge>
+        ),
       },
       {
         accessorKey: 'angkatan',
@@ -64,9 +90,9 @@ export default function AsprakTable({
         id: 'actions',
         header: 'Aksi',
         cell: ({ row }) => (
-            <Button variant="ghost" size="sm" onClick={() => onViewDetails(row.original)}>
-              Lihat <ArrowUpRight className="ml-1" size={14} />
-            </Button>
+          <Button variant="ghost" size="sm" onClick={() => onViewDetails(row.original)}>
+            Lihat <ArrowUpRight className="ml-1" size={14} />
+          </Button>
         ),
       },
     ],

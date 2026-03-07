@@ -231,8 +231,7 @@ export default function AsprakImportCSVModal({
           const remappedData = updated.map((r) => ({
             nama_lengkap: r.nama_lengkap,
             nim: r.nim,
-            kode:
-              r.codeRule === 'Manual edit' ? r.kode : r.codeSource === 'csv' ? r.originalKode : '',
+            kode: r.codeRule === 'Manual edit' ? r.kode : r.originalKode ? r.originalKode : '',
             role: r.role,
             angkatan: r.angkatan,
           }));
