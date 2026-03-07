@@ -15,9 +15,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, Search, X, ChevronDown, ChevronRight, Users, Calendar } from 'lucide-react';
+import { Loader2, Search, X, ChevronDown, ChevronRight, Users, Calendar, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
-import type { Asprak, Jadwal, Praktikum } from '@/types/database';
+import type { Asprak, Jadwal, Praktikum, JadwalPengganti } from '@/types/database';
 import { Field, FieldGroup } from '@/components/ui/field';
 
 import {
@@ -57,6 +57,7 @@ interface PelanggaranFormProps {
   jadwalList: (Jadwal & { id_praktikum?: string })[];
   initialTahunAjaran?: string;
   initialPraktikumId?: string;
+  initialModul?: string;
 }
 
 export default function PelanggaranForm({
@@ -69,6 +70,7 @@ export default function PelanggaranForm({
   jadwalList,
   initialTahunAjaran = '',
   initialPraktikumId = '',
+  initialModul = '',
 }: PelanggaranFormProps) {
   // ── Context filters ──
   const [selectedTahunAjaran, setSelectedTahunAjaran] = useState(initialTahunAjaran);
@@ -78,13 +80,14 @@ export default function PelanggaranForm({
   useEffect(() => {
     if (initialTahunAjaran) setSelectedTahunAjaran(initialTahunAjaran);
     if (initialPraktikumId) setSelectedPraktikumId(initialPraktikumId);
-  }, [initialTahunAjaran, initialPraktikumId]);
+    if (initialModul) setModul(initialModul);
+  }, [initialTahunAjaran, initialPraktikumId, initialModul]);
 
   // ── Violation fields ──
   const [selectedAsprakIds, setSelectedAsprakIds] = useState<string[]>([]);
   const [idJadwal, setIdJadwal] = useState('');
   const [jenis, setJenis] = useState('');
-  const [modul, setModul] = useState<string>('');
+  const [modul, setModul] = useState<string>(initialModul);
 
   // ── Side panel state ──
   const [sidePanel, setSidePanel] = useState<SidePanel>(null);
@@ -295,6 +298,10 @@ export default function PelanggaranForm({
           ) : (
             filteredJadwal.map((j) => {
               const selected = idJadwal === j.id;
+              // Find substitute for CURRENT selected module
+              const currentModulNum = parseInt(modul);
+              const substitute = j.jadwal_pengganti?.find((jp) => jp.modul === currentModulNum);
+
               return (
                 <div
                   key={j.id}
@@ -306,11 +313,32 @@ export default function PelanggaranForm({
                     closePanel();
                   }}
                 >
-                  <div className="text-sm font-medium">
-                    {j.kelas}
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="text-sm font-medium">{j.kelas}</div>
+                    {substitute && (
+                      <Badge variant="outline" className="text-[10px] h-4 px-1 bg-amber-500/10 text-amber-600 border-amber-200 uppercase font-bold tracking-tight">
+                        Pengganti
+                      </Badge>
+                    )}
                   </div>
-                  <div className="text-xs text-muted-foreground mt-0.5">
-                    {j.hari} · {j.jam}
+                  
+                  <div className="text-xs text-muted-foreground mt-0.5 space-y-0.5">
+                    {substitute ? (
+                      <div className="flex flex-col">
+                        <span className="font-semibold text-amber-600">
+                          {substitute.hari} · {substitute.jam}
+                        </span>
+                        <span className="text-[10px] opacity-80">
+                          ({new Date(substitute.tanggal).toLocaleDateString('id-ID', {
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric',
+                          })})
+                        </span>
+                      </div>
+                    ) : (
+                      <div>{j.hari} · {j.jam}</div>
+                    )}
                   </div>
                 </div>
               );
@@ -490,9 +518,26 @@ export default function PelanggaranForm({
                     >
                       <Calendar className="h-4 w-4 flex-shrink-0" />
                       <span className="truncate">
-                        {selectedJadwal
-                          ? `${selectedJadwal.kelas} (${selectedJadwal.hari})`
-                          : 'Pilih Jadwal / Kelas...'}
+                        {selectedJadwal ? (
+                          <>
+                            {selectedJadwal.kelas}{' '}
+                            {(() => {
+                              const currentModulNum = parseInt(modul);
+                              const sub = selectedJadwal.jadwal_pengganti?.find(
+                                (jp) => jp.modul === currentModulNum
+                              );
+                              return sub ? (
+                                <span className="text-amber-600 font-semibold">
+                                  ({sub.hari} · PENGGANTI)
+                                </span>
+                              ) : (
+                                `(${selectedJadwal.hari})`
+                              );
+                            })()}
+                          </>
+                        ) : (
+                          'Pilih Jadwal / Kelas...'
+                        )}
                       </span>
                     </span>
                     <ChevronRight className="h-4 w-4 flex-shrink-0 text-muted-foreground" />

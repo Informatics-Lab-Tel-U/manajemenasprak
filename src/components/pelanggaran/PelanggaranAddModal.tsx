@@ -27,6 +27,7 @@ interface PelanggaranAddModalProps {
   jadwalList: (Jadwal & { id_praktikum?: string })[];
   initialTahunAjaran?: string;
   initialPraktikumId?: string;
+  initialModul?: string;
 }
 
 export default function PelanggaranAddModal({
@@ -40,6 +41,7 @@ export default function PelanggaranAddModal({
   jadwalList,
   initialTahunAjaran,
   initialPraktikumId,
+  initialModul,
 }: PelanggaranAddModalProps) {
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -53,6 +55,7 @@ export default function PelanggaranAddModal({
         jadwalList={jadwalList}
         initialTahunAjaran={initialTahunAjaran}
         initialPraktikumId={initialPraktikumId}
+        initialModul={initialModul}
       />
     </Dialog>
   );
