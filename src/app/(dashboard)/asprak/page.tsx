@@ -16,6 +16,7 @@ import {
   UpsertAsprakInput,
 } from '@/lib/fetchers/asprakFetcher';
 import { ExistingAsprakInfo } from '@/components/asprak/AsprakImportCSVModal';
+import { ExistingNimInfo } from '@/utils/validation/asprakValidation';
 import AsprakFilters from '@/components/asprak/AsprakFilters';
 import AsprakTable from '@/components/asprak/AsprakTable';
 import AsprakAddModal from '@/components/asprak/AsprakAddModal';
@@ -59,7 +60,7 @@ function AsprakPageContent() {
   } = useAsprak();
   const { praktikumNames: availablePraktikums } = usePraktikum();
   const [existingCodes, setExistingCodes] = useState<string[]>([]);
-  const [allExistingNims, setAllExistingNims] = useState<string[]>([]);
+  const [allExistingNims, setAllExistingNims] = useState<ExistingNimInfo[]>([]);
   const [allExistingAspraks, setAllExistingAspraks] = useState<ExistingAsprakInfo[]>([]);
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -88,7 +89,7 @@ function AsprakPageContent() {
       setExistingCodes(codesResult.data);
     }
     if (allAsprakResult.ok && allAsprakResult.data) {
-      setAllExistingNims(allAsprakResult.data.map((a) => a.nim));
+      setAllExistingNims(allAsprakResult.data.map((a) => ({ nim: a.nim, role: a.role })));
       setAllExistingAspraks(
         allAsprakResult.data.map((a) => ({ kode: a.kode, angkatan: a.angkatan ?? 0 }))
       );
@@ -112,7 +113,13 @@ function AsprakPageContent() {
   };
 
   const handleCSVImport = async (
-    rows: { nim: string; nama_lengkap: string; kode: string; angkatan: number }[],
+    rows: {
+      nim: string;
+      nama_lengkap: string;
+      kode: string;
+      role: 'ASPRAK' | 'ASLAB';
+      angkatan: number;
+    }[],
     _term: string
   ) => {
     const result = await bulkImportAspraks(rows);
@@ -184,7 +191,11 @@ function AsprakPageContent() {
     setShowEditModal(true);
   };
 
-  const handleSaveEdit = async (praktikumIds: string[], newKode: string, forceOverride: boolean) => {
+  const handleSaveEdit = async (
+    praktikumIds: string[],
+    newKode: string,
+    forceOverride: boolean
+  ) => {
     if (!editTarget) return;
 
     // Use 'all' to indicate global update
@@ -295,11 +306,7 @@ function AsprakPageContent() {
               onTermChange={setSelectedTerm}
             />
 
-            <AsprakTable
-              data={filteredList}
-              loading={loading}
-              onViewDetails={handleView}
-            />
+            <AsprakTable data={filteredList} loading={loading} onViewDetails={handleView} />
           </div>
         </TabsContent>
 

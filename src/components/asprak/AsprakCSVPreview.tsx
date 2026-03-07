@@ -8,7 +8,17 @@
  */
 
 import { useState } from 'react';
-import { CheckCircle, AlertTriangle, Sparkles, ArrowLeft, Save, Copy, FileCheck, CopyX, Pencil } from 'lucide-react';
+import {
+  CheckCircle,
+  AlertTriangle,
+  Sparkles,
+  ArrowLeft,
+  Save,
+  Copy,
+  FileCheck,
+  CopyX,
+  Pencil,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -19,6 +29,7 @@ export interface PreviewRow {
   nama_lengkap: string;
   nim: string;
   kode: string;
+  role: 'ASPRAK' | 'ASLAB';
   angkatan: number;
   codeRule: string;
   codeSource: 'csv' | 'generated';
@@ -37,6 +48,7 @@ interface AsprakCSVPreviewProps {
   onConfirm: () => void;
   onBack: () => void;
   onCodeEdit: (rowIndex: number, newCode: string) => void;
+  onRoleEdit?: (rowIndex: number, newRole: 'ASPRAK' | 'ASLAB') => void;
   onToggleSelect: (rowIndex: number) => void;
   onToggleAll: (checked: boolean) => void;
   loading: boolean;
@@ -51,26 +63,35 @@ export default function AsprakCSVPreview({
   onConfirm,
   onBack,
   onCodeEdit,
+  onRoleEdit,
   onToggleSelect,
   onToggleAll,
   loading,
   onSkip,
   forceOverride = false,
-  onForceOverrideChange
+  onForceOverrideChange,
 }: AsprakCSVPreviewProps) {
   const totalOk = rows.filter((r) => r.status === 'ok').length;
   const totalWarning = rows.filter((r) => r.status === 'warning').length;
   const totalError = rows.filter((r) => r.status === 'error').length;
-  const totalDuplicateDB = rows.filter((r) => r.status === 'error' && r.statusMessage?.includes('Duplikat')).length;
+  const totalDuplicateDB = rows.filter(
+    (r) => r.status === 'error' && r.statusMessage?.includes('Duplikat')
+  ).length;
   const totalDuplicateCSV = rows.filter((r) => r.status === 'duplicate-csv').length;
   const totalOtherErrors = totalError - totalDuplicateDB;
-  const totalGenerated = rows.filter((r) => r.codeSource === 'generated' && r.status === 'ok').length;
-  const totalManualEdit = rows.filter((r) => r.codeRule === 'Manual edit' && (r.status === 'ok' || r.status === 'warning')).length;
-  const totalFromCSV = rows.filter((r) => r.codeSource === 'csv' && r.codeRule !== 'Manual edit' && r.status === 'ok').length;
-  
+  const totalGenerated = rows.filter(
+    (r) => r.codeSource === 'generated' && r.status === 'ok'
+  ).length;
+  const totalManualEdit = rows.filter(
+    (r) => r.codeRule === 'Manual edit' && (r.status === 'ok' || r.status === 'warning')
+  ).length;
+  const totalFromCSV = rows.filter(
+    (r) => r.codeSource === 'csv' && r.codeRule !== 'Manual edit' && r.status === 'ok'
+  ).length;
+
   // Count selectable rows (OK)
-  const selectableRows = rows.filter(r => r.status === 'ok');
-  const selectedCount = selectableRows.filter(r => r.selected).length;
+  const selectableRows = rows.filter((r) => r.status === 'ok');
+  const selectedCount = selectableRows.filter((r) => r.selected).length;
   const allSelected = selectableRows.length > 0 && selectedCount === selectableRows.length;
   const isIndeterminate = selectedCount > 0 && selectedCount < selectableRows.length;
 
@@ -84,7 +105,10 @@ export default function AsprakCSVPreview({
         <Badge variant="outline" className="text-sm px-3 py-1">
           Total: <span className="font-bold ml-1">{rows.length}</span>
         </Badge>
-        <Badge variant={selectedCount > 0 ? "default" : "outline"} className="text-sm px-3 py-1 transition-colors">
+        <Badge
+          variant={selectedCount > 0 ? 'default' : 'outline'}
+          className="text-sm px-3 py-1 transition-colors"
+        >
           Dipilih: <span className="font-bold ml-1">{selectedCount}</span>
         </Badge>
         {totalOk > 0 && (
@@ -139,8 +163,8 @@ export default function AsprakCSVPreview({
 
       {onForceOverrideChange !== undefined && (
         <div className="flex items-center space-x-2 bg-muted/30 p-3 rounded-md border border-border/50">
-          <Switch 
-            id="force-override" 
+          <Switch
+            id="force-override"
             checked={forceOverride}
             onCheckedChange={onForceOverrideChange}
             disabled={loading}
@@ -148,7 +172,9 @@ export default function AsprakCSVPreview({
           <Label htmlFor="force-override" className="text-sm font-medium leading-tight">
             Paksa gunakan Kode dari CSV
             <p className="text-xs text-muted-foreground font-normal mt-0.5">
-              Jika diaktifkan, kode yang ada di CSV tidak akan diubah/di-generate ulang, mengabaikan aturan bentrok 5 tahun di database. (Bentrok dalam satu file CSV tetap akan diperingatkan).
+              Jika diaktifkan, kode yang ada di CSV tidak akan diubah/di-generate ulang, mengabaikan
+              aturan bentrok 5 tahun di database. (Bentrok dalam satu file CSV tetap akan
+              diperingatkan).
             </p>
           </Label>
         </div>
@@ -161,8 +187,8 @@ export default function AsprakCSVPreview({
             <thead className="bg-muted/50 sticky top-0 z-10">
               <tr>
                 <th className="px-3 py-2.5 text-center border-b border-border w-[40px]">
-                  <Checkbox 
-                    checked={allSelected ? true : isIndeterminate ? "indeterminate" : false}
+                  <Checkbox
+                    checked={allSelected ? true : isIndeterminate ? 'indeterminate' : false}
                     onCheckedChange={(checked) => onToggleAll(!!checked)}
                     disabled={selectableRows.length === 0}
                   />
@@ -182,6 +208,9 @@ export default function AsprakCSVPreview({
                 <th className="px-3 py-2.5 text-center text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border">
                   Angkatan
                 </th>
+                <th className="px-3 py-2.5 text-center text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border">
+                  Role
+                </th>
                 <th className="px-3 py-2.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border">
                   Rule
                 </th>
@@ -192,15 +221,19 @@ export default function AsprakCSVPreview({
             </thead>
             <tbody>
               {rows.map((row, idx) => {
-                const isDuplicateDB = row.status === 'error' && row.statusMessage?.includes('Duplikat');
+                const isDuplicateDB =
+                  row.status === 'error' && row.statusMessage?.includes('Duplikat');
                 const isDuplicateCSV = row.status === 'duplicate-csv';
                 const isDuplicate = isDuplicateDB || isDuplicateCSV;
-                const isDisabled = row.status === 'error' || row.status === 'duplicate-csv' || row.status === 'warning';
-                
+                const isDisabled =
+                  row.status === 'error' ||
+                  row.status === 'duplicate-csv' ||
+                  row.status === 'warning';
+
                 return (
-                <tr
-                  key={idx}
-                  className={`
+                  <tr
+                    key={idx}
+                    className={`
                     border-b border-border/50 transition-colors
                     ${isDuplicateDB ? 'bg-red-500/10' : ''}
                     ${isDuplicateCSV ? 'bg-orange-500/10' : ''}
@@ -209,100 +242,132 @@ export default function AsprakCSVPreview({
                     ${!isDisabled && row.selected ? 'bg-muted/40' : ''}
                     hover:bg-muted/60
                   `}
-                >
-                  <td className="px-3 py-2 text-center">
-                    <Checkbox 
-                      checked={row.selected && !isDisabled}
-                      onCheckedChange={() => onToggleSelect(idx)}
-                      disabled={isDisabled}
-                      className={isDisabled ? "opacity-50 cursor-not-allowed" : ""}
-                    />
-                  </td>
-                  <td className="px-3 py-2 text-muted-foreground font-mono text-xs">
-                    {idx + 1}
-                  </td>
-                  <td className={`px-3 py-2 font-medium ${isDuplicate ? 'line-through opacity-50' : ''}`}>
-                    {row.nama_lengkap}
-                  </td>
-                  <td className={`px-3 py-2 font-mono text-xs ${isDuplicate ? 'line-through opacity-50' : ''}`}>
-                    {row.nim}
-                  </td>
-                  <td className="px-3 py-2 text-center">
-                    {isDuplicate ? (
-                      <span className="inline-flex items-center gap-1 font-mono font-bold text-xs px-2 py-0.5 rounded-md opacity-40 bg-muted/30 text-muted-foreground">
-                        {row.kode || '—'}
-                      </span>
-                    ) : (
-                      <div className="inline-flex items-center gap-1">
-                        <input
-                          type="text"
-                          value={row.kode}
-                          onChange={(e) => {
-                            const val = e.target.value.replace(/[^a-zA-Z]/g, '').slice(0, 3);
-                            onCodeEdit(idx, val);
-                          }}
-                          maxLength={3}
-                          className={`
+                  >
+                    <td className="px-3 py-2 text-center">
+                      <Checkbox
+                        checked={row.selected && !isDisabled}
+                        onCheckedChange={() => onToggleSelect(idx)}
+                        disabled={isDisabled}
+                        className={isDisabled ? 'opacity-50 cursor-not-allowed' : ''}
+                      />
+                    </td>
+                    <td className="px-3 py-2 text-muted-foreground font-mono text-xs">{idx + 1}</td>
+                    <td
+                      className={`px-3 py-2 font-medium ${isDuplicate ? 'line-through opacity-50' : ''}`}
+                    >
+                      {row.nama_lengkap}
+                    </td>
+                    <td
+                      className={`px-3 py-2 font-mono text-xs ${isDuplicate ? 'line-through opacity-50' : ''}`}
+                    >
+                      {row.nim}
+                    </td>
+                    <td className="px-3 py-2 text-center">
+                      {isDuplicate ? (
+                        <span className="inline-flex items-center gap-1 font-mono font-bold text-xs px-2 py-0.5 rounded-md opacity-40 bg-muted/30 text-muted-foreground">
+                          {row.kode || '—'}
+                        </span>
+                      ) : (
+                        <div className="inline-flex items-center gap-1">
+                          <input
+                            type="text"
+                            value={row.kode}
+                            onChange={(e) => {
+                              const val = e.target.value.replace(/[^a-zA-Z]/g, '').slice(0, 3);
+                              onCodeEdit(idx, val);
+                            }}
+                            maxLength={3}
+                            className={`
                             w-[52px] text-center font-mono font-bold text-xs px-1.5 py-0.5 rounded-md
                             border outline-none transition-all
                             focus:ring-2 focus:ring-primary/40
-                            ${!row.kode
-                              ? 'border-amber-500/50 bg-amber-500/5 text-amber-400 placeholder:text-amber-400/50'
-                              : row.codeSource === 'generated'
-                                ? 'border-violet-500/30 bg-violet-500/10 text-violet-400'
-                                : 'border-sky-500/30 bg-sky-500/10 text-sky-400'
+                            ${
+                              !row.kode
+                                ? 'border-amber-500/50 bg-amber-500/5 text-amber-400 placeholder:text-amber-400/50'
+                                : row.codeSource === 'generated'
+                                  ? 'border-violet-500/30 bg-violet-500/10 text-violet-400'
+                                  : 'border-sky-500/30 bg-sky-500/10 text-sky-400'
                             }
                           `}
-                          placeholder="???"
-                          title={row.codeRule}
-                        />
-                        {row.codeSource === 'generated' && row.kode && <Sparkles size={11} className="text-violet-400" />}
-                        {row.codeSource === 'csv' && row.kode && row.codeRule !== 'Manual edit' && <FileCheck size={11} className="text-sky-400" />}
-                        {row.codeRule === 'Manual edit' && <Pencil size={11} className="text-sky-400" />}
-                      </div>
-                    )}
-                  </td>
-                  <td className={`px-3 py-2 text-center font-mono text-xs ${isDuplicate ? 'opacity-50' : ''}`}>
-                    {row.angkatan}
-                  </td>
-                  <td className="px-3 py-2 text-xs text-muted-foreground font-mono truncate max-w-[150px]" title={row.codeRule}>
-                    {row.codeRule || '-'}
-                  </td>
-                  <td className="px-3 py-2">
-                    {row.status === 'ok' && (
-                      <span className="inline-flex items-center gap-1 text-emerald-500 text-xs">
-                        <CheckCircle size={14} /> OK
-                      </span>
-                    )}
-                    {row.status === 'warning' && (
-                      <span
-                        className="inline-flex items-center gap-1 text-amber-500 text-xs"
-                        title={row.statusMessage}
-                      >
-                        <AlertTriangle size={14} /> {row.statusMessage || 'Warning'}
-                      </span>
-                    )}
-                    {row.status === 'error' && isDuplicateDB && (
-                      <span className="inline-flex items-center gap-1 text-red-400 text-xs font-medium">
-                        <Copy size={14} /> Duplikat DB
-                      </span>
-                    )}
-                    {isDuplicateCSV && (
-                      <span className="inline-flex items-center gap-1 text-orange-400 text-xs font-medium">
-                        <CopyX size={14} /> Duplikat dalam CSV
-                      </span>
-                    )}
-                    {row.status === 'error' && !isDuplicate && (
-                      <span
-                        className="inline-flex items-center gap-1 text-red-500 text-xs"
-                        title={row.statusMessage}
-                      >
-                        <AlertTriangle size={14} /> {row.statusMessage || 'Error'}
-                      </span>
-                    )}
-                  </td>
-                </tr>
-              );
+                            placeholder="???"
+                            title={row.codeRule}
+                          />
+                          {row.codeSource === 'generated' && row.kode && (
+                            <Sparkles size={11} className="text-violet-400" />
+                          )}
+                          {row.codeSource === 'csv' &&
+                            row.kode &&
+                            row.codeRule !== 'Manual edit' && (
+                              <FileCheck size={11} className="text-sky-400" />
+                            )}
+                          {row.codeRule === 'Manual edit' && (
+                            <Pencil size={11} className="text-sky-400" />
+                          )}
+                        </div>
+                      )}
+                    </td>
+                    <td
+                      className={`px-3 py-2 text-center font-mono text-xs ${isDuplicate ? 'opacity-50' : ''}`}
+                    >
+                      {row.angkatan}
+                    </td>
+                    <td
+                      className={`px-3 py-2 text-center font-mono text-xs ${isDuplicate ? 'opacity-50' : ''}`}
+                    >
+                      {onRoleEdit ? (
+                        <select
+                          className="bg-background border border-border text-xs rounded px-1 py-1 w-full"
+                          value={row.role}
+                          onChange={(e) => onRoleEdit(idx, e.target.value as 'ASPRAK' | 'ASLAB')}
+                        >
+                          <option value="ASPRAK">ASPRAK</option>
+                          <option value="ASLAB">ASLAB</option>
+                        </select>
+                      ) : (
+                        row.role
+                      )}
+                    </td>
+                    <td
+                      className="px-3 py-2 text-xs text-muted-foreground font-mono truncate max-w-[150px]"
+                      title={row.codeRule}
+                    >
+                      {row.codeRule || '-'}
+                    </td>
+                    <td className="px-3 py-2">
+                      {row.status === 'ok' && (
+                        <span className="inline-flex items-center gap-1 text-emerald-500 text-xs">
+                          <CheckCircle size={14} /> OK
+                        </span>
+                      )}
+                      {row.status === 'warning' && (
+                        <span
+                          className="inline-flex items-center gap-1 text-amber-500 text-xs"
+                          title={row.statusMessage}
+                        >
+                          <AlertTriangle size={14} /> {row.statusMessage || 'Warning'}
+                        </span>
+                      )}
+                      {row.status === 'error' && isDuplicateDB && (
+                        <span className="inline-flex items-center gap-1 text-red-400 text-xs font-medium">
+                          <Copy size={14} /> Duplikat DB
+                        </span>
+                      )}
+                      {isDuplicateCSV && (
+                        <span className="inline-flex items-center gap-1 text-orange-400 text-xs font-medium">
+                          <CopyX size={14} /> Duplikat dalam CSV
+                        </span>
+                      )}
+                      {row.status === 'error' && !isDuplicate && (
+                        <span
+                          className="inline-flex items-center gap-1 text-red-500 text-xs"
+                          title={row.statusMessage}
+                        >
+                          <AlertTriangle size={14} /> {row.statusMessage || 'Error'}
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                );
               })}
             </tbody>
           </table>
@@ -317,25 +382,19 @@ export default function AsprakCSVPreview({
         </Button>
 
         <div className="flex items-center gap-3">
-          {(totalError + totalDuplicateCSV) > 0 && (
+          {totalError + totalDuplicateCSV > 0 && (
             <p className="text-xs text-amber-500">
               {totalError + totalDuplicateCSV} row(s) bermasalah akan di-skip saat import.
             </p>
           )}
           {onSkip && (
-              <Button type="button" variant="secondary" onClick={onSkip} disabled={loading}>
-                 Lewati Langkah Ini
-              </Button>
+            <Button type="button" variant="secondary" onClick={onSkip} disabled={loading}>
+              Lewati Langkah Ini
+            </Button>
           )}
-          <Button
-            onClick={onConfirm}
-            disabled={loading || selectedCount === 0}
-            variant="default"
-          >
+          <Button onClick={onConfirm} disabled={loading || selectedCount === 0} variant="default">
             <Save size={16} className="mr-1" />
-            {loading
-              ? 'Menyimpan...'
-              : `Simpan ${selectedCount} Data Terpilih`}
+            {loading ? 'Menyimpan...' : `Simpan ${selectedCount} Data Terpilih`}
           </Button>
         </div>
       </div>

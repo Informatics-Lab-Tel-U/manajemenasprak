@@ -11,6 +11,7 @@ export interface UpsertAsprakInput {
   nim: string;
   nama_lengkap: string;
   kode: string;
+  role: 'ASPRAK' | 'ASLAB';
   angkatan: number;
   assignments: {
     term: string;
@@ -211,6 +212,7 @@ export interface BulkImportRow {
   nim: string;
   nama_lengkap: string;
   kode: string;
+  role: 'ASPRAK' | 'ASLAB';
   angkatan: number;
 }
 

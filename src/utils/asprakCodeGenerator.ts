@@ -289,7 +289,7 @@ export function generateAsprakCode(
  * @returns Array of generated codes in the same order
  */
 export function batchGenerateCodes(
-  rows: { nama_lengkap: string; kode?: string }[],
+  rows: { nama_lengkap: string; kode?: string; role?: string }[],
   existingCodes: Set<string>
 ): CodeGenerationResult[] {
   const allUsed = new Set(existingCodes);
@@ -302,8 +302,12 @@ export function batchGenerateCodes(
     const row = rows[i];
     if (row.kode) {
       const normalized = row.kode.toUpperCase().trim();
-      if (isValidCode(normalized) && !allUsed.has(normalized)) {
-        allUsed.add(normalized);
+      const isAslab = row.role === 'ASLAB';
+
+      // IF ASLAB: bypass the uniqueness check, let them use whatever code they want
+      // IF ASPRAK: must be a valid 3-letter code and not already used
+      if (isAslab || (isValidCode(normalized) && !allUsed.has(normalized))) {
+        if (!isAslab) allUsed.add(normalized);
         results[i] = { code: normalized, rule: 'Provided (CSV)' };
       }
     }

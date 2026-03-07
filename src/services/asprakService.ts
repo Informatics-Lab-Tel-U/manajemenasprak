@@ -2,6 +2,7 @@ import 'server-only';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { Asprak } from '@/types/database';
+import type { Role } from '@/config/rbac';
 import { logger } from '@/lib/logger';
 import { checkCodeConflict, generateConflictErrorMessage } from '@/utils/conflict';
 import { generateAsprakCode } from '@/utils/asprakCodeGenerator';
@@ -85,6 +86,7 @@ export async function getAllAsprak(
       nama_lengkap: string;
       nim: string;
       kode: string;
+      role?: string;
       angkatan: number;
       created_at: string;
     };
@@ -93,6 +95,7 @@ export async function getAllAsprak(
       nama_lengkap: row.nama_lengkap,
       nim: row.nim,
       kode: row.kode,
+      role: row.role as Role,
       angkatan: row.angkatan,
       created_at: row.created_at,
     };
@@ -158,6 +161,7 @@ export async function getAspraksWithAssignments(
       nama_lengkap: row.nama_lengkap,
       nim: row.nim,
       kode: row.kode,
+      role: row.role,
       angkatan: row.angkatan,
       created_at: row.created_at,
       updated_at: row.updated_at ?? '',
@@ -231,6 +235,7 @@ export interface UpsertAsprakInput {
   nim: string;
   nama_lengkap: string;
   kode: string;
+  role: 'ASPRAK' | 'ASLAB';
   angkatan: number;
   assignments: {
     term: string;
@@ -271,6 +276,7 @@ export async function upsertAsprak(
       .update({
         nama_lengkap: input.nama_lengkap,
         kode: input.kode,
+        role: input.role,
         angkatan: angkatan,
       })
       .eq('id', existingUser.id);
@@ -293,6 +299,7 @@ export async function upsertAsprak(
         nim: input.nim,
         nama_lengkap: input.nama_lengkap,
         kode: input.kode,
+        role: input.role,
         angkatan: angkatan,
       })
       .select()
@@ -348,6 +355,7 @@ export interface BulkUpsertRow {
   nim: string;
   nama_lengkap: string;
   kode: string;
+  role: 'ASPRAK' | 'ASLAB';
   angkatan: number;
 }
 
@@ -373,32 +381,34 @@ export async function bulkUpsertAspraks(
     // Fetch existing aspraks by NIM to determine PK for upsert
     const { data: existing } = await supabase
       .from('asprak')
-      .select('id, nim')
+      .select('id, nim, role')
       .in('nim', nims);
 
-    const existingMap = new Map((existing || []).map((e) => [e.nim, e.id]));
+    const existingMap = new Map((existing || []).map((e) => [`${e.nim}_${e.role}`, e.id]));
 
     const upsertPayload = []; // for existing users (includes ID)
     const insertPayload = []; // for new users (no ID)
-    const seenNim = new Set();
-    
+    const seenNimRole = new Set();
+
     for (const row of rows) {
-      if (seenNim.has(row.nim)) {
-          result.skipped++;
-          continue;
+      const uniqueKey = `${row.nim}_${row.role}`;
+      if (seenNimRole.has(uniqueKey)) {
+        result.skipped++;
+        continue;
       }
-      seenNim.add(row.nim);
+      seenNimRole.add(uniqueKey);
 
       let angkatan = row.angkatan;
       if (angkatan > 0 && angkatan < 100) angkatan += 2000;
 
-      const existingId = existingMap.get(row.nim);
+      const existingId = existingMap.get(uniqueKey);
       if (existingId) {
         upsertPayload.push({
           id: existingId,
           nim: row.nim,
           nama_lengkap: row.nama_lengkap,
           kode: row.kode,
+          role: row.role,
           angkatan: angkatan,
         });
       } else {
@@ -406,6 +416,7 @@ export async function bulkUpsertAspraks(
           nim: row.nim,
           nama_lengkap: row.nama_lengkap,
           kode: row.kode,
+          role: row.role,
           angkatan: angkatan,
         });
       }
