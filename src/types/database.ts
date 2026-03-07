@@ -27,6 +27,7 @@ export type Asprak = {
   nama_lengkap: string;
   nim: string;
   kode: string;
+  role: Role;
   angkatan?: number;
   created_at: string;
   updated_at: string;

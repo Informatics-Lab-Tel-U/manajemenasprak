@@ -35,7 +35,11 @@ import { cn } from '@/lib/utils';
 
 import TermInput, { buildTermString } from './TermInput';
 import AsprakCSVPreview, { PreviewRow } from './AsprakCSVPreview';
-import { validateAsprakData, validateAsprakCodeEdit } from '@/utils/validation/asprakValidation';
+import {
+  validateAsprakData,
+  validateAsprakCodeEdit,
+  ExistingNimInfo,
+} from '@/utils/validation/asprakValidation';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -43,6 +47,7 @@ interface RawCSVRow {
   nama_lengkap?: string;
   nim?: string;
   kode?: string;
+  role?: string;
   angkatan?: string | number;
 }
 
@@ -56,10 +61,16 @@ const CODE_RECYCLE_YEARS = 5;
 
 interface AsprakImportCSVModalProps {
   existingCodes: string[];
-  existingNims: string[];
+  existingNims: ExistingNimInfo[];
   existingAspraks: ExistingAsprakInfo[];
   onImport: (
-    rows: { nim: string; nama_lengkap: string; kode: string; angkatan: number }[],
+    rows: {
+      nim: string;
+      nama_lengkap: string;
+      kode: string;
+      role: 'ASPRAK' | 'ASLAB';
+      angkatan: number;
+    }[],
     term: string
   ) => Promise<void>;
   onClose: () => void;
@@ -115,6 +126,7 @@ export default function AsprakImportCSVModal({
           if (h.includes('nama')) return 'nama_lengkap';
           if (h.includes('nim')) return 'nim';
           if (h.includes('kode')) return 'kode';
+          if (h.includes('role') || h.includes('peran')) return 'role';
           if (h.includes('angkatan') || h.includes('tahun')) return 'angkatan';
           return h.replace(/[^a-z0-9]/g, '_');
         },
@@ -200,35 +212,83 @@ export default function AsprakImportCSVModal({
 
   const handleCodeEdit = useCallback(
     (rowIndex: number, newCode: string) => {
-      setPreviewRows((prev) => validateAsprakCodeEdit(rowIndex, newCode, prev, existingAspraks, forceOverride));
+      setPreviewRows((prev) =>
+        validateAsprakCodeEdit(rowIndex, newCode, prev, existingAspraks, forceOverride)
+      );
     },
     [existingAspraks, forceOverride]
   );
 
+  const handleRoleEdit = useCallback(
+    (rowIndex: number, newRole: 'ASPRAK' | 'ASLAB') => {
+      setPreviewRows((prev) => {
+        const updated = [...prev];
+        const row = { ...updated[rowIndex] };
+        row.role = newRole;
+        updated[rowIndex] = row;
+        // Re-run validation for the entire dataset when a role changes
+        try {
+          const remappedData = updated.map((r) => ({
+            nama_lengkap: r.nama_lengkap,
+            nim: r.nim,
+            kode: r.codeRule === 'Manual edit' ? r.kode : r.originalKode ? r.originalKode : '',
+            role: r.role,
+            angkatan: r.angkatan,
+          }));
+          const revalidated = validateAsprakData(
+            remappedData,
+            existingCodes,
+            existingNims,
+            forceOverride
+          );
+          return revalidated.map((revalRow, i) => {
+            if (updated[i].codeRule === 'Manual edit') {
+              revalRow.kode = updated[i].kode;
+              revalRow.codeSource = 'csv';
+              revalRow.codeRule = 'Manual edit';
+            }
+            revalRow.selected = updated[i].selected;
+            return revalRow;
+          });
+        } catch (e: any) {
+          setError(`Error saat menyiapkan data: ${e.message}`);
+          return updated;
+        }
+      });
+    },
+    [existingCodes, existingNims, forceOverride]
+  );
+
   const handleForceOverrideToggle = useCallback((checked: boolean) => {
-      if (checked) {
-          setShowOverrideConfirm(true);
-      } else {
-          setForceOverride(false);
-      }
+    if (checked) {
+      setShowOverrideConfirm(true);
+    } else {
+      setForceOverride(false);
+    }
   }, []);
 
   const confirmOverride = () => {
-      setForceOverride(true);
-      setShowOverrideConfirm(false);
+    setForceOverride(true);
+    setShowOverrideConfirm(false);
   };
 
   const cancelOverride = () => {
-      setForceOverride(false);
-      setShowOverrideConfirm(false);
+    setForceOverride(false);
+    setShowOverrideConfirm(false);
   };
 
   // ─── Template Download ──────────────────────────────────────────────────
 
   const handleDownloadTemplate = (format: 'csv' | 'xlsx') => {
     const data = [
-      { nama_lengkap: 'Budi Santoso', nim: '1301213001', kode: 'BUS', angkatan: 2021 },
-      { nama_lengkap: 'Siti Aminah', nim: '1301213002', kode: '', angkatan: 2021 },
+      {
+        nama_lengkap: 'Budi Santoso',
+        nim: '1301213001',
+        kode: 'BUS',
+        angkatan: 2021,
+        role: 'ASPRAK',
+      },
+      { nama_lengkap: 'Siti Aminah', nim: '1301213002', kode: '', angkatan: 2021, role: 'ASLAB' },
     ];
 
     if (format === 'csv') {
@@ -286,6 +346,7 @@ export default function AsprakImportCSVModal({
           nim: r.nim,
           nama_lengkap: r.nama_lengkap,
           kode: r.kode,
+          role: r.role,
           angkatan: r.angkatan,
         })),
         term
@@ -424,7 +485,13 @@ export default function AsprakImportCSVModal({
                           Format Kolom:
                         </p>
                         <div className="flex flex-wrap gap-2 mb-1">
-                          {['nama_lengkap', 'nim', 'kode (opsional)', 'angkatan'].map((col) => (
+                          {[
+                            'nama_lengkap',
+                            'nim',
+                            'kode (opsional)',
+                            'angkatan',
+                            'role (opsional)',
+                          ].map((col) => (
                             <span
                               key={col}
                               className="text-[10px] bg-background border px-1.5 py-0.5 rounded font-mono text-muted-foreground"
@@ -435,7 +502,9 @@ export default function AsprakImportCSVModal({
                         </div>
                         <p className="text-[10px] text-muted-foreground/60 mb-3">
                           * Kolom <code className="text-[9px] bg-muted px-1 rounded">kode</code>{' '}
-                          boleh kosong (akan di-generate otomatis).
+                          boleh kosong (akan di-generate otomatis). * Kolom{' '}
+                          <code className="text-[9px] bg-muted px-1 rounded">role</code> akan
+                          default menjadi <b>ASPRAK</b> jika kosong (pilih ASPRAK/ASLAB).
                         </p>
 
                         <div className="flex items-center gap-3 pt-2 border-t border-border/50">
@@ -477,6 +546,7 @@ export default function AsprakImportCSVModal({
                   onConfirm={handleConfirm}
                   onBack={handleBack}
                   onCodeEdit={handleCodeEdit}
+                  onRoleEdit={handleRoleEdit}
                   onToggleSelect={handleToggleSelect}
                   onToggleAll={handleToggleAll}
                   loading={saving}
@@ -495,13 +565,22 @@ export default function AsprakImportCSVModal({
             <AlertDialogTitle>Konfirmasi Pemaksaan Kode</AlertDialogTitle>
             <AlertDialogDescription>
               Apakah Anda yakin ingin memaksakan kode dari CSV?
-              <br /><br />
-              <span className="font-semibold text-destructive">Perhatian:</span> Ini akan mengabaikan peringatan bentrok kode dari database, termasuk kode yang baru saja dipakai dalam selisih kurang dari 5 tahun. Tindakan ini akan me-refresh ulang preview data serta mereset input kode manual yang telah Anda ubah.
+              <br />
+              <br />
+              <span className="font-semibold text-destructive">Perhatian:</span> Ini akan
+              mengabaikan peringatan bentrok kode dari database, termasuk kode yang baru saja
+              dipakai dalam selisih kurang dari 5 tahun. Tindakan ini akan me-refresh ulang preview
+              data serta mereset input kode manual yang telah Anda ubah.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={cancelOverride}>Batal</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmOverride} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Ya, Paksa Gunakan</AlertDialogAction>
+            <AlertDialogAction
+              onClick={confirmOverride}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Ya, Paksa Gunakan
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

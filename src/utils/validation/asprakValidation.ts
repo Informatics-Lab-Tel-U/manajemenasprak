@@ -4,14 +4,18 @@ import type { ExistingAsprakInfo } from '@/components/asprak/AsprakImportCSVModa
 
 const CODE_RECYCLE_YEARS = 5;
 
+// Define a type for existing nims with roles
+export type ExistingNimInfo = { nim: string; role: string };
+
 export function validateAsprakData(
   data: any[],
   existingCodes: string[],
-  existingNims: string[],
+  existingNims: ExistingNimInfo[],
   forceOverride: boolean = false
 ): PreviewRow[] {
   const usedCodes = new Set(existingCodes.map((c) => c.toUpperCase()));
-  const existingNimSet = new Set(existingNims);
+  // We check uniqueness for NIM+Role combination
+  const existingRecords = new Set(existingNims.map((e) => `${e.nim}_${e.role}`));
 
   // Map column variations mapped from headers
   const normalizedData = data.map((r: any) => {
@@ -19,7 +23,10 @@ export function validateAsprakData(
     const keys = Object.keys(r);
     const getVal = (possibleNames: string[]) => {
       for (const p of possibleNames) {
-        const found = keys.find(k => k.toLowerCase().replace(/[^a-z0-9]/g, '') === p.toLowerCase().replace(/[^a-z0-9]/g, ''));
+        const found = keys.find(
+          (k) =>
+            k.toLowerCase().replace(/[^a-z0-9]/g, '') === p.toLowerCase().replace(/[^a-z0-9]/g, '')
+        );
         if (found) return r[found];
       }
       return undefined;
@@ -29,14 +36,17 @@ export function validateAsprakData(
       nama_lengkap: String(getVal(['nama_lengkap', 'namalengkap', 'nama']) || '').trim(),
       nim: String(getVal(['nim']) || '').trim(),
       kode: getVal(['kode']) ? String(getVal(['kode'])).trim() : undefined,
+      role: String(getVal(['role', 'peran']) || '')
+        .trim()
+        .toUpperCase(),
       angkatan: getVal(['angkatan', 'tahun']),
     };
   });
 
-  // Prepare rows for batch code generation
   const rowsForCodeGen = normalizedData.map((row) => ({
     nama_lengkap: row.nama_lengkap,
     kode: row.kode,
+    role: row.role === 'ASLAB' ? 'ASLAB' : 'ASPRAK',
   }));
 
   const generatedCodes = batchGenerateCodes(rowsForCodeGen, forceOverride ? new Set() : usedCodes);
@@ -48,11 +58,14 @@ export function validateAsprakData(
     const row = normalizedData[idx];
     const namaLengkap = row.nama_lengkap;
     const nim = row.nim;
+    let role = row.role;
+    if (role !== 'ASPRAK' && role !== 'ASLAB') {
+      role = 'ASPRAK'; // Default role
+    }
+
     const rawAngkatan = row.angkatan;
     let angkatan =
-      typeof rawAngkatan === 'number'
-        ? rawAngkatan
-        : parseInt(String(rawAngkatan || '0'), 10);
+      typeof rawAngkatan === 'number' ? rawAngkatan : parseInt(String(rawAngkatan || '0'), 10);
     if (angkatan > 0 && angkatan < 100) angkatan += 2000;
 
     const originalKode = row.kode ? row.kode.toUpperCase() : '';
@@ -68,12 +81,12 @@ export function validateAsprakData(
     } else if (!nim) {
       status = 'error';
       statusMessage = 'NIM kosong';
-    } else if (existingNimSet.has(nim)) {
+    } else if (existingRecords.has(`${nim}_${role}`)) {
       status = 'error';
-      statusMessage = 'Duplikat — NIM sudah ada di database';
-    } else if (seenNimsInCSV.has(nim)) {
+      statusMessage = `Duplikat — NIM ${role} sudah ada di database`;
+    } else if (seenNimsInCSV.has(`${nim}_${role}`)) {
       status = 'duplicate-csv';
-      statusMessage = 'Duplikat dalam CSV — NIM sama dengan row sebelumnya';
+      statusMessage = 'Duplikat dalam CSV — NIM dan Role sama dengan row sebelumnya';
     } else if (angkatan <= 0 || isNaN(angkatan)) {
       status = 'warning';
       statusMessage = 'Angkatan tidak valid';
@@ -85,16 +98,15 @@ export function validateAsprakData(
       statusMessage = 'Kode gagal di-generate — isi manual di kolom kode';
     }
 
-    // Track this NIM as seen in current CSV
-    if (nim) seenNimsInCSV.add(nim);
+    // Track this NIM+Role as seen in current CSV
+    if (nim) seenNimsInCSV.add(`${nim}_${role}`);
 
     const codeSource: PreviewRow['codeSource'] =
       generated.rule === 'Provided (CSV)' ? 'csv' : 'generated';
 
     const isDuplicate =
-      (status === 'error' && statusMessage.includes('Duplikat')) ||
-      status === 'duplicate-csv';
-      
+      (status === 'error' && statusMessage.includes('Duplikat')) || status === 'duplicate-csv';
+
     // If forceOverride is true, and originalKode exists in the CSV, we use it directly
     // and ignore DB conflicts (the code generator will still have tried to generate a unique one if we didn't pass empty usedCodes)
     let finalCodeRule = isDuplicate ? 'Duplikat' : generated.rule;
@@ -120,6 +132,7 @@ export function validateAsprakData(
       nama_lengkap: namaLengkap.toUpperCase(),
       nim,
       kode: finalDisplayKode,
+      role: role as 'ASPRAK' | 'ASLAB',
       angkatan: isNaN(angkatan) ? 0 : angkatan,
       codeRule: finalCodeRule,
       codeSource: finalCodeSource,
@@ -159,21 +172,28 @@ export function validateAsprakCodeEdit(
 
   // ── Real-time conflict check ──
   if (/^[A-Z]{3}$/.test(uppercased)) {
-    const conflictInCSV = updated.some(
-      (r, i) =>
-        i !== rowIndex &&
-        r.kode === uppercased &&
-        r.status !== 'error' &&
-        r.status !== 'duplicate-csv'
-    );
+    const conflictInCSV =
+      row.role !== 'ASLAB' &&
+      updated.some(
+        (r, i) =>
+          i !== rowIndex &&
+          r.kode === uppercased &&
+          r.status !== 'error' &&
+          r.status !== 'duplicate-csv'
+      );
 
-    const conflictInDB = !forceOverride && existingAspraks.some((a) => {
-      if (a.kode.toUpperCase() !== uppercased) return false;
-      const gap = row.angkatan - a.angkatan;
-      return gap < CODE_RECYCLE_YEARS;
-    });
+    const conflictInDB =
+      row.role !== 'ASLAB' &&
+      !forceOverride &&
+      existingAspraks.some((a) => {
+        if (a.kode.toUpperCase() !== uppercased) return false;
+        const gap = row.angkatan - a.angkatan;
+        return gap < CODE_RECYCLE_YEARS;
+      });
 
-    const preserveError = row.status === 'error' && (row.statusMessage?.includes('NIM') || row.statusMessage?.includes('Nama'));
+    const preserveError =
+      row.status === 'error' &&
+      (row.statusMessage?.includes('NIM') || row.statusMessage?.includes('Nama'));
     const preserveDuplicateCsv = row.status === 'duplicate-csv';
 
     if (conflictInCSV) {
@@ -199,19 +219,23 @@ export function validateAsprakCodeEdit(
       row.selected = false;
     }
   } else if (uppercased.length > 0 && uppercased.length < 3) {
-    const preserveError = row.status === 'error' && (row.statusMessage?.includes('NIM') || row.statusMessage?.includes('Nama'));
+    const preserveError =
+      row.status === 'error' &&
+      (row.statusMessage?.includes('NIM') || row.statusMessage?.includes('Nama'));
     const preserveDuplicateCsv = row.status === 'duplicate-csv';
     if (!preserveError && !preserveDuplicateCsv) {
-        row.status = 'error';
-        row.statusMessage = 'Kode harus 3 huruf';
+      row.status = 'error';
+      row.statusMessage = 'Kode harus 3 huruf';
     }
     row.selected = false;
   } else if (uppercased.length === 0) {
-    const preserveError = row.status === 'error' && (row.statusMessage?.includes('NIM') || row.statusMessage?.includes('Nama'));
+    const preserveError =
+      row.status === 'error' &&
+      (row.statusMessage?.includes('NIM') || row.statusMessage?.includes('Nama'));
     const preserveDuplicateCsv = row.status === 'duplicate-csv';
     if (!preserveError && !preserveDuplicateCsv) {
-        row.status = 'error';
-        row.statusMessage = 'Kode tidak boleh kosong';
+      row.status = 'error';
+      row.statusMessage = 'Kode tidak boleh kosong';
     }
     row.selected = false;
   }

@@ -15,7 +15,11 @@ import {
 import { X, Loader2 } from 'lucide-react';
 import AsprakCSVPreview, { PreviewRow } from '../../asprak/AsprakCSVPreview';
 import type { ExistingAsprakInfo } from '../../asprak/AsprakImportCSVModal';
-import { validateAsprakData, validateAsprakCodeEdit } from '@/utils/validation/asprakValidation';
+import {
+  validateAsprakData,
+  validateAsprakCodeEdit,
+  ExistingNimInfo,
+} from '@/utils/validation/asprakValidation';
 
 interface StepAsprakProps {
   data: any[];
@@ -23,18 +27,18 @@ interface StepAsprakProps {
   onNext: () => void;
   onPrev?: () => void;
   onImport: (
-    rows: { nim: string; nama_lengkap: string; kode: string; angkatan: number }[],
+    rows: {
+      nim: string;
+      nama_lengkap: string;
+      kode: string;
+      role: 'ASPRAK' | 'ASLAB';
+      angkatan: number;
+    }[],
     term: string
   ) => Promise<void>;
 }
 
-export default function StepAsprak({
-  data,
-  term,
-  onNext,
-  onPrev,
-  onImport,
-}: StepAsprakProps) {
+export default function StepAsprak({ data, term, onNext, onPrev, onImport }: StepAsprakProps) {
   const [previewRows, setPreviewRows] = useState<PreviewRow[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -44,7 +48,7 @@ export default function StepAsprak({
 
   // Asprak specific existing data fetched independently
   const [existingCodes, setExistingCodes] = useState<string[]>([]);
-  const [existingNims, setExistingNims] = useState<string[]>([]);
+  const [existingNims, setExistingNims] = useState<ExistingNimInfo[]>([]);
   const [existingAspraks, setExistingAspraks] = useState<ExistingAsprakInfo[]>([]);
 
   useEffect(() => {
@@ -60,13 +64,13 @@ export default function StepAsprak({
             const dataArr = json.data;
             setExistingAspraks(dataArr);
             setExistingCodes(dataArr.map((a: any) => a.kode));
-            setExistingNims(dataArr.map((a: any) => a.nim));
+            setExistingNims(dataArr.map((a: any) => ({ nim: a.nim, role: a.role })));
           }
         }
       } catch (err: any) {
         if (active) {
-            console.error('Failed fetching aspraks info:', err);
-            setError('Gagal mengambil data asprak eksisting.');
+          console.error('Failed fetching aspraks info:', err);
+          setError('Gagal mengambil data asprak eksisting.');
         }
       } finally {
         if (active) setIsFetching(false);
@@ -80,17 +84,17 @@ export default function StepAsprak({
   }, []);
 
   useEffect(() => {
-      if (!data || data.length === 0) {
-          setError('Data Excel Asprak kosong.');
-          return;
-      }
-      
-      try {
-        const preview = validateAsprakData(data, existingCodes, existingNims, forceOverride);
-        setPreviewRows(preview);
-      } catch (e: any) {
-        setError(`Error saat menyiapkan data: ${e.message}`);
-      }
+    if (!data || data.length === 0) {
+      setError('Data Excel Asprak kosong.');
+      return;
+    }
+
+    try {
+      const preview = validateAsprakData(data, existingCodes, existingNims, forceOverride);
+      setPreviewRows(preview);
+    } catch (e: any) {
+      setError(`Error saat menyiapkan data: ${e.message}`);
+    }
   }, [data, existingCodes, existingNims, existingAspraks, forceOverride]);
 
   const handleToggleSelect = useCallback((rowIndex: number) => {
@@ -118,27 +122,69 @@ export default function StepAsprak({
 
   const handleCodeEdit = useCallback(
     (rowIndex: number, newCode: string) => {
-      setPreviewRows((prev) => validateAsprakCodeEdit(rowIndex, newCode, prev, existingAspraks, forceOverride));
+      setPreviewRows((prev) =>
+        validateAsprakCodeEdit(rowIndex, newCode, prev, existingAspraks, forceOverride)
+      );
     },
     [existingAspraks, forceOverride]
   );
 
+  const handleRoleEdit = useCallback(
+    (rowIndex: number, newRole: 'ASPRAK' | 'ASLAB') => {
+      setPreviewRows((prev) => {
+        const updated = [...prev];
+        const row = { ...updated[rowIndex] };
+        row.role = newRole;
+        updated[rowIndex] = row;
+        try {
+          const remappedData = updated.map((r) => ({
+            nama_lengkap: r.nama_lengkap,
+            nim: r.nim,
+            kode:
+              r.codeRule === 'Manual edit' ? r.kode : r.codeSource === 'csv' ? r.originalKode : '',
+            role: r.role,
+            angkatan: r.angkatan,
+          }));
+          const revalidated = validateAsprakData(
+            remappedData,
+            existingCodes,
+            existingNims,
+            forceOverride
+          );
+          return revalidated.map((revalRow, i) => {
+            if (updated[i].codeRule === 'Manual edit') {
+              revalRow.kode = updated[i].kode;
+              revalRow.codeSource = 'csv';
+              revalRow.codeRule = 'Manual edit';
+            }
+            revalRow.selected = updated[i].selected;
+            return revalRow;
+          });
+        } catch (e: any) {
+          setError(`Error saat menyiapkan data: ${e.message}`);
+          return updated;
+        }
+      });
+    },
+    [existingCodes, existingNims, forceOverride]
+  );
+
   const handleForceOverrideToggle = useCallback((checked: boolean) => {
-      if (checked) {
-          setShowOverrideConfirm(true);
-      } else {
-          setForceOverride(false);
-      }
+    if (checked) {
+      setShowOverrideConfirm(true);
+    } else {
+      setForceOverride(false);
+    }
   }, []);
 
   const confirmOverride = () => {
-      setForceOverride(true);
-      setShowOverrideConfirm(false);
+    setForceOverride(true);
+    setShowOverrideConfirm(false);
   };
 
   const cancelOverride = () => {
-      setForceOverride(false);
-      setShowOverrideConfirm(false);
+    setForceOverride(false);
+    setShowOverrideConfirm(false);
   };
 
   const handleConfirmImport = async () => {
@@ -147,8 +193,8 @@ export default function StepAsprak({
     );
 
     if (selectedRows.length === 0) {
-        onNext();
-        return;
+      onNext();
+      return;
     }
 
     setSaving(true);
@@ -160,6 +206,7 @@ export default function StepAsprak({
           nim: r.nim,
           nama_lengkap: r.nama_lengkap,
           kode: r.kode,
+          role: r.role,
           angkatan: r.angkatan,
         })),
         term
@@ -199,6 +246,7 @@ export default function StepAsprak({
         onConfirm={handleConfirmImport}
         onBack={onPrev || onNext}
         onCodeEdit={handleCodeEdit}
+        onRoleEdit={handleRoleEdit}
         onToggleSelect={handleToggleSelect}
         onToggleAll={handleToggleAll}
         loading={saving}
@@ -213,13 +261,22 @@ export default function StepAsprak({
             <AlertDialogTitle>Konfirmasi Pemaksaan Kode</AlertDialogTitle>
             <AlertDialogDescription>
               Apakah Anda yakin ingin memaksakan kode dari CSV?
-              <br /><br />
-              <span className="font-semibold text-destructive">Perhatian:</span> Ini akan mengabaikan peringatan bentrok kode dari database, termasuk kode yang baru saja dipakai dalam selisih kurang dari 5 tahun. Tindakan ini akan me-refresh ulang preview data serta mereset input kode manual yang telah Anda ubah.
+              <br />
+              <br />
+              <span className="font-semibold text-destructive">Perhatian:</span> Ini akan
+              mengabaikan peringatan bentrok kode dari database, termasuk kode yang baru saja
+              dipakai dalam selisih kurang dari 5 tahun. Tindakan ini akan me-refresh ulang preview
+              data serta mereset input kode manual yang telah Anda ubah.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={cancelOverride}>Batal</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmOverride} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Ya, Paksa Gunakan</AlertDialogAction>
+            <AlertDialogAction
+              onClick={confirmOverride}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Ya, Paksa Gunakan
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
