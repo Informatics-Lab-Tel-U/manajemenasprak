@@ -23,7 +23,10 @@ export function validatePraktikumData(
       row.Nama ||
       row['Nama Singkat'] ||
       ''
-    ).toString().trim().toUpperCase();
+    )
+      .toString()
+      .trim()
+      .toUpperCase();
     const tahunAjaran = (row.tahun_ajaran || row['Tahun Ajaran'] || '').toString().trim();
 
     let status: PraktikumPreviewRow['status'] = 'ok';

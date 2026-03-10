@@ -113,9 +113,7 @@ export function ManajemenAkunFormModal({ open, onOpenChange, mode, user, onSucce
         let existingPraktikumId = '';
         let existingTahun = tahuns[0] ?? '';
         if (mode === 'edit' && user?.id) {
-          const aRes = await fetch(
-            `/api/admin/users/assignments?id_pengguna=${user.id}`
-          );
+          const aRes = await fetch(`/api/admin/users/assignments?id_pengguna=${user.id}`);
           const aJson = await aRes.json();
           if (!cancelled && aJson.ok && aJson.data?.length > 0) {
             existingPraktikumId = aJson.data[0].id_praktikum ?? '';
@@ -137,9 +135,11 @@ export function ManajemenAkunFormModal({ open, onOpenChange, mode, user, onSucce
     };
 
     loadData();
-    return () => { cancelled = true; };
-  // Only re‑run when `open` changes — deliberate: avoids the setState→useEffect loop
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => {
+      cancelled = true;
+    };
+    // Only re‑run when `open` changes — deliberate: avoids the setState→useEffect loop
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   /* ── Re-fetch praktikum when user explicitly switches role to ASPRAK_KOOR ── */
@@ -164,11 +164,15 @@ export function ManajemenAkunFormModal({ open, onOpenChange, mode, user, onSucce
         }
       })
       .catch(() => toast.error('Gagal memuat data praktikum'))
-      .finally(() => { if (!cancelled) setLoadingPraktikum(false); });
+      .finally(() => {
+        if (!cancelled) setLoadingPraktikum(false);
+      });
 
-    return () => { cancelled = true; };
-  // intentionally only depends on role changing
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => {
+      cancelled = true;
+    };
+    // intentionally only depends on role changing
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [role]);
 
   const filteredPraktikum = React.useMemo(
@@ -239,9 +243,7 @@ export function ManajemenAkunFormModal({ open, onOpenChange, mode, user, onSucce
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>
-            {mode === 'create' ? 'Tambah Akun Baru' : 'Edit Akun'}
-          </DialogTitle>
+          <DialogTitle>{mode === 'create' ? 'Tambah Akun Baru' : 'Edit Akun'}</DialogTitle>
           <DialogDescription>
             {mode === 'create'
               ? 'Buat akun pengguna baru. Pastikan email dan kata sandi valid.'
@@ -390,9 +392,7 @@ export function ManajemenAkunFormModal({ open, onOpenChange, mode, user, onSucce
                         <Field orientation="horizontal">
                           <FieldContent>
                             <FieldTitle>{p.nama}</FieldTitle>
-                            <FieldDescription>
-                              ID: {p.id.substring(0, 8)}...
-                            </FieldDescription>
+                            <FieldDescription>ID: {p.id.substring(0, 8)}...</FieldDescription>
                           </FieldContent>
                           <RadioGroupItem value={p.id} id={`p-${p.id}`} disabled={isLoading} />
                         </Field>
@@ -431,4 +431,3 @@ export function ManajemenAkunFormModal({ open, onOpenChange, mode, user, onSucce
     </Dialog>
   );
 }
-

@@ -205,7 +205,7 @@ export async function POST(req: Request) {
       let jadwalInserted = 0;
       for (const row of jadwalData) {
         const prodi = row.kelas.split('-')[0];
-        let mkId =
+        const mkId =
           mkMap.get(`${row.nama_singkat}|${prodi}`) ||
           mkMap.get(`${row.nama_singkat}|IF`) ||
           mkMap.get(`${row.nama_singkat}|SE`);
@@ -237,10 +237,10 @@ export async function POST(req: Request) {
       }
 
       logger.info(`Import complete: ${jadwalInserted} jadwal inserted`);
-      
+
       const { createAuditLog } = await import('@/services/server/auditLogService');
       await createAuditLog('DATA_IMPORT', 'EXCEL', 'IMPORT', { term, count: jadwalInserted });
-      
+
       return NextResponse.json({ success: true, message: `Imported ${jadwalInserted} schedules` });
     } catch (e: any) {
       logger.error('Import failed, rolling back...', e);
@@ -262,4 +262,3 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: e.message }, { status: 500 });
   }
 }
-

@@ -114,7 +114,9 @@ export async function getPelanggaranByFilter(
   });
 }
 
-export async function getPelanggaranByKoor(supabaseClient?: SupabaseClient): Promise<Pelanggaran[]> {
+export async function getPelanggaranByKoor(
+  supabaseClient?: SupabaseClient
+): Promise<Pelanggaran[]> {
   const supabase = supabaseClient || globalAdmin;
   const { data, error } = await supabase
     .from('pelanggaran')
@@ -271,7 +273,10 @@ export async function getExportData(
   }));
 }
 
-export async function deletePelanggaran(id: string, supabaseClient?: SupabaseClient): Promise<void> {
+export async function deletePelanggaran(
+  id: string,
+  supabaseClient?: SupabaseClient
+): Promise<void> {
   const supabase = supabaseClient || globalAdmin;
   const { error } = await supabase.from('pelanggaran').delete().eq('id', id);
 
@@ -330,15 +335,16 @@ export async function finalizePelanggaranByModul(
 ): Promise<void> {
   const supabase = globalAdmin;
 
-  const { error } = await supabase
-    .from('pelanggaran_status')
-    .upsert({
+  const { error } = await supabase.from('pelanggaran_status').upsert(
+    {
       id_praktikum,
       modul,
       is_finalized: true,
       finalized_at: new Date().toISOString(),
       finalized_by: finalizedBy,
-    }, { onConflict: 'id_praktikum, modul' });
+    },
+    { onConflict: 'id_praktikum, modul' }
+  );
 
   if (error) {
     logger.error('Error finalizing pelanggaran modul:', error);
@@ -406,9 +412,7 @@ export async function getPelanggaranSummary(
 ): Promise<PelanggaranSummaryEntry[]> {
   const supabase = supabaseClient || globalAdmin;
 
-  let query = supabase
-    .from('pelanggaran')
-    .select(PELANGGARAN_SELECT);
+  let query = supabase.from('pelanggaran').select(PELANGGARAN_SELECT);
 
   if (modul) {
     query = query.eq('modul', modul);

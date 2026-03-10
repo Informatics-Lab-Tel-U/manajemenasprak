@@ -3,12 +3,7 @@
 import * as React from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Eye, Search, FilterX, ChevronLeft, ChevronRight } from 'lucide-react';
-import {
-  useReactTable,
-  getCoreRowModel,
-  flexRender,
-  ColumnDef,
-} from '@tanstack/react-table';
+import { useReactTable, getCoreRowModel, flexRender, ColumnDef } from '@tanstack/react-table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -44,11 +39,11 @@ interface Props {
   pageSize: number;
 }
 
-export default function AuditLogsClientPage({ 
-  logs: initialLogs, 
-  totalCount, 
-  currentPage, 
-  pageSize 
+export default function AuditLogsClientPage({
+  logs: initialLogs,
+  totalCount,
+  currentPage,
+  pageSize,
 }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -84,11 +79,21 @@ export default function AuditLogsClientPage({
   const getOperationBadge = (operation: string) => {
     switch (operation.toUpperCase()) {
       case 'INSERT':
-        return <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-green-200">INSERT</Badge>;
+        return (
+          <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-green-200">
+            INSERT
+          </Badge>
+        );
       case 'UPDATE':
-        return <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 border-blue-200">UPDATE</Badge>;
+        return (
+          <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 border-blue-200">
+            UPDATE
+          </Badge>
+        );
       case 'DELETE':
-        return <Badge className="bg-red-100 text-red-700 hover:bg-red-100 border-red-200">DELETE</Badge>;
+        return (
+          <Badge className="bg-red-100 text-red-700 hover:bg-red-100 border-red-200">DELETE</Badge>
+        );
       default:
         return <Badge variant="outline">{operation}</Badge>;
     }
@@ -143,11 +148,7 @@ export default function AuditLogsClientPage({
         header: () => <div className="text-right">Aksi</div>,
         cell: ({ row }) => (
           <div className="text-right">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setSelectedLog(row.original)}
-            >
+            <Button variant="ghost" size="icon" onClick={() => setSelectedLog(row.original)}>
               <Eye className="h-4 w-4" />
             </Button>
           </div>
@@ -169,16 +170,16 @@ export default function AuditLogsClientPage({
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="title-gradient text-3xl font-bold">
-            Audit Logs
-          </h1>
-          <p className="text-muted-foreground mt-2">Riwayat aktifitas dan perubahan data dalam sistem</p>
+          <h1 className="title-gradient text-3xl font-bold">Audit Logs</h1>
+          <p className="text-muted-foreground mt-2">
+            Riwayat aktifitas dan perubahan data dalam sistem
+          </p>
         </div>
       </div>
 
       <div className="card glass p-6">
         <div className="flex justify-between items-center mb-6">
-           <div className="relative w-full md:w-72">
+          <div className="relative w-full md:w-72">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Cari tabel, operasi, atau user..."
@@ -217,7 +218,10 @@ export default function AuditLogsClientPage({
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={columns.length} className="h-32 text-center text-muted-foreground">
+                  <TableCell
+                    colSpan={columns.length}
+                    className="h-32 text-center text-muted-foreground"
+                  >
                     <div className="flex flex-col items-center gap-2">
                       <FilterX className="h-8 w-8 opacity-20" />
                       <p>Tidak ada data audit log yang ditemukan.</p>
@@ -233,10 +237,7 @@ export default function AuditLogsClientPage({
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <p className="text-sm font-medium">Baris per halaman</p>
-            <Select
-              value={`${pageSize}`}
-              onValueChange={handlePageSizeChange}
-            >
+            <Select value={`${pageSize}`} onValueChange={handlePageSizeChange}>
               <SelectTrigger className="h-8 w-[70px]">
                 <SelectValue placeholder={pageSize} />
               </SelectTrigger>
@@ -289,24 +290,28 @@ export default function AuditLogsClientPage({
               Detail data untuk record {selectedLog?.record_id} pada tabel {selectedLog?.table_name}
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="flex-1 overflow-auto py-4 space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Data Lama</h4>
+                <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+                  Data Lama
+                </h4>
                 <pre className="p-4 bg-muted rounded-lg text-xs overflow-auto max-h-64">
                   {JSON.stringify(selectedLog?.old_values, null, 2) || '// Tidak ada data lama'}
                 </pre>
               </div>
               <div className="space-y-2">
-                <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Data Baru</h4>
+                <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+                  Data Baru
+                </h4>
                 <pre className="p-4 bg-muted rounded-lg text-xs overflow-auto max-h-64">
                   {JSON.stringify(selectedLog?.new_values, null, 2) || '// Tidak ada data baru'}
                 </pre>
               </div>
             </div>
           </div>
-          
+
           <div className="flex justify-end pt-4 border-t">
             <Button onClick={() => setSelectedLog(null)}>Tutup</Button>
           </div>

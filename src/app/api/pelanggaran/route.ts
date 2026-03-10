@@ -30,13 +30,19 @@ export async function GET(req: Request) {
         const praktikumList = await pelanggaranService.getKoorPraktikumList(userId, supabase);
         return NextResponse.json({ ok: true, data: praktikumList });
       }
-      return NextResponse.json({ ok: false, error: 'Unauthorized or missing params' }, { status: 400 });
+      return NextResponse.json(
+        { ok: false, error: 'Unauthorized or missing params' },
+        { status: 400 }
+      );
     }
 
     if (action === 'praktikum-detail' && idPraktikum) {
       const praktikum = await praktikumService.getPraktikumById(idPraktikum, supabase);
       if (!praktikum) {
-        return NextResponse.json({ ok: false, error: 'Praktikum tidak ditemukan' }, { status: 404 });
+        return NextResponse.json(
+          { ok: false, error: 'Praktikum tidak ditemukan' },
+          { status: 404 }
+        );
       }
       return NextResponse.json({ ok: true, data: praktikum });
     }
@@ -59,8 +65,13 @@ export async function GET(req: Request) {
       }
       const minCount = searchParams.get('minCount') ? Number(searchParams.get('minCount')) : 1;
       const modulParam = searchParams.get('modul') ? Number(searchParams.get('modul')) : undefined;
-      
-      const summary = await pelanggaranService.getPelanggaranSummary(tahunAjaran, modulParam, minCount, supabase);
+
+      const summary = await pelanggaranService.getPelanggaranSummary(
+        tahunAjaran,
+        modulParam,
+        minCount,
+        supabase
+      );
       return NextResponse.json({ ok: true, data: summary });
     }
 
@@ -69,7 +80,11 @@ export async function GET(req: Request) {
     const finalTahunAjaran = tahunAjaran || undefined;
 
     if (finalIdPraktikum || finalTahunAjaran) {
-      const pelanggaran = await pelanggaranService.getPelanggaranByFilter(finalIdPraktikum, finalTahunAjaran, supabase);
+      const pelanggaran = await pelanggaranService.getPelanggaranByFilter(
+        finalIdPraktikum,
+        finalTahunAjaran,
+        supabase
+      );
       return NextResponse.json({ ok: true, data: pelanggaran });
     }
 
@@ -86,22 +101,19 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-      const user = await requireRole(['ADMIN', 'ASLAB', 'ASPRAK_KOOR']);
-      const supabase = await createClient();
-      const body = await req.json();
-      const { action } = body;
-  
-      // --- Finalize per praktikum ---
-      if (action === 'finalize') {
-        const { id_praktikum } = body;
-  
-        if (!id_praktikum) {
-          return NextResponse.json(
-            { ok: false, error: 'Missing id_praktikum' },
-            { status: 400 }
-          );
-        }
-        await pelanggaranService.finalizePelanggaranByPraktikum(id_praktikum, user.id);
+    const user = await requireRole(['ADMIN', 'ASLAB', 'ASPRAK_KOOR']);
+    const supabase = await createClient();
+    const body = await req.json();
+    const { action } = body;
+
+    // --- Finalize per praktikum ---
+    if (action === 'finalize') {
+      const { id_praktikum } = body;
+
+      if (!id_praktikum) {
+        return NextResponse.json({ ok: false, error: 'Missing id_praktikum' }, { status: 400 });
+      }
+      await pelanggaranService.finalizePelanggaranByPraktikum(id_praktikum, user.id);
 
       const { createAuditLog } = await import('@/services/server/auditLogService');
       await createAuditLog('Pelanggaran', id_praktikum, 'FINALIZE_PRAKTIKUM');
@@ -109,42 +121,42 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: true });
     }
 
-      // --- Unfinalize (RESET) ---
-      if (action === 'unfinalize') {
-        // Ensure strictly ADMIN
-        if (user.pengguna.role !== 'ADMIN') {
-          return NextResponse.json(
-            { ok: false, error: 'Hanya Admin yang dapat mereset finalisasi' },
-            { status: 403 }
-          );
-        }
-
-        const { id_praktikum } = body;
-        if (!id_praktikum) {
-          return NextResponse.json(
-            { ok: false, error: 'Missing id_praktikum' },
-            { status: 400 }
-          );
-        }
-
-        await pelanggaranService.unfinalizePelanggaranByPraktikum(id_praktikum);
-
-        const { createAuditLog } = await import('@/services/server/auditLogService');
-        await createAuditLog('Pelanggaran', id_praktikum, 'UNFINALIZE_PRAKTIKUM');
-
-        return NextResponse.json({ ok: true });
+    // --- Unfinalize (RESET) ---
+    if (action === 'unfinalize') {
+      // Ensure strictly ADMIN
+      if (user.pengguna.role !== 'ADMIN') {
+        return NextResponse.json(
+          { ok: false, error: 'Hanya Admin yang dapat mereset finalisasi' },
+          { status: 403 }
+        );
       }
+
+      const { id_praktikum } = body;
+      if (!id_praktikum) {
+        return NextResponse.json({ ok: false, error: 'Missing id_praktikum' }, { status: 400 });
+      }
+
+      await pelanggaranService.unfinalizePelanggaranByPraktikum(id_praktikum);
+
+      const { createAuditLog } = await import('@/services/server/auditLogService');
+      await createAuditLog('Pelanggaran', id_praktikum, 'UNFINALIZE_PRAKTIKUM');
+
+      return NextResponse.json({ ok: true });
+    }
 
     if (action === 'finalize-modul') {
       const { id_praktikum, modul } = body;
       if (!id_praktikum || modul === undefined) {
-        return NextResponse.json({ ok: false, error: 'Missing id_praktikum or modul' }, { status: 400 });
+        return NextResponse.json(
+          { ok: false, error: 'Missing id_praktikum or modul' },
+          { status: 400 }
+        );
       }
       await pelanggaranService.finalizePelanggaranByModul(id_praktikum, Number(modul), user.id);
-      
+
       const { createAuditLog } = await import('@/services/server/auditLogService');
       await createAuditLog('Pelanggaran', id_praktikum, 'FINALIZE_MODUL', { modul: Number(modul) });
-      
+
       return NextResponse.json({ ok: true });
     }
 
@@ -154,12 +166,17 @@ export async function POST(req: Request) {
       }
       const { id_praktikum, modul } = body;
       if (!id_praktikum || modul === undefined) {
-        return NextResponse.json({ ok: false, error: 'Missing id_praktikum or modul' }, { status: 400 });
+        return NextResponse.json(
+          { ok: false, error: 'Missing id_praktikum or modul' },
+          { status: 400 }
+        );
       }
       await pelanggaranService.unfinalizePelanggaranByModul(id_praktikum, Number(modul));
 
       const { createAuditLog } = await import('@/services/server/auditLogService');
-      await createAuditLog('Pelanggaran', id_praktikum, 'UNFINALIZE_MODUL', { modul: Number(modul) });
+      await createAuditLog('Pelanggaran', id_praktikum, 'UNFINALIZE_MODUL', {
+        modul: Number(modul),
+      });
 
       return NextResponse.json({ ok: true });
     }
@@ -188,7 +205,12 @@ export async function POST(req: Request) {
       );
 
       const { createAuditLog } = await import('@/services/server/auditLogService');
-      await createAuditLog('Pelanggaran', pelanggaran.id, 'CREATE', { id_asprak: asprakIds[0], id_jadwal, jenis, modul });
+      await createAuditLog('Pelanggaran', pelanggaran.id, 'CREATE', {
+        id_asprak: asprakIds[0],
+        id_jadwal,
+        jenis,
+        modul,
+      });
 
       return NextResponse.json({ ok: true, data: pelanggaran });
     }
@@ -222,10 +244,10 @@ export async function DELETE(req: Request) {
     }
 
     await pelanggaranService.deletePelanggaran(id, supabase);
-    
+
     const { createAuditLog } = await import('@/services/server/auditLogService');
     await createAuditLog('Pelanggaran', id, 'DELETE');
-    
+
     return NextResponse.json({ ok: true });
   } catch (error: any) {
     logger.error('API Error in /api/pelanggaran DELETE:', error);
@@ -235,4 +257,3 @@ export async function DELETE(req: Request) {
     );
   }
 }
-

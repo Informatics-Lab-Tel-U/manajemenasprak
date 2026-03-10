@@ -1,25 +1,15 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import {
-  Field,
-  FieldGroup,
-  FieldLabel,
-} from '@/components/ui/field';
+import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { DialogFooter } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { Plus } from 'lucide-react';
@@ -36,7 +26,7 @@ export default function MataKuliahManualModal({
   open,
   onClose,
   defaultTerm,
-  onConfirm
+  onConfirm,
 }: MataKuliahManualModalProps) {
   // Term State
   const initialYear = defaultTerm ? defaultTerm.substring(0, 2) : '25';
@@ -51,10 +41,12 @@ export default function MataKuliahManualModal({
   const [prodiBase, setProdiBase] = useState('IF');
   const [dosenKoor, setDosenKoor] = useState('');
   const [warna, setWarna] = useState('#3a5edb');
-  
+
   const [loading, setLoading] = useState(false);
   const [fetchingPraktikums, setFetchingPraktikums] = useState(false);
-  const [localValidPraktikums, setLocalValidPraktikums] = useState<{id: string, nama: string}[]>([]);
+  const [localValidPraktikums, setLocalValidPraktikums] = useState<{ id: string; nama: string }[]>(
+    []
+  );
 
   // Computed Term
   const term = buildTermString(termYear, termSem);
@@ -63,34 +55,36 @@ export default function MataKuliahManualModal({
   // Fetch Praktikums when Term changes
   useEffect(() => {
     if (!open || !isTermValid) {
-        setLocalValidPraktikums([]);
-        return;
+      setLocalValidPraktikums([]);
+      return;
     }
-    
+
     let active = true;
     async function fetchPraktikums() {
-        setFetchingPraktikums(true);
-        try {
-            const res = await fetch(`/api/praktikum?action=by-term&term=${term}`);
-            if (active && res.ok) {
-                const json = await res.json();
-                if (json.ok && Array.isArray(json.data)) {
-                    setLocalValidPraktikums(json.data);
-                } else {
-                    setLocalValidPraktikums([]);
-                }
-            }
-        } catch (e: any) {
-            console.error(e);
-        } finally {
-            if (active) setFetchingPraktikums(false);
+      setFetchingPraktikums(true);
+      try {
+        const res = await fetch(`/api/praktikum?action=by-term&term=${term}`);
+        if (active && res.ok) {
+          const json = await res.json();
+          if (json.ok && Array.isArray(json.data)) {
+            setLocalValidPraktikums(json.data);
+          } else {
+            setLocalValidPraktikums([]);
+          }
         }
+      } catch (e: any) {
+        console.error(e);
+      } finally {
+        if (active) setFetchingPraktikums(false);
+      }
     }
     fetchPraktikums();
     // Reset selection on term change
     setSelectedPraktikumId('');
-    
-    return () => { active = false; };
+
+    return () => {
+      active = false;
+    };
   }, [term, open, isTermValid]);
 
   // Reset form on open
@@ -114,25 +108,29 @@ export default function MataKuliahManualModal({
     try {
       const isNew = selectedPraktikumId === 'new';
 
-      if (isNew && !newMkSingkat.trim()) throw new Error('MK Singkat wajib diisi untuk praktikum baru');
+      if (isNew && !newMkSingkat.trim())
+        throw new Error('MK Singkat wajib diisi untuk praktikum baru');
       if (!isNew && !selectedPraktikumId) throw new Error('Pilih Praktikum');
       if (!namaLengkap.trim()) throw new Error('Nama Lengkap wajib diisi');
       if (dosenKoor.length !== 3) throw new Error('Kode Dosen harus 3 karakter');
 
       const program_studi = prodiBase;
       const mk_singkat = !isNew
-        ? localValidPraktikums.find(p => p.id === selectedPraktikumId)?.nama 
+        ? localValidPraktikums.find((p) => p.id === selectedPraktikumId)?.nama
         : newMkSingkat.toUpperCase().trim();
 
-      await onConfirm({
-        mk_singkat, 
-        id_praktikum: isNew ? undefined : selectedPraktikumId,
-        nama_lengkap: namaLengkap, 
-        program_studi,
-        dosen_koor: dosenKoor.toUpperCase(),
-        warna
-      }, term);
-      
+      await onConfirm(
+        {
+          mk_singkat,
+          id_praktikum: isNew ? undefined : selectedPraktikumId,
+          nama_lengkap: namaLengkap,
+          program_studi,
+          dosen_koor: dosenKoor.toUpperCase(),
+          warna,
+        },
+        term
+      );
+
       onClose();
     } catch (error: any) {
       toast.error(error.message);
@@ -151,62 +149,79 @@ export default function MataKuliahManualModal({
         <form onSubmit={handleSubmit} className="contents">
           <FieldGroup className="p-6 pt-2">
             {/* Term Selector */}
-            <TermInput 
-               termYear={termYear} 
-               termSem={termSem} 
-               onYearChange={setTermYear} 
-               onSemChange={setTermSem}
-               label="Tahun Ajaran"
+            <TermInput
+              termYear={termYear}
+              termSem={termSem}
+              onYearChange={setTermYear}
+              onSemChange={setTermSem}
+              label="Tahun Ajaran"
             />
 
             {/* Praktikum Selector & New Input */}
             <div className="grid grid-cols-[1fr,140px] gap-4 items-start">
-               <Field>
-                  <FieldLabel>Pilih Praktikum</FieldLabel>
-                  <Select 
-                      value={selectedPraktikumId} 
-                      onValueChange={setSelectedPraktikumId}
-                      disabled={!isTermValid || fetchingPraktikums}
+              <Field>
+                <FieldLabel>Pilih Praktikum</FieldLabel>
+                <Select
+                  value={selectedPraktikumId}
+                  onValueChange={setSelectedPraktikumId}
+                  disabled={!isTermValid || fetchingPraktikums}
+                >
+                  <SelectTrigger
+                    className={
+                      selectedPraktikumId === 'new' ? 'border-primary text-primary font-medium' : ''
+                    }
                   >
-                    <SelectTrigger className={selectedPraktikumId === 'new' ? 'border-primary text-primary font-medium' : ''}>
-                      <SelectValue placeholder={
-                          !isTermValid ? "Isi tahun dulu..." : 
-                          fetchingPraktikums ? "Memuat..." : 
-                          "Pilih..."
-                      } />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="new" className="text-emerald-600 font-medium focus:text-emerald-700 bg-emerald-50/50">
-                          <span className="flex items-center">
-                              <Plus size={14} className="mr-1" /> Buat Baru
-                          </span>
+                    <SelectValue
+                      placeholder={
+                        !isTermValid
+                          ? 'Isi tahun dulu...'
+                          : fetchingPraktikums
+                            ? 'Memuat...'
+                            : 'Pilih...'
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem
+                      value="new"
+                      className="text-emerald-600 font-medium focus:text-emerald-700 bg-emerald-50/50"
+                    >
+                      <span className="flex items-center">
+                        <Plus size={14} className="mr-1" /> Buat Baru
+                      </span>
+                    </SelectItem>
+                    {localValidPraktikums.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.nama}
                       </SelectItem>
-                      {localValidPraktikums.map(p => (
-                        <SelectItem key={p.id} value={p.id}>{p.nama}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-               </Field>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Field>
 
-               <Field>
-                <FieldLabel className={selectedPraktikumId !== 'new' ? 'text-muted-foreground' : ''}>Kode Baru</FieldLabel>
-                <Input 
-                   placeholder="Mis: ALPRO"
-                   value={newMkSingkat}
-                   onChange={e => setNewMkSingkat(e.target.value.toUpperCase())}
-                   disabled={selectedPraktikumId !== 'new'}
-                   className={selectedPraktikumId === 'new' ? 'border-primary bg-primary/5' : ''}
+              <Field>
+                <FieldLabel
+                  className={selectedPraktikumId !== 'new' ? 'text-muted-foreground' : ''}
+                >
+                  Kode Baru
+                </FieldLabel>
+                <Input
+                  placeholder="Mis: ALPRO"
+                  value={newMkSingkat}
+                  onChange={(e) => setNewMkSingkat(e.target.value.toUpperCase())}
+                  disabled={selectedPraktikumId !== 'new'}
+                  className={selectedPraktikumId === 'new' ? 'border-primary bg-primary/5' : ''}
                 />
-               </Field>
+              </Field>
             </div>
 
             {/* Nama Lengkap */}
             <Field>
               <FieldLabel>Nama Lengkap MK</FieldLabel>
-              <Input 
+              <Input
                 placeholder="Contoh: Algoritma dan Pemrograman 1"
                 value={namaLengkap}
-                onChange={e => setNamaLengkap(e.target.value)}
+                onChange={(e) => setNamaLengkap(e.target.value)}
               />
             </Field>
 
@@ -218,8 +233,10 @@ export default function MataKuliahManualModal({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {['IF', 'IF-PJJ', 'IT', 'SE', 'DS'].map(p => (
-                    <SelectItem key={p} value={p}>{p}</SelectItem>
+                  {['IF', 'IF-PJJ', 'IT', 'SE', 'DS'].map((p) => (
+                    <SelectItem key={p} value={p}>
+                      {p}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -228,14 +245,14 @@ export default function MataKuliahManualModal({
             {/* Dosen Koor */}
             <Field>
               <FieldLabel>Kode Dosen Koordinator</FieldLabel>
-              <Input 
+              <Input
                 placeholder="3 Huruf (misal: PEY)"
                 value={dosenKoor}
-                onChange={e => setDosenKoor(e.target.value.toUpperCase())}
+                onChange={(e) => setDosenKoor(e.target.value.toUpperCase())}
                 maxLength={3}
               />
               {dosenKoor.length > 0 && dosenKoor.length !== 3 && (
-                  <p className="text-xs text-destructive mt-1">Harus 3 karakter</p>
+                <p className="text-xs text-destructive mt-1">Harus 3 karakter</p>
               )}
             </Field>
 
@@ -243,10 +260,10 @@ export default function MataKuliahManualModal({
             <Field>
               <FieldLabel>Warna Jadwal (Opsional)</FieldLabel>
               <div className="flex items-center gap-3">
-                <Input 
+                <Input
                   type="color"
                   value={warna}
-                  onChange={e => setWarna(e.target.value)}
+                  onChange={(e) => setWarna(e.target.value)}
                   className="w-12 h-10 p-1 cursor-pointer"
                 />
                 <div className="text-sm text-muted-foreground">{warna}</div>
@@ -255,7 +272,9 @@ export default function MataKuliahManualModal({
           </FieldGroup>
 
           <DialogFooter className="p-6 border-t bg-muted/50">
-            <Button type="button" variant="ghost" onClick={onClose}>Batal</Button>
+            <Button type="button" variant="ghost" onClick={onClose}>
+              Batal
+            </Button>
             <Button type="submit" disabled={loading}>
               {loading ? 'Menyimpan...' : 'Simpan'}
             </Button>
@@ -265,4 +284,3 @@ export default function MataKuliahManualModal({
     </Dialog>
   );
 }
-

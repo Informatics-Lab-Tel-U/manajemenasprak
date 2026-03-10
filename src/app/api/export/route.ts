@@ -21,9 +21,9 @@ export async function GET(req: Request) {
       .from('praktikum')
       .select('*')
       .eq('tahun_ajaran', term);
-    
+
     if (pError) throw pError;
-    
+
     logger.info(`Found ${praktikum?.length || 0} praktikum records for ${term}`);
 
     if (!praktikum || praktikum.length === 0) {
@@ -34,22 +34,22 @@ export async function GET(req: Request) {
           mata_kuliah: [],
           asprak: [],
           jadwal: [],
-          asprak_praktikum: []
+          asprak_praktikum: [],
         },
-        message: `No data found for term ${term}`
+        message: `No data found for term ${term}`,
       });
     }
 
-    const pIds = praktikum.map(p => p.id);
+    const pIds = praktikum.map((p) => p.id);
 
     // 2. Fetch Mata Kuliah
     const { data: mk, error: mkError } = await supabase
       .from('mata_kuliah')
       .select('*, praktikum:praktikum(nama)')
       .in('id_praktikum', pIds);
-    
+
     if (mkError) throw mkError;
-    const mkIds = mk.map(m => m.id);
+    const mkIds = mk.map((m) => m.id);
     logger.info(`Found ${mk?.length || 0} mata_kuliah records`);
 
     // 3. Fetch Asprak (those linked to this term's praktikum)
@@ -57,7 +57,7 @@ export async function GET(req: Request) {
       .from('asprak_praktikum')
       .select('*, asprak:asprak(*), praktikum:praktikum(nama)')
       .in('id_praktikum', pIds);
-    
+
     if (pivotError) throw pivotError;
     logger.info(`Found ${pivot?.length || 0} pivot records`);
 
@@ -76,31 +76,31 @@ export async function GET(req: Request) {
       .from('jadwal')
       .select('*, mata_kuliah:mata_kuliah(id_praktikum, praktikum:praktikum(nama))')
       .in('id_mk', mkIds);
-    
+
     if (jError) throw jError;
     logger.info(`Found ${jadwal?.length || 0} jadwal records`);
 
     // Formatting for Excel
-    const formattedPraktikum = praktikum.map(p => ({
+    const formattedPraktikum = praktikum.map((p) => ({
       nama_singkat: p.nama,
-      tahun_ajaran: p.tahun_ajaran
+      tahun_ajaran: p.tahun_ajaran,
     }));
 
-    const formattedMk = mk.map(m => ({
+    const formattedMk = mk.map((m) => ({
       mk_singkat: (m as any).praktikum?.nama || '',
       program_studi: m.program_studi,
       nama_lengkap: m.nama_lengkap,
-      dosen_koor: m.dosen_koor
+      dosen_koor: m.dosen_koor,
     }));
 
-    const formattedAsprak = asprak.map(a => ({
+    const formattedAsprak = asprak.map((a) => ({
       nim: a.nim,
       nama_lengkap: a.nama_lengkap,
       kode: a.kode,
-      angkatan: a.angkatan
+      angkatan: a.angkatan,
     }));
 
-    const formattedJadwal = jadwal.map(j => ({
+    const formattedJadwal = jadwal.map((j) => ({
       kelas: j.kelas,
       nama_singkat: (j as any).mata_kuliah?.praktikum?.nama || '',
       hari: j.hari,
@@ -108,12 +108,12 @@ export async function GET(req: Request) {
       jam: j.jam,
       ruangan: j.ruangan,
       total_asprak: j.total_asprak,
-      dosen: j.dosen
+      dosen: j.dosen,
     }));
 
-    const formattedPivot = pivot.map(p => ({
+    const formattedPivot = pivot.map((p) => ({
       kode_asprak: (p as any).asprak?.kode || '',
-      mk_singkat: (p as any).praktikum?.nama || ''
+      mk_singkat: (p as any).praktikum?.nama || '',
     }));
 
     return NextResponse.json({
@@ -123,13 +123,11 @@ export async function GET(req: Request) {
         mata_kuliah: formattedMk,
         asprak: formattedAsprak,
         jadwal: formattedJadwal,
-        asprak_praktikum: formattedPivot
-      }
+        asprak_praktikum: formattedPivot,
+      },
     });
-
   } catch (e: any) {
     logger.error('Export failed:', e);
     return NextResponse.json({ error: e.message }, { status: 500 });
   }
 }
-

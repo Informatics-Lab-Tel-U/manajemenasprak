@@ -84,9 +84,7 @@ export default function JadwalCSVPreview({
               <tr>
                 <th className="px-3 py-2.5 text-center border-b border-border w-[40px]">
                   <Checkbox
-                    checked={
-                      allSelected ? true : isIndeterminate ? 'indeterminate' : false
-                    }
+                    checked={allSelected ? true : isIndeterminate ? 'indeterminate' : false}
                     onCheckedChange={(checked) => onToggleAll(!!checked)}
                     disabled={selectableRows.length === 0}
                   />
@@ -159,9 +157,7 @@ export default function JadwalCSVPreview({
                       <div>
                         {row.hari}, {row.jam}
                       </div>
-                      <div className="text-[10px] text-muted-foreground/60">
-                        Sesi {row.sesi}
-                      </div>
+                      <div className="text-[10px] text-muted-foreground/60">Sesi {row.sesi}</div>
                     </td>
                     <td className="px-3 py-2">{row.ruangan}</td>
                     <td className="px-3 py-2 truncate max-w-[150px]" title={row.dosen}>
@@ -207,20 +203,14 @@ export default function JadwalCSVPreview({
 
         <div className="flex items-center gap-3">
           {totalError > 0 && (
-            <p className="text-xs text-amber-500">
-              {totalError} row(s) bermasalah akan di-skip.
-            </p>
+            <p className="text-xs text-amber-500">{totalError} row(s) bermasalah akan di-skip.</p>
           )}
           {onSkip && (
-              <Button type="button" variant="secondary" onClick={onSkip} disabled={loading}>
-                 Lewati Langkah Ini
-              </Button>
+            <Button type="button" variant="secondary" onClick={onSkip} disabled={loading}>
+              Lewati Langkah Ini
+            </Button>
           )}
-          <Button
-            onClick={onConfirm}
-            disabled={loading || selectedCount === 0}
-            variant="default"
-          >
+          <Button onClick={onConfirm} disabled={loading || selectedCount === 0} variant="default">
             {loading ? (
               <Loader2 className="animate-spin mr-2" size={16} />
             ) : (

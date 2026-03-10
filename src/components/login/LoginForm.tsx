@@ -4,13 +4,7 @@ import * as React from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { createClient } from '@/lib/supabase/client';
@@ -69,9 +63,7 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
   return (
     <div className={cn('flex flex-col gap-6', className)} {...props}>
       <div>
-        <h2 className="text-2xl font-semibold tracking-tight">
-          Selamat Datang
-        </h2>
+        <h2 className="text-2xl font-semibold tracking-tight">Selamat Datang</h2>
         <p className="text-sm text-muted-foreground mt-1">
           Masuk untuk mengakses sistem manajemen asisten praktikum
         </p>
@@ -80,9 +72,7 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
       <Card>
         <CardHeader>
           <CardTitle>Masuk ke akun Anda</CardTitle>
-          <CardDescription>
-            Masukkan email dan kata sandi akun Anda
-          </CardDescription>
+          <CardDescription>Masukkan email dan kata sandi akun Anda</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -127,11 +117,7 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
                   tabIndex={-1}
                   aria-label={showPassword ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'}
                 >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
             </div>

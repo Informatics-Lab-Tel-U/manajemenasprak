@@ -24,7 +24,8 @@ export async function GET(request: NextRequest) {
     // Join asprak_koordinator with praktikum to get nama & tahun_ajaran
     const { data, error } = await admin
       .from('asprak_koordinator')
-      .select(`
+      .select(
+        `
         id_praktikum,
         is_active,
         praktikum:praktikum (
@@ -32,7 +33,8 @@ export async function GET(request: NextRequest) {
           nama,
           tahun_ajaran
         )
-      `)
+      `
+      )
       .eq('id_pengguna', idPengguna)
       .eq('is_active', true);
 
@@ -50,4 +52,3 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ ok: false, error: err.message }, { status: 500 });
   }
 }
-

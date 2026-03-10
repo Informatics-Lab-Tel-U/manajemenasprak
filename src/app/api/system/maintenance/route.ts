@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
   try {
     // Only Admin can toggle maintenance
     const user = await requireRole(['ADMIN']);
-    
+
     const body = await request.json();
     const { active } = body;
 
@@ -42,7 +42,11 @@ export async function POST(request: NextRequest) {
     await systemService.setMaintenanceStatus(active, user.id);
 
     const { createAuditLog } = await import('@/services/server/auditLogService');
-    await createAuditLog('System', 'maintenance_mode', active ? 'ENABLE_MAINTENANCE' : 'DISABLE_MAINTENANCE');
+    await createAuditLog(
+      'System',
+      'maintenance_mode',
+      active ? 'ENABLE_MAINTENANCE' : 'DISABLE_MAINTENANCE'
+    );
 
     return NextResponse.json({ ok: true });
   } catch (error: any) {

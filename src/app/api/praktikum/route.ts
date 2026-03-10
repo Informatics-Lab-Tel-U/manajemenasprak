@@ -27,16 +27,16 @@ export async function GET(req: Request) {
     }
 
     if (action === 'by-term') {
-        const term = searchParams.get('term') || undefined;
-        const data = await praktikumService.getPraktikumByTerm(term, supabase);
-        return NextResponse.json({ ok: true, data });
+      const term = searchParams.get('term') || undefined;
+      const data = await praktikumService.getPraktikumByTerm(term, supabase);
+      return NextResponse.json({ ok: true, data });
     }
 
     if (action === 'details') {
-        const id = searchParams.get('id');
-        if (!id) return NextResponse.json({ ok: false, error: 'Missing id param' }, { status: 400 });
-        const data = await praktikumService.getPraktikumDetails(id, supabase);
-        return NextResponse.json({ ok: true, data });
+      const id = searchParams.get('id');
+      if (!id) return NextResponse.json({ ok: false, error: 'Missing id param' }, { status: 400 });
+      const data = await praktikumService.getPraktikumDetails(id, supabase);
+      return NextResponse.json({ ok: true, data });
     }
 
     return NextResponse.json({ ok: false, error: 'Invalid action' }, { status: 400 });
@@ -82,4 +82,3 @@ export async function POST(req: Request) {
     );
   }
 }
-

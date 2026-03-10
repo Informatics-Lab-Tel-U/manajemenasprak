@@ -11,7 +11,18 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Filter, X, Clock, MapPin, User, Users, ChevronRight, Plus, Upload, PaintBucket } from 'lucide-react';
+import {
+  Filter,
+  X,
+  Clock,
+  MapPin,
+  User,
+  Users,
+  ChevronRight,
+  Plus,
+  Upload,
+  PaintBucket,
+} from 'lucide-react';
 import { Jadwal } from '@/types/database';
 import { JadwalModal } from '@/components/jadwal/JadwalModal';
 import JadwalImportCSVModal from '@/components/jadwal/JadwalImportCSVModal';
@@ -31,8 +42,12 @@ function JadwalTableSkeleton() {
     <table className="w-full border-collapse text-sm">
       <thead>
         <tr className="bg-muted/50 border-b border-border">
-          <th className="p-2 border-r border-border text-center min-w-[60px]"><Skeleton className="h-4 w-8 mx-auto" /></th>
-          <th className="p-2 border-r border-border text-center min-w-[60px]"><Skeleton className="h-4 w-8 mx-auto" /></th>
+          <th className="p-2 border-r border-border text-center min-w-[60px]">
+            <Skeleton className="h-4 w-8 mx-auto" />
+          </th>
+          <th className="p-2 border-r border-border text-center min-w-[60px]">
+            <Skeleton className="h-4 w-8 mx-auto" />
+          </th>
           {Array.from({ length: 4 }).map((_, i) => (
             <th key={i} className="p-2 border-r border-border text-center min-w-[120px]">
               <Skeleton className="h-4 w-16 mx-auto" />
@@ -54,9 +69,7 @@ function JadwalTableSkeleton() {
             {Array.from({ length: 4 }).map((_, j) => (
               <td key={j} className="p-2 border-r border-border align-top">
                 <div className="flex flex-col gap-1 w-full min-h-[60px] justify-center">
-                  {(i + j) % 3 === 0 && (
-                    <Skeleton className="h-14 w-full rounded-sm" />
-                  )}
+                  {(i + j) % 3 === 0 && <Skeleton className="h-14 w-full rounded-sm" />}
                 </div>
               </td>
             ))}
@@ -75,7 +88,6 @@ export default function JadwalPage() {
   React.useEffect(() => {
     setMounted(true);
   }, []);
-
 
   const {
     data: rawJadwalList,
@@ -129,34 +141,34 @@ export default function JadwalPage() {
     let conflict: Jadwal | undefined;
 
     if (selectedModul === 'Default') {
-      conflict = rawJadwalList.find(
-        (j) => {
-          const isExistingPJJ = j.kelas?.toUpperCase().includes('PJJ');
-          if (isEditingPJJ || isExistingPJJ) return false;
-          
-          return Number(j.id) !== Number(currentId) &&
-            j.hari === hari &&
-            j.sesi === Number(sesi) &&
-            j.ruangan === ruangan;
-        }
-      );
+      conflict = rawJadwalList.find((j) => {
+        const isExistingPJJ = j.kelas?.toUpperCase().includes('PJJ');
+        if (isEditingPJJ || isExistingPJJ) return false;
+
+        return (
+          Number(j.id) !== Number(currentId) &&
+          j.hari === hari &&
+          j.sesi === Number(sesi) &&
+          j.ruangan === ruangan
+        );
+      });
     } else {
       const effectiveJadwal = rawJadwalList.map((j) => {
         const substitute = jadwalPengganti.find((jp) => Number(jp.id_jadwal) === Number(j.id));
         return substitute ? { ...j, ...substitute } : j;
       });
 
-      conflict = effectiveJadwal.find(
-        (j) => {
-          const isExistingPJJ = j.kelas?.toUpperCase().includes('PJJ');
-          if (isEditingPJJ || isExistingPJJ) return false;
+      conflict = effectiveJadwal.find((j) => {
+        const isExistingPJJ = j.kelas?.toUpperCase().includes('PJJ');
+        if (isEditingPJJ || isExistingPJJ) return false;
 
-          return Number(j.id) !== Number(currentId) &&
-            j.hari === hari &&
-            j.sesi === Number(sesi) &&
-            j.ruangan === ruangan;
-        }
-      );
+        return (
+          Number(j.id) !== Number(currentId) &&
+          j.hari === hari &&
+          j.sesi === Number(sesi) &&
+          j.ruangan === ruangan
+        );
+      });
     }
 
     const conflictName = conflict?.mata_kuliah?.nama_lengkap || 'Unknown Course';
@@ -260,11 +272,11 @@ export default function JadwalPage() {
     const matrix: Record<string, Record<string, Record<string, Jadwal[]>>> = {};
     jadwalList.forEach((j) => {
       if (!j.hari) return;
-      
+
       const hari = j.hari.toUpperCase();
       const staticForDay = STATIC_SESSIONS[hari] || [];
       const staticJamToSesi = new Map<string, number>();
-      staticForDay.forEach(s => staticJamToSesi.set(s.jam, s.sesi));
+      staticForDay.forEach((s) => staticJamToSesi.set(s.jam, s.sesi));
 
       let jamStr = j.jam || '';
       if (jamStr.split(':').length === 3) jamStr = jamStr.split(':').slice(0, 2).join(':');
@@ -281,7 +293,7 @@ export default function JadwalPage() {
       if (!matrix[hari]) matrix[hari] = {};
       if (!matrix[hari][rowKey]) matrix[hari][rowKey] = {};
       if (!matrix[hari][rowKey][roomKey]) matrix[hari][rowKey][roomKey] = [];
-      
+
       const normalizedJ = { ...j, jam: jamStr, sesi: sesi ?? undefined };
       matrix[hari][rowKey][roomKey].push(normalizedJ as Jadwal);
     });
@@ -357,16 +369,12 @@ export default function JadwalPage() {
 
         const rowKey =
           sesi !== null && sesi !== undefined && sesi !== 0 ? sesi.toString() : jamStr || 'Unknown';
-          
+
         if (!sessionsAsKeys.has(rowKey)) {
           sessionsAsKeys.set(rowKey, { sesi: sesi || null, jam: jamStr || '-', rowKey });
         } else {
           const existing = sessionsAsKeys.get(rowKey)!;
-          if (
-            !existing.jam ||
-            existing.jam === '-' ||
-            (!sesi && existing.sesi === null)
-          ) {
+          if (!existing.jam || existing.jam === '-' || (!sesi && existing.sesi === null)) {
             sessionsAsKeys.set(rowKey, {
               sesi: sesi || existing.sesi,
               jam: jamStr || existing.jam,
@@ -388,7 +396,8 @@ export default function JadwalPage() {
       });
 
       // Sesi terakhir dari STATIC_SESSIONS (sesi 5) hanya ditampilkan jika ada jadwal
-      const lastStaticSession = staticForDay.length > 0 ? staticForDay[staticForDay.length - 1] : null;
+      const lastStaticSession =
+        staticForDay.length > 0 ? staticForDay[staticForDay.length - 1] : null;
       const filteredSessions = lastStaticSession
         ? sortedSessions.filter((s) => {
             if (s.sesi !== lastStaticSession.sesi) return true; // bukan sesi terakhir, selalu tampil
@@ -475,7 +484,12 @@ export default function JadwalPage() {
             <Upload size={18} className="mr-2" />
             Import CSV
           </Button>
-          <Button variant="secondary" onClick={() => setIsColorModalOpen(true)} title="Atur Warna Grup" className="px-3">
+          <Button
+            variant="secondary"
+            onClick={() => setIsColorModalOpen(true)}
+            title="Atur Warna Grup"
+            className="px-3"
+          >
             <PaintBucket size={18} />
           </Button>
           <Select value={selectedModul} onValueChange={setSelectedModul}>
@@ -591,14 +605,14 @@ export default function JadwalPage() {
                                   key={jadwal.id || idx}
                                   onClick={() => setSelectedJadwal(jadwal)}
                                   className={`w-full flex-1 flex flex-col items-center justify-center p-1 cursor-pointer transition-all hover:brightness-110 overflow-hidden hover:scale-105 hover:z-20 hover:shadow-lg origin-center min-h-[60px] ${
-                                    (jadwal as any).__is_pengganti ? 'ring-4 ring-inset ring-yellow-400 z-10' : ''
-                                  } ${
-                                    idx < jadwals.length - 1 ? 'border-b border-border/50' : ''
-                                  }`}
+                                    (jadwal as any).__is_pengganti
+                                      ? 'ring-4 ring-inset ring-yellow-400 z-10'
+                                      : ''
+                                  } ${idx < jadwals.length - 1 ? 'border-b border-border/50' : ''}`}
                                   style={{
-                                    backgroundColor: jadwal.mata_kuliah?.warna || getCourseColor(
-                                      jadwal.mata_kuliah?.nama_lengkap || ''
-                                    ),
+                                    backgroundColor:
+                                      jadwal.mata_kuliah?.warna ||
+                                      getCourseColor(jadwal.mata_kuliah?.nama_lengkap || ''),
                                   }}
                                   title="Click for details"
                                 >
@@ -694,7 +708,11 @@ export default function JadwalPage() {
                     <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
                       Ruangan
                     </p>
-                    <p className="text-sm font-semibold">{!selectedJadwal.ruangan || selectedJadwal.ruangan === 'Tanpa Ruangan' ? '-' : selectedJadwal.ruangan}</p>
+                    <p className="text-sm font-semibold">
+                      {!selectedJadwal.ruangan || selectedJadwal.ruangan === 'Tanpa Ruangan'
+                        ? '-'
+                        : selectedJadwal.ruangan}
+                    </p>
                   </div>
                 </div>
 

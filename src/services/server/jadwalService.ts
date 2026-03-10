@@ -4,7 +4,7 @@ import { Jadwal } from '@/types/database';
 export async function getTodaySchedule(limit: number = 5, term?: string): Promise<Jadwal[]> {
   const supabase = await createClient();
   const today = new Date().toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
-  
+
   const dayMap: Record<string, string> = {
     SUNDAY: 'MINGGU',
     MONDAY: 'SENIN',
@@ -17,11 +17,11 @@ export async function getTodaySchedule(limit: number = 5, term?: string): Promis
 
   const dayIndo = dayMap[today] || today;
 
-  if(dayIndo === 'MINGGU') {
+  if (dayIndo === 'MINGGU') {
     return [];
   }
 
-  let query = supabase
+  const query = supabase
     .from('jadwal')
     .select(
       `
@@ -53,9 +53,7 @@ export async function getTodaySchedule(limit: number = 5, term?: string): Promis
 
   // Filter by term in memory if provided
   if (term) {
-    results = results.filter(
-      (j) => (j.mata_kuliah as any)?.praktikum?.tahun_ajaran === term
-    );
+    results = results.filter((j) => (j.mata_kuliah as any)?.praktikum?.tahun_ajaran === term);
   }
 
   return results.slice(0, limit);
@@ -77,4 +75,3 @@ export async function fetchAvailableTerms(): Promise<string[]> {
   const terms = Array.from(new Set(data.map((item) => item.tahun_ajaran)));
   return terms;
 }
-

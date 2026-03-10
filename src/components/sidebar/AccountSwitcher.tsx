@@ -62,9 +62,7 @@ export function AccountSwitcher({
               </div>
               <div className="flex flex-col gap-0.5 leading-none">
                 <span className="font-medium truncate">{nama}</span>
-                <span className="text-xs text-muted-foreground truncate">
-                  {ROLE_LABEL[role]}
-                </span>
+                <span className="text-xs text-muted-foreground truncate">{ROLE_LABEL[role]}</span>
               </div>
               <ChevronsUpDown className="ml-auto shrink-0" />
             </SidebarMenuButton>

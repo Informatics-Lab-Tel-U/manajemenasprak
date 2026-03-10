@@ -7,12 +7,12 @@ export async function GET() {
   try {
     // Only ADMIN and ASLAB can access this
     await requireRole(['ADMIN', 'ASLAB']);
-    
+
     const data = await getAvailableTahunAjaran();
-    
+
     return NextResponse.json({
       ok: true,
-      data
+      data,
     });
   } catch (e: any) {
     logger.error('API /api/tahun-ajaran failed:', e);
@@ -22,4 +22,3 @@ export async function GET() {
     );
   }
 }
-

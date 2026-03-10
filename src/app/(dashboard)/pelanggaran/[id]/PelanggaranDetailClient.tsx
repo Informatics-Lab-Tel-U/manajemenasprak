@@ -403,7 +403,9 @@ export default function PelanggaranDetailClient({
           </Button>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="title-gradient text-3xl font-bold">{praktikum?.nama ?? 'Detail Praktikum'}</h1>
+              <h1 className="title-gradient text-3xl font-bold">
+                {praktikum?.nama ?? 'Detail Praktikum'}
+              </h1>
               {isFinalized && (
                 <Badge className="bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/10 border-emerald-200/50 gap-1.5 py-0.5 px-2">
                   <CheckCircle2 className="h-3.5 w-3.5" />
@@ -547,12 +549,8 @@ export default function PelanggaranDetailClient({
                 ) : loading ? (
                   Array.from({ length: 5 }).map((_, i) => (
                     <TableRow key={i}>
-                      <TableCell><Skeleton className="h-4 w-20" /></TableCell>
                       <TableCell>
-                        <div className="space-y-1">
-                          <Skeleton className="h-4 w-32" />
-                          <Skeleton className="h-3 w-20" />
-                        </div>
+                        <Skeleton className="h-4 w-20" />
                       </TableCell>
                       <TableCell>
                         <div className="space-y-1">
@@ -560,9 +558,21 @@ export default function PelanggaranDetailClient({
                           <Skeleton className="h-3 w-20" />
                         </div>
                       </TableCell>
-                      <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                      <TableCell><Skeleton className="h-5 w-24 rounded-full" /></TableCell>
-                      <TableCell><Skeleton className="h-8 w-8 rounded-md" /></TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          <Skeleton className="h-4 w-32" />
+                          <Skeleton className="h-3 w-20" />
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-16" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-5 w-24 rounded-full" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-8 w-8 rounded-md" />
+                      </TableCell>
                     </TableRow>
                   ))
                 ) : (
@@ -639,10 +649,18 @@ export default function PelanggaranDetailClient({
                 ) : loading ? (
                   Array.from({ length: 3 }).map((_, i) => (
                     <TableRow key={i}>
-                      <TableCell><Skeleton className="h-4 w-12" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-8 mx-auto" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-8 mx-auto" /></TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-12" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-32" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-8 mx-auto" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-8 mx-auto" />
+                      </TableCell>
                     </TableRow>
                   ))
                 ) : (
@@ -681,8 +699,8 @@ export default function PelanggaranDetailClient({
           <AlertDialogHeader>
             <AlertDialogTitle>Finalisasi Modul {selectedModul}?</AlertDialogTitle>
             <AlertDialogDescription>
-              Tindakan ini akan mengunci semua data pelanggaran pada modul ini. 
-              Pastikan data sudah benar.
+              Tindakan ini akan mengunci semua data pelanggaran pada modul ini. Pastikan data sudah
+              benar.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -706,8 +724,8 @@ export default function PelanggaranDetailClient({
           <AlertDialogHeader>
             <AlertDialogTitle>Reset Finalisasi Modul {selectedModul}?</AlertDialogTitle>
             <AlertDialogDescription>
-              Tindakan ini akan membuka kembali penguncian data pada modul ini. 
-              Gunakan hanya jika diperlukan perbaikan data.
+              Tindakan ini akan membuka kembali penguncian data pada modul ini. Gunakan hanya jika
+              diperlukan perbaikan data.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

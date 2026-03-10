@@ -5,12 +5,7 @@ import * as XLSX from 'xlsx';
 import { FileSpreadsheet, Upload, FileText, X, Download } from 'lucide-react';
 import { toast } from 'sonner';
 
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -24,11 +19,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import {
-  Field,
-  FieldGroup,
-  FieldLabel,
-} from '@/components/ui/field';
+import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { cn } from '@/lib/utils'; // Ensure utility exists or use standard class string
 
 import TermInput, { buildTermString } from '@/components/asprak/TermInput';
@@ -150,7 +141,11 @@ export default function MataKuliahImportModal({
             return;
           }
 
-          const transformed = validateMataKuliahData(rows, localValidPraktikums, existingMataKuliah);
+          const transformed = validateMataKuliahData(
+            rows,
+            localValidPraktikums,
+            existingMataKuliah
+          );
           setParsedRows(transformed);
           setStep('preview');
         },
@@ -330,7 +325,9 @@ export default function MataKuliahImportModal({
 
                   <Field className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <FieldLabel className="text-sm font-medium leading-none">Upload CSV</FieldLabel>
+                      <FieldLabel className="text-sm font-medium leading-none">
+                        Upload CSV
+                      </FieldLabel>
                       {fileName && (
                         <span className="text-xs text-muted-foreground flex items-center gap-1">
                           <FileText size={12} /> {fileName}
@@ -452,15 +449,13 @@ export default function MataKuliahImportModal({
           <AlertDialogHeader>
             <AlertDialogTitle>Batalkan Import?</AlertDialogTitle>
             <AlertDialogDescription>
-              Anda sedang dalam proses import. Jika Anda keluar sekarang, data pratinjau akan hilang.
+              Anda sedang dalam proses import. Jika Anda keluar sekarang, data pratinjau akan
+              hilang.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Batal, kembali ke pratinjau</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleClose}
-              variant="destructive"
-            >
+            <AlertDialogAction onClick={handleClose} variant="destructive">
               Ya, Batalkan Import
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -469,4 +464,3 @@ export default function MataKuliahImportModal({
     </>
   );
 }
-

@@ -14,12 +14,7 @@ interface StepPraktikumProps {
   onImport: (rows: { nama: string; tahun_ajaran: string }[]) => Promise<void>;
 }
 
-export default function StepPraktikum({
-  data,
-  onNext,
-  onPrev,
-  onImport,
-}: StepPraktikumProps) {
+export default function StepPraktikum({ data, onNext, onPrev, onImport }: StepPraktikumProps) {
   const [previewRows, setPreviewRows] = useState<PraktikumPreviewRow[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -29,35 +24,38 @@ export default function StepPraktikum({
     let active = true;
 
     async function process() {
-        if (!data || data.length === 0) {
-          setError('Data CSV/Excel Praktikum kosong.');
-          return;
+      if (!data || data.length === 0) {
+        setError('Data CSV/Excel Praktikum kosong.');
+        return;
+      }
+
+      try {
+        const res = await fetchAllPraktikum();
+        if (!active) return;
+
+        let existing: { nama: string; tahun_ajaran: string }[] = [];
+        if (res.ok && res.data) {
+          existing = res.data.map((p: any) => ({
+            nama: p.nama,
+            tahun_ajaran: p.tahun_ajaran,
+          }));
         }
 
-        try {
-            const res = await fetchAllPraktikum();
-            if (!active) return;
-
-            let existing: {nama: string; tahun_ajaran: string}[] = [];
-            if (res.ok && res.data) {
-                existing = res.data.map((p: any) => ({
-                    nama: p.nama,
-                    tahun_ajaran: p.tahun_ajaran
-                }));
-            }
-
-            const preview = validatePraktikumData(data, existing);
-            setPreviewRows(preview);
-        } catch (err: any) {
-             if (active) setError(err.message || 'Gagal memuat data praktikum dari database untuk validasi.');
-        } finally {
-             if (active) setIsFetching(false);
-        }
+        const preview = validatePraktikumData(data, existing);
+        setPreviewRows(preview);
+      } catch (err: any) {
+        if (active)
+          setError(err.message || 'Gagal memuat data praktikum dari database untuk validasi.');
+      } finally {
+        if (active) setIsFetching(false);
+      }
     }
 
     process();
 
-    return () => { active = false; };
+    return () => {
+      active = false;
+    };
   }, [data]);
 
   const handleToggleSelect = useCallback((rowIndex: number) => {
@@ -130,7 +128,7 @@ export default function StepPraktikum({
       <PraktikumCSVPreview
         rows={previewRows}
         onConfirm={handleConfirm}
-        onBack={onPrev || onNext} 
+        onBack={onPrev || onNext}
         onToggleSelect={handleToggleSelect}
         onToggleAll={handleToggleAll}
         loading={saving}

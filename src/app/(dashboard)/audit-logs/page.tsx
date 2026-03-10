@@ -22,11 +22,6 @@ export default async function AuditLogsPage(props: {
   const { logs, count } = await getAuditLogs(page, pageSize);
 
   return (
-    <AuditLogsClientPage
-      logs={logs}
-      totalCount={count}
-      currentPage={page}
-      pageSize={pageSize}
-    />
+    <AuditLogsClientPage logs={logs} totalCount={count} currentPage={page} pageSize={pageSize} />
   );
 }

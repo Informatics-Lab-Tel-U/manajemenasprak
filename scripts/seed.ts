@@ -186,7 +186,7 @@ async function processTerm(folderName: string) {
 
     let jadwalInsertedCount = 0;
     for (const row of jadwalRows) {
-        let prodi = getProdiFromKelas(row.kelas);
+        const prodi = getProdiFromKelas(row.kelas);
 
         let mkId = mkMap.get(`${row.nama_singkat}|${prodi}`);
 

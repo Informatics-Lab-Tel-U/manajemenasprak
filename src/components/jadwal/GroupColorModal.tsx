@@ -41,13 +41,13 @@ export function GroupColorModal({ isOpen, onClose, mataKuliahList }: GroupColorM
   const [initialColors, setInitialColors] = useState<Record<string, string>>({});
 
   // Group by Praktikum Name globally
-  const uniqueGroups = useMemo(() => Array.from(
-    new Set(
-      mataKuliahList
-        .map((mk) => mk.praktikum?.nama)
-        .filter(Boolean) as string[]
-    )
-  ).sort(), [mataKuliahList]);
+  const uniqueGroups = useMemo(
+    () =>
+      Array.from(
+        new Set(mataKuliahList.map((mk) => mk.praktikum?.nama).filter(Boolean) as string[])
+      ).sort(),
+    [mataKuliahList]
+  );
 
   useEffect(() => {
     if (isOpen) {
@@ -68,9 +68,7 @@ export function GroupColorModal({ isOpen, onClose, mataKuliahList }: GroupColorM
     setColors((prev) => ({ ...prev, [groupName]: color }));
   };
 
-  const hasChanges = Object.keys(colors).some(
-    (key) => colors[key] !== initialColors[key]
-  );
+  const hasChanges = Object.keys(colors).some((key) => colors[key] !== initialColors[key]);
 
   const handleSave = async () => {
     if (!hasChanges) {
@@ -100,7 +98,9 @@ export function GroupColorModal({ isOpen, onClose, mataKuliahList }: GroupColorM
       onClose();
       window.location.reload();
     } catch (error: unknown) {
-      toast.error(error instanceof Error ? error.message : 'Terjadi kesalahan yang tidak diketahui');
+      toast.error(
+        error instanceof Error ? error.message : 'Terjadi kesalahan yang tidak diketahui'
+      );
     } finally {
       setLoading(false);
     }
@@ -134,18 +134,18 @@ export function GroupColorModal({ isOpen, onClose, mataKuliahList }: GroupColorM
                 const isChanged = currentColor !== initialColors[groupName];
 
                 return (
-                  <div 
-                    key={groupName} 
+                  <div
+                    key={groupName}
                     className={cn(
-                      "p-4 rounded-lg border transition-colors",
-                      isChanged ? "bg-primary/5 border-primary/20" : "bg-muted/30 border-border/50"
+                      'p-4 rounded-lg border transition-colors',
+                      isChanged ? 'bg-primary/5 border-primary/20' : 'bg-muted/30 border-border/50'
                     )}
                   >
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-3">
-                        <div 
+                        <div
                           className="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider shadow-sm"
-                          style={{ 
+                          style={{
                             backgroundColor: currentColor,
                             color: contrastColor,
                           }}
@@ -189,10 +189,10 @@ export function GroupColorModal({ isOpen, onClose, mataKuliahList }: GroupColorM
                             type="button"
                             onClick={() => handleColorChange(groupName, color)}
                             className={cn(
-                              "relative aspect-square rounded-sm border transition-all hover:scale-105",
-                              isSelected 
-                                ? "border-primary ring-1 ring-primary ring-offset-1" 
-                                : "border-transparent"
+                              'relative aspect-square rounded-sm border transition-all hover:scale-105',
+                              isSelected
+                                ? 'border-primary ring-1 ring-primary ring-offset-1'
+                                : 'border-transparent'
                             )}
                             style={{ backgroundColor: color }}
                           />
@@ -214,29 +214,36 @@ export function GroupColorModal({ isOpen, onClose, mataKuliahList }: GroupColorM
               {uniqueGroups.map((groupName) => {
                 const currentColor = colors[groupName] || '#3a5edb';
                 const isChanged = currentColor !== initialColors[groupName];
-                
+
                 return (
                   <div key={`ov-${groupName}`} className="flex items-center justify-between group">
                     <div className="flex items-center gap-2 overflow-hidden">
-                      <div 
-                        className="w-3 h-3 rounded-full shrink-0 shadow-sm border border-black/5" 
-                        style={{ backgroundColor: currentColor }} 
+                      <div
+                        className="w-3 h-3 rounded-full shrink-0 shadow-sm border border-black/5"
+                        style={{ backgroundColor: currentColor }}
                       />
-                      <span className={cn(
-                        "text-xs truncate transition-colors",
-                        isChanged ? "text-primary font-bold" : "text-muted-foreground group-hover:text-foreground"
-                      )}>
+                      <span
+                        className={cn(
+                          'text-xs truncate transition-colors',
+                          isChanged
+                            ? 'text-primary font-bold'
+                            : 'text-muted-foreground group-hover:text-foreground'
+                        )}
+                      >
                         {groupName}
                       </span>
                     </div>
                     {isChanged && (
-                      <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0 ml-2" title="Modified" />
+                      <span
+                        className="w-1.5 h-1.5 rounded-full bg-primary shrink-0 ml-2"
+                        title="Modified"
+                      />
                     )}
                   </div>
                 );
               })}
             </div>
-            
+
             {hasChanges && (
               <div className="mt-8 flex items-center gap-2.5 px-1 animate-in fade-in slide-in-from-bottom-2">
                 <div className="relative flex h-1.5 w-1.5">
@@ -255,8 +262,8 @@ export function GroupColorModal({ isOpen, onClose, mataKuliahList }: GroupColorM
           <Button variant="outline" onClick={onClose} disabled={loading}>
             Batal
           </Button>
-          <Button 
-            onClick={handleSave} 
+          <Button
+            onClick={handleSave}
             disabled={loading || uniqueGroups.length === 0 || !hasChanges}
             className="px-8"
           >

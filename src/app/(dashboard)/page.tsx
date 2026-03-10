@@ -16,7 +16,7 @@ export default async function Home() {
 
   return (
     <div className="container">
-      <DashboardClient 
+      <DashboardClient
         initialStats={initialStats}
         initialSchedule={initialSchedule}
         initialTerms={initialTerms}

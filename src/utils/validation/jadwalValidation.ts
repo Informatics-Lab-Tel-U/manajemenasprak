@@ -15,13 +15,8 @@ export async function validateJadwalConflicts(
 
   const getKey = (hari: string, sesi: number | string, ruangan: string, jam: string) =>
     `${hari}-${sesi}-${jam}-${ruangan}`;
-  const getFullKey = (
-    id_mk: string,
-    kelas: string,
-    hari: string,
-    sesi: number,
-    ruangan: string
-  ) => `${id_mk}-${kelas}-${hari}-${sesi}-${ruangan}`;
+  const getFullKey = (id_mk: string, kelas: string, hari: string, sesi: number, ruangan: string) =>
+    `${id_mk}-${kelas}-${hari}-${sesi}-${ruangan}`;
 
   const dbMap = new Map<string, any>();
   const dbFullMap = new Set<string>();
@@ -36,7 +31,7 @@ export async function validateJadwalConflicts(
 
   rows.forEach((row, idx) => {
     if (row.status === 'error') return;
-    
+
     const isPJJ = row.kelas.toUpperCase().includes('PJJ');
     if (!row.ruangan && !isPJJ) return; // Drop empty rooms IF NOT PJJ (this is handled later as error anyway)
 

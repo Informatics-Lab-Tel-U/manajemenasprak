@@ -23,7 +23,9 @@ export default async function PelanggaranPage() {
     praktikumList = await praktikumService.getAllPraktikum();
   }
 
-  const tahunAjaranList = Array.from(new Set(praktikumList.map((p) => p.tahun_ajaran))).sort().reverse();
+  const tahunAjaranList = Array.from(new Set(praktikumList.map((p) => p.tahun_ajaran)))
+    .sort()
+    .reverse();
 
   // ── Fetch violation counts per praktikum ──
   const countMap = await pelanggaranService.getPelanggaranCountsByPraktikum(isKoor, supabase);

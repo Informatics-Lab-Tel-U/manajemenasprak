@@ -1,4 +1,3 @@
-
 import { logger } from '@/lib/logger';
 import { ServiceResult } from '@/types/api';
 
@@ -10,25 +9,24 @@ export interface ValidatePlottingRow {
 
 export interface ValidationResult {
   validRows: { asprak_id: string; praktikum_id: string; original: ValidatePlottingRow }[];
-  ambiguousRows: { 
-     original: ValidatePlottingRow; 
-     candidates: { id: string; nama_lengkap: string; nim: string; angkatan: number }[];
-     reason: string;
-     praktikum_id: string;
+  ambiguousRows: {
+    original: ValidatePlottingRow;
+    candidates: { id: string; nama_lengkap: string; nim: string; angkatan: number }[];
+    reason: string;
+    praktikum_id: string;
   }[];
   invalidRows: { original: ValidatePlottingRow; reason: string }[];
 }
 
-
 export async function validatePlottingImport(
-  rows: ValidatePlottingRow[], 
+  rows: ValidatePlottingRow[],
   term: string
 ): Promise<ServiceResult<ValidationResult>> {
   try {
     const res = await fetch('/api/plotting', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'validate-import', rows, term }),
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'validate-import', rows, term }),
     });
     const json = await res.json();
     if (!res.ok) return { ok: false, error: json.error };
@@ -44,9 +42,9 @@ export async function savePlotting(
 ): Promise<ServiceResult<void>> {
   try {
     const res = await fetch('/api/plotting', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'save-plotting', assignments }),
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'save-plotting', assignments }),
     });
     const json = await res.json();
     if (!res.ok) return { ok: false, error: json.error };
@@ -56,4 +54,3 @@ export async function savePlotting(
     return { ok: false, error: e.message };
   }
 }
-

@@ -74,26 +74,23 @@ export function LightWavesBackground({
 
   const activeColors = isDark ? colors : lightColors;
 
-  const initWaves = useCallback(
-    (height: number, waveColors: string[]) => {
-      const waves: Wave[] = [];
-      const waveCount = 5;
+  const initWaves = useCallback((height: number, waveColors: string[]) => {
+    const waves: Wave[] = [];
+    const waveCount = 5;
 
-      for (let i = 0; i < waveCount; i++) {
-        waves.push({
-          y: height * (0.3 + (i / waveCount) * 0.5),
-          amplitude: height * (0.15 + Math.random() * 0.15),
-          frequency: 0.002 + Math.random() * 0.002,
-          speed: (0.2 + Math.random() * 0.3) * (i % 2 === 0 ? 1 : -1),
-          phase: Math.random() * Math.PI * 2,
-          color: waveColors[i % waveColors.length],
-          opacity: 0.15 + Math.random() * 0.1,
-        });
-      }
-      wavesRef.current = waves;
-    },
-    []
-  );
+    for (let i = 0; i < waveCount; i++) {
+      waves.push({
+        y: height * (0.3 + (i / waveCount) * 0.5),
+        amplitude: height * (0.15 + Math.random() * 0.15),
+        frequency: 0.002 + Math.random() * 0.002,
+        speed: (0.2 + Math.random() * 0.3) * (i % 2 === 0 ? 1 : -1),
+        phase: Math.random() * Math.PI * 2,
+        color: waveColors[i % waveColors.length],
+        opacity: 0.15 + Math.random() * 0.1,
+      });
+    }
+    wavesRef.current = waves;
+  }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -276,10 +273,7 @@ export function LightWavesBackground({
       />
 
       {/* Vignette — adapts to theme */}
-      <div
-        className="pointer-events-none absolute inset-0"
-        style={{ background: vignetteStyle }}
-      />
+      <div className="pointer-events-none absolute inset-0" style={{ background: vignetteStyle }} />
 
       {/* Content layer */}
       {children && <div className="relative z-10 h-full w-full">{children}</div>}
