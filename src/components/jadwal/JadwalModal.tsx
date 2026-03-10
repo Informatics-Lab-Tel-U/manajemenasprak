@@ -187,7 +187,14 @@ export function JadwalModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.id_mk || !formData.kelas || !formData.hari || formData.sesi === undefined || formData.sesi === null || !formData.jam) {
+    if (
+      !formData.id_mk ||
+      !formData.kelas ||
+      !formData.hari ||
+      formData.sesi === undefined ||
+      formData.sesi === null ||
+      !formData.jam
+    ) {
       toast.error('Mohon isi semua field yang wajib');
       return;
     }
@@ -433,9 +440,16 @@ export function JadwalModal({
               </div>
               <div className="space-y-2">
                 <div className="flex justify-between items-center mb-1">
-                  <Label htmlFor="sesi" className="leading-none">Sesi & Jam</Label>
+                  <Label htmlFor="sesi" className="leading-none">
+                    Sesi & Jam
+                  </Label>
                   <div className="flex items-center space-x-2">
-                    <Label htmlFor="custom-jam" className="text-[10px] text-muted-foreground font-medium cursor-pointer">Custom Jam</Label>
+                    <Label
+                      htmlFor="custom-jam"
+                      className="text-[10px] text-muted-foreground font-medium cursor-pointer"
+                    >
+                      Custom Jam
+                    </Label>
                     <Switch
                       id="custom-jam"
                       checked={isCustomJam}
@@ -452,7 +466,7 @@ export function JadwalModal({
                     />
                   </div>
                 </div>
-                
+
                 {!isCustomJam ? (
                   <Select
                     value={formData.sesi?.toString() || '1'}
@@ -474,7 +488,9 @@ export function JadwalModal({
                 ) : (
                   <Select
                     value={formData.jam?.split(':')[0] || '06'}
-                    onValueChange={(val) => setFormData((prev) => ({ ...prev, jam: `${val}:30`, sesi: 0 }))}
+                    onValueChange={(val) =>
+                      setFormData((prev) => ({ ...prev, jam: `${val}:30`, sesi: 0 }))
+                    }
                   >
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Pilih Jam" />

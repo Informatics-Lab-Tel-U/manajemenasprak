@@ -16,7 +16,10 @@ export async function fetchAllPelanggaran(): Promise<ServiceResult<Pelanggaran[]
   }
 }
 
-export async function fetchPelanggaranByFilter(idPraktikum?: string, tahunAjaran?: string): Promise<ServiceResult<Pelanggaran[]>> {
+export async function fetchPelanggaranByFilter(
+  idPraktikum?: string,
+  tahunAjaran?: string
+): Promise<ServiceResult<Pelanggaran[]>> {
   try {
     const url = new URL('/api/pelanggaran', window.location.origin);
     if (idPraktikum) url.searchParams.append('idPraktikum', idPraktikum);
@@ -63,7 +66,9 @@ export async function deletePelanggaran(id: string): Promise<ServiceResult<void>
   }
 }
 
-export async function fetchPelanggaranCounts(isKoor: boolean): Promise<ServiceResult<PelanggaranCountMap>> {
+export async function fetchPelanggaranCounts(
+  isKoor: boolean
+): Promise<ServiceResult<PelanggaranCountMap>> {
   try {
     const res = await fetch(`/api/pelanggaran?action=counts&isKoor=${isKoor}`, {
       method: 'GET',

@@ -87,7 +87,7 @@ export async function getStats(
   });
   const jadwalByDay = Object.entries(jadwalMap).map(([name, count]) => ({ name, count }));
 
-  const uniqueAsprakIds = new Set((asprakRes.data as any[])?.map(d => d.id_asprak));
+  const uniqueAsprakIds = new Set((asprakRes.data as any[])?.map((d) => d.id_asprak));
 
   return {
     asprakCount: uniqueAsprakIds.size,

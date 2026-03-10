@@ -15,13 +15,29 @@ export function validateMataKuliahData(
 
   return data.map((r: any) => {
     // Fallbacks for different header formats (e.g. from template vs random casing)
-    const mk_singkat = (r.mk_singkat || r['Nama Singkat'] || r.nama_singkat || r['MK Singkat'] || '').toString().trim();
+    const mk_singkat = (
+      r.mk_singkat ||
+      r['Nama Singkat'] ||
+      r.nama_singkat ||
+      r['MK Singkat'] ||
+      ''
+    )
+      .toString()
+      .trim();
     const nama_lengkap = (r.nama_lengkap || r['Nama Lengkap'] || '').toString().trim();
-    const program_studi = (r.program_studi || r['Program Studi'] || r.prodi || r.Prodi || '').toString().trim().toUpperCase();
-    const dosen_koor = (r.dosen_koor || r['Dosen Koor'] || r.koor || '').toString().trim().toUpperCase();
+    const program_studi = (r.program_studi || r['Program Studi'] || r.prodi || r.Prodi || '')
+      .toString()
+      .trim()
+      .toUpperCase();
+    const dosen_koor = (r.dosen_koor || r['Dosen Koor'] || r.koor || '')
+      .toString()
+      .trim()
+      .toUpperCase();
 
     // Use localValidPraktikums for validation
-    const isMkKnown = localValidPraktikums.some((p) => p.nama.toUpperCase() === mk_singkat.toUpperCase());
+    const isMkKnown = localValidPraktikums.some(
+      (p) => p.nama.toUpperCase() === mk_singkat.toUpperCase()
+    );
     const isProdiValid = isValidProdi(program_studi);
     const isKoorValid = dosen_koor.length === 3;
 
@@ -32,7 +48,9 @@ export function validateMataKuliahData(
 
     // Check Duplicates
     // existingMataKuliah is grouped by mk_singkat
-    const existingGroup = existingMataKuliah.find((g) => g.mk_singkat.toUpperCase() === mk_singkat.toUpperCase());
+    const existingGroup = existingMataKuliah.find(
+      (g) => g.mk_singkat.toUpperCase() === mk_singkat.toUpperCase()
+    );
     const isDuplicate = existingGroup?.items.some(
       (item) => item.program_studi.toUpperCase() === program_studi.toUpperCase()
     );
@@ -56,7 +74,7 @@ export function validateMataKuliahData(
     }
 
     if (mk_singkat && program_studi) {
-        internalMap.add(key);
+      internalMap.add(key);
     }
 
     return {

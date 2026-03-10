@@ -8,7 +8,11 @@ import { PelanggaranCountMap } from '@/services/pelanggaranService';
 import { CreatePelanggaranInput } from '@/types/api';
 import { toast } from 'sonner';
 
-export function usePelanggaran(initialTahunAjaran?: string, isKoor: boolean = false, userId?: string) {
+export function usePelanggaran(
+  initialTahunAjaran?: string,
+  isKoor: boolean = false,
+  userId?: string
+) {
   const [praktikumList, setPraktikumList] = useState<Praktikum[]>([]);
   const [tahunAjaranList, setTahunAjaranList] = useState<string[]>([]);
   const [selectedTahun, setSelectedTahun] = useState(initialTahunAjaran || '');
@@ -29,7 +33,7 @@ export function usePelanggaran(initialTahunAjaran?: string, isKoor: boolean = fa
       ]);
 
       if (countsRes.ok) setCountMap(countsRes.data || {});
-      
+
       if (asprakRes.ok && asprakRes.data) {
         const formattedAsprak = asprakRes.data.map((a: any) => ({
           ...a,
@@ -38,9 +42,7 @@ export function usePelanggaran(initialTahunAjaran?: string, isKoor: boolean = fa
         setAsprakList(formattedAsprak);
       }
 
-      if (jadwalRes.ok) setJadwalList(jadwalRes.data as any || []);
-
-
+      if (jadwalRes.ok) setJadwalList((jadwalRes.data as any) || []);
     } catch (e: any) {
       setError(e);
     } finally {
@@ -53,7 +55,9 @@ export function usePelanggaran(initialTahunAjaran?: string, isKoor: boolean = fa
       const res = await pelanggaranFetcher.fetchKoorPraktikumList(userId);
       if (res.ok && res.data) {
         setPraktikumList(res.data);
-        const years = Array.from(new Set(res.data.map((p) => p.tahun_ajaran))).sort().reverse();
+        const years = Array.from(new Set(res.data.map((p) => p.tahun_ajaran)))
+          .sort()
+          .reverse();
         setTahunAjaranList(years);
         if (years.length > 0 && !selectedTahun) {
           setSelectedTahun(years[0]);
@@ -81,7 +85,7 @@ export function usePelanggaran(initialTahunAjaran?: string, isKoor: boolean = fa
   const finalize = async (idPraktikum: string) => {
     const result = await pelanggaranFetcher.finalizePelanggaran(idPraktikum);
     if (result.ok) {
-        await fetchData();
+      await fetchData();
     }
     return result;
   };
@@ -108,7 +112,11 @@ export function usePelanggaran(initialTahunAjaran?: string, isKoor: boolean = fa
   };
 }
 
-export function usePelanggaranDetail(idPraktikum: string, initialViolations?: Pelanggaran[], initialPraktikum?: Praktikum) {
+export function usePelanggaranDetail(
+  idPraktikum: string,
+  initialViolations?: Pelanggaran[],
+  initialPraktikum?: Praktikum
+) {
   const [violations, setViolations] = useState<Pelanggaran[]>(initialViolations || []);
   const [praktikum, setPraktikum] = useState<Praktikum | null>(initialPraktikum || null);
   const [asprakList, setAsprakList] = useState<(Asprak & { praktikum_ids?: string[] })[]>([]);
@@ -145,8 +153,8 @@ export function usePelanggaranDetail(idPraktikum: string, initialViolations?: Pe
         setAsprakList(formattedAsprak);
       }
 
-      if (jadwalRes.ok) setJadwalList(jadwalRes.data as any || []);
-      
+      if (jadwalRes.ok) setJadwalList((jadwalRes.data as any) || []);
+
       if (fResult.ok) setFinalizedModules(fResult.data || []);
     } catch (err: any) {
       setError(err.message || 'Terjadi kesalahan saat memuat data');
@@ -244,4 +252,3 @@ export function usePelanggaranDetail(idPraktikum: string, initialViolations?: Pe
     unfinalizeModul,
   };
 }
-

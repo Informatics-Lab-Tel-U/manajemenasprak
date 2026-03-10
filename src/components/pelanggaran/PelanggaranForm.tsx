@@ -15,7 +15,16 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, Search, X, ChevronDown, ChevronRight, Users, Calendar, AlertCircle } from 'lucide-react';
+import {
+  Loader2,
+  Search,
+  X,
+  ChevronDown,
+  ChevronRight,
+  Users,
+  Calendar,
+  AlertCircle,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import type { Asprak, Jadwal, Praktikum, JadwalPengganti } from '@/types/database';
 import { Field, FieldGroup } from '@/components/ui/field';
@@ -316,12 +325,15 @@ export default function PelanggaranForm({
                   <div className="flex items-center justify-between gap-2">
                     <div className="text-sm font-medium">{j.kelas}</div>
                     {substitute && (
-                      <Badge variant="outline" className="text-[10px] h-4 px-1 bg-amber-500/10 text-amber-600 border-amber-200 uppercase font-bold tracking-tight">
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] h-4 px-1 bg-amber-500/10 text-amber-600 border-amber-200 uppercase font-bold tracking-tight"
+                      >
                         Pengganti
                       </Badge>
                     )}
                   </div>
-                  
+
                   <div className="text-xs text-muted-foreground mt-0.5 space-y-0.5">
                     {substitute ? (
                       <div className="flex flex-col">
@@ -329,15 +341,19 @@ export default function PelanggaranForm({
                           {substitute.hari} · {substitute.jam}
                         </span>
                         <span className="text-[10px] opacity-80">
-                          ({new Date(substitute.tanggal).toLocaleDateString('id-ID', {
+                          (
+                          {new Date(substitute.tanggal).toLocaleDateString('id-ID', {
                             day: 'numeric',
                             month: 'short',
                             year: 'numeric',
-                          })})
+                          })}
+                          )
                         </span>
                       </div>
                     ) : (
-                      <div>{j.hari} · {j.jam}</div>
+                      <div>
+                        {j.hari} · {j.jam}
+                      </div>
                     )}
                   </div>
                 </div>

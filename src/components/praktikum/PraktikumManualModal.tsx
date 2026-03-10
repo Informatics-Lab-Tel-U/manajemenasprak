@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -76,7 +75,7 @@ export default function PraktikumManualModal({
         setLoading(false);
         return;
       }
-      
+
       await onConfirm(nama, term);
       onClose();
       setNama('');
@@ -96,7 +95,7 @@ export default function PraktikumManualModal({
           <DialogHeader className="px-6 py-4 border-b shrink-0">
             <DialogTitle>Input Manual Praktikum</DialogTitle>
           </DialogHeader>
-          
+
           <div className="flex-1 overflow-y-auto px-6 py-5">
             <FieldGroup>
               {error && (
@@ -111,18 +110,24 @@ export default function PraktikumManualModal({
               <Field>
                 <Label htmlFor="nama-praktikum">Nama Singkat Matkul</Label>
                 <div className="relative">
-                  <Input 
+                  <Input
                     id="nama-praktikum"
-                    value={nama} 
-                    onChange={(e) => handleNamaChange(e.target.value)} 
+                    value={nama}
+                    onChange={(e) => handleNamaChange(e.target.value)}
                     onBlur={handleBlur}
                     placeholder="Contoh: PBO, JARKOM, STRUKDAT"
                     required
                   />
                   <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                    {status === 'checking' && <span className="text-xs text-muted-foreground animate-pulse">Checking...</span>}
+                    {status === 'checking' && (
+                      <span className="text-xs text-muted-foreground animate-pulse">
+                        Checking...
+                      </span>
+                    )}
                     {status === 'exists' && <AlertTriangle size={16} className="text-amber-500" />}
-                    {status === 'available' && <CheckCircle size={16} className="text-emerald-500" />}
+                    {status === 'available' && (
+                      <CheckCircle size={16} className="text-emerald-500" />
+                    )}
                   </div>
                 </div>
                 {status === 'exists' && (
@@ -136,8 +141,14 @@ export default function PraktikumManualModal({
               <TermInput
                 termYear={termYear}
                 termSem={termSem}
-                onYearChange={(y) => { setTermYear(y); setStatus('idle'); }}
-                onSemChange={(s) => { setTermSem(s); setStatus('idle'); }}
+                onYearChange={(y) => {
+                  setTermYear(y);
+                  setStatus('idle');
+                }}
+                onSemChange={(s) => {
+                  setTermSem(s);
+                  setStatus('idle');
+                }}
               />
             </FieldGroup>
           </div>
@@ -157,4 +168,3 @@ export default function PraktikumManualModal({
     </Dialog>
   );
 }
-

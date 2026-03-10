@@ -17,8 +17,9 @@ export async function getMaintenanceStatus(): Promise<boolean> {
 
     if (error) {
       // If table doesn't exist yet or other error, default to false
-      if (error.code !== 'PGRST116') { // PGRST116 is not found
-          logger.error('Error fetching maintenance status:', error);
+      if (error.code !== 'PGRST116') {
+        // PGRST116 is not found
+        logger.error('Error fetching maintenance status:', error);
       }
       return false;
     }
@@ -34,14 +35,12 @@ export async function getMaintenanceStatus(): Promise<boolean> {
  * Update maintenance mode status (Admin only).
  */
 export async function setMaintenanceStatus(active: boolean, userId: string): Promise<void> {
-  const { error } = await globalAdmin
-    .from('system_config')
-    .upsert({
-      key: 'maintenance_mode',
-      value_bool: active,
-      updated_at: new Date().toISOString(),
-      updated_by: userId,
-    });
+  const { error } = await globalAdmin.from('system_config').upsert({
+    key: 'maintenance_mode',
+    value_bool: active,
+    updated_at: new Date().toISOString(),
+    updated_by: userId,
+  });
 
   if (error) {
     logger.error('Error setting maintenance status:', error);

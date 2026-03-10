@@ -4,13 +4,7 @@ import { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
-import {
-  FileSpreadsheet,
-  Upload,
-  FileText,
-  X,
-  Download,
-} from 'lucide-react';
+import { FileSpreadsheet, Upload, FileText, X, Download } from 'lucide-react';
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -23,7 +17,10 @@ import { MataKuliah } from '@/types/database';
 import type { CreateJadwalInput } from '@/services/jadwalService';
 import * as jadwalFetcher from '@/lib/fetchers/jadwalFetcher';
 import JadwalCSVPreview, { JadwalPreviewRow } from './JadwalCSVPreview';
-import { validateJadwalConflicts, buildJadwalPreviewRows } from '@/utils/validation/jadwalValidation';
+import {
+  validateJadwalConflicts,
+  buildJadwalPreviewRows,
+} from '@/utils/validation/jadwalValidation';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -39,8 +36,6 @@ interface RawCSVRow {
   // allow legacy column just in case
   mata_kuliah?: string;
 }
-
-
 
 interface JadwalImportCSVModalProps {
   mataKuliahList: MataKuliah[];
@@ -219,8 +214,6 @@ export default function JadwalImportCSVModal({
     setFileName(null);
     setError(null);
   };
-
-
 
   // ─── Render ──────────────────────────────────────────────────────────────
 

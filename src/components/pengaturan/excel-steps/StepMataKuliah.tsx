@@ -27,9 +27,11 @@ export default function StepMataKuliah({
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
-  const [localValidPraktikums, setLocalValidPraktikums] = useState<{ id: string; nama: string }[]>([]);
+  const [localValidPraktikums, setLocalValidPraktikums] = useState<{ id: string; nama: string }[]>(
+    []
+  );
   const [existingMataKuliah, setExistingMataKuliah] = useState<MataKuliahGrouped[]>([]);
-  
+
   const isValidProdi = (prodi: string) => {
     const base = prodi?.replace('-PJJ', '') || '';
     return ['IF', 'IT', 'SE', 'DS'].includes(base);
@@ -80,13 +82,13 @@ export default function StepMataKuliah({
 
   // Process data after fetch is complete (or updated)
   useEffect(() => {
-      if (!data || data.length === 0) {
-          setError('Data Excel Mata Kuliah kosong.');
-          return;
-      }
-      
-      const transformed = validateMataKuliahData(data, localValidPraktikums, existingMataKuliah);
-      setParsedRows(transformed);
+    if (!data || data.length === 0) {
+      setError('Data Excel Mata Kuliah kosong.');
+      return;
+    }
+
+    const transformed = validateMataKuliahData(data, localValidPraktikums, existingMataKuliah);
+    setParsedRows(transformed);
   }, [data, localValidPraktikums, existingMataKuliah]);
 
   const handleUpdateRow = (index: number, updates: Partial<MataKuliahCSVRow>) => {
@@ -130,7 +132,7 @@ export default function StepMataKuliah({
     } catch (e: any) {
       setError(e.message);
       setLoading(false);
-    } 
+    }
   };
 
   if (isFetching) {

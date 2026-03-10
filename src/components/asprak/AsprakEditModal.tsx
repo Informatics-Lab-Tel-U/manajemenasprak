@@ -38,7 +38,7 @@ export default function AsprakEditModal({
   const [kodeError, setKodeError] = useState<string | null>(null);
   const [forceOverride, setForceOverride] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [existingAspraks, setExistingAspraks] = useState<{kode: string, angkatan: number}[]>([]);
+  const [existingAspraks, setExistingAspraks] = useState<{ kode: string; angkatan: number }[]>([]);
 
   useEffect(() => {
     if (open) {
@@ -49,13 +49,13 @@ export default function AsprakEditModal({
       fetch('/api/asprak?action=all-info')
         .then((res) => res.json())
         .then((json) => {
-           if (json.ok && json.data) {
-               setExistingAspraks(json.data);
-           }
+          if (json.ok && json.data) {
+            setExistingAspraks(json.data);
+          }
         });
 
       // Initialize selection
-      // eslint-disable-next-line react-hooks/set-state-in-effect
+
       setSelectedPraktikumIds(assignments);
       setNewKode(asprak.kode);
       setKodeError(null);
@@ -64,50 +64,50 @@ export default function AsprakEditModal({
   }, [open, getPraktikumByTerm, assignments, asprak.kode]);
 
   const validateKodeMatch = (up: string, force: boolean) => {
-      const safeUp = up || '';
-      if (safeUp.length === 0) {
-          setKodeError('Kode tidak boleh kosong');
-          return;
+    const safeUp = up || '';
+    if (safeUp.length === 0) {
+      setKodeError('Kode tidak boleh kosong');
+      return;
+    }
+    if (safeUp.length !== 3) {
+      setKodeError('Kode Asisten harus persis 3 huruf');
+      return;
+    }
+
+    if (!force) {
+      let calculatedAngkatan = asprak.angkatan || 0;
+      if (calculatedAngkatan > 0 && calculatedAngkatan < 100) calculatedAngkatan += 2000;
+
+      const conflictInDB = existingAspraks.some((a) => {
+        if (a.kode.toUpperCase() !== up) return false;
+        // Ignore self match
+        if (a.kode.toUpperCase() === asprak.kode.toUpperCase()) return false;
+
+        const gap = calculatedAngkatan - a.angkatan;
+        return gap < 5; // CODE_RECYCLE_YEARS
+      });
+
+      if (conflictInDB) {
+        setKodeError('Kode sudah digunakan (< 5 tahun)');
+        return;
       }
-      if (safeUp.length !== 3) {
-          setKodeError('Kode Asisten harus persis 3 huruf');
-          return;
-      }
+    }
 
-      if (!force) {
-          let calculatedAngkatan = asprak.angkatan || 0;
-          if (calculatedAngkatan > 0 && calculatedAngkatan < 100) calculatedAngkatan += 2000;
-
-          const conflictInDB = existingAspraks.some((a) => {
-              if (a.kode.toUpperCase() !== up) return false;
-              // Ignore self match
-              if (a.kode.toUpperCase() === asprak.kode.toUpperCase()) return false;
-              
-              const gap = calculatedAngkatan - a.angkatan;
-              return gap < 5; // CODE_RECYCLE_YEARS
-          });
-
-          if (conflictInDB) {
-              setKodeError('Kode sudah digunakan (< 5 tahun)');
-              return;
-          }
-      }
-
-      setKodeError(null);
+    setKodeError(null);
   };
 
   const handleKodeChange = (val: string) => {
-      const up = val.toUpperCase().slice(0, 3);
-      setNewKode(up);
-      validateKodeMatch(up, forceOverride);
+    const up = val.toUpperCase().slice(0, 3);
+    setNewKode(up);
+    validateKodeMatch(up, forceOverride);
   };
 
   // React to force override changes
   useEffect(() => {
-      if (open && newKode) {
-          validateKodeMatch(newKode, forceOverride);
-      }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (open && newKode) {
+      validateKodeMatch(newKode, forceOverride);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [forceOverride, open, existingAspraks]);
 
   const handleSave = async () => {

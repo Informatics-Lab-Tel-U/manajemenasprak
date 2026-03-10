@@ -14,7 +14,12 @@ import MataKuliahManualModal from '@/components/mata-kuliah/MataKuliahManualModa
 import { toast } from 'sonner';
 
 function MataKuliahPageContent() {
-  const { terms, selectedTerm, setSelectedTerm, loading: asprakLoading } = useAsprak(undefined, true);
+  const {
+    terms,
+    selectedTerm,
+    setSelectedTerm,
+    loading: asprakLoading,
+  } = useAsprak(undefined, true);
   const { getMataKuliahByTerm, createMataKuliah, bulkImportMataKuliah, loading } = useMataKuliah();
   const { getPraktikumByTerm } = usePraktikum();
 
@@ -29,7 +34,6 @@ function MataKuliahPageContent() {
   useEffect(() => {
     setMounted(true);
   }, []);
-
 
   useEffect(() => {
     async function fetchData() {
@@ -90,7 +94,6 @@ function MataKuliahPageContent() {
       toast.error(e.message);
     }
   };
-
 
   const filteredData = (Array.isArray(groupedData) ? groupedData : []).filter((group) => {
     if (!searchQuery) return true;

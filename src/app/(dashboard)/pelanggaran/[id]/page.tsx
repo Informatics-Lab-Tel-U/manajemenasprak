@@ -17,10 +17,5 @@ export default async function PelanggaranDetailPage({
   const authUser = await requireAuth();
   const role = authUser.pengguna.role;
 
-  return (
-    <PelanggaranDetailClient
-      role={role}
-      idPraktikum={id}
-    />
-  );
+  return <PelanggaranDetailClient role={role} idPraktikum={id} />;
 }

@@ -21,7 +21,10 @@ export type MataKuliahGrouped = {
   items: MataKuliahWithPraktikum[];
 };
 
-export async function getMataKuliahByTerm(term: string | null, supabaseClient?: SupabaseClient): Promise<MataKuliahGrouped[]> {
+export async function getMataKuliahByTerm(
+  term: string | null,
+  supabaseClient?: SupabaseClient
+): Promise<MataKuliahGrouped[]> {
   const supabase = supabaseClient || globalAdmin;
   let query = supabase.from('mata_kuliah').select(`
       *,

@@ -5,7 +5,10 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { X, Loader2 } from 'lucide-react';
 import * as jadwalFetcher from '@/lib/fetchers/jadwalFetcher';
 import JadwalCSVPreview, { JadwalPreviewRow } from '../../jadwal/JadwalCSVPreview';
-import { validateJadwalConflicts, buildJadwalPreviewRows } from '@/utils/validation/jadwalValidation';
+import {
+  validateJadwalConflicts,
+  buildJadwalPreviewRows,
+} from '@/utils/validation/jadwalValidation';
 
 interface StepJadwalProps {
   data: any[];
@@ -15,13 +18,7 @@ interface StepJadwalProps {
   onImport: (rows: any[]) => Promise<void>;
 }
 
-export default function StepJadwal({
-  data,
-  term,
-  onNext,
-  onPrev,
-  onImport,
-}: StepJadwalProps) {
+export default function StepJadwal({ data, term, onNext, onPrev, onImport }: StepJadwalProps) {
   const [previewRows, setPreviewRows] = useState<JadwalPreviewRow[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -32,28 +29,30 @@ export default function StepJadwal({
     let active = true;
 
     async function fetchMK() {
-        if (!term) return;
-        try {
-            const res = await fetch(`/api/mata-kuliah?term=${term}`);
-            if (!active) return;
-            if (res.ok) {
-                const json = await res.json();
-                if (json.ok && Array.isArray(json.data)) {
-                    // flatten grouped mk to simple list for easier search
-                    const flat = json.data.reduce((acc: any[], group: any) => {
-                        return [...acc, ...group.items];
-                    }, []);
-                    setMataKuliahList(flat);
-                }
-            }
-        } catch (e) {
-            console.error("Failed fetching MK for jadwal", e);
-        } finally {
-            if (active) setIsFetching(false);
+      if (!term) return;
+      try {
+        const res = await fetch(`/api/mata-kuliah?term=${term}`);
+        if (!active) return;
+        if (res.ok) {
+          const json = await res.json();
+          if (json.ok && Array.isArray(json.data)) {
+            // flatten grouped mk to simple list for easier search
+            const flat = json.data.reduce((acc: any[], group: any) => {
+              return [...acc, ...group.items];
+            }, []);
+            setMataKuliahList(flat);
+          }
         }
+      } catch (e) {
+        console.error('Failed fetching MK for jadwal', e);
+      } finally {
+        if (active) setIsFetching(false);
+      }
     }
     fetchMK();
-    return () => { active = false; };
+    return () => {
+      active = false;
+    };
   }, [term]);
 
   // Replaced with imported validateJadwalConflicts
@@ -62,26 +61,28 @@ export default function StepJadwal({
     let active = true;
 
     async function processCSV() {
-        if (!data || data.length === 0) {
-            setError('Data Excel Jadwal kosong.');
-            return;
-        }
+      if (!data || data.length === 0) {
+        setError('Data Excel Jadwal kosong.');
+        return;
+      }
 
-        if (mataKuliahList.length === 0) {
-            // Wait for mata kuliah list to load if needed. 
-            // Technically it could be empty if term has no MK yet, 
-            // but usually we import MK before Jadwal in this flow anyway.
-        }
+      if (mataKuliahList.length === 0) {
+        // Wait for mata kuliah list to load if needed.
+        // Technically it could be empty if term has no MK yet,
+        // but usually we import MK before Jadwal in this flow anyway.
+      }
 
-        const preview = buildJadwalPreviewRows(data, mataKuliahList, term);
+      const preview = buildJadwalPreviewRows(data, mataKuliahList, term);
 
-        const validatedRows = await validateJadwalConflicts(preview, term);
-        if (active) setPreviewRows(validatedRows);
+      const validatedRows = await validateJadwalConflicts(preview, term);
+      if (active) setPreviewRows(validatedRows);
     }
-    
+
     processCSV();
 
-    return () => { active = false; };
+    return () => {
+      active = false;
+    };
   }, [data, mataKuliahList, term]);
 
   const handleToggleSelect = (index: number) => {
@@ -103,8 +104,8 @@ export default function StepJadwal({
   const handleConfirm = async () => {
     const selected = previewRows.filter((r) => r.selected && r.status !== 'error');
     if (selected.length === 0) {
-        onNext();
-        return;
+      onNext();
+      return;
     }
 
     setSaving(true);
@@ -131,16 +132,16 @@ export default function StepJadwal({
 
   if (isFetching) {
     return (
-       <div className="flex-1 flex flex-col items-center justify-center min-h-[400px] bg-background/50 border rounded-md">
-         <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
-         <p className="text-sm text-muted-foreground">Memuat data eksisting untuk validasi...</p>
-       </div>
+      <div className="flex-1 flex flex-col items-center justify-center min-h-[400px] bg-background/50 border rounded-md">
+        <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+        <p className="text-sm text-muted-foreground">Memuat data eksisting untuk validasi...</p>
+      </div>
     );
   }
 
   return (
     <div className="flex-1 overflow-hidden flex flex-col min-h-0 bg-background/50 h-[80vh] border rounded-md">
-       {error && (
+      {error && (
         <div className="p-4 shrink-0 pb-0">
           <Alert className="border-destructive/50 text-destructive">
             <AlertDescription className="flex items-start gap-2">
@@ -152,15 +153,15 @@ export default function StepJadwal({
       )}
 
       <div className="p-4 flex-1 h-full max-h-full">
-          <JadwalCSVPreview
-            rows={previewRows}
-            onConfirm={handleConfirm}
-            onBack={onPrev || onNext}
-            onToggleSelect={handleToggleSelect}
-            onToggleAll={handleToggleAll}
-            loading={saving}
-            onSkip={onNext}
-          />
+        <JadwalCSVPreview
+          rows={previewRows}
+          onConfirm={handleConfirm}
+          onBack={onPrev || onNext}
+          onToggleSelect={handleToggleSelect}
+          onToggleAll={handleToggleAll}
+          loading={saving}
+          onSkip={onNext}
+        />
       </div>
     </div>
   );

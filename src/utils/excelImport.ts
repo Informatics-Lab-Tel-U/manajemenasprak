@@ -194,7 +194,7 @@ export async function processExcelUpload(
 
     let jadwalInserted = 0;
     for (const row of jadwalData) {
-      let prodi = row.kelas.split('-')[0];
+      const prodi = row.kelas.split('-')[0];
       let mkId = mkMap.get(`${row.nama_singkat}|${prodi}`);
 
       if (!mkId && row.kelas.toString().toUpperCase().includes('PJJ'))
@@ -264,4 +264,3 @@ export async function processExcelUpload(
     throw new Error(`Import FAILED & ROLLED BACK: ${e.message}`);
   }
 }
-

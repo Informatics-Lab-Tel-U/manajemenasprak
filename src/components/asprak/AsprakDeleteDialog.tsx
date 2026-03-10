@@ -1,4 +1,3 @@
-
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,8 +28,9 @@ export default function AsprakDeleteDialog({
         <AlertDialogHeader>
           <AlertDialogTitle>Konfirmasi Hapus</AlertDialogTitle>
           <AlertDialogDescription>
-            Apakah anda yakin ingin menghapus data asprak <strong>{name}</strong>?
-            Tindakan ini tidak dapat dibatalkan dan akan menghapus semua riwayat penugasan praktikum yang terkait.
+            Apakah anda yakin ingin menghapus data asprak <strong>{name}</strong>? Tindakan ini
+            tidak dapat dibatalkan dan akan menghapus semua riwayat penugasan praktikum yang
+            terkait.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

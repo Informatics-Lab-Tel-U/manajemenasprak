@@ -9,11 +9,7 @@ interface AsprakAddModalProps {
   open: boolean;
 }
 
-export default function AsprakAddModal({
-  onSubmit,
-  onClose,
-  open,
-}: AsprakAddModalProps) {
+export default function AsprakAddModal({ onSubmit, onClose, open }: AsprakAddModalProps) {
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="flex max-h-[min(700px,85vh)] flex-col gap-0 p-0 sm:max-w-lg">
@@ -21,10 +17,7 @@ export default function AsprakAddModal({
           <DialogTitle className="border-b px-6 py-4">Input Manual Asprak</DialogTitle>
           <ScrollArea className="flex max-h-full flex-col overflow-hidden">
             <div className="px-6 py-4">
-              <AsprakForm
-                onSubmit={onSubmit}
-                onCancel={onClose}
-              />
+              <AsprakForm onSubmit={onSubmit} onCancel={onClose} />
             </div>
           </ScrollArea>
         </DialogHeader>

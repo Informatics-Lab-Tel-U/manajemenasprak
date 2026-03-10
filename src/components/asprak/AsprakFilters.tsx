@@ -29,7 +29,9 @@ export default function AsprakFilters({
   hideAllOption = false,
 }: AsprakFiltersProps) {
   return (
-    <div className={`flex flex-col sm:flex-row gap-4 border-border items-center ${hideSearch ? 'justify-end' : ''}`}>
+    <div
+      className={`flex flex-col sm:flex-row gap-4 border-border items-center ${hideSearch ? 'justify-end' : ''}`}
+    >
       {!hideSearch && (
         <div className="relative flex-1 w-full">
           <Search

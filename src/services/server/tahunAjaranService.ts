@@ -7,7 +7,7 @@ import { logger } from '@/lib/logger';
  */
 export async function getAvailableTahunAjaran() {
   const supabase = createAdminClient();
-  
+
   const { data, error } = await supabase
     .from('praktikum')
     .select('tahun_ajaran')
@@ -22,6 +22,6 @@ export async function getAvailableTahunAjaran() {
 
   // Extract unique values
   const uniqueTahunAjaran = Array.from(new Set(data.map((p: any) => p.tahun_ajaran)));
-  
+
   return uniqueTahunAjaran;
 }

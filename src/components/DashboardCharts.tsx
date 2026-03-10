@@ -53,11 +53,10 @@ export default function DashboardCharts({
   const days = ['MINGGU', 'SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU'];
   const currentDayName = days[todayDate.getDay()];
 
-
   const uniqueRooms = useMemo(() => {
     // We can use the global ROOMS constant or derive from today's schedule
     // Using global ROOMS ensures the grid structure is consistent
-    return ROOMS; 
+    return ROOMS;
   }, []);
 
   // Filter Logic
@@ -138,7 +137,9 @@ export default function DashboardCharts({
                 <table className="w-full border-collapse text-sm">
                   <thead>
                     <tr className="bg-muted/50 border-b border-border">
-                      <th className="p-2 border-r border-border min-w-[60px]"><Skeleton className="h-4 w-8 mx-auto" /></th>
+                      <th className="p-2 border-r border-border min-w-[60px]">
+                        <Skeleton className="h-4 w-8 mx-auto" />
+                      </th>
                       {Array.from({ length: 4 }).map((_, i) => (
                         <th key={i} className="p-2 border-r border-border min-w-[120px]">
                           <Skeleton className="h-4 w-16 mx-auto" />
@@ -157,9 +158,7 @@ export default function DashboardCharts({
                         </td>
                         {Array.from({ length: 4 }).map((_, j) => (
                           <td key={j} className="p-2 border-r border-border align-middle">
-                            {i % 2 === 0 && j % 2 === 0 && (
-                              <Skeleton className="h-10 w-full" />
-                            )}
+                            {i % 2 === 0 && j % 2 === 0 && <Skeleton className="h-10 w-full" />}
                           </td>
                         ))}
                       </tr>
@@ -211,9 +210,9 @@ export default function DashboardCharts({
                               <div
                                 className="w-full h-full flex flex-col items-center justify-center p-1 transition-all hover:brightness-110 overflow-hidden hover:scale-105 hover:z-10 hover:shadow-lg origin-center"
                                 style={{
-                                  backgroundColor: jadwal.mata_kuliah?.warna || getCourseColor(
-                                    jadwal.mata_kuliah?.nama_lengkap || ''
-                                  ),
+                                  backgroundColor:
+                                    jadwal.mata_kuliah?.warna ||
+                                    getCourseColor(jadwal.mata_kuliah?.nama_lengkap || ''),
                                 }}
                                 title={`${jadwal.mata_kuliah?.nama_lengkap} - ${jadwal.kelas}`}
                               >
@@ -253,7 +252,11 @@ export default function DashboardCharts({
           {loading ? (
             <div className="h-[300px] w-full flex items-end gap-2 pb-4">
               {Array.from({ length: 7 }).map((_, i) => (
-                <Skeleton key={i} className="flex-1" style={{ height: `${20 + (i * 17) % 60}%` }} />
+                <Skeleton
+                  key={i}
+                  className="flex-1"
+                  style={{ height: `${20 + ((i * 17) % 60)}%` }}
+                />
               ))}
             </div>
           ) : (
@@ -280,7 +283,11 @@ export default function DashboardCharts({
           {loading ? (
             <div className="h-[300px] w-full flex items-end gap-2 pb-4">
               {Array.from({ length: 7 }).map((_, i) => (
-                <Skeleton key={i} className="flex-1" style={{ height: `${30 + (i * 10) % 50}%` }} />
+                <Skeleton
+                  key={i}
+                  className="flex-1"
+                  style={{ height: `${30 + ((i * 10) % 50)}%` }}
+                />
               ))}
             </div>
           ) : (
@@ -296,8 +303,6 @@ export default function DashboardCharts({
           )}
         </CardContent>
       </Card>
-
-      
     </div>
   );
 }

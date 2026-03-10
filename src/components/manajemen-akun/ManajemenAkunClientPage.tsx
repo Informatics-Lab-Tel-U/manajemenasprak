@@ -2,7 +2,17 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Pencil, Trash2, Shield, ShieldCheck, User, ChevronLeft, ChevronRight, Key } from 'lucide-react';
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  Shield,
+  ShieldCheck,
+  User,
+  ChevronLeft,
+  ChevronRight,
+  Key,
+} from 'lucide-react';
 import {
   useReactTable,
   getCoreRowModel,
@@ -179,10 +189,10 @@ export function ManajemenAkunClientPage({ users }: { users: UserWithEmail[] }) {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="title-gradient text-3xl font-bold">
-            Manajemen Akun
-          </h1>
-          <p className="text-muted-foreground mt-2">Kelola akun pengguna yang terdaftar di sistem</p>
+          <h1 className="title-gradient text-3xl font-bold">Manajemen Akun</h1>
+          <p className="text-muted-foreground mt-2">
+            Kelola akun pengguna yang terdaftar di sistem
+          </p>
         </div>
         <Button onClick={() => setIsCreateOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
@@ -219,7 +229,10 @@ export function ManajemenAkunClientPage({ users }: { users: UserWithEmail[] }) {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={columns.length} className="h-32 text-center text-muted-foreground py-12">
+                  <TableCell
+                    colSpan={columns.length}
+                    className="h-32 text-center text-muted-foreground py-12"
+                  >
                     Belum ada akun terdaftar.
                   </TableCell>
                 </TableRow>
@@ -301,22 +314,21 @@ export function ManajemenAkunClientPage({ users }: { users: UserWithEmail[] }) {
       )}
 
       {/* Delete Confirmation */}
-      <AlertDialog open={!!deleteTarget} onOpenChange={(open: boolean) => !open && setDeleteTarget(null)}>
+      <AlertDialog
+        open={!!deleteTarget}
+        onOpenChange={(open: boolean) => !open && setDeleteTarget(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Hapus Akun</AlertDialogTitle>
             <AlertDialogDescription>
-              Apakah Anda yakin ingin menghapus akun{' '}
-              <strong>{deleteTarget?.nama_lengkap}</strong>? Tindakan ini tidak dapat dibatalkan.
+              Apakah Anda yakin ingin menghapus akun <strong>{deleteTarget?.nama_lengkap}</strong>?
+              Tindakan ini tidak dapat dibatalkan.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isDeleting}>Batal</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              disabled={isDeleting}
-              variant="destructive"
-            >
+            <AlertDialogAction onClick={handleDelete} disabled={isDeleting} variant="destructive">
               {isDeleting ? 'Menghapus...' : 'Hapus'}
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -333,4 +345,3 @@ export function ManajemenAkunClientPage({ users }: { users: UserWithEmail[] }) {
     </div>
   );
 }
-

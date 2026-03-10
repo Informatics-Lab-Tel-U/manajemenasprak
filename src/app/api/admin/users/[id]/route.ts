@@ -12,10 +12,7 @@ import type { UpdatePenggunaInput } from '@/types/api';
  * asprak_koordinator schema: id_pengguna, id_praktikum, is_active
  * UNIQUE constraint: (id_pengguna, id_praktikum)
  */
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     await requireRole(['ADMIN'], '/');
 
@@ -43,10 +40,7 @@ export async function PATCH(
     if (role) updateData.role = role;
 
     if (Object.keys(updateData).length > 0) {
-      const { error } = await supabase
-        .from('pengguna')
-        .update(updateData)
-        .eq('id', userId);
+      const { error } = await supabase.from('pengguna').update(updateData).eq('id', userId);
       if (error) throw error;
     }
 
@@ -69,9 +63,7 @@ export async function PATCH(
           is_active: true,
         }));
 
-        const { error: insertError } = await admin
-          .from('asprak_koordinator')
-          .insert(rows);
+        const { error: insertError } = await admin.from('asprak_koordinator').insert(rows);
         if (insertError) throw insertError;
       }
     }

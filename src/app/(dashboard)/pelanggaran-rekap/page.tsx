@@ -10,19 +10,13 @@ export const metadata = {
 };
 
 export default async function PelanggaranRekapPage() {
-  const [user, years] = await Promise.all([
-    getCurrentUser(),
-    getTahunAjaranList(),
-  ]);
+  const [user, years] = await Promise.all([getCurrentUser(), getTahunAjaranList()]);
 
   if (!user) return null;
 
   return (
     <Suspense fallback={<RekapLoading />}>
-      <PelanggaranRekapClient 
-        initialTahunAjaranList={years}
-        userRole={user.pengguna.role}
-      />
+      <PelanggaranRekapClient initialTahunAjaranList={years} userRole={user.pengguna.role} />
     </Suspense>
   );
 }

@@ -18,13 +18,18 @@ import PraktikumDetailsModal from '@/components/praktikum/PraktikumDetailsModal'
 import { PraktikumWithStats } from '@/services/praktikumService';
 
 function PraktikumPageContent() {
-  const { terms, selectedTerm, setSelectedTerm, loading: asprakLoading } = useAsprak(undefined, true);
+  const {
+    terms,
+    selectedTerm,
+    setSelectedTerm,
+    loading: asprakLoading,
+  } = useAsprak(undefined, true);
   const { getPraktikumByTerm, bulkImport, getOrCreate, loading: praktikumLoading } = usePraktikum();
 
   const [praktikumList, setPraktikumList] = useState<PraktikumWithStats[]>([]);
   const [loadingList, setLoadingList] = useState(true);
   const [mounted, setMounted] = useState(false);
-  
+
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -138,7 +143,9 @@ function PraktikumPageContent() {
         <div className="flex justify-between items-center">
           <div>
             <h1 className="title-gradient text-3xl font-bold">Data Praktikum</h1>
-            <p className="text-muted-foreground mt-2">Kelola data praktikum dan penugasan per angkatan</p>
+            <p className="text-muted-foreground mt-2">
+              Kelola data praktikum dan penugasan per angkatan
+            </p>
           </div>
           <div className="flex gap-3 items-center">
             <Button onClick={() => setShowManualModal(true)} variant="outline">
@@ -209,4 +216,3 @@ export default function PraktikumPage() {
     </Suspense>
   );
 }
-

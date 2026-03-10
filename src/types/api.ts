@@ -31,4 +31,3 @@ export interface UpdatePenggunaInput {
   /** Only for ASPRAK_KOOR: praktikum IDs to assign. tahun_ajaran is derived via join */
   praktikum_ids?: string[];
 }
-
