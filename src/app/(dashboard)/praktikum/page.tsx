@@ -114,14 +114,14 @@ function PraktikumPageContent() {
     return (
       <div className="container relative space-y-8 py-8">
         <header>
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div className="space-y-2">
               <Skeleton className="h-10 w-64" />
               <Skeleton className="h-4 w-48" />
             </div>
-            <div className="flex gap-3">
-              <Skeleton className="h-10 w-32" />
-              <Skeleton className="h-10 w-32" />
+            <div className="flex gap-2 w-full md:w-auto">
+              <Skeleton className="h-10 flex-1 md:flex-none md:w-32" />
+              <Skeleton className="h-10 flex-1 md:flex-none md:w-32" />
             </div>
           </div>
         </header>
@@ -140,21 +140,28 @@ function PraktikumPageContent() {
   return (
     <div className="container relative space-y-8">
       <header className="mb-6">
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Data Praktikum</h1>
             <p className="text-sm text-muted-foreground mt-1">
               Kelola data praktikum dan penugasan per angkatan
             </p>
           </div>
-          <div className="flex gap-3 items-center">
-            <Button onClick={() => setShowManualModal(true)} variant="outline">
-              <Plus size={18} className="mr-2" />
-              Input Manual
+          <div className="flex flex-wrap gap-2 md:gap-3 items-center w-full md:w-auto">
+            <Button
+              onClick={() => setShowManualModal(true)}
+              variant="outline"
+              className="flex-1 md:flex-none min-w-0 md:whitespace-nowrap"
+            >
+              <Plus size={18} className="flex-shrink-0" />
+              <span className="hidden sm:inline ml-2">Input Manual</span>
             </Button>
-            <Button onClick={() => setShowImportModal(true)}>
-              <Upload size={18} className="mr-2" />
-              Import CSV
+            <Button
+              onClick={() => setShowImportModal(true)}
+              className="flex-1 md:flex-none min-w-0 md:whitespace-nowrap"
+            >
+              <Upload size={18} className="flex-shrink-0" />
+              <span className="hidden sm:inline ml-2">Import CSV</span>
             </Button>
           </div>
         </div>

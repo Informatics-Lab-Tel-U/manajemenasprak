@@ -416,19 +416,19 @@ export default function JadwalPage() {
   if (!mounted) {
     return (
       <div className="container relative space-y-8 py-8">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-4">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full md:w-auto">
             <div className="space-y-2">
               <Skeleton className="h-10 w-64" />
               <Skeleton className="h-4 w-48" />
             </div>
             <Skeleton className="h-10 w-32 rounded-lg" />
           </div>
-          <div className="flex gap-3 items-center">
-            <Skeleton className="h-10 w-32" />
-            <Skeleton className="h-10 w-32" />
-            <Skeleton className="h-10 w-[180px]" />
-            <Skeleton className="h-10 w-[180px]" />
+          <div className="flex flex-wrap gap-2 md:gap-3 items-center w-full md:w-auto">
+            <Skeleton className="h-10 flex-1 sm:flex-none sm:w-32" />
+            <Skeleton className="h-10 flex-1 sm:flex-none sm:w-32" />
+            <Skeleton className="h-10 w-10 flex-shrink-0" />
+            <Skeleton className="h-10 w-full sm:max-w-[180px]" />
           </div>
         </div>
         <div className="overflow-x-auto rounded-lg border border-border bg-card/50 min-h-[400px]">
@@ -440,8 +440,8 @@ export default function JadwalPage() {
 
   return (
     <div className="container relative space-y-8">
-      <div className="flex justify-between items-center">
-        <div className="flex items-center gap-4">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full md:w-auto">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Jadwal Praktikum</h1>
             <p className="text-sm text-muted-foreground mt-1">Overview jadwal per ruangan</p>
@@ -475,25 +475,32 @@ export default function JadwalPage() {
           </div>
         </div>
 
-        <div className="flex gap-3 w-full md:w-auto items-center">
-          <Button variant="outline" onClick={handleOpenAdd}>
-            <Plus size={18} className="mr-2" />
-            Tambah Jadwal
+        <div className="flex flex-wrap gap-2 md:gap-3 items-center w-full md:w-auto">
+          <Button
+            variant="outline"
+            onClick={handleOpenAdd}
+            className="flex-1 sm:flex-none min-w-0 md:whitespace-nowrap"
+          >
+            <Plus size={18} className="flex-shrink-0" />
+            <span className="hidden sm:inline ml-2">Tambah Jadwal</span>
           </Button>
-          <Button onClick={() => setIsImportModalOpen(true)}>
-            <Upload size={18} className="mr-2" />
-            Import CSV
+          <Button
+            onClick={() => setIsImportModalOpen(true)}
+            className="flex-1 sm:flex-none min-w-0 md:whitespace-nowrap"
+          >
+            <Upload size={18} className="flex-shrink-0" />
+            <span className="hidden sm:inline ml-2">Import CSV</span>
           </Button>
           <Button
             variant="secondary"
             onClick={() => setIsColorModalOpen(true)}
             title="Atur Warna Grup"
-            className="px-3"
+            className="px-2 sm:px-3 flex-shrink-0"
           >
             <PaintBucket size={18} />
           </Button>
           <Select value={selectedModul} onValueChange={setSelectedModul}>
-            <SelectTrigger className="w-full md:w-[180px]">
+            <SelectTrigger className="w-full sm:max-w-[180px]">
               <SelectValue placeholder="Select modul" />
             </SelectTrigger>
             <SelectContent>

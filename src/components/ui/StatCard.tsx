@@ -14,7 +14,10 @@ interface StatCardProps {
   loading?: boolean;
 }
 
-const colorClasses: Record<string, { icon: string; badge: string; border: string; gradient: string }> = {
+const colorClasses: Record<
+  string,
+  { icon: string; badge: string; border: string; gradient: string }
+> = {
   purple: {
     icon: 'text-violet-600 bg-violet-100 dark:text-violet-300 dark:bg-violet-500/20',
     badge:

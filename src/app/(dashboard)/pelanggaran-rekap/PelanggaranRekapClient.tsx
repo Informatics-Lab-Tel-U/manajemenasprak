@@ -66,12 +66,12 @@ export default function PelanggaranRekapClient({ initialTahunAjaranList, userRol
   if (!mounted) return null;
 
   return (
-    <div className="container space-y-6">
+    <div className="container relative space-y-8">
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Data Pelanggaran Asprak</h1>
-          <p className="text-muted-foreground mt-1">
+          <h1 className="text-2xl font-bold tracking-tight">Data Pelanggaran Asprak</h1>
+          <p className="text-sm text-muted-foreground mt-1">
             Agregasi data pelanggaran asisten praktikum lintas praktikum
           </p>
         </div>
