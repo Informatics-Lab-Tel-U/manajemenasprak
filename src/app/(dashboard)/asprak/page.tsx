@@ -263,24 +263,28 @@ function AsprakPageContent() {
   return (
     <div className="container" style={{ position: 'relative' }}>
       {/* Header */}
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Data Asisten Praktikum</h1>
           <p className="text-sm text-muted-foreground mt-1">Kelola daftar asisten praktikum</p>
         </div>
-        <div className="flex gap-3 items-center">
-          <Button variant="outline" onClick={() => setShowAddModal(true)}>
-            <Plus size={18} />
-            Input Manual
+        <div className="flex flex-wrap gap-2 md:gap-3 items-center w-full md:w-auto">
+          <Button
+            variant="outline"
+            onClick={() => setShowAddModal(true)}
+            className="flex-1 md:flex-none min-w-0 md:whitespace-nowrap"
+          >
+            <Plus size={18} className="flex-shrink-0" />
+            <span className="hidden sm:inline ml-1">Input Manual</span>
           </Button>
 
           {/* Import Dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button>
-                <Upload size={18} />
-                Import CSV
-                <ChevronDown size={14} className="ml-1 opacity-70" />
+              <Button className="flex-1 md:flex-none min-w-0 md:whitespace-nowrap">
+                <Upload size={18} className="flex-shrink-0" />
+                <span className="hidden sm:inline ml-1">Import CSV</span>
+                <ChevronDown size={14} className="hidden sm:inline ml-1 opacity-70" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-52">
@@ -299,9 +303,13 @@ function AsprakPageContent() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <Button variant="outline" onClick={() => setShowExportModal(true)}>
-            <Download size={18} />
-            Export Data
+          <Button
+            variant="outline"
+            onClick={() => setShowExportModal(true)}
+            className="flex-1 md:flex-none min-w-0 md:whitespace-nowrap"
+          >
+            <Download size={18} className="flex-shrink-0" />
+            <span className="hidden sm:inline ml-1">Export Data</span>
           </Button>
         </div>
       </div>

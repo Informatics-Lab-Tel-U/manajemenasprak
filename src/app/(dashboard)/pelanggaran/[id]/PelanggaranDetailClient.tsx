@@ -419,10 +419,10 @@ export default function PelanggaranDetailClient({
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap gap-2 items-center w-full md:w-auto">
           {/* Module Selector */}
           <Select value={selectedModul} onValueChange={setSelectedModul}>
-            <SelectTrigger className="w-[180px] h-9 bg-background/50 backdrop-blur-sm border-white/20">
+            <SelectTrigger className="w-full sm:w-[180px] h-9 bg-background/50 backdrop-blur-sm border-white/20">
               <SelectValue placeholder="Pilih Modul" />
             </SelectTrigger>
             <SelectContent>
@@ -448,11 +448,11 @@ export default function PelanggaranDetailClient({
             <Button
               onClick={() => setIsAddOpen(true)}
               size="sm"
-              className="h-9 gap-2 shadow-sm"
+              className="h-9 gap-2 shadow-sm flex-1 sm:flex-none min-w-0"
               disabled={loading}
             >
-              <Plus className="h-4 w-4" />
-              <span>Catat Pelanggaran</span>
+              <Plus className="h-4 w-4 flex-shrink-0" />
+              <span className="hidden sm:inline truncate">Catat Pelanggaran</span>
             </Button>
           )}
 
@@ -461,11 +461,11 @@ export default function PelanggaranDetailClient({
               onClick={() => setShowFinalize(true)}
               size="sm"
               variant="outline"
-              className="h-9 gap-2 border-emerald-200 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-300"
+              className="h-9 gap-2 flex-1 sm:flex-none min-w-0 border-emerald-200 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-300"
               disabled={loading}
             >
-              <CheckCircle2 className="h-4 w-4" />
-              <span>Finalisasi Modul {selectedModul}</span>
+              <CheckCircle2 className="h-4 w-4 flex-shrink-0" />
+              <span className="hidden sm:inline truncate">Finalisasi Modul {selectedModul}</span>
             </Button>
           )}
 
@@ -474,11 +474,11 @@ export default function PelanggaranDetailClient({
               onClick={() => setShowUnfinalize(true)}
               size="sm"
               variant="outline"
-              className="h-9 gap-2 text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700"
+              className="h-9 gap-2 flex-1 sm:flex-none min-w-0 text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700"
               disabled={loading}
             >
-              <RotateCcw className="h-4 w-4" />
-              <span>Reset Finalisasi</span>
+              <RotateCcw className="h-4 w-4 flex-shrink-0" />
+              <span className="hidden sm:inline truncate">Reset Finalisasi</span>
             </Button>
           )}
 
@@ -486,11 +486,11 @@ export default function PelanggaranDetailClient({
             variant="outline"
             size="sm"
             onClick={handleExport}
-            className="h-9 gap-2 border-primary/20 hover:border-primary/40"
+            className="h-9 gap-2 flex-1 sm:flex-none min-w-0 border-primary/20 hover:border-primary/40"
             disabled={loading || violations.length === 0}
           >
-            <Download className="h-4 w-4" />
-            <span>Export</span>
+            <Download className="h-4 w-4 flex-shrink-0" />
+            <span className="hidden sm:inline">Export</span>
           </Button>
         </div>
       </div>

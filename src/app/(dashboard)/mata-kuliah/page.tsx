@@ -109,14 +109,14 @@ function MataKuliahPageContent() {
   if (!mounted) {
     return (
       <div className="container relative space-y-8 py-8">
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div className="space-y-2">
             <Skeleton className="h-10 w-64" />
             <Skeleton className="h-4 w-48" />
           </div>
-          <div className="flex gap-3">
-            <Skeleton className="h-10 w-32" />
-            <Skeleton className="h-10 w-32" />
+          <div className="flex gap-2 w-full md:w-auto">
+            <Skeleton className="h-10 flex-1 md:flex-none md:w-32" />
+            <Skeleton className="h-10 flex-1 md:flex-none md:w-32" />
           </div>
         </div>
         <Skeleton className="h-20 w-full rounded-xl" />
@@ -138,19 +138,28 @@ function MataKuliahPageContent() {
 
   return (
     <div className="container relative space-y-8">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Mata Kuliah</h1>
           <p className="text-sm text-muted-foreground mt-1">
             Kelola data mata kuliah, koordinator, dan varian prodi per tahun ajaran.
           </p>
         </div>
-        <div className="flex gap-3">
-          <Button variant="outline" onClick={() => setShowManualModal(true)}>
-            <Plus className="mr-2 h-4 w-4" /> Input Manual
+        <div className="flex flex-wrap gap-2 md:gap-3 items-center w-full md:w-auto">
+          <Button
+            variant="outline"
+            onClick={() => setShowManualModal(true)}
+            className="flex-1 md:flex-none min-w-0 md:whitespace-nowrap"
+          >
+            <Plus className="flex-shrink-0 h-4 w-4" />
+            <span className="hidden sm:inline ml-2">Input Manual</span>
           </Button>
-          <Button onClick={() => setShowImportModal(true)}>
-            <Upload className="mr-2 h-4 w-4" /> Import CSV
+          <Button
+            onClick={() => setShowImportModal(true)}
+            className="flex-1 md:flex-none min-w-0 md:whitespace-nowrap"
+          >
+            <Upload className="flex-shrink-0 h-4 w-4" />
+            <span className="hidden sm:inline ml-2">Import CSV</span>
           </Button>
         </div>
       </div>

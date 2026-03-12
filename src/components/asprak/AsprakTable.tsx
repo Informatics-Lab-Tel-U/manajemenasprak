@@ -85,11 +85,11 @@ function AsprakTableSkeleton() {
           </TableBody>
         </Table>
       </div>
-      <div className="flex items-center justify-between">
-        <Skeleton className="h-8 w-[150px]" />
-        <div className="flex items-center gap-2">
-          <Skeleton className="h-8 w-24" />
-          <Skeleton className="h-8 w-24" />
+      <div className="flex flex-col gap-4 md:gap-0 md:flex-row md:items-center md:justify-between">
+        <Skeleton className="h-8 w-full sm:w-[150px]" />
+        <div className="flex gap-2">
+          <Skeleton className="h-8 flex-1 sm:flex-none sm:w-24" />
+          <Skeleton className="h-8 flex-1 sm:flex-none sm:w-24" />
         </div>
       </div>
     </div>
@@ -208,16 +208,16 @@ export default function AsprakTable({ data, loading, onViewDetails }: AsprakTabl
       </div>
 
       {/* Pagination Controls */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-2">
-          <p className="text-sm font-medium">Baris per halaman</p>
+      <div className="flex flex-col gap-4 md:gap-0 md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+          <p className="text-sm font-medium whitespace-nowrap">Baris per halaman</p>
           <Select
             value={`${table.getState().pagination.pageSize}`}
             onValueChange={(value) => {
               table.setPageSize(Number(value));
             }}
           >
-            <SelectTrigger className="h-8 w-[70px]">
+            <SelectTrigger className="h-8 w-full sm:w-[70px]">
               <SelectValue placeholder={table.getState().pagination.pageSize} />
             </SelectTrigger>
             <SelectContent side="top">
@@ -232,28 +232,30 @@ export default function AsprakTable({ data, loading, onViewDetails }: AsprakTabl
           </Select>
         </div>
 
-        <div className="flex items-center space-x-6 lg:space-x-8">
-          <div className="flex w-[120px] items-center justify-center text-sm font-medium">
+        <div className="flex flex-col gap-3 sm:gap-0 sm:flex-row sm:items-center sm:justify-end">
+          <div className="flex w-full sm:w-auto sm:min-w-[120px] items-center justify-center text-sm font-medium order-3 sm:order-none">
             Halaman {table.getState().pagination.pageIndex + 1} dari {table.getPageCount()}
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex gap-2 justify-between sm:justify-end sm:gap-2 order-2 sm:order-none sm:ml-4">
             <Button
               variant="outline"
               size="sm"
               onClick={() => table.previousPage()}
               disabled={!table.getCanPreviousPage()}
+              className="flex-1 sm:flex-none"
             >
-              <ChevronLeft className="h-4 w-4" />
-              Sebelumnya
+              <ChevronLeft className="h-4 w-4 flex-shrink-0" />
+              <span className="hidden sm:inline ml-1">Sebelumnya</span>
             </Button>
             <Button
               variant="outline"
               size="sm"
               onClick={() => table.nextPage()}
               disabled={!table.getCanNextPage()}
+              className="flex-1 sm:flex-none"
             >
-              Berikutnya
-              <ChevronRight className="h-4 w-4" />
+              <span className="hidden sm:inline">Berikutnya</span>
+              <ChevronRight className="h-4 w-4 flex-shrink-0 sm:ml-1" />
             </Button>
           </div>
         </div>
