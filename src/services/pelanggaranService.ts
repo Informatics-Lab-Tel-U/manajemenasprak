@@ -303,7 +303,7 @@ export async function getJadwalForPelanggaran(
     return [];
   }
 
-  const jadwalRaw = (data ?? []) as any[];
+  const jadwalRaw = data ?? [];
 
   return jadwalRaw.map((j) => ({
     ...j,

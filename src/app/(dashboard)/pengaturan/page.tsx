@@ -5,7 +5,6 @@ import { Trash2, Upload, FileSpreadsheet, Download, ShieldAlert, Activity } from
 import { useDropzone } from 'react-dropzone';
 import * as importFetcher from '@/lib/fetchers/importFetcher';
 import * as jadwalFetcher from '@/lib/fetchers/jadwalFetcher';
-import * as XLSX from 'xlsx';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -141,6 +140,8 @@ export default function DatabasePage() {
 
       try {
         const ab = await file.arrayBuffer();
+        // Load xlsx lazily — only when user drops a file
+        const XLSX = await import('xlsx');
         const wb = XLSX.read(ab);
 
         // Expected Sheets: praktikum, mata_kuliah, asprak, jadwal, asprak_praktikum
@@ -249,6 +250,8 @@ export default function DatabasePage() {
     try {
       const result = await importFetcher.exportExcelDataset(exportTerm);
       if (result.ok && result.data) {
+        // Load xlsx lazily — only when user triggers export
+        const XLSX = await import('xlsx');
         const wb = XLSX.utils.book_new();
 
         // Add all 5 sheets
@@ -279,7 +282,9 @@ export default function DatabasePage() {
     }
   };
 
-  const handleDownloadTemplate = () => {
+  const handleDownloadTemplate = async () => {
+    // Load xlsx lazily — only when user clicks Download Template
+    const XLSX = await import('xlsx');
     const wb = XLSX.utils.book_new();
     const startY = parseInt(termYear);
     const termStr = `${startY}${startY + 1}-${termSem}`;

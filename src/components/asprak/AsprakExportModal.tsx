@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import * as XLSX from 'xlsx';
 import Papa from 'papaparse';
+
 import { Download, FileSpreadsheet, FileText, Loader2 } from 'lucide-react';
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -103,13 +103,14 @@ export default function AsprakExportModal({ onClose, open }: AsprakExportModalPr
           }
         }, 500);
       } else {
-        // Excel
+        // Excel — load xlsx lazily on demand
+        const XLSX = await import('xlsx');
         const wsAsprak = XLSX.utils.json_to_sheet(dataAsprak);
         const wbAsprak = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wbAsprak, wsAsprak, 'Data Asprak');
         XLSX.writeFile(wbAsprak, `asprak_${termSuffix}.xlsx`);
 
-        setTimeout(() => {
+        setTimeout(async () => {
           if (dataPlotting.length > 0 || isAllTerms) {
             const wsPlotting = XLSX.utils.json_to_sheet(
               dataPlotting.length > 0 ? dataPlotting : [{ kode_asprak: '', mk_singkat: '' }]

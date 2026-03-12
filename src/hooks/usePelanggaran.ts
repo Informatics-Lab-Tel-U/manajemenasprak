@@ -161,7 +161,7 @@ export function usePelanggaranDetail(
     } finally {
       setLoading(false);
     }
-  }, [idPraktikum, error]);
+  }, [idPraktikum]); // Removed 'error' from deps — error state must not trigger refetch (causes infinite loop)
 
   useEffect(() => {
     fetchDetail();

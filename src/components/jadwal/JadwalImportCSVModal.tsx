@@ -3,7 +3,7 @@
 import { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import Papa from 'papaparse';
-import * as XLSX from 'xlsx';
+
 import { FileSpreadsheet, Upload, FileText, X, Download } from 'lucide-react';
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -118,7 +118,7 @@ export default function JadwalImportCSVModal({
 
   // ─── Handlers ────────────────────────────────────────────────────────────
 
-  const handleDownloadTemplate = (format: 'csv' | 'xlsx') => {
+  const handleDownloadTemplate = async (format: 'csv' | 'xlsx') => {
     const data = [
       {
         Kelas: 'IF-45-01',
@@ -153,6 +153,8 @@ export default function JadwalImportCSVModal({
       link.click();
       document.body.removeChild(link);
     } else {
+      // Load xlsx lazily — only when user requests XLSX template
+      const XLSX = await import('xlsx');
       const ws = XLSX.utils.json_to_sheet(data);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'Template');

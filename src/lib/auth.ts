@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import type { Role } from '@/config/rbac';
@@ -12,8 +13,9 @@ export type AuthUser = {
 /**
  * Returns the current authenticated user + their Pengguna profile (with role).
  * Returns null if not authenticated or profile not found.
+ * Wrapped with React.cache() so multiple calls in the same request share one DB query.
  */
-export async function getCurrentUser(): Promise<AuthUser | null> {
+export const getCurrentUser = cache(async (): Promise<AuthUser | null> => {
   const supabase = await createClient();
 
   const {
@@ -36,7 +38,7 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
     email: user.email ?? '',
     pengguna: pengguna as Pengguna,
   };
-}
+});
 
 /**
  * Server-side auth guard.
