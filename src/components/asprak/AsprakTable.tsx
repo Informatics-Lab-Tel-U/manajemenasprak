@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Select,
   SelectContent,
@@ -41,6 +42,58 @@ function getAslabTerm(angkatan?: number): string {
   const start = (angkatan + 3) % 100;
   const end = (angkatan + 4) % 100;
   return `${start.toString().padStart(2, '0')}${end.toString().padStart(2, '0')}`;
+}
+
+function AsprakTableSkeleton() {
+  return (
+    <div className="space-y-4">
+      <div className="rounded-md border border-indigo-200/50 dark:border-indigo-500/20">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>NIM</TableHead>
+              <TableHead>Nama Lengkap</TableHead>
+              <TableHead>Role</TableHead>
+              <TableHead>Kode</TableHead>
+              <TableHead>Angkatan</TableHead>
+              <TableHead>Aksi</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {Array.from({ length: 10 }).map((_, i) => (
+              <TableRow key={i}>
+                <TableCell>
+                  <Skeleton className="h-4 w-20" />
+                </TableCell>
+                <TableCell>
+                  <Skeleton className="h-4 w-40" />
+                </TableCell>
+                <TableCell>
+                  <Skeleton className="h-6 w-16 rounded-full" />
+                </TableCell>
+                <TableCell>
+                  <Skeleton className="h-6 w-12 rounded-md" />
+                </TableCell>
+                <TableCell>
+                  <Skeleton className="h-4 w-12" />
+                </TableCell>
+                <TableCell>
+                  <Skeleton className="h-8 w-16 rounded-md" />
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+      <div className="flex items-center justify-between">
+        <Skeleton className="h-8 w-[150px]" />
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-8 w-24" />
+          <Skeleton className="h-8 w-24" />
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default function AsprakTable({ data, loading, onViewDetails }: AsprakTableProps) {
@@ -112,28 +165,7 @@ export default function AsprakTable({ data, loading, onViewDetails }: AsprakTabl
   });
 
   if (loading) {
-    return (
-      <div>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>NIM</TableHead>
-              <TableHead>Nama Lengkap</TableHead>
-              <TableHead>Kode</TableHead>
-              <TableHead>Angkatan</TableHead>
-              <TableHead>Aksi</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            <TableRow>
-              <TableCell colSpan={5} className="text-center py-8">
-                Memuat...
-              </TableCell>
-            </TableRow>
-          </TableBody>
-        </Table>
-      </div>
-    );
+    return <AsprakTableSkeleton />;
   }
 
   return (
