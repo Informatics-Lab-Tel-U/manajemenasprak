@@ -26,7 +26,7 @@ export default function PraktikumCard({ praktikum, onClick }: PraktikumCardProps
         )}
       />
 
-      <div className="p-5 flex flex-col h-full relative z-10">
+      <div className="p-4 flex flex-col h-full relative z-10">
         {/* Header: Term Badge */}
         <div className="flex justify-between items-start mb-3">
           <div
@@ -41,7 +41,7 @@ export default function PraktikumCard({ praktikum, onClick }: PraktikumCardProps
         </div>
 
         {/* Main Content: Nama Praktikum */}
-        <div className="flex-grow mb-4">
+        <div className="flex-grow mb-2">
           <h3
             className="font-semibold text-lg leading-snug text-foreground/90 dark:text-foreground group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-2"
             title={praktikum.nama}
