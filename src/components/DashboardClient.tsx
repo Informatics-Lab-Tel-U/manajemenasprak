@@ -39,8 +39,8 @@ export default function DashboardClient({
     <>
       <header className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="title-gradient text-3xl font-bold">Ringkasan</h1>
-          <p className="text-muted-foreground mt-1">
+          <h1 className="text-2xl font-bold tracking-tight">Ringkasan</h1>
+          <p className="text-sm text-muted-foreground mt-1">
             Selamat datang di portal admin Manajemen Asisten Praktikum
           </p>
         </div>

@@ -24,6 +24,7 @@ import { fetchPelanggaranSummary } from '@/lib/fetchers/pelanggaranFetcher';
 import type { PelanggaranSummaryEntry } from '@/services/pelanggaranService';
 import type { Role } from '@/config/rbac';
 import { toast } from 'sonner';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface Props {
   initialTahunAjaranList: string[];
@@ -32,7 +33,7 @@ interface Props {
 
 export default function PelanggaranRekapClient({ initialTahunAjaranList, userRole }: Props) {
   const [tahunAjaran, setTahunAjaran] = React.useState(initialTahunAjaranList[0] || '');
-  const [modul, setModul] = React.useState<string>('all');
+  const [modul, setModul] = React.useState<string>('1');
   const [minCount, setMinCount] = React.useState<number>(1);
   const [loading, setLoading] = React.useState(false);
   const [data, setData] = React.useState<PelanggaranSummaryEntry[]>([]);
@@ -41,14 +42,14 @@ export default function PelanggaranRekapClient({ initialTahunAjaranList, userRol
   React.useEffect(() => {
     setMounted(true);
     if (initialTahunAjaranList[0]) {
-      handleFetch(initialTahunAjaranList[0], 'all', 1);
+      handleFetch(initialTahunAjaranList[0], '1', 1);
     }
   }, []);
 
   async function handleFetch(t: string, m: string, c: number) {
     setLoading(true);
     try {
-      const modulVal = m === 'all' ? undefined : Number(m);
+      const modulVal = Number(m);
       const res = await fetchPelanggaranSummary(t, modulVal, c);
       if (res.ok) {
         setData(res.data || []);
@@ -103,11 +104,10 @@ export default function PelanggaranRekapClient({ initialTahunAjaranList, userRol
             <label className="text-xs font-medium text-muted-foreground">Modul</label>
             <Select value={modul} onValueChange={setModul}>
               <SelectTrigger className="h-9">
-                <SelectValue placeholder="Semua Modul" />
+                <SelectValue placeholder="Pilih Modul" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Semua Modul</SelectItem>
-                {Array.from({ length: 14 }, (_, i) => (
+                {Array.from({ length: 16 }, (_, i) => (
                   <SelectItem key={i + 1} value={String(i + 1)}>
                     Modul {i + 1}
                   </SelectItem>
@@ -170,14 +170,29 @@ export default function PelanggaranRekapClient({ initialTahunAjaranList, userRol
                   </TableHeader>
                   <TableBody>
                     {loading ? (
-                      <TableRow>
-                        <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
-                          <div className="flex flex-col items-center gap-2">
-                            <Loader2 className="h-6 w-6 animate-spin" />
-                            <span className="text-sm">Memuat data...</span>
-                          </div>
-                        </TableCell>
-                      </TableRow>
+                      Array.from({ length: 10 }).map((_, i) => (
+                        <TableRow key={i}>
+                          <TableCell>
+                            <Skeleton className="h-4 w-24" />
+                          </TableCell>
+                          <TableCell>
+                            <Skeleton className="h-4 w-16" />
+                            <Skeleton className="h-3 w-20 mt-1 opacity-50" />
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Skeleton className="h-4 w-12 mx-auto" />
+                          </TableCell>
+                          <TableCell>
+                            <Skeleton className="h-5 w-24 rounded-full" />
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Skeleton className="h-4 w-8 mx-auto" />
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Skeleton className="h-4 w-16 mx-auto" />
+                          </TableCell>
+                        </TableRow>
+                      ))
                     ) : flatViolations.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={6} className="h-48 text-center text-muted-foreground">

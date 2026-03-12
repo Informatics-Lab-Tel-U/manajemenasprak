@@ -118,8 +118,8 @@ export default function PelanggaranClientPage({
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
-          <h1 className="title-gradient text-3xl font-bold">Pelanggaran</h1>
-          <p className="text-muted-foreground mt-1">
+          <h1 className="text-2xl font-bold tracking-tight">Pelanggaran</h1>
+          <p className="text-sm text-muted-foreground mt-1">
             Log indisipliner asisten praktikum per praktikum
           </p>
         </div>

@@ -5,7 +5,6 @@ import { Trash2, Upload, FileSpreadsheet, Download, ShieldAlert, Activity } from
 import { useDropzone } from 'react-dropzone';
 import * as importFetcher from '@/lib/fetchers/importFetcher';
 import * as jadwalFetcher from '@/lib/fetchers/jadwalFetcher';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -17,7 +16,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Switch } from '@/components/ui/switch';
@@ -397,420 +395,460 @@ export default function DatabasePage() {
   };
 
   return (
-    <div className="container">
-      <header className="mb-8">
-        <h1 className="title-gradient text-3xl font-bold">Pengaturan</h1>
-        <p className="text-muted-foreground mt-2">Kelola impor dan pembersihan data</p>
+    <div className="container mx-auto">
+      {/* Page Header */}
+      <header className="mb-10 pb-8 border-b border-border/50">
+        <h1 className="text-2xl font-bold tracking-tight">Pengaturan</h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          Kelola impor, ekspor, dan pembersihan data sistem.
+        </p>
       </header>
 
+      {/* Global Status */}
       {status && (
-        <Alert
+        <div
           className={cn(
-            'mb-8',
-            status.type === 'error' && 'border-destructive/50 text-destructive',
-            status.type === 'success' && 'border-chart-4/50 text-chart-4',
-            status.type === 'info' && 'border-chart-2/50 text-chart-2'
+            'mb-8 px-4 py-3 rounded-md text-sm border-l-2 bg-muted/30',
+            status.type === 'error' && 'border-destructive text-destructive',
+            status.type === 'success' && 'border-green-500 text-green-600 dark:text-green-400',
+            status.type === 'info' && 'border-blue-500 text-blue-600 dark:text-blue-400'
           )}
         >
-          <AlertDescription>{status.message}</AlertDescription>
-        </Alert>
+          {status.message}
+        </div>
       )}
 
-      <div className="grid gap-8 grid-cols-1 lg:grid-cols-2">
-        {/* Import Section - Dropzone / Wizard */}
-        <Card
-          className={cn('bg-card/80 backdrop-blur-sm shadow-md', wizardStep > 0 && 'lg:col-span-2')}
-        >
-          <CardHeader>
-            <CardTitle className="flex items-center gap-3">
-              <div className="p-3 rounded-xl bg-chart-2/10 text-chart-2">
-                <Upload size={24} />
-              </div>
-              {wizardStep === 0
-                ? 'Import Excel Dataset'
-                : `Import Wizard (Langkah ${wizardStep}/5)`}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {wizardStep === 0 && (
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Tahun Ajaran</Label>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      required
-                      type="number"
-                      min="10"
-                      max="99"
-                      placeholder="YY"
-                      value={termYear}
-                      onChange={(e) => setTermYear(e.target.value)}
-                      className="w-20 text-center"
-                    />
-
-                    <span className="text-muted-foreground">/</span>
-
-                    <div className="w-20 px-3 py-2 bg-muted/30 rounded-md text-muted-foreground text-center text-sm">
-                      {termYear ? parseInt(termYear) + 1 : 'YY'}
-                    </div>
-
-                    <span className="text-muted-foreground">-</span>
-
-                    <Select value={termSem} onValueChange={(val) => setTermSem(val as '1' | '2')}>
-                      <SelectTrigger className="flex-1">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          <SelectItem value="1">1 (Ganjil)</SelectItem>
-                          <SelectItem value="2">2 (Genap)</SelectItem>
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Isi ini untuk otomatis mengisi tahun ajaran jika di Excel kosong.
-                  </p>
-                </div>
-
-                <div
-                  {...getRootProps()}
-                  className={cn(
-                    'border-2 border-dashed rounded-lg p-12 text-center cursor-pointer transition-all',
-                    isDragActive
-                      ? 'border-chart-2 bg-chart-2/5'
-                      : 'border-border bg-transparent hover:border-chart-2/50'
-                  )}
-                >
-                  <input {...getInputProps()} />
-                  <FileSpreadsheet size={48} className="text-muted-foreground mb-4 mx-auto" />
-                  {isDragActive ? (
-                    <p className="text-chart-2 font-semibold">Letakkan file Excel di sini...</p>
-                  ) : (
-                    <div className="space-y-2">
-                      <p className="font-medium">Tarik & letakkan dataset .xlsx di sini</p>
-                      <p className="text-sm text-muted-foreground">atau klik untuk memilih file</p>
-                      <p className="text-xs text-muted-foreground mt-4">
-                        Harus berisi sheet: praktikum, mata_kuliah, asprak, jadwal, asprak_praktikum
-                      </p>
-                    </div>
-                  )}
-
-                  {loading && (
-                    <div className="mt-4 space-y-2">
-                      <Progress value={progress} className="h-2 w-full" />
-                      <p className="text-sm text-center text-muted-foreground">
-                        {progress}% Mengunggah & Memproses...
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
+      {/* Section: Import Excel Dataset */}
+      <section className="pb-10 mb-10 border-b border-border/40">
+        <div className="mb-6">
+          <div className="flex items-center gap-2 mb-1">
+            <Upload className="h-4 w-4 text-muted-foreground" />
+            <h2 className="text-base font-semibold">Import Excel Dataset</h2>
+            {wizardStep > 0 && (
+              <Badge variant="secondary" className="text-xs">
+                Langkah {wizardStep}/5
+              </Badge>
             )}
+          </div>
+          <p className="text-sm text-muted-foreground ml-6">
+            Upload file .xlsx untuk mengimpor data ke dalam sistem.
+          </p>
+        </div>
 
-            {wizardStep === 1 && excelData && (
-              <div>
-                <div className="mb-4">
-                  <h3 className="font-semibold text-lg">Langkah 1: Praktikum</h3>
-                  <p className="text-sm text-muted-foreground">Tinjau dan simpan data Praktikum</p>
-                </div>
-                <StepPraktikum
-                  data={excelData.praktikum}
-                  onNext={() => setWizardStep(2)}
-                  onPrev={() => setWizardStep(0)}
-                  onImport={async (rows) => {
-                    await fetch('/api/praktikum', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ action: 'bulk-import', rows }),
-                    }).then((res) => {
-                      if (!res.ok) throw new Error('Gagal import praktikum');
-                    });
-                  }}
-                />
-              </div>
-            )}
-
-            {wizardStep === 2 && excelData && (
-              <div>
-                <div className="mb-4">
-                  <h3 className="font-semibold text-lg">Langkah 2: Mata Kuliah</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Tinjau dan simpan data Mata Kuliah ({activeTerm})
-                  </p>
-                </div>
-                <StepMataKuliah
-                  data={excelData.mataKuliah}
-                  term={activeTerm}
-                  onNext={() => setWizardStep(3)}
-                  onPrev={() => setWizardStep(1)}
-                  onImport={async (rows, t) => {
-                    await fetch(`/api/mata-kuliah`, {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ action: 'bulk', data: rows, term: t }),
-                    }).then((res) => {
-                      if (!res.ok) throw new Error('Gagal import MK');
-                    });
-                  }}
-                />
-              </div>
-            )}
-
-            {wizardStep === 3 && excelData && (
-              <div>
-                <div className="mb-4">
-                  <h3 className="font-semibold text-lg">Langkah 3: Asisten Praktikum</h3>
-                  <p className="text-sm text-muted-foreground">Tinjau dan simpan data Asprak</p>
-                </div>
-                <StepAsprak
-                  data={excelData.asprak}
-                  term={activeTerm}
-                  onNext={() => setWizardStep(4)}
-                  onPrev={() => setWizardStep(2)}
-                  onImport={async (rows, t) => {
-                    const res = await fetch('/api/asprak', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ action: 'bulk-import', rows: rows }),
-                    });
-                    const data = await res.json();
-                    if (!res.ok) throw new Error(data.error || 'Gagal import Asprak');
-                  }}
-                />
-              </div>
-            )}
-
-            {wizardStep === 4 && excelData && (
-              <div>
-                <div className="mb-4">
-                  <h3 className="font-semibold text-lg">Langkah 4: Penugasan (Plotting)</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Tinjau dan simpan Plotting Asprak ({activeTerm})
-                  </p>
-                </div>
-                <StepPlotting
-                  data={excelData.plotting}
-                  term={activeTerm}
-                  onNext={() => setWizardStep(5)}
-                  onPrev={() => setWizardStep(3)}
-                  onSuccess={() => {}}
-                />
-              </div>
-            )}
-
-            {wizardStep === 5 && excelData && (
-              <div>
-                <div className="mb-4">
-                  <h3 className="font-semibold text-lg">Langkah 5: Jadwal</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Tinjau dan simpan data Jadwal ({activeTerm})
-                  </p>
-                </div>
-                <StepJadwal
-                  data={excelData.jadwal}
-                  term={activeTerm}
-                  onPrev={() => setWizardStep(4)}
-                  onNext={() => {
-                    setWizardStep(0);
-                    setExcelData(null);
-                    setStatus({ type: 'success', message: 'Import Excel selesai dengan sukses!' });
-                  }}
-                  onImport={async (rows) => {
-                    const res = await jadwalFetcher.bulkImportJadwal(rows);
-                    if (!res.ok) throw new Error(res.error || 'Gagal import jadwal');
-                  }}
-                />
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Export Section */}
-        <Card className="bg-card/80 backdrop-blur-sm shadow-md">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-3">
-              <div className="p-3 rounded-xl bg-chart-4/10 text-chart-4">
-                <Download size={24} />
-              </div>
-              Export Excel Dataset
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
+        {wizardStep === 0 && (
+          <div className="space-y-5">
             <div className="space-y-2">
-              <Label>Pilih Tahun Ajaran untuk Export</Label>
-              <Select
-                value={exportTerm}
-                onValueChange={setExportTerm}
-                disabled={loading || loadingTahunAjaran}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue
-                    placeholder={loadingTahunAjaran ? 'Memuat...' : 'Pilih Tahun Ajaran'}
-                  />
+              <Label className="text-sm">Tahun Ajaran</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  required
+                  type="number"
+                  min="10"
+                  max="99"
+                  placeholder="YY"
+                  value={termYear}
+                  onChange={(e) => setTermYear(e.target.value)}
+                  className="w-20 text-center"
+                />
+                <span className="text-muted-foreground">/</span>
+                <div className="w-20 px-3 py-2 bg-muted/40 rounded-md text-muted-foreground text-center text-sm">
+                  {termYear ? parseInt(termYear) + 1 : 'YY'}
+                </div>
+                <span className="text-muted-foreground">-</span>
+                <Select value={termSem} onValueChange={(val) => setTermSem(val as '1' | '2')}>
+                  <SelectTrigger className="flex-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectItem value="1">1 (Ganjil)</SelectItem>
+                      <SelectItem value="2">2 (Genap)</SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Isi ini untuk otomatis mengisi tahun ajaran jika di Excel kosong.
+              </p>
+            </div>
+
+            <div
+              {...getRootProps()}
+              className={cn(
+                'border-2 border-dashed rounded-lg p-12 text-center cursor-pointer transition-all',
+                isDragActive
+                  ? 'border-foreground bg-muted/20'
+                  : 'border-border bg-transparent hover:border-foreground/40 hover:bg-muted/10'
+              )}
+            >
+              <input {...getInputProps()} />
+              <FileSpreadsheet size={40} className="text-muted-foreground mb-4 mx-auto" />
+              {isDragActive ? (
+                <p className="font-semibold text-sm">Letakkan file Excel di sini...</p>
+              ) : (
+                <div className="space-y-1">
+                  <p className="font-medium text-sm">Tarik & letakkan dataset .xlsx di sini</p>
+                  <p className="text-sm text-muted-foreground">atau klik untuk memilih file</p>
+                  <p className="text-xs text-muted-foreground mt-3 opacity-60">
+                    Sheet: praktikum, mata_kuliah, asprak, jadwal, asprak_praktikum
+                  </p>
+                </div>
+              )}
+              {loading && (
+                <div className="mt-4 space-y-2">
+                  <Progress value={progress} className="h-1 w-full" />
+                  <p className="text-xs text-muted-foreground">
+                    {progress}% Mengunggah & Memproses...
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {wizardStep === 1 && excelData && (
+          <div>
+            <div className="mb-4">
+              <h3 className="font-semibold text-lg">Langkah 1: Praktikum</h3>
+              <p className="text-sm text-muted-foreground">Tinjau dan simpan data Praktikum</p>
+            </div>
+            <StepPraktikum
+              data={excelData.praktikum}
+              onNext={() => setWizardStep(2)}
+              onPrev={() => setWizardStep(0)}
+              onImport={async (rows) => {
+                await fetch('/api/praktikum', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ action: 'bulk-import', rows }),
+                }).then((res) => {
+                  if (!res.ok) throw new Error('Gagal import praktikum');
+                });
+              }}
+            />
+          </div>
+        )}
+
+        {wizardStep === 2 && excelData && (
+          <div>
+            <div className="mb-4">
+              <h3 className="font-semibold text-lg">Langkah 2: Mata Kuliah</h3>
+              <p className="text-sm text-muted-foreground">
+                Tinjau dan simpan data Mata Kuliah ({activeTerm})
+              </p>
+            </div>
+            <StepMataKuliah
+              data={excelData.mataKuliah}
+              term={activeTerm}
+              onNext={() => setWizardStep(3)}
+              onPrev={() => setWizardStep(1)}
+              onImport={async (rows, t) => {
+                await fetch(`/api/mata-kuliah`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ action: 'bulk', data: rows, term: t }),
+                }).then((res) => {
+                  if (!res.ok) throw new Error('Gagal import MK');
+                });
+              }}
+            />
+          </div>
+        )}
+
+        {wizardStep === 3 && excelData && (
+          <div>
+            <div className="mb-4">
+              <h3 className="font-semibold text-lg">Langkah 3: Asisten Praktikum</h3>
+              <p className="text-sm text-muted-foreground">Tinjau dan simpan data Asprak</p>
+            </div>
+            <StepAsprak
+              data={excelData.asprak}
+              term={activeTerm}
+              onNext={() => setWizardStep(4)}
+              onPrev={() => setWizardStep(2)}
+              onImport={async (rows, t) => {
+                const res = await fetch('/api/asprak', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ action: 'bulk-import', rows: rows }),
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Gagal import Asprak');
+              }}
+            />
+          </div>
+        )}
+
+        {wizardStep === 4 && excelData && (
+          <div>
+            <div className="mb-4">
+              <h3 className="font-semibold text-lg">Langkah 4: Penugasan (Plotting)</h3>
+              <p className="text-sm text-muted-foreground">
+                Tinjau dan simpan Plotting Asprak ({activeTerm})
+              </p>
+            </div>
+            <StepPlotting
+              data={excelData.plotting}
+              term={activeTerm}
+              onNext={() => setWizardStep(5)}
+              onPrev={() => setWizardStep(3)}
+              onSuccess={() => {}}
+            />
+          </div>
+        )}
+
+        {wizardStep === 5 && excelData && (
+          <div>
+            <div className="mb-4">
+              <h3 className="font-semibold text-lg">Langkah 5: Jadwal</h3>
+              <p className="text-sm text-muted-foreground">
+                Tinjau dan simpan data Jadwal ({activeTerm})
+              </p>
+            </div>
+            <StepJadwal
+              data={excelData.jadwal}
+              term={activeTerm}
+              onPrev={() => setWizardStep(4)}
+              onNext={() => {
+                setWizardStep(0);
+                setExcelData(null);
+                setStatus({ type: 'success', message: 'Import Excel selesai dengan sukses!' });
+              }}
+              onImport={async (rows) => {
+                const res = await jadwalFetcher.bulkImportJadwal(rows);
+                if (!res.ok) throw new Error(res.error || 'Gagal import jadwal');
+              }}
+            />
+          </div>
+        )}
+      </section>
+
+      {/* Section: Export & Template */}
+      <section className="pb-10 mb-10 border-b border-border/40">
+        <div className="mb-6">
+          <div className="flex items-center gap-2 mb-1">
+            <Download className="h-4 w-4 text-muted-foreground" />
+            <h2 className="text-base font-semibold">Export & Template</h2>
+          </div>
+          <p className="text-sm text-muted-foreground ml-6">
+            Download dataset aktif atau template kosong untuk diisi.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          {/* Export */}
+          <div className="space-y-3 p-5 rounded-lg border border-border/60 bg-muted/10">
+            <div>
+              <p className="text-sm font-medium">Export Dataset</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Download semua data dari database
+              </p>
+            </div>
+            <Select
+              value={exportTerm}
+              onValueChange={setExportTerm}
+              disabled={loading || loadingTahunAjaran}
+            >
+              <SelectTrigger className="w-full h-9">
+                <SelectValue
+                  placeholder={loadingTahunAjaran ? 'Memuat...' : 'Pilih Tahun Ajaran'}
+                />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  {tahunAjaranList.map((term) => (
+                    <SelectItem key={term} value={term}>
+                      {term}
+                    </SelectItem>
+                  ))}
+                  {tahunAjaranList.length === 0 && !loadingTahunAjaran && (
+                    <SelectItem value="none" disabled>
+                      Tidak ada data di database
+                    </SelectItem>
+                  )}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+            <Button
+              onClick={handleExport}
+              disabled={loading || !exportTerm}
+              className="w-full h-9 gap-2"
+              size="sm"
+            >
+              <FileSpreadsheet size={14} />
+              Export .xlsx
+            </Button>
+          </div>
+
+          {/* Template */}
+          <div className="space-y-3 p-5 rounded-lg border border-border/60 bg-muted/10">
+            <div>
+              <p className="text-sm font-medium">Download Template</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Template kosong siap diisi</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Input
+                required
+                type="number"
+                min="10"
+                max="99"
+                placeholder="YY"
+                value={termYear}
+                onChange={(e) => setTermYear(e.target.value)}
+                className="w-20 text-center h-9"
+              />
+              <span className="text-muted-foreground text-sm">/</span>
+              <div className="w-20 px-3 py-2 bg-muted/40 rounded-md text-muted-foreground text-center text-sm">
+                {termYear ? parseInt(termYear) + 1 : 'YY'}
+              </div>
+              <Select value={termSem} onValueChange={(val) => setTermSem(val as '1' | '2')}>
+                <SelectTrigger className="flex-1 h-9">
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
-                    {tahunAjaranList.map((term) => (
-                      <SelectItem key={term} value={term}>
-                        {term}
-                      </SelectItem>
-                    ))}
-                    {tahunAjaranList.length === 0 && !loadingTahunAjaran && (
-                      <SelectItem value="none" disabled>
-                        Tidak ada data di database
-                      </SelectItem>
-                    )}
+                    <SelectItem value="1">1 (Ganjil)</SelectItem>
+                    <SelectItem value="2">2 (Genap)</SelectItem>
                   </SelectGroup>
                 </SelectContent>
               </Select>
             </div>
-
             <Button
-              onClick={handleExport}
-              disabled={loading || !exportTerm}
-              className="w-full bg-chart-4 hover:bg-chart-4/90 text-white gap-2"
+              onClick={handleDownloadTemplate}
+              variant="outline"
+              className="w-full h-9 gap-2"
+              size="sm"
             >
-              <FileSpreadsheet size={16} />
-              Export Dataset ke Excel (.xlsx)
+              <Download size={14} />
+              Download Template
             </Button>
+          </div>
+        </div>
+      </section>
 
-            <div className="pt-4 border-t border-border/50">
-              <p className="text-xs text-muted-foreground mb-3 text-center">Butuh format kosong?</p>
-              <Button
-                onClick={handleDownloadTemplate}
-                variant="outline"
-                className="w-full border-chart-4/50 text-chart-4 hover:bg-chart-4/10"
-              >
-                <Download size={16} />
-                Download Template Excel
-              </Button>
+      {/* Section: System Control — ADMIN ONLY */}
+      {userRole === 'ADMIN' && (
+        <>
+          <section className="pb-10 mb-10 border-b border-border/40">
+            <div className="mb-6">
+              <div className="flex items-center gap-2 mb-1">
+                <Activity className="h-4 w-4 text-muted-foreground" />
+                <h2 className="text-base font-semibold">System Control</h2>
+              </div>
+              <p className="text-sm text-muted-foreground ml-6">
+                Kelola status sistem dan akses pengguna.
+              </p>
             </div>
-          </CardContent>
-        </Card>
 
-        {/* System Management - ADMIN ONLY */}
-        {userRole === 'ADMIN' && (
-          <Card className="bg-card/80 backdrop-blur-sm shadow-md border-chart-1/30">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-3">
-                <div className="p-3 rounded-xl bg-chart-1/10 text-chart-1">
-                  <Activity size={24} />
+            {/* Maintenance Toggle */}
+            <div className="flex items-center justify-between p-4 rounded-lg border border-border/60 bg-muted/10">
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-medium">Maintenance Mode</p>
+                  {isMaintenance && (
+                    <Badge variant="destructive" className="animate-pulse text-[10px] px-1.5 py-0">
+                      ACTIVE
+                    </Badge>
+                  )}
                 </div>
-                Data & System Control
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Maintenance Toggle */}
-              <div className="flex items-center justify-between p-4 rounded-lg bg-chart-1/5 border border-chart-1/10 transition-all">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <Label className="text-base font-semibold">Maintenance Mode</Label>
-                    {isMaintenance && (
-                      <Badge
-                        variant="destructive"
-                        className="animate-pulse px-1.5 py-0 text-[10px]"
-                      >
-                        ACTIVE
-                      </Badge>
-                    )}
-                  </div>
-                  <p className="text-xs text-muted-foreground max-w-[240px]">
-                    Kunci akses publik dan redirect user non-admin ke halaman pemeliharaan.
-                  </p>
-                </div>
-                <Switch
-                  checked={isMaintenance}
-                  onCheckedChange={handleToggleMaintenance}
-                  disabled={loadingMaintenance}
-                />
-              </div>
-
-              <div className="pt-4 border-t border-border/50">
-                <h4 className="text-sm font-semibold text-destructive flex items-center gap-2 mb-3">
-                  <ShieldAlert size={16} /> Danger Zone
-                </h4>
-                <p className="text-xs text-muted-foreground mb-4">
-                  Tindakan ini tidak dapat dibatalkan. Pastikan Anda telah melakukan backup sebelum
-                  membersihkan database.
+                <p className="text-xs text-muted-foreground max-w-xs">
+                  Kunci akses publik dan redirect user non-admin ke halaman pemeliharaan.
                 </p>
-                <Button
-                  onClick={handleClearTrigger}
-                  disabled={loading}
-                  variant="destructive"
-                  className="w-full"
-                >
-                  Clear All Database Content
-                </Button>
               </div>
-            </CardContent>
-          </Card>
-        )}
-      </div>
+              <Switch
+                checked={isMaintenance}
+                onCheckedChange={handleToggleMaintenance}
+                disabled={loadingMaintenance}
+              />
+            </div>
+          </section>
 
-      <div className="grid gap-8 grid-cols-1 mt-8">
-        <Card className="bg-card/80 backdrop-blur-sm shadow-md border-orange-500/30">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-3 text-orange-500">
-              <div className="p-3 rounded-xl bg-orange-500/10">
-                <Trash2 size={24} />
+          {/* Danger Zone */}
+          <section className="pb-10">
+            <div className="mb-6">
+              <div className="flex items-center gap-2 mb-1">
+                <ShieldAlert className="h-4 w-4 text-destructive" />
+                <h2 className="text-base font-semibold text-destructive">Danger Zone</h2>
               </div>
-              Hapus Jadwal Per Tahun Ajaran
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <p className="text-sm text-muted-foreground">
-              Fitur ini hanya menghapus data di tabel{' '}
-              <span className="font-mono bg-muted px-1 py-0.5 rounded text-secondary-foreground">
-                Jadwal
-              </span>{' '}
-              untuk tahun ajaran tertentu tanpa menghapus relasi Mata Kuliah dan Praktikum.
-            </p>
+              <p className="text-sm text-muted-foreground ml-6">
+                Tindakan ini bersifat permanen dan tidak dapat dibatalkan.
+              </p>
+            </div>
 
-            <div className="space-y-2">
-              <Label>Pilih Tahun Ajaran yang Jadwalnya Akan Dihapus</Label>
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Select
-                  value={deleteTerm}
-                  onValueChange={setDeleteTerm}
-                  disabled={loading || loadingTahunAjaran}
-                >
-                  <SelectTrigger className="w-full sm:w-[50%]">
-                    <SelectValue
-                      placeholder={loadingTahunAjaran ? 'Memuat...' : 'Pilih Tahun Ajaran'}
-                    />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      {tahunAjaranList.map((term) => (
-                        <SelectItem key={term} value={term}>
-                          {term}
-                        </SelectItem>
-                      ))}
-                      {tahunAjaranList.length === 0 && !loadingTahunAjaran && (
-                        <SelectItem value="none" disabled>
-                          Tidak ada data di database
-                        </SelectItem>
-                      )}
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-
+            <div className="rounded-lg border border-destructive/30 divide-y divide-destructive/20">
+              {/* Delete Jadwal by Term */}
+              <div className="p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="space-y-0.5">
+                  <p className="text-sm font-medium">Hapus Jadwal per Tahun Ajaran</p>
+                  <p className="text-xs text-muted-foreground max-w-xs">
+                    Menghapus jadwal untuk term tertentu, tidak menghapus Mata Kuliah dan Praktikum.
+                  </p>
+                  <div className="pt-2">
+                    <Select
+                      value={deleteTerm}
+                      onValueChange={setDeleteTerm}
+                      disabled={loading || loadingTahunAjaran}
+                    >
+                      <SelectTrigger className="h-8 w-48 text-xs">
+                        <SelectValue
+                          placeholder={loadingTahunAjaran ? 'Memuat...' : 'Pilih Tahun Ajaran'}
+                        />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          {tahunAjaranList.map((term) => (
+                            <SelectItem key={term} value={term}>
+                              {term}
+                            </SelectItem>
+                          ))}
+                          {tahunAjaranList.length === 0 && !loadingTahunAjaran && (
+                            <SelectItem value="none" disabled>
+                              Tidak ada data
+                            </SelectItem>
+                          )}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
                 <Button
                   onClick={handleDeleteJadwalTermTrigger}
                   disabled={loading || !deleteTerm}
                   variant="destructive"
-                  className="w-full sm:w-[50%]"
+                  size="sm"
+                  className="shrink-0"
                 >
-                  Hapus Jadwal (Term {deleteTerm || '...'})
+                  <Trash2 size={14} className="mr-1.5" />
+                  Hapus Jadwal
+                </Button>
+              </div>
+
+              {/* Clear All */}
+              <div className="p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="space-y-0.5">
+                  <p className="text-sm font-medium">Bersihkan Semua Data</p>
+                  <p className="text-xs text-muted-foreground max-w-xs">
+                    Menghapus seluruh konten database secara permanen, termasuk jadwal, asprak, dan
+                    praktikum.
+                  </p>
+                </div>
+                <Button
+                  onClick={handleClearTrigger}
+                  disabled={loading}
+                  variant="destructive"
+                  size="sm"
+                  className="shrink-0"
+                >
+                  <Trash2 size={14} className="mr-1.5" />
+                  Clear All Database
                 </Button>
               </div>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+          </section>
+        </>
+      )}
 
-      {/* Confirmation Modal */}
+      {/* Confirmation Modal — Clear All */}
       <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -823,7 +861,6 @@ export default function DatabasePage() {
               assignment akan dihapus permanen.
             </DialogDescription>
           </DialogHeader>
-
           <div className="space-y-3 py-2">
             <Label className="text-sm">
               Ketik <span className="font-bold text-destructive">"{CONFIRMATION_PHRASE}"</span>{' '}
@@ -836,7 +873,6 @@ export default function DatabasePage() {
               autoComplete="off"
             />
           </div>
-
           <DialogFooter className="sm:justify-between gap-2">
             <Button variant="outline" onClick={() => setIsDeleteModalOpen(false)}>
               Batal
@@ -852,11 +888,11 @@ export default function DatabasePage() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Jadwal By Term Modal */}
+      {/* Confirmation Modal — Delete Jadwal By Term */}
       <Dialog open={isDeleteTermModalOpen} onOpenChange={setIsDeleteTermModalOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-orange-500 flex items-center gap-2">
+            <DialogTitle className="text-destructive flex items-center gap-2">
               <Trash2 className="w-5 h-5" />
               Hapus Data Jadwal "{deleteTerm}"?
             </DialogTitle>
@@ -865,10 +901,9 @@ export default function DatabasePage() {
               dikembalikan.
             </DialogDescription>
           </DialogHeader>
-
           <div className="space-y-3 py-2">
             <Label className="text-sm">
-              Ketik <span className="font-bold text-orange-500">"{CONFIRMATION_TERM_PHRASE}"</span>{' '}
+              Ketik <span className="font-bold text-destructive">"{CONFIRMATION_TERM_PHRASE}"</span>{' '}
               untuk konfirmasi:
             </Label>
             <Input
@@ -878,7 +913,6 @@ export default function DatabasePage() {
               autoComplete="off"
             />
           </div>
-
           <DialogFooter className="sm:justify-between gap-2">
             <Button variant="outline" onClick={() => setIsDeleteTermModalOpen(false)}>
               Batal

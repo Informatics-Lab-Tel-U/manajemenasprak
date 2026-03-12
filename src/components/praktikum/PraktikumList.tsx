@@ -13,11 +13,11 @@ interface PraktikumListProps {
 
 function PraktikumCardSkeleton() {
   return (
-    <Card className="p-5 flex flex-col h-[152px] relative overflow-hidden transition-all duration-300 border bg-white/60 dark:bg-zinc-900/60 border-indigo-200/50 dark:border-indigo-500/20">
+    <Card className="p-4 flex flex-col h-[136px] relative overflow-hidden transition-all duration-300 border bg-white/60 dark:bg-zinc-900/60 border-indigo-200/50 dark:border-indigo-500/20">
       <div className="flex justify-between items-start mb-3">
         <Skeleton className="h-6 w-24 rounded-md" />
       </div>
-      <div className="flex-grow mb-4">
+      <div className="flex-grow mb-2">
         <Skeleton className="h-5 w-full rounded-md" />
       </div>
       <div className="mt-auto pt-3 border-t border-dashed border-border/60 flex items-center justify-between">

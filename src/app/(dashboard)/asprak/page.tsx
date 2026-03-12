@@ -35,6 +35,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuLabel,
 } from '@/components/ui/dropdown-menu';
+import { Skeleton } from '@/components/ui/skeleton';
 
 import AsprakGenerationRules from '@/components/asprak/AsprakGenerationRules';
 import AsprakDeleteDialog from '@/components/asprak/AsprakDeleteDialog';
@@ -264,8 +265,8 @@ function AsprakPageContent() {
       {/* Header */}
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="title-gradient text-3xl font-bold">Data Asisten Praktikum</h1>
-          <p className="text-muted-foreground mt-2">Kelola daftar asisten praktikum</p>
+          <h1 className="text-2xl font-bold tracking-tight">Data Asisten Praktikum</h1>
+          <p className="text-sm text-muted-foreground mt-1">Kelola daftar asisten praktikum</p>
         </div>
         <div className="flex gap-3 items-center">
           <Button variant="outline" onClick={() => setShowAddModal(true)}>
@@ -308,7 +309,7 @@ function AsprakPageContent() {
       <Tabs value={activeTab} className="w-full">
         <TabsContent value="data">
           {/* Filters and Table */}
-          <div className="card glass p-6">
+          <div className="card glass p-6 flex flex-col gap-6">
             <AsprakFilters
               searchQuery={searchQuery}
               onSearchChange={setSearchQuery}
@@ -397,9 +398,50 @@ function AsprakPageContent() {
   );
 }
 
+function AsprakSkeleton() {
+  return (
+    <div className="container">
+      {/* Header Skeleton */}
+      <div className="flex justify-between items-center mb-8">
+        <div className="space-y-2">
+          <Skeleton className="h-10 w-64" />
+          <Skeleton className="h-4 w-48" />
+        </div>
+        <div className="flex gap-3">
+          <Skeleton className="h-10 w-32" />
+          <Skeleton className="h-10 w-32" />
+          <Skeleton className="h-10 w-32" />
+        </div>
+      </div>
+
+      <div className="w-full">
+        {/* Tabs Skeleton */}
+        <div className="flex gap-4 mb-6 border-b pb-2">
+          <Skeleton className="h-8 w-24" />
+          <Skeleton className="h-8 w-24" />
+        </div>
+
+        {/* Card Skeleton */}
+        <div className="card glass p-6 space-y-6">
+          <div className="flex flex-col sm:flex-row gap-4 items-center">
+            <Skeleton className="h-10 flex-1 w-full" />
+            <Skeleton className="h-10 w-full sm:w-[180px]" />
+          </div>
+          <div className="space-y-4">
+            <Skeleton className="h-10 w-full" />
+            {Array.from({ length: 10 }).map((_, i) => (
+              <Skeleton key={i} className="h-12 w-full" />
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function AsprakPage() {
   return (
-    <Suspense fallback={<div className="container py-10 text-center">Memuat...</div>}>
+    <Suspense fallback={<AsprakSkeleton />}>
       <AsprakPageContent />
     </Suspense>
   );

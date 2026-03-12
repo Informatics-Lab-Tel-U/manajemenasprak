@@ -97,7 +97,7 @@ export default function DashboardCharts({
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Schedule Visualization */}
-      <Card className="col-span-full bg-white/60 dark:bg-zinc-900/60 backdrop-blur-sm border-border/50 shadow-sm">
+      <Card className="col-span-full border-border/50 shadow-sm bg-card">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle>
@@ -172,7 +172,7 @@ export default function DashboardCharts({
               <p>Tidak ada jadwal praktikum untuk hari ini.</p>
             </div>
           ) : (
-            <div className="overflow-x-auto rounded-lg border border-border shadow-sm bg-card/50 backdrop-blur-sm">
+            <div className="overflow-x-auto rounded-lg border border-border shadow-sm bg-card/50">
               <table className="w-full border-collapse text-sm">
                 <thead>
                   <tr className="bg-muted/50 border-b border-border">
@@ -243,7 +243,7 @@ export default function DashboardCharts({
         </CardContent>
       </Card>
       {/* Chart 1: Asprak per Angkatan */}
-      <Card className="bg-white/60 dark:bg-zinc-900/60 backdrop-blur-sm border-border/50 shadow-sm">
+      <Card className="border-border/50 shadow-sm bg-card">
         <CardHeader>
           <CardTitle>Total Asprak per Angkatan</CardTitle>
           <CardDescription>Distribusi asisten praktikum berdasarkan angkatan</CardDescription>
@@ -274,7 +274,7 @@ export default function DashboardCharts({
       </Card>
 
       {/* Chart 2: Jadwal per Hari */}
-      <Card className="bg-white/60 dark:bg-zinc-900/60 backdrop-blur-sm border-border/50 shadow-sm">
+      <Card className="border-border/50 shadow-sm bg-card">
         <CardHeader>
           <CardTitle>Distribusi Jadwal per Hari</CardTitle>
           <CardDescription>Jumlah kelas praktikum per hari dalam seminggu</CardDescription>

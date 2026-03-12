@@ -189,8 +189,8 @@ export function ManajemenAkunClientPage({ users }: { users: UserWithEmail[] }) {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="title-gradient text-3xl font-bold">Manajemen Akun</h1>
-          <p className="text-muted-foreground mt-2">
+          <h1 className="text-2xl font-bold tracking-tight">Manajemen Akun</h1>
+          <p className="text-sm text-muted-foreground mt-1">
             Kelola akun pengguna yang terdaftar di sistem
           </p>
         </div>

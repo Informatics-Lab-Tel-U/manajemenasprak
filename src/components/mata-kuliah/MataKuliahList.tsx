@@ -12,11 +12,11 @@ interface MataKuliahListProps {
 function MataKuliahCardSkeleton() {
   return (
     <Card className="relative overflow-hidden transition-all duration-300 border bg-white/60 dark:bg-zinc-900/60 rounded-xl border-primary/20 dark:border-primary/20">
-      <div className="p-5 flex flex-col h-[184px] relative z-10">
+      <div className="p-4 flex flex-col h-[160px] relative z-10">
         <div className="flex justify-between items-start mb-3">
           <Skeleton className="h-6 w-32 rounded-md" />
         </div>
-        <div className="flex-grow mb-4">
+        <div className="flex-grow mb-2">
           <Skeleton className="h-5 w-full rounded-md mt-1" />
           <Skeleton className="h-3 w-24 rounded-md mt-2" />
         </div>

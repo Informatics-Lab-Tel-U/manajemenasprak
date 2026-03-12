@@ -443,8 +443,8 @@ export default function JadwalPage() {
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-4">
           <div>
-            <h1 className="title-gradient text-3xl font-bold">Jadwal Praktikum</h1>
-            <p className="text-muted-foreground mt-2 text-sm">Overview jadwal per ruangan</p>
+            <h1 className="text-2xl font-bold tracking-tight">Jadwal Praktikum</h1>
+            <p className="text-sm text-muted-foreground mt-1">Overview jadwal per ruangan</p>
           </div>
 
           <div className="bg-muted/50 p-1.5 rounded-lg flex items-center gap-1 border border-border/50">

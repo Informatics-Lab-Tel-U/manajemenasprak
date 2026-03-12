@@ -140,8 +140,8 @@ function MataKuliahPageContent() {
     <div className="container relative space-y-8">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="title-gradient text-3xl font-bold">Mata Kuliah</h1>
-          <p className="text-muted-foreground mt-2">
+          <h1 className="text-2xl font-bold tracking-tight">Mata Kuliah</h1>
+          <p className="text-sm text-muted-foreground mt-1">
             Kelola data mata kuliah, koordinator, dan varian prodi per tahun ajaran.
           </p>
         </div>

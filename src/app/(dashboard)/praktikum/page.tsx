@@ -139,11 +139,11 @@ function PraktikumPageContent() {
 
   return (
     <div className="container relative space-y-8">
-      <header>
+      <header className="mb-6">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="title-gradient text-3xl font-bold">Data Praktikum</h1>
-            <p className="text-muted-foreground mt-2">
+            <h1 className="text-2xl font-bold tracking-tight">Data Praktikum</h1>
+            <p className="text-sm text-muted-foreground mt-1">
               Kelola data praktikum dan penugasan per angkatan
             </p>
           </div>
