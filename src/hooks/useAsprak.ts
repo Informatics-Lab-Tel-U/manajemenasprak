@@ -5,7 +5,7 @@
  * Uses fetchers for client-side API calls
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Asprak } from '@/types/database';
 import * as asprakFetcher from '@/lib/fetchers/asprakFetcher';
 
@@ -17,17 +17,20 @@ export function useAsprak(initialTerm?: string, defaultToLatest: boolean = false
   const [terms, setTerms] = useState<string[]>([]);
   const [selectedTerm, setSelectedTerm] = useState(initialTerm || (defaultToLatest ? '' : 'all'));
   const [hasInitializedLatest, setHasInitializedLatest] = useState(false);
+  // Use ref so fetchTerms doesn't re-create every time hasInitializedLatest changes
+  const hasInitializedLatestRef = useRef(hasInitializedLatest);
+  hasInitializedLatestRef.current = hasInitializedLatest;
 
   const fetchTerms = useCallback(async () => {
     const result = await asprakFetcher.fetchAvailableTerms();
     if (result.ok && result.data) {
       setTerms(result.data);
-      if (defaultToLatest && !hasInitializedLatest && result.data.length > 0) {
+      if (defaultToLatest && !hasInitializedLatestRef.current && result.data.length > 0) {
         setSelectedTerm(result.data[0]);
         setHasInitializedLatest(true);
       }
     }
-  }, [defaultToLatest, hasInitializedLatest]);
+  }, [defaultToLatest]); // removed hasInitializedLatest — now read via ref
 
   const fetchAll = useCallback(async () => {
     setLoading(true);

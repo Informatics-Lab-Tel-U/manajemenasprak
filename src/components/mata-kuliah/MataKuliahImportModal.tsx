@@ -1,7 +1,6 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import Papa from 'papaparse';
-import * as XLSX from 'xlsx';
 import { FileSpreadsheet, Upload, FileText, X, Download } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -219,7 +218,7 @@ export default function MataKuliahImportModal({
     }
   };
 
-  const downloadTemplate = (format: 'csv' | 'xlsx') => {
+  const downloadTemplate = async (format: 'csv' | 'xlsx') => {
     const data = [
       {
         mk_singkat: 'ALPRO 1',
@@ -246,6 +245,8 @@ export default function MataKuliahImportModal({
       link.click();
       document.body.removeChild(link);
     } else {
+      // Load xlsx lazily — only when user requests XLSX template
+      const XLSX = await import('xlsx');
       const ws = XLSX.utils.json_to_sheet(data);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'Template');

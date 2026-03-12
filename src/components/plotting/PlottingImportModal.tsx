@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import Papa from 'papaparse';
-import * as XLSX from 'xlsx';
+
 import { FileSpreadsheet, Upload, X, Download, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -100,7 +100,7 @@ export default function PlottingImportModal({
     onDrop: (files) => files[0] && processCSV(files[0]),
   });
 
-  const handleDownloadTemplate = (format: 'csv' | 'xlsx') => {
+  const handleDownloadTemplate = async (format: 'csv' | 'xlsx') => {
     const data = [
       { kode_asprak: 'ARS', mk_singkat: 'PBO' },
       { kode_asprak: 'ZZA', mk_singkat: 'STRUKDAT' },
@@ -117,6 +117,8 @@ export default function PlottingImportModal({
       link.click();
       document.body.removeChild(link);
     } else {
+      // Load xlsx lazily — only when user requests XLSX template
+      const XLSX = await import('xlsx');
       const ws = XLSX.utils.json_to_sheet(data);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'Template');

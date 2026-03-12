@@ -14,7 +14,6 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import Papa from 'papaparse';
-import * as XLSX from 'xlsx';
 import { FileSpreadsheet, Upload, FileText, X, Download } from 'lucide-react';
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -279,7 +278,7 @@ export default function AsprakImportCSVModal({
 
   // ─── Template Download ──────────────────────────────────────────────────
 
-  const handleDownloadTemplate = (format: 'csv' | 'xlsx') => {
+  const handleDownloadTemplate = async (format: 'csv' | 'xlsx') => {
     const data = [
       {
         nama_lengkap: 'Budi Santoso',
@@ -302,6 +301,8 @@ export default function AsprakImportCSVModal({
       link.click();
       document.body.removeChild(link);
     } else {
+      // Load xlsx lazily — only when user requests XLSX template
+      const XLSX = await import('xlsx');
       const ws = XLSX.utils.json_to_sheet(data);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'Template');

@@ -25,28 +25,28 @@ export async function updateSession(request: NextRequest) {
   );
 
   // IMPORTANT: Do not add any logic between createServerClient and getUser().
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // getUser + system_config are independent — run them in parallel.
+  const [
+    {
+      data: { user },
+    },
+    { data: maintenanceConfig },
+  ] = await Promise.all([
+    supabase.auth.getUser(),
+    supabase.from('system_config').select('value_bool').eq('key', 'maintenance_mode').single(),
+  ]);
 
   const { pathname } = request.nextUrl;
-
-  // 1. Check Maintenance Mode
-  const { data: maintenanceConfig } = await supabase
-    .from('system_config')
-    .select('value_bool')
-    .eq('key', 'maintenance_mode')
-    .single();
   const isMaintenanceMode = !!maintenanceConfig?.value_bool;
 
-  // 2. Redirect away from /maintenance if mode is OFF
+  // 1. Redirect away from /maintenance if mode is OFF
   if (!isMaintenanceMode && pathname === '/maintenance') {
     const url = request.nextUrl.clone();
     url.pathname = '/';
     return NextResponse.redirect(url);
   }
 
-  // 3. Redirect to /maintenance if mode is ON (except for ADMINs & login page)
+  // 2. Redirect to /maintenance if mode is ON (except for ADMINs & login page)
   if (isMaintenanceMode && !pathname.startsWith('/api/auth')) {
     let isAdmin = false;
     if (user) {
@@ -65,20 +65,7 @@ export async function updateSession(request: NextRequest) {
     }
   }
 
-  if (user && pathname === '/login') {
-    const { data: pengguna } = await supabase
-      .from('pengguna')
-      .select('role')
-      .eq('id', user.id)
-      .single();
-
-    const role = pengguna?.role as Role | undefined;
-    const destination = role ? ROLE_DEFAULT_REDIRECT[role] : '/';
-    const redirectUrl = request.nextUrl.clone();
-    redirectUrl.pathname = destination;
-    return NextResponse.redirect(redirectUrl);
-  }
-
+  // Early exits — no pengguna query needed
   if (pathname.startsWith('/api/')) {
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -94,6 +81,7 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
+  // Single pengguna query — reused for both login-redirect and role-check (was 2 separate queries)
   const { data: pengguna, error: penggunaError } = await supabase
     .from('pengguna')
     .select('role, deleted_at')
@@ -105,6 +93,14 @@ export async function updateSession(request: NextRequest) {
   }
 
   const role = pengguna?.role as Role | undefined;
+
+  // Handle logged-in user visiting /login — redirect to their home
+  if (pathname === '/login') {
+    const destination = role ? ROLE_DEFAULT_REDIRECT[role] : '/';
+    const redirectUrl = request.nextUrl.clone();
+    redirectUrl.pathname = destination;
+    return NextResponse.redirect(redirectUrl);
+  }
 
   if (!role || pengguna?.deleted_at) {
     await supabase.auth.signOut();
