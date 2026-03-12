@@ -403,7 +403,7 @@ export default function PelanggaranDetailClient({
           </Button>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="title-gradient text-3xl font-bold">
+              <h1 className="text-2xl font-bold tracking-tight">
                 {praktikum?.nama ?? 'Detail Praktikum'}
               </h1>
               {isFinalized && (
@@ -413,7 +413,7 @@ export default function PelanggaranDetailClient({
                 </Badge>
               )}
             </div>
-            <p className="text-muted-foreground mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               {praktikum?.tahun_ajaran} · Detail log pelanggaran per asisten
             </p>
           </div>

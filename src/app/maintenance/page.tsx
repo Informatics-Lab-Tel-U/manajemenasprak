@@ -18,9 +18,7 @@ export default function MaintenancePage() {
         </div>
 
         <div className="space-y-4">
-          <h1 className="text-4xl font-extrabold tracking-tight title-gradient">
-            Sedang Pemeliharaan
-          </h1>
+          <h1 className="text-4xl font-extrabold tracking-tight">Sedang Pemeliharaan</h1>
           <p className="text-muted-foreground text-lg leading-relaxed">
             Sistem Manajemen Asprak sedang dalam pembersihan berkala atau pembaruan fitur. Kami akan
             segera kembali!
@@ -75,16 +73,6 @@ export default function MaintenancePage() {
         }
         .animate-bounce-slow {
           animation: bounce-slow 3s ease-in-out infinite;
-        }
-        .title-gradient {
-          background: linear-gradient(
-            135deg,
-            hsl(var(--chart-1)),
-            hsl(var(--chart-2)),
-            hsl(var(--chart-4))
-          );
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
         }
       `}</style>
     </div>

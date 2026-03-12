@@ -415,7 +415,7 @@ export async function getPelanggaranSummary(
   let query = supabase.from('pelanggaran').select(PELANGGARAN_SELECT);
 
   if (modul) {
-    query = query.eq('modul', modul);
+    query = query.lte('modul', modul);
   }
 
   const { data, error } = await query;

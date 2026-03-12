@@ -44,15 +44,15 @@ export default function PanduanClientPage({ role }: PanduanClientPageProps) {
 
   return (
     <div className="container relative space-y-8">
-      <div>
-        <h1 className="title-gradient text-3xl font-bold">Panduan Sistem</h1>
-        <p className="text-muted-foreground mt-2">
+      <header className="mb-10 pb-8 border-b border-border/50">
+        <h1 className="text-2xl font-bold tracking-tight">Panduan Sistem</h1>
+        <p className="text-sm text-muted-foreground mt-1">
           Dokumentasi lengkap pengoperasian Sistem Manajemen Asisten Praktikum.
         </p>
-      </div>
+      </header>
 
       <div>
-        <div className="w-full space-y-6">
+        <div className="w-full">
           <Accordion
             type="single"
             collapsible
@@ -62,7 +62,7 @@ export default function PanduanClientPage({ role }: PanduanClientPageProps) {
             {!isKoor && (
               <>
                 {/* 1. Alur Penambahan Data */}
-                <AccordionItem value="alur" className="border rounded-lg px-4 bg-card">
+                <AccordionItem value="alur" className="border rounded-xl px-4 bg-card/30">
                   <AccordionTrigger className="hover:no-underline py-4">
                     <div className="flex items-center gap-3">
                       <div className="p-2 bg-muted rounded-full">
@@ -76,8 +76,8 @@ export default function PanduanClientPage({ role }: PanduanClientPageProps) {
                       </div>
                     </div>
                   </AccordionTrigger>
-                  <AccordionContent className="pt-2 pb-6 px-2">
-                    <div className="relative flex flex-col md:flex-row gap-4 items-start md:items-center justify-between p-6 bg-muted/30 rounded-lg border border-border/50">
+                  <AccordionContent className="pt-2 pb-10 space-y-4">
+                    <div className="relative flex flex-col md:flex-row gap-4 items-start md:items-center justify-between p-6 bg-muted/20 rounded-lg border border-border/40">
                       <StepCard
                         number={1}
                         title="Data Praktikum"
@@ -94,19 +94,21 @@ export default function PanduanClientPage({ role }: PanduanClientPageProps) {
                       <ArrowRight className="hidden md:block text-muted-foreground" />
                       <StepCard number={4} title="Data Asprak" desc="Data mahasiswa asisten." />
                     </div>
-                    <div className="mt-4 p-4 bg-amber-500/10 border border-amber-500/20 rounded-md flex gap-3 text-sm text-amber-700 dark:text-amber-400">
-                      <AlertTriangle className="h-5 w-5 flex-shrink-0" />
-                      <p>
-                        <strong>Penting:</strong> Jangan melompati urutan. Anda tidak bisa membuat
-                        Jadwal jika Mata Kuliah belum ada, dan tidak bisa membuat Mata Kuliah jika
-                        Praktikum belum ada.
-                      </p>
+                    <div className="mt-4 p-4 border-l-4 border-amber-500 bg-amber-500/5 text-sm text-foreground/80">
+                      <div className="flex gap-3">
+                        <AlertTriangle className="h-5 w-5 text-amber-500 shrink-0" />
+                        <p>
+                          <strong className="text-amber-600 dark:text-amber-400">Penting:</strong>{' '}
+                          Jangan melompati urutan. Anda tidak bisa membuat Jadwal jika Mata Kuliah
+                          belum ada, dan tidak bisa membuat Mata Kuliah jika Praktikum belum ada.
+                        </p>
+                      </div>
                     </div>
                   </AccordionContent>
                 </AccordionItem>
 
                 {/* 2. Data Praktikum */}
-                <AccordionItem value="praktikum" className="border rounded-lg px-4 bg-card">
+                <AccordionItem value="praktikum" className="border rounded-xl px-4 bg-card/30">
                   <AccordionTrigger className="hover:no-underline py-4">
                     <div className="flex items-center gap-3">
                       <div className="p-2 bg-muted rounded-full">
@@ -137,21 +139,22 @@ export default function PanduanClientPage({ role }: PanduanClientPageProps) {
                         },
                       ]}
                     />
-                    <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-md text-sm text-blue-600 dark:text-blue-400">
-                      <strong>Info:</strong> Kombinasi (Nama + Tahun Ajaran) harus unik. Data
-                      praktikum digunakan sebagai konteks utama pada halaman Pelanggaran.
+                    <div className="p-4 border-l-4 border-blue-500 bg-blue-500/5 text-sm text-foreground/80 flex gap-3 italic">
+                      <Info className="h-5 w-5 text-blue-500 shrink-0" />
+                      <p>
+                        <strong>Info:</strong> Kombinasi (Nama + Tahun Ajaran) harus unik. Data
+                        praktikum digunakan sebagai konteks utama pada halaman Pelanggaran.
+                      </p>
                     </div>
                   </AccordionContent>
                 </AccordionItem>
 
                 {/* 3. Mata Kuliah */}
-                <AccordionItem value="matakuliah" className="border rounded-lg px-4 bg-card">
+                <AccordionItem value="matakuliah" className="border rounded-xl px-4 bg-card/30">
                   <AccordionTrigger className="hover:no-underline py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-muted rounded-full">
-                        <Library size={20} />
-                      </div>
-                      <div className="text-left">
+                    <div className="flex items-center gap-3 text-muted-foreground">
+                      <Library size={20} />
+                      <div className="text-left text-foreground">
                         <h3 className="font-semibold text-base">Data Mata Kuliah</h3>
                         <p className="text-sm font-normal text-muted-foreground">
                           Mata kuliah yang dibuka pada praktikum tertentu.
@@ -159,7 +162,7 @@ export default function PanduanClientPage({ role }: PanduanClientPageProps) {
                       </div>
                     </div>
                   </AccordionTrigger>
-                  <AccordionContent className="pt-2 pb-6 px-2 space-y-4">
+                  <AccordionContent className="pt-2 pb-10 space-y-6">
                     <DataTable
                       columns={[
                         { name: 'Nama MK', type: 'Teks', rule: 'Wajib', desc: 'Nama mata kuliah.' },
@@ -187,21 +190,19 @@ export default function PanduanClientPage({ role }: PanduanClientPageProps) {
                 </AccordionItem>
 
                 {/* 4. Jadwal */}
-                <AccordionItem value="jadwal" className="border rounded-lg px-4 bg-card">
+                <AccordionItem value="jadwal" className="border rounded-xl px-4 bg-card/30">
                   <AccordionTrigger className="hover:no-underline py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-muted rounded-full">
-                        <Calendar size={20} />
-                      </div>
-                      <div className="text-left">
+                    <div className="flex items-center gap-3 text-muted-foreground">
+                      <Calendar size={20} />
+                      <div className="text-left text-foreground">
                         <h3 className="font-semibold text-base">Jadwal Praktikum</h3>
                         <p className="text-sm font-normal text-muted-foreground">
-                          Jadwal sesi, ruangan, dan kebutuhan asprak.
+                          Jadwal sesi, ruangan, and kebutuhan asprak.
                         </p>
                       </div>
                     </div>
                   </AccordionTrigger>
-                  <AccordionContent className="pt-2 pb-6 px-2 space-y-4">
+                  <AccordionContent className="pt-2 pb-10 space-y-6">
                     <DataTable
                       columns={[
                         {
@@ -242,7 +243,7 @@ export default function PanduanClientPage({ role }: PanduanClientPageProps) {
                         },
                       ]}
                     />
-                    <div className="mt-3 text-sm text-muted-foreground p-3 bg-muted rounded-md border">
+                    <div className="mt-3 text-sm text-muted-foreground p-4 bg-muted/20 border-l-4 border-muted-foreground/30">
                       <strong>Aturan Validasi:</strong> Sistem akan menolak jika ada jadwal dengan
                       (Hari + Sesi + Ruangan) yang sama dalam satu Term.
                     </div>
@@ -250,13 +251,11 @@ export default function PanduanClientPage({ role }: PanduanClientPageProps) {
                 </AccordionItem>
 
                 {/* 5. Data Asprak */}
-                <AccordionItem value="asprak" className="border rounded-lg px-4 bg-card">
+                <AccordionItem value="asprak" className="border rounded-xl px-4 bg-card/30">
                   <AccordionTrigger className="hover:no-underline py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-muted rounded-full">
-                        <Users size={20} />
-                      </div>
-                      <div className="text-left">
+                    <div className="flex items-center gap-3 text-muted-foreground">
+                      <Users size={20} />
+                      <div className="text-left text-foreground">
                         <h3 className="font-semibold text-base">Data Asprak</h3>
                         <p className="text-sm font-normal text-muted-foreground">
                           Database asisten praktikum.
@@ -264,7 +263,7 @@ export default function PanduanClientPage({ role }: PanduanClientPageProps) {
                       </div>
                     </div>
                   </AccordionTrigger>
-                  <AccordionContent className="pt-2 pb-6 px-2 space-y-4">
+                  <AccordionContent className="pt-2 pb-10 space-y-6">
                     <DataTable
                       columns={[
                         {
@@ -297,13 +296,11 @@ export default function PanduanClientPage({ role }: PanduanClientPageProps) {
                 </AccordionItem>
 
                 {/* 6. Plotting */}
-                <AccordionItem value="plotting" className="border rounded-lg px-4 bg-card">
+                <AccordionItem value="plotting" className="border rounded-xl px-4 bg-card/30">
                   <AccordionTrigger className="hover:no-underline py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-muted rounded-full">
-                        <Users size={20} />
-                      </div>
-                      <div className="text-left">
+                    <div className="flex items-center gap-3 text-muted-foreground">
+                      <Users size={20} />
+                      <div className="text-left text-foreground">
                         <h3 className="font-semibold text-base">Plotting Asprak</h3>
                         <p className="text-sm font-normal text-muted-foreground">
                           Penugasan asisten ke jadwal praktikum.
@@ -311,15 +308,18 @@ export default function PanduanClientPage({ role }: PanduanClientPageProps) {
                       </div>
                     </div>
                   </AccordionTrigger>
-                  <AccordionContent className="pt-2 pb-6 px-2 space-y-4">
+                  <AccordionContent className="pt-2 pb-10 space-y-6">
                     <p className="text-sm text-muted-foreground">
                       Plotting adalah proses menghubungkan <strong>Data Asprak</strong> dengan{' '}
                       <strong>Jadwal Praktikum</strong>. Satu jadwal kelas bisa memiliki banyak
                       asprak sesuai kuota (Total Asprak).
                     </p>
-                    <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-md text-sm text-blue-600 dark:text-blue-400">
-                      <strong>Tips:</strong> Gunakan menu <em>Plotting Asprak</em> untuk melihat
-                      beban kerja setiap asisten dan menghindari jadwal bentrok.
+                    <div className="p-4 border-l-4 border-blue-500 bg-blue-500/5 text-sm text-foreground/80 flex gap-3 italic">
+                      <Info className="h-5 w-5 text-blue-500 shrink-0" />
+                      <p>
+                        <strong>Tips:</strong> Gunakan menu <em>Plotting Asprak</em> untuk melihat
+                        beban kerja setiap asisten dan menghindari jadwal bentrok.
+                      </p>
                     </div>
                   </AccordionContent>
                 </AccordionItem>
@@ -327,7 +327,7 @@ export default function PanduanClientPage({ role }: PanduanClientPageProps) {
             )}
 
             {/* 7. Pelanggaran */}
-            <AccordionItem value="pelanggaran" className="border rounded-lg px-4 bg-card">
+            <AccordionItem value="pelanggaran" className="border rounded-xl px-4 bg-card/30">
               <AccordionTrigger className="hover:no-underline py-4">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-muted rounded-full">
@@ -341,7 +341,7 @@ export default function PanduanClientPage({ role }: PanduanClientPageProps) {
                   </div>
                 </div>
               </AccordionTrigger>
-              <AccordionContent className="pt-2 pb-6 px-2 space-y-5">
+              <AccordionContent className="pt-2 pb-10 space-y-8">
                 {!isKoor && (
                   <div>
                     <h4 className="font-medium mb-3 flex items-center gap-2">
@@ -415,9 +415,13 @@ export default function PanduanClientPage({ role }: PanduanClientPageProps) {
                     Setelah difinalisasi, data tidak dapat diubah. Pastikan semua data sudah benar
                     sebelum klik tombol <em>Finalisasi</em>.
                   </p>
-                  <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-md text-sm text-amber-700 dark:text-amber-400">
-                    <strong>Peringatan:</strong> Finalisasi bersifat permanen. Data yang sudah final
-                    tidak dapat diedit atau dihapus.
+                  <div className="p-4 border-l-4 border-amber-500 bg-amber-500/5 text-sm text-foreground/80 flex gap-3">
+                    <AlertTriangle className="h-5 w-5 text-amber-500 shrink-0" />
+                    <div>
+                      <strong className="text-amber-600 dark:text-amber-400">Peringatan:</strong>{' '}
+                      Finalisasi bersifat permanen. Data yang sudah final tidak dapat diedit atau
+                      dihapus.
+                    </div>
                   </div>
                 </div>
 
@@ -465,13 +469,11 @@ export default function PanduanClientPage({ role }: PanduanClientPageProps) {
             {!isKoor && (
               <>
                 {/* 8. Role & Akses */}
-                <AccordionItem value="role-akses" className="border rounded-lg px-4 bg-card">
+                <AccordionItem value="role-akses" className="border rounded-xl px-4 bg-card/30">
                   <AccordionTrigger className="hover:no-underline py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-muted rounded-full">
-                        <ShieldCheck size={20} />
-                      </div>
-                      <div className="text-left">
+                    <div className="flex items-center gap-3 text-muted-foreground">
+                      <ShieldCheck size={20} />
+                      <div className="text-left text-foreground">
                         <h3 className="font-semibold text-base">Role & Hak Akses</h3>
                         <p className="text-sm font-normal text-muted-foreground">
                           Perbedaan akses berdasarkan role pengguna.
@@ -479,7 +481,7 @@ export default function PanduanClientPage({ role }: PanduanClientPageProps) {
                       </div>
                     </div>
                   </AccordionTrigger>
-                  <AccordionContent className="pt-2 pb-6 px-2 space-y-4">
+                  <AccordionContent className="pt-2 pb-10 space-y-8">
                     <div className="rounded-md border overflow-hidden">
                       <Table>
                         <TableHeader>
@@ -535,22 +537,24 @@ export default function PanduanClientPage({ role }: PanduanClientPageProps) {
                       </ul>
                     </div>
 
-                    <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-md text-sm text-blue-600 dark:text-blue-400">
-                      <strong>Cara assign Asprak Koor ke praktikum:</strong> Pergi ke{' '}
-                      <em>Manajemen Akun</em> → Tambah Akun → pilih role <em>Koordinator Asprak</em>{' '}
-                      → pilih Tahun Ajaran dan centang Praktikum yang dipegang.
+                    <div className="p-4 border-l-4 border-blue-500 bg-blue-500/5 text-sm text-foreground/80 flex gap-3 italic">
+                      <Info className="h-5 w-5 text-blue-500 shrink-0" />
+                      <p>
+                        <strong>Cara assign Asprak Koor ke praktikum:</strong> Pergi ke{' '}
+                        <em>Manajemen Akun</em> → Tambah Akun → pilih role{' '}
+                        <em>Koordinator Asprak</em> → pilih Tahun Ajaran dan centang Praktikum yang
+                        dipegang.
+                      </p>
                     </div>
                   </AccordionContent>
                 </AccordionItem>
 
                 {/* 9. Manajemen Akun */}
-                <AccordionItem value="manajemen-akun" className="border rounded-lg px-4 bg-card">
+                <AccordionItem value="manajemen-akun" className="border rounded-xl px-4 bg-card/30">
                   <AccordionTrigger className="hover:no-underline py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-muted rounded-full">
-                        <Eye size={20} />
-                      </div>
-                      <div className="text-left">
+                    <div className="flex items-center gap-3 text-muted-foreground">
+                      <Eye size={20} />
+                      <div className="text-left text-foreground">
                         <h3 className="font-semibold text-base">Manajemen Akun</h3>
                         <p className="text-sm font-normal text-muted-foreground">
                           Kelola akun pengguna sistem (Admin only).
@@ -558,7 +562,7 @@ export default function PanduanClientPage({ role }: PanduanClientPageProps) {
                       </div>
                     </div>
                   </AccordionTrigger>
-                  <AccordionContent className="pt-2 pb-6 px-2 space-y-4">
+                  <AccordionContent className="pt-2 pb-10 space-y-6">
                     <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1.5">
                       <li>
                         Tambah akun baru dengan role:{' '}
@@ -588,13 +592,11 @@ export default function PanduanClientPage({ role }: PanduanClientPageProps) {
                 </AccordionItem>
 
                 {/* 10. Database Manager */}
-                <AccordionItem value="db-manager" className="border rounded-lg px-4 bg-card">
+                <AccordionItem value="db-manager" className="border rounded-xl px-4 bg-card/30">
                   <AccordionTrigger className="hover:no-underline py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-muted rounded-full">
-                        <Settings size={20} />
-                      </div>
-                      <div className="text-left">
+                    <div className="flex items-center gap-3 text-muted-foreground">
+                      <Settings size={20} />
+                      <div className="text-left text-foreground">
                         <h3 className="font-semibold text-base">Database & Import/Export</h3>
                         <p className="text-sm font-normal text-muted-foreground">
                           Fitur Admin untuk maintenance dan migrasi data.
@@ -602,7 +604,7 @@ export default function PanduanClientPage({ role }: PanduanClientPageProps) {
                       </div>
                     </div>
                   </AccordionTrigger>
-                  <AccordionContent className="pt-2 pb-6 px-2 space-y-4">
+                  <AccordionContent className="pt-2 pb-10 space-y-6">
                     <ul className="list-disc list-inside text-sm text-muted-foreground space-y-2">
                       <li>
                         <strong>Bulk Import Excel:</strong> Import seluruh data satu Term
@@ -619,11 +621,12 @@ export default function PanduanClientPage({ role }: PanduanClientPageProps) {
                       </li>
                     </ul>
 
-                    <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-md text-sm text-red-600 dark:text-red-400 flex items-start gap-2">
-                      <AlertTriangle className="h-5 w-5 flex-shrink-0" />
+                    <div className="p-4 border-l-4 border-red-500 bg-red-500/5 text-sm text-foreground/80 flex gap-3">
+                      <AlertTriangle className="h-5 w-5 text-red-500 shrink-0" />
                       <div>
-                        <strong>Danger Zone:</strong> &ldquo;Clear Database&rdquo; bersifat permanen
-                        dan tidak bisa dibatalkan. Backup data sebelum menjalankan fitur ini.
+                        <strong className="text-red-600 dark:text-red-400">Danger Zone:</strong>{' '}
+                        &ldquo;Clear Database&rdquo; bersifat permanen dan tidak bisa dibatalkan.
+                        Backup data sebelum menjalankan fitur ini.
                       </div>
                     </div>
                   </AccordionContent>
@@ -641,13 +644,13 @@ export default function PanduanClientPage({ role }: PanduanClientPageProps) {
 
 function StepCard({ number, title, desc }: { number: number; title: string; desc: string }) {
   return (
-    <div className="flex items-start gap-3 p-2">
-      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-bold text-sm shrink-0">
-        {number}
+    <div className="flex items-start gap-3 p-1">
+      <div className="flex items-center justify-center w-7 h-7 border-2 border-primary/20 rounded-lg text-primary font-bold text-xs shrink-0">
+        0{number}
       </div>
       <div>
-        <h4 className="font-semibold text-sm">{title}</h4>
-        <p className="text-xs text-muted-foreground">{desc}</p>
+        <h4 className="font-bold text-sm text-foreground/90">{title}</h4>
+        <p className="text-[11px] text-muted-foreground font-medium">{desc}</p>
       </div>
     </div>
   );

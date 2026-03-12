@@ -170,8 +170,8 @@ export default function AuditLogsClientPage({
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="title-gradient text-3xl font-bold">Audit Logs</h1>
-          <p className="text-muted-foreground mt-2">
+          <h1 className="text-2xl font-bold tracking-tight">Audit Logs</h1>
+          <p className="text-sm text-muted-foreground mt-1">
             Riwayat aktifitas dan perubahan data dalam sistem
           </p>
         </div>

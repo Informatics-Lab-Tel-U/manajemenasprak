@@ -265,8 +265,8 @@ function AsprakPageContent() {
       {/* Header */}
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="title-gradient text-3xl font-bold">Data Asisten Praktikum</h1>
-          <p className="text-muted-foreground mt-2">Kelola daftar asisten praktikum</p>
+          <h1 className="text-2xl font-bold tracking-tight">Data Asisten Praktikum</h1>
+          <p className="text-sm text-muted-foreground mt-1">Kelola daftar asisten praktikum</p>
         </div>
         <div className="flex gap-3 items-center">
           <Button variant="outline" onClick={() => setShowAddModal(true)}>
