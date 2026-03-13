@@ -75,7 +75,7 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
           <CardDescription>Masukkan email dan kata sandi akun Anda</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <form onSubmit={handleSubmit} method="POST" className="flex flex-col gap-4">
             {error && (
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
@@ -93,6 +93,7 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 disabled={isLoading}
+                name="email"
                 autoComplete="email"
               />
             </div>
@@ -107,6 +108,7 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   disabled={isLoading}
+                  name="password"
                   autoComplete="current-password"
                   className="pr-10"
                 />
