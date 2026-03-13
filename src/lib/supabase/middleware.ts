@@ -73,7 +73,14 @@ export async function updateSession(request: NextRequest) {
     return supabaseResponse;
   }
 
-  if (isPublicPath(pathname)) return supabaseResponse;
+  if (isPublicPath(pathname)) {
+    // Allow logged-in users visiting /login to fall through and get redirected
+    if (user && pathname === '/login') {
+      // fall through
+    } else {
+      return supabaseResponse;
+    }
+  }
 
   if (!user) {
     const loginUrl = request.nextUrl.clone();
