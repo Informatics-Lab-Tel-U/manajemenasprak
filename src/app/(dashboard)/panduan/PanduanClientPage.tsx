@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   BookOpen,
   Database,
@@ -39,7 +39,10 @@ interface PanduanClientPageProps {
   role: Role;
 }
 
-export default function PanduanClientPage({ role }: PanduanClientPageProps) {
+// Memoize DataTable to prevent unnecessary re-renders
+export const MemoizedDataTable = React.memo(DataTable);
+
+const PanduanClientPageComponent = function PanduanClientPage({ role }: PanduanClientPageProps) {
   const isKoor = role === 'ASPRAK_KOOR';
 
   return (
@@ -632,7 +635,10 @@ export default function PanduanClientPage({ role }: PanduanClientPageProps) {
       </div>
     </div>
   );
-}
+};
+
+// Wrap with React.memo to prevent unnecessary re-renders when parent re-renders
+export default React.memo(PanduanClientPageComponent);
 
 // ─── Helper Components ────────────────────────────────────────────────────────
 
