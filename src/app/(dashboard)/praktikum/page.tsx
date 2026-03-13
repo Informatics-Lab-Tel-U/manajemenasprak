@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 import { requireAuth } from '@/lib/auth';
-import { getAvailableTerms } from '@/services/asprakService';
+import { getAvailableTerms } from '@/services/termService';
 import { getPraktikumByTerm } from '@/services/praktikumService';
 import PraktikumClientPage from './PraktikumClientPage';
 import PraktikumLoading from './loading';

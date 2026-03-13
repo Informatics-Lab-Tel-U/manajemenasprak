@@ -6,6 +6,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import * as asprakService from '@/services/asprakService';
+import { getAvailableTerms } from '@/services/termService';
 import { logger } from '@/lib/logger';
 import { requireRole } from '@/lib/auth';
 
@@ -18,23 +19,27 @@ export async function GET(req: Request) {
     const action = params.get('action');
     const term = params.get('term') || undefined;
 
+    const cacheHeaders = {
+      'Cache-Control': 'public, max-age=60, stale-while-revalidate=300',
+    };
+
     if (action === 'plotting') {
       const data = await asprakService.getAspraksWithAssignments(term, supabase);
-      return NextResponse.json({ ok: true, data });
+      return NextResponse.json({ ok: true, data }, { headers: cacheHeaders });
     }
 
     if (action === 'codes') {
       const codes = await asprakService.getExistingCodes(supabase);
-      return NextResponse.json({ ok: true, data: codes });
+      return NextResponse.json({ ok: true, data: codes }, { headers: cacheHeaders });
     }
 
     if (action === 'terms') {
-      const terms = await asprakService.getAvailableTerms(supabase);
-      return NextResponse.json({ ok: true, data: terms });
+      const terms = await getAvailableTerms(supabase);
+      return NextResponse.json({ ok: true, data: terms }, { headers: cacheHeaders });
     }
 
     const data = await asprakService.getAllAsprak(term, supabase);
-    return NextResponse.json({ ok: true, data });
+    return NextResponse.json({ ok: true, data }, { headers: cacheHeaders });
   } catch (e: any) {
     logger.error('GET /api/asprak error:', e);
     return NextResponse.json({ ok: false, error: e.message }, { status: 500 });

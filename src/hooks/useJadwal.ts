@@ -75,14 +75,14 @@ export function useJadwal(
         setError(new Error(result.error || 'Failed to fetch jadwal'));
       }
 
-      if (selectedModul !== 'Default') {
-        const modulNum = parseInt(selectedModul.replace('Modul ', ''));
+      if (selectedModul === 'Default') {
+        setJadwalPengganti([]);
+      } else {
+        const modulNum = Number.parseInt(selectedModul.replace('Modul ', ''));
         const penggantiResult = await jadwalFetcher.fetchJadwalPengganti(modulNum);
         if (penggantiResult.ok && penggantiResult.data) {
           setJadwalPengganti(penggantiResult.data);
         }
-      } else {
-        setJadwalPengganti([]);
       }
     } catch (e: any) {
       setError(e as Error);
@@ -143,13 +143,14 @@ export function useJadwal(
   useEffect(() => {
     if (selectedTerm) {
       // Skip if we have initial data and haven't changed the term
-      if (initialData && selectedTerm === (initialTerm || initialData.terms?.[0])) {
+      const effectiveInitialTerm = initialTerm || initialData?.terms?.[0] || '';
+      if (initialData?.jadwal && selectedTerm === effectiveInitialTerm) {
         setLoading(false);
         return;
       }
       fetchJadwal();
     }
-  }, [selectedTerm, fetchJadwal, initialData, initialTerm]);
+  }, [selectedTerm, fetchJadwal, initialData?.jadwal, initialTerm]);
 
   return {
     data,
