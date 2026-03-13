@@ -1,22 +1,18 @@
 import 'server-only';
+import { cache } from 'react';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { getCachedAvailableTerms as getCachedTerms } from './termService';
+
 const globalAdmin = createAdminClient();
 import { Jadwal, JadwalPengganti } from '@/types/database';
 import { logger } from '@/lib/logger';
 
-export async function getAvailableTerms(supabaseClient?: SupabaseClient): Promise<string[]> {
-  const supabase = supabaseClient || globalAdmin;
-  const { data, error } = await supabase
-    .from('praktikum')
-    .select('tahun_ajaran')
-    .order('tahun_ajaran', { ascending: false });
-
-  if (!data) return [];
-  return Array.from(new Set(data.map((p) => p.tahun_ajaran)))
-    .sort()
-    .reverse();
-}
+/**
+ * Re-export getCachedAvailableTerms from termService (shared business logic)
+ * This prevents code duplication across services
+ */
+export const getCachedAvailableTerms = getCachedTerms;
 
 export async function getJadwalByTerm(
   term: string,
@@ -49,6 +45,16 @@ export async function getJadwalByTerm(
   }
   return data as Jadwal[];
 }
+
+/**
+ * Cached version of getJadwalByTerm
+ * Deduplicates requests within a single render/request cycle
+ */
+export const getCachedJadwalByTerm = cache(
+  async (term: string, supabaseClient?: SupabaseClient): Promise<Jadwal[]> => {
+    return getJadwalByTerm(term, supabaseClient);
+  }
+);
 
 export async function getScheduleForValidation(term: string, supabaseClient?: SupabaseClient) {
   const supabase = supabaseClient || globalAdmin;

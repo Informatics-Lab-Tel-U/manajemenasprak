@@ -39,7 +39,7 @@ export async function fetchTodaySchedule(
   term?: string
 ): Promise<ServiceResult<Jadwal[]>> {
   try {
-    const url = new URL('/api/jadwal', window.location.origin);
+    const url = new URL('/api/jadwal', globalThis.location.origin);
     url.searchParams.append('action', 'today');
     url.searchParams.append('limit', limit.toString());
     if (term) {

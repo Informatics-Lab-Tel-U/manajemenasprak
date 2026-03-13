@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { Download, Plus, Upload, ChevronDown, Users, GitFork } from 'lucide-react';
 import { toast } from 'sonner';
 import { Asprak } from '@/types/database';
@@ -59,8 +59,26 @@ export default function AsprakClientPage({
   initialExistingNims,
   initialExistingAspraks,
 }: AsprakClientPageProps) {
+  const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
-  const activeTab = searchParams.get('tab') || 'data';
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'data');
+
+  // Sync tab state if URL changes externally (e.g., browser back button)
+  useEffect(() => {
+    const tab = searchParams.get('tab') || 'data';
+    if (tab !== activeTab) {
+      setActiveTab(tab);
+    }
+  }, [searchParams, activeTab]);
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('tab', value);
+    // Use router.push with { scroll: false } for better transition
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+  };
 
   const {
     data: asprakList,
@@ -324,7 +342,7 @@ export default function AsprakClientPage({
         </div>
       </div>
 
-      <Tabs value={activeTab} className="w-full">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         <TabsList className="mb-6">
           <TabsTrigger value="data">Data Asprak</TabsTrigger>
           <TabsTrigger value="rules">Aturan Kode</TabsTrigger>

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import * as jadwalService from '@/services/jadwalService';
+import { getAvailableTerms } from '@/services/termService';
 import { logger } from '@/lib/logger';
 
 export async function GET(req: Request) {
@@ -10,14 +11,18 @@ export async function GET(req: Request) {
     const action = searchParams.get('action');
     const term = searchParams.get('term');
 
+    const cacheHeaders = {
+      'Cache-Control': 'public, max-age=60, stale-while-revalidate=300',
+    };
+
     if (action === 'terms') {
-      const terms = await jadwalService.getAvailableTerms(supabase);
-      return NextResponse.json({ ok: true, data: terms });
+      const terms = await getAvailableTerms(supabase);
+      return NextResponse.json({ ok: true, data: terms }, { headers: cacheHeaders });
     }
 
     if (action === 'by-term' && term) {
       const jadwal = await jadwalService.getJadwalByTerm(term, supabase);
-      return NextResponse.json({ ok: true, data: jadwal });
+      return NextResponse.json({ ok: true, data: jadwal }, { headers: cacheHeaders });
     }
 
     if (action === 'today') {
@@ -25,7 +30,7 @@ export async function GET(req: Request) {
       const term = searchParams.get('term');
       // Pass the term (or undefined) to the service
       const jadwal = await jadwalService.getTodaySchedule(limit, term || undefined, supabase);
-      return NextResponse.json({ ok: true, data: jadwal });
+      return NextResponse.json({ ok: true, data: jadwal }, { headers: cacheHeaders });
     }
 
     if (action === 'validation') {
@@ -33,18 +38,18 @@ export async function GET(req: Request) {
       if (!term)
         return NextResponse.json({ ok: false, error: 'Missing term param' }, { status: 400 });
       const result = await jadwalService.getScheduleForValidation(term, supabase);
-      return NextResponse.json({ ok: true, data: result });
+      return NextResponse.json({ ok: true, data: result }, { headers: cacheHeaders });
     }
 
     if (action === 'pengganti') {
       const modul = parseInt(searchParams.get('modul') || '0');
       const jadwal = await jadwalService.getJadwalPengganti(modul, supabase);
-      return NextResponse.json({ ok: true, data: jadwal });
+      return NextResponse.json({ ok: true, data: jadwal }, { headers: cacheHeaders });
     }
 
     // Default action: get all jadwal
     const jadwal = await jadwalService.getAllJadwal(supabase);
-    return NextResponse.json({ ok: true, data: jadwal });
+    return NextResponse.json({ ok: true, data: jadwal }, { headers: cacheHeaders });
   } catch (error: any) {
     logger.error('API Error in /api/jadwal:', error);
     return NextResponse.json(

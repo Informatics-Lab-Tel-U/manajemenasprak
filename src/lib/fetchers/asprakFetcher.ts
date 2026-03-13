@@ -41,7 +41,7 @@ export async function fetchPlottingData(
   term?: string
 ): Promise<ServiceResult<AsprakPlottingData[]>> {
   try {
-    const url = new URL('/api/asprak', window.location.origin);
+    const url = new URL('/api/asprak', globalThis.location.origin);
     url.searchParams.append('action', 'plotting');
     if (term) url.searchParams.append('term', term);
 

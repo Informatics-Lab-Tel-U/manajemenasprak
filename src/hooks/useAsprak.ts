@@ -22,9 +22,15 @@ export function useAsprak(
   const [error, setError] = useState<string | null>(null);
 
   const [terms, setTerms] = useState<string[]>(initialData?.terms || []);
-  const [selectedTerm, setSelectedTerm] = useState(
-    initialTerm || (initialData?.terms?.[0] ? initialData.terms[0] : defaultToLatest ? '' : 'all')
-  );
+  let _initialTermValue = initialTerm;
+  if (!_initialTermValue && initialData?.terms?.[0]) {
+    _initialTermValue = initialData.terms[0];
+  } else if (!_initialTermValue && defaultToLatest) {
+    _initialTermValue = '';
+  } else if (!_initialTermValue) {
+    _initialTermValue = 'all';
+  }
+  const [selectedTerm, setSelectedTerm] = useState(_initialTermValue);
   const [hasInitializedLatest, setHasInitializedLatest] = useState(!!initialData?.terms);
   // Use ref so fetchTerms doesn't re-create every time hasInitializedLatest changes
   const hasInitializedLatestRef = useRef(hasInitializedLatest);
@@ -91,13 +97,14 @@ export function useAsprak(
   }, [fetchTerms]);
 
   useEffect(() => {
-    // If we have initial data and we haven't changed the term, skip the first fetch
-    if (initialData && selectedTerm === (initialTerm || initialData.terms?.[0] || 'all')) {
+    // If we have initial data and the term hasn't changed from initial, skip the fetch
+    const effectiveInitialTerm = initialTerm || initialData?.terms?.[0] || 'all';
+    if (initialData?.asprakList && selectedTerm === effectiveInitialTerm) {
       setLoading(false);
       return;
     }
     fetchAll();
-  }, [fetchAll, selectedTerm, initialData, initialTerm]);
+  }, [fetchAll, selectedTerm, initialData?.asprakList, initialTerm]);
 
   return {
     data,
