@@ -177,7 +177,7 @@ export default function AuditLogsClientPage({
         </div>
       </div>
 
-      <div className="card glass p-6">
+      <div className="card glass p-6 border border-border/50">
         <div className="flex justify-between items-center mb-6">
           <div className="relative w-full md:w-72">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
