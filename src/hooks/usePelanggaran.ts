@@ -11,44 +11,78 @@ import { toast } from 'sonner';
 export function usePelanggaran(
   initialTahunAjaran?: string,
   isKoor: boolean = false,
-  userId?: string
+  userId?: string,
+  initialData?: {
+    praktikumList?: Praktikum[];
+    tahunAjaranList?: string[];
+    countMap?: PelanggaranCountMap;
+  },
+  options: { fetchHeavyData?: boolean } = { fetchHeavyData: false }
 ) {
-  const [praktikumList, setPraktikumList] = useState<Praktikum[]>([]);
-  const [tahunAjaranList, setTahunAjaranList] = useState<string[]>([]);
+  const [praktikumList, setPraktikumList] = useState<Praktikum[]>(initialData?.praktikumList || []);
+  const [tahunAjaranList, setTahunAjaranList] = useState<string[]>(
+    initialData?.tahunAjaranList || []
+  );
   const [selectedTahun, setSelectedTahun] = useState(initialTahunAjaran || '');
-  const [countMap, setCountMap] = useState<PelanggaranCountMap>({});
+  const [countMap, setCountMap] = useState<PelanggaranCountMap>(initialData?.countMap || {});
   const [asprakList, setAsprakList] = useState<(Asprak & { praktikum_ids?: string[] })[]>([]);
   const [jadwalList, setJadwalList] = useState<(Jadwal & { id_praktikum?: string })[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!initialData);
   const [error, setError] = useState<Error | null>(null);
 
+  // Sync year list if we have initial praktikum data and no initial year list
+  useEffect(() => {
+    if (praktikumList.length > 0 && tahunAjaranList.length === 0) {
+      const years = Array.from(new Set(praktikumList.map((p) => p.tahun_ajaran)))
+        .sort()
+        .reverse();
+      setTahunAjaranList(years);
+      if (years.length > 0 && !selectedTahun) {
+        setSelectedTahun(years[0]);
+      }
+    }
+  }, [praktikumList, selectedTahun, tahunAjaranList.length]);
+
   const fetchData = useCallback(async () => {
-    setLoading(true);
+    // Only set loading if we don't already have some data
+    if (Object.keys(countMap).length === 0) {
+      setLoading(true);
+    }
     setError(null);
     try {
-      const [countsRes, asprakRes, jadwalRes] = await Promise.all([
-        pelanggaranFetcher.fetchPelanggaranCounts(isKoor),
-        asprakFetcher.fetchPlottingData(),
-        pelanggaranFetcher.fetchJadwalForPelanggaran(),
-      ]);
+      // Conditionally fetch heavy data (asprak, jadwal)
+      const fetchGroup: Promise<any>[] = [pelanggaranFetcher.fetchPelanggaranCounts(isKoor)];
+
+      if (options.fetchHeavyData) {
+        fetchGroup.push(asprakFetcher.fetchPlottingData());
+        fetchGroup.push(pelanggaranFetcher.fetchJadwalForPelanggaran());
+      }
+
+      const results = await Promise.all(fetchGroup);
+      const countsRes = results[0];
 
       if (countsRes.ok) setCountMap(countsRes.data || {});
 
-      if (asprakRes.ok && asprakRes.data) {
-        const formattedAsprak = asprakRes.data.map((a: any) => ({
-          ...a,
-          praktikum_ids: a.assignments?.map((ap: any) => ap.id) || [],
-        }));
-        setAsprakList(formattedAsprak);
-      }
+      if (options.fetchHeavyData) {
+        const asprakRes = results[1];
+        const jadwalRes = results[2];
 
-      if (jadwalRes.ok) setJadwalList((jadwalRes.data as any) || []);
+        if (asprakRes.ok && asprakRes.data) {
+          const formattedAsprak = asprakRes.data.map((a: any) => ({
+            ...a,
+            praktikum_ids: a.assignments?.map((ap: any) => ap.id) || [],
+          }));
+          setAsprakList(formattedAsprak);
+        }
+
+        if (jadwalRes.ok) setJadwalList((jadwalRes.data as any) || []);
+      }
     } catch (e: any) {
       setError(e);
     } finally {
       setLoading(false);
     }
-  }, [isKoor]);
+  }, [isKoor, countMap, options.fetchHeavyData]);
 
   const fetchPraktikum = useCallback(async () => {
     if (isKoor && userId) {
@@ -91,9 +125,15 @@ export function usePelanggaran(
   };
 
   useEffect(() => {
-    fetchData();
-    fetchPraktikum();
-  }, [fetchData, fetchPraktikum]);
+    // If we have initial data, we can skip the first fetch
+    // But we might still want to fetch asprak/jadwal in the background if they are needed elsewhere
+    // However, on the list page they are not used.
+    // To keep it simple and performant: if we have initial counts, we skip initial fetchData.
+    if (!initialData) {
+      fetchData();
+      fetchPraktikum();
+    }
+  }, [fetchData, fetchPraktikum, initialData]);
 
   return {
     praktikumList,

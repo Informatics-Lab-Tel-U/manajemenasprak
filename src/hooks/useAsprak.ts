@@ -9,19 +9,29 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { Asprak } from '@/types/database';
 import * as asprakFetcher from '@/lib/fetchers/asprakFetcher';
 
-export function useAsprak(initialTerm?: string, defaultToLatest: boolean = false) {
-  const [data, setData] = useState<Asprak[]>([]);
+export function useAsprak(
+  initialTerm?: string,
+  defaultToLatest: boolean = false,
+  initialData?: {
+    asprakList?: Asprak[];
+    terms?: string[];
+  }
+) {
+  const [data, setData] = useState<Asprak[]>(initialData?.asprakList || []);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [terms, setTerms] = useState<string[]>([]);
-  const [selectedTerm, setSelectedTerm] = useState(initialTerm || (defaultToLatest ? '' : 'all'));
-  const [hasInitializedLatest, setHasInitializedLatest] = useState(false);
+  const [terms, setTerms] = useState<string[]>(initialData?.terms || []);
+  const [selectedTerm, setSelectedTerm] = useState(
+    initialTerm || (initialData?.terms?.[0] ? initialData.terms[0] : defaultToLatest ? '' : 'all')
+  );
+  const [hasInitializedLatest, setHasInitializedLatest] = useState(!!initialData?.terms);
   // Use ref so fetchTerms doesn't re-create every time hasInitializedLatest changes
   const hasInitializedLatestRef = useRef(hasInitializedLatest);
   hasInitializedLatestRef.current = hasInitializedLatest;
 
   const fetchTerms = useCallback(async () => {
+    if (terms.length > 0) return; // Skip if already have terms
     const result = await asprakFetcher.fetchAvailableTerms();
     if (result.ok && result.data) {
       setTerms(result.data);
@@ -30,7 +40,7 @@ export function useAsprak(initialTerm?: string, defaultToLatest: boolean = false
         setHasInitializedLatest(true);
       }
     }
-  }, [defaultToLatest]); // removed hasInitializedLatest — now read via ref
+  }, [defaultToLatest, terms.length]);
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
@@ -53,7 +63,7 @@ export function useAsprak(initialTerm?: string, defaultToLatest: boolean = false
     }
 
     setLoading(false);
-  }, [selectedTerm]);
+  }, [selectedTerm, defaultToLatest, hasInitializedLatest]);
 
   const upsert = async (input: asprakFetcher.UpsertAsprakInput) => {
     const result = await asprakFetcher.upsertAsprak(input);
@@ -81,8 +91,13 @@ export function useAsprak(initialTerm?: string, defaultToLatest: boolean = false
   }, [fetchTerms]);
 
   useEffect(() => {
+    // If we have initial data and we haven't changed the term, skip the first fetch
+    if (initialData && selectedTerm === (initialTerm || initialData.terms?.[0] || 'all')) {
+      setLoading(false);
+      return;
+    }
     fetchAll();
-  }, [fetchAll, selectedTerm]);
+  }, [fetchAll, selectedTerm, initialData, initialTerm]);
 
   return {
     data,

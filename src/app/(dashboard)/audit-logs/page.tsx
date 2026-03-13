@@ -9,17 +9,18 @@ export default async function AuditLogsPage(props: {
   searchParams: Promise<{ page?: string; pageSize?: string }>;
 }) {
   const searchParams = await props.searchParams;
-  const authUser = await requireAuth();
+  const page = Number(searchParams.page) || 1;
+  const pageSize = Number(searchParams.pageSize) || 10;
+
+  const [authUser, { logs, count }] = await Promise.all([
+    requireAuth(),
+    getAuditLogs(page, pageSize),
+  ]);
 
   // Security check: only ADMIN and ASLAB can access audit logs
   if (authUser.pengguna.role === 'ASPRAK_KOOR') {
     redirect('/');
   }
-
-  const page = Number(searchParams.page) || 1;
-  const pageSize = Number(searchParams.pageSize) || 10;
-
-  const { logs, count } = await getAuditLogs(page, pageSize);
 
   return (
     <AuditLogsClientPage logs={logs} totalCount={count} currentPage={page} pageSize={pageSize} />

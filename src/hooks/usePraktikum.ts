@@ -5,18 +5,21 @@ import * as praktikumFetcher from '@/lib/fetchers/praktikumFetcher';
 import { Praktikum } from '@/types/database';
 import type { PraktikumWithStats } from '@/services/praktikumService';
 
-export function usePraktikum() {
-  const [praktikumNames, setPraktikumNames] = useState<{ id: string; nama: string }[]>([]);
-  const [loading, setLoading] = useState(true);
+export function usePraktikum(initialData?: { praktikumNames: { id: string; nama: string }[] }) {
+  const [praktikumNames, setPraktikumNames] = useState<{ id: string; nama: string }[]>(
+    initialData?.praktikumNames || []
+  );
+  const [loading, setLoading] = useState(!initialData?.praktikumNames);
 
   const fetchPraktikumNames = useCallback(async () => {
+    if (praktikumNames.length > 0 && initialData) return;
     setLoading(true);
     const result = await praktikumFetcher.fetchUniquePraktikumNames();
     if (result.ok && result.data) {
       setPraktikumNames(result.data);
     }
     setLoading(false);
-  }, []);
+  }, [praktikumNames.length, initialData]);
 
   const getOrCreate = useCallback(
     async (nama: string, tahunAjaran: string): Promise<Praktikum | null> => {
@@ -36,8 +39,12 @@ export function usePraktikum() {
   }, []);
 
   useEffect(() => {
+    if (initialData && praktikumNames.length > 0) {
+      setLoading(false);
+      return;
+    }
     fetchPraktikumNames();
-  }, [fetchPraktikumNames]);
+  }, [fetchPraktikumNames, initialData]);
 
   const getDetails = useCallback(async (id: string) => {
     const result = await praktikumFetcher.fetchPraktikumDetails(id);
