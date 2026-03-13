@@ -65,9 +65,7 @@ export default function PanduanClientPage({ role }: PanduanClientPageProps) {
                 <AccordionItem value="alur" className="border rounded-xl px-4 bg-card/30">
                   <AccordionTrigger className="hover:no-underline py-4">
                     <div className="flex items-center gap-3">
-                      <div className="p-2 bg-muted rounded-full">
-                        <GitGraph size={20} />
-                      </div>
+                      <GitGraph size={20} className="text-muted-foreground" />
                       <div className="text-left">
                         <h3 className="font-semibold text-base">Alur Penambahan Data</h3>
                         <p className="text-sm font-normal text-muted-foreground">
@@ -111,9 +109,7 @@ export default function PanduanClientPage({ role }: PanduanClientPageProps) {
                 <AccordionItem value="praktikum" className="border rounded-xl px-4 bg-card/30">
                   <AccordionTrigger className="hover:no-underline py-4">
                     <div className="flex items-center gap-3">
-                      <div className="p-2 bg-muted rounded-full">
-                        <BookOpen size={20} />
-                      </div>
+                      <BookOpen size={20} className="text-muted-foreground" />
                       <div className="text-left">
                         <h3 className="font-semibold text-base">Data Praktikum</h3>
                         <p className="text-sm font-normal text-muted-foreground">
@@ -330,9 +326,7 @@ export default function PanduanClientPage({ role }: PanduanClientPageProps) {
             <AccordionItem value="pelanggaran" className="border rounded-xl px-4 bg-card/30">
               <AccordionTrigger className="hover:no-underline py-4">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-muted rounded-full">
-                    <AlertTriangle size={20} />
-                  </div>
+                  <AlertTriangle size={20} className="text-muted-foreground" />
                   <div className="text-left">
                     <h3 className="font-semibold text-base">Pencatatan Pelanggaran</h3>
                     <p className="text-sm font-normal text-muted-foreground">

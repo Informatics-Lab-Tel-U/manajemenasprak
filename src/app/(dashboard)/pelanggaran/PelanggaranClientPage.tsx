@@ -123,29 +123,31 @@ export default function PelanggaranClientPage({
             Log indisipliner asisten praktikum per praktikum
           </p>
         </div>
-      </div>
 
-      {/* Filter Tahun */}
-      <div className="card glass p-4 mb-6 flex items-center gap-3">
-        <Filter className="h-4 w-4 text-muted-foreground" />
-        <span className="text-sm font-medium text-muted-foreground">Tahun Ajaran:</span>
-        <Select value={currentTahun} onValueChange={setFilterTahun} disabled={loading}>
-          <SelectTrigger className="h-8 w-[160px] text-sm">
-            <SelectValue placeholder="Tahun Ajaran" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectGroup>
-              {displayedTahunList.map((t) => (
-                <SelectItem key={t} value={t}>
-                  {t}
-                </SelectItem>
-              ))}
-            </SelectGroup>
-          </SelectContent>
-        </Select>
-        {loading && (
-          <div className="h-4 w-4 rounded-full border-2 border-primary border-t-transparent animate-spin ml-2" />
-        )}
+        {/* Filter Tahun */}
+        <div className="flex items-center gap-3 w-full sm:w-auto">
+          <Filter className="h-4 w-4 text-muted-foreground hidden sm:block" />
+          <span className="text-sm font-medium text-muted-foreground hidden sm:block">
+            Tahun Ajaran:
+          </span>
+          <Select value={currentTahun} onValueChange={setFilterTahun} disabled={loading}>
+            <SelectTrigger className="w-full md:w-[180px] sm:max-w-[180px]">
+              <SelectValue placeholder="Tahun Ajaran" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                {displayedTahunList.map((t) => (
+                  <SelectItem key={t} value={t}>
+                    {t}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+          {loading && (
+            <div className="h-4 w-4 rounded-full border-2 border-primary border-t-transparent animate-spin ml-2" />
+          )}
+        </div>
       </div>
 
       {loading && filteredPraktikum.length === 0 ? (
@@ -184,7 +186,7 @@ export default function PelanggaranClientPage({
                 <div className="p-5 flex flex-col h-full relative z-10">
                   <div className="flex items-start justify-between gap-2 mb-4">
                     <div>
-                      <h3 className="font-semibold text-lg leading-snug text-foreground/90 dark:text-foreground group-hover:text-foreground transition-colors">
+                      <h3 className="font-semibold text-base leading-snug text-foreground/90 dark:text-foreground group-hover:text-foreground transition-colors">
                         {p.nama}
                       </h3>
                       <p className="text-xs text-muted-foreground mt-1 font-mono opacity-80">
@@ -205,10 +207,10 @@ export default function PelanggaranClientPage({
 
                   <div className="flex items-center justify-between mt-auto">
                     <div>
-                      <span className="text-3xl font-bold tracking-tight text-foreground">
+                      <span className="text-2xl font-bold tracking-tight text-foreground">
                         {info.total}
                       </span>
-                      <span className="text-xs text-muted-foreground ml-1.5 font-medium uppercase tracking-wider">
+                      <span className="text-[10px] text-muted-foreground ml-1.5 font-medium uppercase tracking-wider">
                         pelanggaran
                       </span>
                     </div>

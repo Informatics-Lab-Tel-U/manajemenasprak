@@ -475,7 +475,7 @@ export default function JadwalPage() {
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-2 md:gap-3 items-center w-full md:w-auto">
+        <div className="flex flex-wrap md:flex-nowrap gap-2 md:gap-3 items-center w-full md:w-auto">
           <Button
             variant="outline"
             onClick={handleOpenAdd}
@@ -500,7 +500,7 @@ export default function JadwalPage() {
             <PaintBucket size={18} />
           </Button>
           <Select value={selectedModul} onValueChange={setSelectedModul}>
-            <SelectTrigger className="w-full sm:max-w-[180px]">
+            <SelectTrigger className="w-full md:w-[180px] sm:max-w-[180px]">
               <SelectValue placeholder="Select modul" />
             </SelectTrigger>
             <SelectContent>
@@ -515,7 +515,7 @@ export default function JadwalPage() {
           </Select>
 
           <Select value={selectedTerm} onValueChange={setSelectedTerm}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-full md:w-[180px] sm:max-w-[180px]">
               <SelectValue placeholder="Select term" />
             </SelectTrigger>
             <SelectContent>

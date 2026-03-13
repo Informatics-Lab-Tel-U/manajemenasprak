@@ -5,6 +5,12 @@ import { Filter, Search, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -77,66 +83,79 @@ export default function PelanggaranRekapClient({ initialTahunAjaranList, userRol
         </div>
       </div>
 
-      {/* Filters Card */}
-      <div className="card glass p-6 border border-border/50">
-        <div className="flex items-center gap-2 mb-4">
-          <Filter className="h-4 w-4 text-muted-foreground" />
-          <h2 className="text-sm font-semibold">Filter Parameter</h2>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground">Tahun Ajaran</label>
-            <Select value={tahunAjaran} onValueChange={setTahunAjaran}>
-              <SelectTrigger className="h-9">
-                <SelectValue placeholder="Pilih Tahun" />
-              </SelectTrigger>
-              <SelectContent>
-                {initialTahunAjaranList.map((y) => (
-                  <SelectItem key={y} value={y}>
-                    {y}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+      {/* Filters Accordion */}
+      <Accordion type="single" collapsible defaultValue="filter" className="w-full">
+        <AccordionItem value="filter" className="border rounded-xl px-4 bg-card/30">
+          <AccordionTrigger className="hover:no-underline py-4">
+            <div className="flex items-center gap-3">
+              <Filter size={20} className="text-muted-foreground" />
+              <div className="text-left">
+                <h3 className="font-semibold text-base">Filter Parameter</h3>
+                <p className="text-sm font-normal text-muted-foreground">
+                  Sesuaikan data rekap pelanggaran yang ingin ditampilkan.
+                </p>
+              </div>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent className="pt-2 pb-6 space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground">Tahun Ajaran</label>
+                <Select value={tahunAjaran} onValueChange={setTahunAjaran}>
+                  <SelectTrigger className="h-9 w-full">
+                    <SelectValue placeholder="Pilih Tahun" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {initialTahunAjaranList.map((y) => (
+                      <SelectItem key={y} value={y}>
+                        {y}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground">Modul</label>
-            <Select value={modul} onValueChange={setModul}>
-              <SelectTrigger className="h-9">
-                <SelectValue placeholder="Pilih Modul" />
-              </SelectTrigger>
-              <SelectContent>
-                {Array.from({ length: 16 }, (_, i) => (
-                  <SelectItem key={i + 1} value={String(i + 1)}>
-                    Modul {i + 1}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground">Batas Modul</label>
+                <Select value={modul} onValueChange={setModul}>
+                  <SelectTrigger className="h-9 w-full">
+                    <SelectValue placeholder="Pilih Modul" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Array.from({ length: 16 }, (_, i) => (
+                      <SelectItem key={i + 1} value={String(i + 1)}>
+                        Modul {i + 1}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground">Min. Pelanggaran</label>
-            <Input
-              type="number"
-              min={1}
-              value={minCount}
-              onChange={(e) => setMinCount(Number(e.target.value))}
-              className="h-9"
-            />
-          </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground">
+                  Min. Pelanggaran
+                </label>
+                <Input
+                  type="number"
+                  min={1}
+                  value={minCount}
+                  onChange={(e) => setMinCount(Number(e.target.value))}
+                  className="h-9 w-full"
+                />
+              </div>
 
-          <Button onClick={loadData} disabled={loading} className="h-9">
-            {loading ? (
-              <Loader2 className="h-4 w-4 animate-spin mr-2" />
-            ) : (
-              <Search className="h-4 w-4 mr-2" />
-            )}
-            Tampilkan
-          </Button>
-        </div>
-      </div>
+              <Button onClick={loadData} disabled={loading} className="h-9">
+                {loading ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <Search className="h-4 w-4 mr-2" />
+                )}
+                Tampilkan
+              </Button>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
 
       {/* Results Table */}
       {(() => {
