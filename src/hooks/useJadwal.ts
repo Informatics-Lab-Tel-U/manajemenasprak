@@ -6,14 +6,23 @@ import * as jadwalFetcher from '@/lib/fetchers/jadwalFetcher';
 import * as praktikumFetcher from '@/lib/fetchers/praktikumFetcher';
 import type { CreateJadwalInput, UpdateJadwalInput } from '@/services/jadwalService';
 
-export function useJadwal(initialTerm?: string) {
-  const [data, setData] = useState<Jadwal[]>([]);
-  const [terms, setTerms] = useState<string[]>([]);
-  const [selectedTerm, setSelectedTerm] = useState(initialTerm || '');
+export function useJadwal(
+  initialTerm?: string,
+  initialData?: {
+    jadwal?: Jadwal[];
+    terms?: string[];
+    mataKuliah?: MataKuliah[];
+  }
+) {
+  const [data, setData] = useState<Jadwal[]>(initialData?.jadwal || []);
+  const [terms, setTerms] = useState<string[]>(initialData?.terms || []);
+  const [selectedTerm, setSelectedTerm] = useState(
+    initialTerm || (initialData?.terms?.[0] ? initialData.terms[0] : '')
+  );
   const [selectedModul, setSelectedModul] = useState('Default');
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!initialData?.jadwal);
   const [error, setError] = useState<Error | null>(null);
-  const [mataKuliahList, setMataKuliahList] = useState<MataKuliah[]>([]);
+  const [mataKuliahList, setMataKuliahList] = useState<MataKuliah[]>(initialData?.mataKuliah || []);
   const [jadwalPengganti, setJadwalPengganti] = useState<any[]>([]);
 
   const moduls = [
@@ -35,6 +44,7 @@ export function useJadwal(initialTerm?: string) {
   ];
 
   const fetchTerms = useCallback(async () => {
+    if (terms.length > 0) return;
     const result = await jadwalFetcher.fetchAvailableTerms();
     if (result.ok && result.data) {
       setTerms(result.data);
@@ -42,14 +52,15 @@ export function useJadwal(initialTerm?: string) {
         setSelectedTerm(result.data[0]);
       }
     }
-  }, [selectedTerm]);
+  }, [selectedTerm, terms.length]);
 
   const fetchMataKuliah = useCallback(async () => {
+    if (mataKuliahList.length > 0) return;
     const result = await praktikumFetcher.fetchMataKuliah();
     if (result.ok && result.data) {
       setMataKuliahList(result.data);
     }
-  }, []);
+  }, [mataKuliahList.length]);
 
   const fetchJadwal = useCallback(async () => {
     if (!selectedTerm) return;
@@ -130,8 +141,15 @@ export function useJadwal(initialTerm?: string) {
   }, [fetchTerms, fetchMataKuliah]);
 
   useEffect(() => {
-    if (selectedTerm) fetchJadwal();
-  }, [selectedTerm, fetchJadwal]);
+    if (selectedTerm) {
+      // Skip if we have initial data and haven't changed the term
+      if (initialData && selectedTerm === (initialTerm || initialData.terms?.[0])) {
+        setLoading(false);
+        return;
+      }
+      fetchJadwal();
+    }
+  }, [selectedTerm, fetchJadwal, initialData, initialTerm]);
 
   return {
     data,

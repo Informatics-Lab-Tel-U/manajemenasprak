@@ -341,7 +341,7 @@ export default function PelanggaranDetailClient({
 
   if (!mounted) {
     return (
-      <div className="container py-8 space-y-8">
+      <div className="container space-y-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <Skeleton className="h-10 w-10 rounded-md" />
@@ -364,7 +364,7 @@ export default function PelanggaranDetailClient({
   }
 
   return (
-    <div className="container py-8 space-y-8">
+    <div className="container space-y-8">
       {/* Delete confirmation dialog */}
       <AlertDialog
         open={!!violationToDelete}

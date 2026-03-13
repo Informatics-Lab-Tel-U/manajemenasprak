@@ -17,35 +17,12 @@ import {
 import type { Praktikum, Asprak, Jadwal } from '@/types/database';
 import { cn } from '@/lib/utils';
 import { usePelanggaran } from '@/hooks/usePelanggaran';
-import { Skeleton } from '@/components/ui/skeleton';
-
-function PelanggaranCardSkeleton() {
-  return (
-    <div className="relative overflow-hidden border backdrop-blur-sm bg-white/60 dark:bg-zinc-900/60 flex flex-col gap-4 rounded-xl p-5 h-[160px]">
-      <div className="flex items-start justify-between gap-2 mb-4">
-        <div className="space-y-2 flex-1">
-          <Skeleton className="h-6 w-3/4" />
-          <Skeleton className="h-3 w-1/4" />
-        </div>
-        <Skeleton className="h-6 w-24 rounded-full" />
-      </div>
-      <div className="flex items-center justify-between mt-auto">
-        <div className="flex items-end gap-2">
-          <Skeleton className="h-10 w-12" />
-          <Skeleton className="h-4 w-16 mb-1" />
-        </div>
-        <Skeleton className="h-8 w-20" />
-      </div>
-    </div>
-  );
-}
+import { PelanggaranCardSkeleton } from '@/components/pelanggaran/PelanggaranCardSkeleton';
 
 interface Props {
   initialPraktikumList: Praktikum[];
   initialTahunAjaranList: string[];
   initialCountMap: Record<string, { total: number; allFinal: boolean; finalized: boolean }>;
-  initialAsprakList: (Asprak & { praktikum_ids?: string[] })[];
-  initialJadwalList: (Jadwal & { id_praktikum?: string })[];
   isKoor: boolean;
   userId?: string;
 }
@@ -54,8 +31,6 @@ export default function PelanggaranClientPage({
   initialPraktikumList,
   initialTahunAjaranList,
   initialCountMap,
-  initialAsprakList,
-  initialJadwalList,
   isKoor,
   userId,
 }: Props) {
@@ -67,7 +42,11 @@ export default function PelanggaranClientPage({
     setSelectedTahun: setFilterTahun,
     countMap,
     loading,
-  } = usePelanggaran(initialTahunAjaranList[0], isKoor, userId);
+  } = usePelanggaran(initialTahunAjaranList[0], isKoor, userId, {
+    praktikumList: initialPraktikumList,
+    tahunAjaranList: initialTahunAjaranList,
+    countMap: initialCountMap,
+  });
 
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
@@ -77,10 +56,10 @@ export default function PelanggaranClientPage({
     setMounted(true);
   }, []);
 
-  // Use state with initial props as fallback to avoid flicker, or just use hook data
-  const displayedPraktikum = praktikumList.length > 0 ? praktikumList : initialPraktikumList;
-  const displayedTahunList = tahunAjaranList.length > 0 ? tahunAjaranList : initialTahunAjaranList;
-  const displayedCountMap = Object.keys(countMap).length > 0 ? countMap : initialCountMap;
+  // Hook data is now pre-initialized with initial props
+  const displayedPraktikum = praktikumList;
+  const displayedTahunList = tahunAjaranList;
+  const displayedCountMap = countMap;
 
   const currentTahun = filterTahun || initialTahunAjaranList[0] || '';
 
@@ -94,15 +73,14 @@ export default function PelanggaranClientPage({
 
   if (!mounted) {
     return (
-      <div className="container py-8">
+      <div className="container">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-          <div className="space-y-2">
-            <Skeleton className="h-10 w-48" />
-            <Skeleton className="h-4 w-64" />
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Pelanggaran</h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Log indisipliner asisten praktikum per praktikum
+            </p>
           </div>
-        </div>
-        <div className="card glass p-4 mb-6 flex items-center gap-3">
-          <Skeleton className="h-8 w-full max-w-[240px]" />
         </div>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
