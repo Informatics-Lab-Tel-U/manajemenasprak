@@ -200,7 +200,7 @@ export function ManajemenAkunClientPage({ users }: { users: UserWithEmail[] }) {
         </Button>
       </div>
 
-      <div className="card glass p-6">
+      <div className="card glass p-6 border border-border/50">
         <div className="rounded-md border mb-4">
           <Table>
             <TableHeader>
