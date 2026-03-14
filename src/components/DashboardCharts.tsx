@@ -77,22 +77,98 @@ export default function DashboardCharts({
   }, [todaySchedule, programType]);
 
   const scheduleMatrix = useMemo(() => {
-    const matrix: Record<number, Record<string, Jadwal>> = {};
+    const matrix: Record<string, Record<string, Jadwal[]>> = {};
+
+    const staticForDay = STATIC_SESSIONS[currentDayName] || [];
+    const staticJamToSesi = new Map<string, number>();
+    staticForDay.forEach((s) => staticJamToSesi.set(s.jam, s.sesi));
+
     filteredSchedule.forEach((j) => {
-      if (!j.sesi || !j.ruangan) return;
-      if (!matrix[j.sesi]) matrix[j.sesi] = {};
-      matrix[j.sesi][j.ruangan] = j;
+      let jamStr = j.jam || '';
+      if (jamStr.split(':').length === 3) jamStr = jamStr.split(':').slice(0, 2).join(':');
+
+      let sesi = j.sesi;
+      if (!sesi || sesi === 0) {
+        if (jamStr && staticJamToSesi.has(jamStr)) sesi = staticJamToSesi.get(jamStr)!;
+      }
+
+      const rowKey =
+        sesi !== null && sesi !== undefined && sesi !== 0 ? sesi.toString() : jamStr || 'Unknown';
+      const roomKey = j.ruangan || 'Tanpa Ruangan';
+
+      if (!matrix[rowKey]) matrix[rowKey] = {};
+      if (!matrix[rowKey][roomKey]) matrix[rowKey][roomKey] = [];
+
+      const normalizedJ = { ...j, jam: jamStr, sesi: sesi ?? undefined };
+      matrix[rowKey][roomKey].push(normalizedJ as Jadwal);
     });
     return matrix;
-  }, [filteredSchedule]);
+  }, [filteredSchedule, currentDayName]);
 
-  const allSessions = STATIC_SESSIONS[currentDayName] || [];
   const visibleSessions = useMemo(() => {
-    if (allSessions.length === 0) return allSessions;
-    const lastSession = allSessions[allSessions.length - 1];
-    const hasLastSessionSchedule = scheduleMatrix[lastSession.sesi] !== undefined;
-    return hasLastSessionSchedule ? allSessions : allSessions.slice(0, -1);
-  }, [allSessions, scheduleMatrix]);
+    const staticForDay = STATIC_SESSIONS[currentDayName] || [];
+    const staticJamToSesi = new Map<string, number>();
+    staticForDay.forEach((s) => staticJamToSesi.set(s.jam, s.sesi));
+
+    const sessionsAsKeys = new Map<string, { sesi: number | null; jam: string; rowKey: string }>();
+
+    // Add static sessions (except session 5 if empty, matching JadwalClientPage style)
+    staticForDay.forEach((s) => {
+      if (s.sesi !== 5) {
+        const rowKey = s.sesi !== null && s.sesi !== undefined ? s.sesi.toString() : s.jam;
+        sessionsAsKeys.set(rowKey, { sesi: s.sesi, jam: s.jam, rowKey });
+      }
+    });
+
+    // Add dynamic keys from current schedule
+    filteredSchedule.forEach((j) => {
+      let jamStr = j.jam || '';
+      if (jamStr.split(':').length === 3) jamStr = jamStr.split(':').slice(0, 2).join(':');
+
+      let sesi = j.sesi;
+      if (!sesi || sesi === 0) {
+        if (jamStr && staticJamToSesi.has(jamStr)) sesi = staticJamToSesi.get(jamStr)!;
+      }
+
+      const rowKey =
+        sesi !== null && sesi !== undefined && sesi !== 0 ? sesi.toString() : jamStr || 'Unknown';
+
+      if (!sessionsAsKeys.has(rowKey)) {
+        sessionsAsKeys.set(rowKey, { sesi: sesi || null, jam: jamStr || '-', rowKey });
+      } else {
+        const existing = sessionsAsKeys.get(rowKey)!;
+        if (!existing.jam || existing.jam === '-' || (!sesi && existing.sesi === null)) {
+          sessionsAsKeys.set(rowKey, {
+            sesi: sesi || existing.sesi,
+            jam: jamStr || existing.jam,
+            rowKey,
+          });
+        }
+      }
+    });
+
+    const parseTime = (jamStr: string) => {
+      const m = jamStr.match(/(\d{1,2}):(\d{2})/);
+      if (m) return parseInt(m[1]) * 60 + parseInt(m[2]);
+      return 9999;
+    };
+
+    const sortedSessions = Array.from(sessionsAsKeys.values()).sort((a, b) => {
+      const timeA = parseTime(a.jam);
+      const timeB = parseTime(b.jam);
+      if (timeA !== 9999 || timeB !== 9999) return timeA - timeB;
+      return (a.sesi ?? 999) - (b.sesi ?? 999);
+    });
+
+    // Visibility rules: hide session 5 if no data
+    const lastStaticSession = staticForDay[staticForDay.length - 1];
+    return lastStaticSession
+      ? sortedSessions.filter((s) => {
+          if (s.sesi !== lastStaticSession.sesi) return true;
+          return scheduleMatrix[s.rowKey] !== undefined;
+        })
+      : sortedSessions;
+  }, [currentDayName, filteredSchedule, scheduleMatrix]);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -190,47 +266,52 @@ export default function DashboardCharts({
                   </tr>
                 </thead>
                 <tbody>
-                  {visibleSessions.map((session, sessionIndex) => (
+                  {visibleSessions.map((session) => (
                     <tr
-                      key={session.sesi ?? sessionIndex + 1}
+                      key={session.rowKey}
                       className="hover:bg-muted/30 transition-colors border-b border-border/50"
                     >
                       <td className="p-2 border-r border-border text-center font-medium text-muted-foreground text-xs">
-                        <div className="font-bold">Sesi {session.sesi ?? sessionIndex + 1}</div>
+                        {session.sesi ? <div className="font-bold">Sesi {session.sesi}</div> : null}
                         <div className="text-[10px] opacity-80">{session.jam}</div>
                       </td>
                       {uniqueRooms.map((room) => {
-                        const jadwal = scheduleMatrix[session.sesi ?? sessionIndex + 1]?.[room];
+                        const jadwals = scheduleMatrix[session.rowKey]?.[room] || [];
                         return (
                           <td
-                            key={`${session.sesi ?? sessionIndex + 1}-${room}`}
-                            className="p-0 border-r border-border h-[60px] w-[120px] relative"
+                            key={`${session.rowKey}-${room}`}
+                            className="p-0 border-r border-border h-[60px] w-[120px] relative align-top"
                           >
-                            {jadwal ? (
-                              <div
-                                className="w-full h-full flex flex-col items-center justify-center p-1 transition-all hover:brightness-110 overflow-hidden hover:scale-105 hover:z-10 hover:shadow-lg origin-center"
-                                style={{
-                                  backgroundColor:
-                                    jadwal.mata_kuliah?.warna ||
-                                    getCourseColor(jadwal.mata_kuliah?.nama_lengkap || ''),
-                                }}
-                                title={`${jadwal.mata_kuliah?.nama_lengkap} - ${jadwal.kelas}`}
-                              >
-                                <div className="text-center leading-tight">
-                                  <div className="font-bold text-[10px] sm:text-xs text-white drop-shadow-md truncate w-full px-1">
-                                    {jadwal.mata_kuliah?.praktikum?.nama ||
-                                      jadwal.mata_kuliah?.nama_lengkap ||
-                                      'Unknown'}
-                                  </div>
-                                  <div className="text-[9px] sm:text-[10px] text-white/90">
-                                    {jadwal.kelas}
-                                  </div>
-                                  <div className="text-[8px] sm:text-[9px] text-white/80 truncate px-1">
-                                    {(jadwal.dosen || '-').split(' ')[0]}
+                            <div className="flex flex-col w-full h-full min-h-[60px]">
+                              {jadwals.map((jadwal, idx) => (
+                                <div
+                                  key={jadwal.id || idx}
+                                  className={`w-full flex-1 flex flex-col items-center justify-center p-1 transition-all hover:brightness-110 overflow-hidden hover:scale-105 hover:z-10 hover:shadow-lg origin-center min-h-[60px] ${
+                                    idx < jadwals.length - 1 ? 'border-b border-border/50' : ''
+                                  }`}
+                                  style={{
+                                    backgroundColor:
+                                      jadwal.mata_kuliah?.warna ||
+                                      getCourseColor(jadwal.mata_kuliah?.nama_lengkap || ''),
+                                  }}
+                                  title={`${jadwal.mata_kuliah?.nama_lengkap} - ${jadwal.kelas}`}
+                                >
+                                  <div className="text-center leading-tight">
+                                    <div className="font-bold text-[10px] sm:text-xs text-white drop-shadow-md truncate w-full px-1">
+                                      {jadwal.mata_kuliah?.praktikum?.nama ||
+                                        jadwal.mata_kuliah?.nama_lengkap ||
+                                        'Unknown'}
+                                    </div>
+                                    <div className="text-[9px] sm:text-[10px] text-white/90">
+                                      {jadwal.kelas}
+                                    </div>
+                                    <div className="text-[8px] sm:text-[9px] text-white/80 truncate px-1">
+                                      {(jadwal.dosen || '-').split(' ')[0]}
+                                    </div>
                                   </div>
                                 </div>
-                              </div>
-                            ) : null}
+                              ))}
+                            </div>
                           </td>
                         );
                       })}

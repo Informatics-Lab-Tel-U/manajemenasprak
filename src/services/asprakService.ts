@@ -70,9 +70,9 @@ export async function getAllAsprak(
       .from('asprak')
       .select('*')
       .in('id', asprakIds)
-      .order('nim', { ascending: true });
+      .order('nama_lengkap', { ascending: true });
   } else {
-    query = supabase.from('asprak').select('*').order('nim', { ascending: true });
+    query = supabase.from('asprak').select('*').order('nama_lengkap', { ascending: true });
   }
 
   const { data, error } = await query;
@@ -131,7 +131,7 @@ export async function getAspraksWithAssignments(
         )
     `
     )
-    .order('nim', { ascending: true });
+    .order('nama_lengkap', { ascending: true });
 
   const { data, error } = await query;
 

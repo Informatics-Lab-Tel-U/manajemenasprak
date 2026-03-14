@@ -108,17 +108,17 @@ export function GroupColorModal({ isOpen, onClose, mataKuliahList }: GroupColorM
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[800px] gap-0 p-0 overflow-hidden">
-        <DialogHeader className="p-6 border-b">
-          <DialogTitle>Pengaturan Warna Grup</DialogTitle>
-          <DialogDescription>
+      <DialogContent className="gap-0 p-0 overflow-hidden w-full sm:max-w-[800px] max-h-[90vh] sm:max-h-screen flex flex-col">
+        <DialogHeader className="p-4 sm:p-6 border-b shrink-0">
+          <DialogTitle className="text-lg sm:text-xl">Pengaturan Warna Grup</DialogTitle>
+          <DialogDescription className="text-xs sm:text-sm">
             Pilih warna untuk setiap grup praktikum secara global.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex h-[60vh]">
+        <div className="flex flex-col sm:flex-row flex-1 min-h-0 overflow-hidden">
           {/* Left Column: Scrollable Color Picker List */}
-          <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 custom-scrollbar">
             {uniqueGroups.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
                 <PaintBucket size={32} className="mb-2 opacity-20" />
@@ -137,50 +137,51 @@ export function GroupColorModal({ isOpen, onClose, mataKuliahList }: GroupColorM
                   <div
                     key={groupName}
                     className={cn(
-                      'p-4 rounded-lg border transition-colors',
+                      'p-3 sm:p-4 rounded-lg border transition-colors',
                       isChanged ? 'bg-primary/5 border-primary/20' : 'bg-muted/30 border-border/50'
                     )}
                   >
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 mb-3 sm:mb-4">
+                      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                         <div
-                          className="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider shadow-sm"
+                          className="px-2 sm:px-2.5 py-1 rounded-md text-[9px] sm:text-[10px] font-bold uppercase tracking-wider shadow-sm shrink-0"
                           style={{
                             backgroundColor: currentColor,
                             color: contrastColor,
                           }}
                         >
-                          {groupName}
+                          {groupName.substring(0, 10)}
                         </div>
                         {isChanged && (
-                          <span className="text-[10px] font-bold text-primary flex items-center gap-1">
+                          <span className="text-[9px] sm:text-[10px] font-bold text-primary flex items-center gap-1">
                             <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                            MODIFIED
+                            <span className="hidden sm:inline">MODIFIED</span>
+                            <span className="sm:hidden">*</span>
                           </span>
                         )}
                       </div>
 
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
                         {isCustom && (
-                          <span className="text-[10px] text-muted-foreground font-medium bg-background px-1.5 py-0.5 rounded border">
+                          <span className="text-[9px] sm:text-[10px] text-muted-foreground font-medium bg-background px-1.5 py-0.5 rounded border">
                             Custom
                           </span>
                         )}
-                        <div className="flex items-center gap-2 bg-background border px-2 py-1 rounded-md">
+                        <div className="flex items-center gap-1.5 sm:gap-2 bg-background border px-2 py-1 rounded-md">
                           <input
                             type="color"
                             value={currentColor}
                             onChange={(e) => handleColorChange(groupName, e.target.value)}
                             className="w-4 h-4 p-0 border-0 cursor-pointer bg-transparent"
                           />
-                          <span className="text-[10px] font-mono text-muted-foreground uppercase">
+                          <span className="text-[8px] sm:text-[10px] font-mono text-muted-foreground uppercase">
                             {currentColor}
                           </span>
                         </div>
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-9 gap-1.5">
+                    <div className="grid grid-cols-7 sm:grid-cols-9 gap-1 sm:gap-1.5">
                       {COURSE_COLORS.map((color) => {
                         const isSelected = currentColor.toLowerCase() === color.toLowerCase();
                         return (
@@ -205,8 +206,8 @@ export function GroupColorModal({ isOpen, onClose, mataKuliahList }: GroupColorM
             )}
           </div>
 
-          {/* Right Column: Color Overview Sidebar */}
-          <div className="w-[240px] border-l bg-muted/10 p-6 overflow-y-auto custom-scrollbar">
+          {/* Right Column: Color Overview Sidebar - Hidden on mobile */}
+          <div className="hidden sm:flex sm:w-[240px] border-l bg-muted/10 p-6 overflow-y-auto custom-scrollbar flex-col">
             <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-4">
               Overview Warna
             </h3>
@@ -258,17 +259,22 @@ export function GroupColorModal({ isOpen, onClose, mataKuliahList }: GroupColorM
           </div>
         </div>
 
-        <DialogFooter className="p-6 border-t bg-muted/20">
-          <Button variant="outline" onClick={onClose} disabled={loading}>
+        <DialogFooter className="p-4 sm:p-6 border-t bg-muted/20 shrink-0 flex gap-2 sm:gap-3 flex-col-reverse sm:flex-row">
+          <Button
+            variant="outline"
+            onClick={onClose}
+            disabled={loading}
+            className="text-sm sm:text-base"
+          >
             Batal
           </Button>
           <Button
             onClick={handleSave}
             disabled={loading || uniqueGroups.length === 0 || !hasChanges}
-            className="px-8"
+            className="px-6 sm:px-8 text-sm sm:text-base"
           >
             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Simpan Perubahan
+            Simpan
           </Button>
         </DialogFooter>
       </DialogContent>
