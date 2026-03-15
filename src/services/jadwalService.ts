@@ -80,21 +80,26 @@ export async function getScheduleForValidation(term: string, supabaseClient?: Su
 }
 
 export async function getTodaySchedule(
-  limit: number = 5,
+  limit: number = 20,
   term?: string,
   supabaseClient?: SupabaseClient
 ): Promise<Jadwal[]> {
   const supabase = supabaseClient || globalAdmin;
-  const dayIndex = new Date().getDay();
+  const now = new Date();
+
+  // 1. Get current day name (SENIN, etc.)
+  const dayIndex = now.getDay();
   const weekdays = ['SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU'];
+  const todayName = dayIndex === 0 ? 'MINGGU' : weekdays[dayIndex - 1];
 
-  if (dayIndex === 0) {
-    return [];
-  }
+  // 2. Get today's local date string (YYYY-MM-DD)
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const todayDateStr = `${year}-${month}-${day}`;
 
-  const today = weekdays[dayIndex - 1];
-
-  let query = supabase
+  // 3. Fetch regular schedules for today
+  let normalQuery = supabase
     .from('jadwal')
     .select(
       `
@@ -110,21 +115,67 @@ export async function getTodaySchedule(
       )
     `
     )
-    .eq('hari', today)
-    .order('jam', { ascending: true })
-    .limit(limit);
+    .eq('hari', todayName);
 
   if (term) {
-    query = query.eq('mata_kuliah.praktikum.tahun_ajaran', term);
+    normalQuery = normalQuery.eq('mata_kuliah.praktikum.tahun_ajaran', term);
   }
 
-  const { data, error } = await query;
+  // 4. Fetch replacement schedules for today
+  let penggantiQuery = supabase
+    .from('jadwal_pengganti')
+    .select(
+      `
+      *,
+      jadwal:jadwal!inner (
+        *,
+        mata_kuliah:mata_kuliah!inner (
+          nama_lengkap,
+          program_studi,
+          warna,
+          praktikum:praktikum!inner (
+            tahun_ajaran,
+            nama
+          )
+        )
+      )
+    `
+    )
+    .eq('tanggal', todayDateStr);
 
-  if (error) {
-    logger.error('Error fetching today schedule:', error);
-    return [];
+  if (term) {
+    penggantiQuery = penggantiQuery.eq('jadwal.mata_kuliah.praktikum.tahun_ajaran', term);
   }
-  return data as Jadwal[];
+
+  const [normalResult, penggantiResult] = await Promise.all([normalQuery, penggantiQuery]);
+
+  const results: any[] = [];
+
+  // Add replacement schedules first
+  if (penggantiResult.data) {
+    penggantiResult.data.forEach((p: any) => {
+      results.push({
+        ...p.jadwal,
+        id: `pengganti-${p.id}`,
+        hari: p.hari,
+        jam: p.jam,
+        sesi: p.sesi,
+        ruangan: p.ruangan,
+        tanggal: p.tanggal,
+        modul: p.modul,
+        __is_pengganti: true,
+      });
+    });
+  }
+
+  // Add normal schedules
+  if (normalResult.data) {
+    normalResult.data.forEach((n: any) => {
+      results.push(n);
+    });
+  }
+
+  return results as Jadwal[];
 }
 
 export interface CreateJadwalInput {
@@ -348,5 +399,46 @@ export async function upsertJadwalPengganti(
 
     if (error) throw new Error(`Failed to create Jadwal Pengganti: ${error.message}`);
     return data;
+  }
+}
+
+export async function getJadwalPenggantiByTerm(
+  term: string,
+  supabaseClient?: SupabaseClient
+): Promise<any[]> {
+  const supabase = supabaseClient || globalAdmin;
+  const { data, error } = await supabase
+    .from('jadwal_pengganti')
+    .select(`
+      *,
+      jadwal:jadwal!inner (
+        id, id_mk, kelas, hari, sesi, jam, ruangan,
+        mata_kuliah:mata_kuliah!inner (
+          id, nama_lengkap,
+          praktikum:praktikum!inner (
+            id, nama, tahun_ajaran
+          )
+        )
+      )
+    `)
+    .eq('jadwal.mata_kuliah.praktikum.tahun_ajaran', term)
+    .order('tanggal', { ascending: true });
+
+  if (error) {
+    logger.error('Error fetching jadwal pengganti by term:', error);
+    return [];
+  }
+  return data;
+}
+
+export async function deleteJadwalPengganti(
+  id: string,
+  supabaseClient?: SupabaseClient
+): Promise<void> {
+  const supabase = supabaseClient || globalAdmin;
+  const { error } = await supabase.from('jadwal_pengganti').delete().eq('id', id);
+  if (error) {
+    logger.error('Error deleting jadwal pengganti:', error);
+    throw new Error(`Failed to delete Jadwal Pengganti: ${error.message}`);
   }
 }

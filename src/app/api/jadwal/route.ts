@@ -47,6 +47,11 @@ export async function GET(req: Request) {
       return NextResponse.json({ ok: true, data: jadwal }, { headers: cacheHeaders });
     }
 
+    if (action === 'pengganti-by-term' && term) {
+      const jadwal = await jadwalService.getJadwalPenggantiByTerm(term, supabase);
+      return NextResponse.json({ ok: true, data: jadwal }, { headers: cacheHeaders });
+    }
+
     // Default action: get all jadwal
     const jadwal = await jadwalService.getAllJadwal(supabase);
     return NextResponse.json({ ok: true, data: jadwal }, { headers: cacheHeaders });
@@ -114,6 +119,14 @@ export async function DELETE(req: Request) {
         return NextResponse.json({ ok: false, error: 'Missing term parameter' }, { status: 400 });
       }
       await jadwalService.deleteJadwalByTerm(term, supabase);
+      return NextResponse.json({ ok: true, data: null });
+    }
+
+    if (action === 'delete-pengganti') {
+      if (!id) {
+        return NextResponse.json({ ok: false, error: 'Missing id parameter' }, { status: 400 });
+      }
+      await jadwalService.deleteJadwalPengganti(id, supabase);
       return NextResponse.json({ ok: true, data: null });
     }
 

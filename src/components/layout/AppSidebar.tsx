@@ -67,7 +67,15 @@ const ALL_NAV_ITEMS: NavItem[] = [
       { label: 'Generate Kode Asprak', href: '/asprak?tab=rules' },
     ],
   },
-  { label: 'Jadwal Praktikum', href: '/jadwal', icon: Calendar },
+  {
+    label: 'Jadwal Praktikum',
+    href: '#',
+    icon: Calendar,
+    items: [
+      { label: 'Overview Jadwal', href: '/jadwal' },
+      { label: 'Jadwal Pengganti', href: '/jadwal/pengganti' },
+    ],
+  },
   {
     label: 'Pelanggaran',
     href: '#',
