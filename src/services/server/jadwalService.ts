@@ -33,7 +33,7 @@ export async function getTodaySchedule(limit: number = 100, term?: string): Prom
 
   // 2. Determine Current Module
   const { data: moduleSchedules } = await supabase
-    .from('modul_schedule')
+    .from('konfigurasi_modul')
     .select('modul, tanggal_mulai')
     .eq('tahun_ajaran', effectiveTerm)
     .order('modul', { ascending: false });
