@@ -6,7 +6,13 @@ export async function getTodaySchedule(limit: number = 100, term?: string): Prom
   const now = new Date();
   
   // Use a stable date string for comparison
-  const todayStr = now.toISOString().split('T')[0];
+  // Use local date string (YYYY-MM-DD) to avoid UTC timezone issues at start of day
+  const todayStr = new Intl.DateTimeFormat('en-CA', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    timeZone: 'Asia/Jakarta' // Explicitly use the server/application timezone if possible, or omit for system local
+  }).format(now);
   const dayIndoMap: Record<string, string> = {
     'Sunday': 'MINGGU',
     'Monday': 'SENIN',
@@ -16,7 +22,7 @@ export async function getTodaySchedule(limit: number = 100, term?: string): Prom
     'Friday': 'JUMAT',
     'Saturday': 'SABTU',
   };
-  const todayName = new Intl.DateTimeFormat('en-US', { weekday: 'long' }).format(now);
+  const todayName = new Intl.DateTimeFormat('en-US', { weekday: 'long', timeZone: 'Asia/Jakarta' }).format(now);
   const dayIndo = dayIndoMap[todayName] || todayName.toUpperCase();
 
   if (dayIndo === 'MINGGU') {
@@ -48,8 +54,8 @@ export async function getTodaySchedule(limit: number = 100, term?: string): Prom
     }
   }
 
-  // 3. Fetch Default Schedules for this day and term
-  const { data: defaultJadwal, error: jError } = await supabase
+  // 3. Fetch all default schedules and all replacements for the current module
+  const { data: allDefaultJadwal, error: jError } = await supabase
     .from('jadwal')
     .select(`
       *,
@@ -63,50 +69,69 @@ export async function getTodaySchedule(limit: number = 100, term?: string): Prom
         )
       )
     `)
-    .eq('hari', dayIndo);
+    .eq('mata_kuliah.praktikum.tahun_ajaran', effectiveTerm);
 
   if (jError) {
-    console.error('Error fetching default schedule:', jError);
+    console.error('Error fetching schedules:', jError);
     return [];
   }
 
-  let results = (defaultJadwal as any[]).filter(
-    (j) => j.mata_kuliah?.praktikum?.tahun_ajaran === effectiveTerm
-  ) as Jadwal[];
+  let finalSchedule: Jadwal[] = [];
 
-  // 4. Integrate Replacements if we have an active module
-  if (currentModul !== null) {
-    const { data: pengganti, error: pError } = await supabase
+  if (currentModul === null) {
+    // No active module session logic, just use defaults for the day
+    finalSchedule = (allDefaultJadwal as any[]).filter(j => j.hari === dayIndo);
+  } else {
+    // Fetch all replacements for this module
+    const { data: replacements, error: pError } = await supabase
       .from('jadwal_pengganti')
       .select('*')
-      .eq('modul', currentModul)
-      .eq('hari', dayIndo);
+      .eq('modul', currentModul);
 
-    if (!pError && pengganti && pengganti.length > 0) {
-      const penggantiMap = new Map();
-      pengganti.forEach((p) => penggantiMap.set(p.id_jadwal, p));
-
-      // Replace default entries with pengganti
-      results = results.map((j) => {
-        const p = penggantiMap.get(j.id);
-        if (p) {
-          return {
-            ...j,
-            ruangan: p.ruangan,
-            jam: p.jam,
-            sesi: p.sesi,
-            __is_pengganti: true,
-          } as any;
-        }
-        return j;
-      });
+    if (pError) {
+      console.error('Error fetching replacements:', pError);
+      return [];
     }
+
+    const replacementMap = new Map<string, any>();
+    replacements?.forEach(r => replacementMap.set(r.id_jadwal, r));
+
+    // 1. Start with default schedules that are ON today and NOT moved away
+    const todayDefaults = (allDefaultJadwal as any[]).filter(j => {
+      const p = replacementMap.get(j.id);
+      if (!p) return j.hari === dayIndo; // No replacement, check if it's normally today
+      return p.hari === dayIndo; // Has replacement, check if the replacement is today
+    });
+
+    // 2. Map default info to replacement info if it exists
+    finalSchedule = todayDefaults.map(j => {
+      const p = replacementMap.get(j.id);
+      if (p) {
+        return {
+          ...j,
+          ruangan: p.ruangan,
+          jam: p.jam,
+          sesi: p.sesi,
+          hari: p.hari,
+          tanggal: p.tanggal,
+          __is_pengganti: true,
+        };
+      }
+      return j;
+    });
+
+    // 3. Add schedules that are NOT normally today but are moved TO today
+    // Actually, the filter above already handles this if we include ALL schedules in allDefaultJadwal
+    // But let's verify:
+    // If j.hari is TUESDAY, but p.hari is MONDAY (today).
+    // The filter `j => { const p = replacementMap.get(j.id); if(!p) return j.hari === 'SENIN'; return p.hari === 'SENIN'; }`
+    // will correctly pick it up.
   }
 
   // Final sort by time
-  results.sort((a, b) => (a.jam || '').localeCompare(b.jam || ''));
+  finalSchedule.sort((a, b) => (a.jam || '').localeCompare(b.jam || ''));
 
-  return results.slice(0, limit);
+  return finalSchedule.slice(0, limit);
 }
 
 export async function fetchAvailableTerms(): Promise<string[]> {

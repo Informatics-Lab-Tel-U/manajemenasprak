@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Filter, X, Clock, MapPin, User, Users, ChevronRight, Plus, Upload, PaintBucket } from 'lucide-react';
 import { Jadwal, MataKuliah } from '@/types/database';
 import { JadwalModal } from '@/components/jadwal/JadwalModal';
+import { ScheduleCell } from '@/components/jadwal/ScheduleCell';
 import JadwalImportCSVModal from '@/components/jadwal/JadwalImportCSVModal';
 import { GroupColorModal } from '@/components/jadwal/GroupColorModal';
 import { JadwalPenggantiModal } from '@/components/jadwal/JadwalPenggantiModal';
@@ -568,35 +569,12 @@ export default function JadwalClientPage({
                           >
                             <div className="flex flex-col w-full h-full min-h-[60px]">
                               {jadwals.map((jadwal, idx) => (
-                                <div
+                                <ScheduleCell
                                   key={jadwal.id || idx}
+                                  jadwal={jadwal}
                                   onClick={() => setSelectedJadwal(jadwal)}
-                                  className={`w-full flex-1 flex flex-col items-center justify-center p-1 cursor-pointer transition-all hover:brightness-110 overflow-hidden hover:scale-105 hover:z-20 hover:shadow-lg origin-center min-h-[60px] ${
-                                    (jadwal as any).__is_pengganti
-                                      ? 'ring-4 ring-inset ring-yellow-400 z-10'
-                                      : ''
-                                  } ${idx < jadwals.length - 1 ? 'border-b border-border/50' : ''}`}
-                                  style={{
-                                    backgroundColor:
-                                      jadwal.mata_kuliah?.warna ||
-                                      getCourseColor(jadwal.mata_kuliah?.nama_lengkap || ''),
-                                  }}
-                                  title="Click for details"
-                                >
-                                  <div className="text-center leading-tight">
-                                    <div className="font-bold text-[10px] sm:text-xs text-white drop-shadow-md truncate w-full px-1">
-                                      {jadwal.mata_kuliah?.praktikum?.nama ||
-                                        jadwal.mata_kuliah?.nama_lengkap ||
-                                        'Unknown'}
-                                    </div>
-                                    <div className="text-[9px] sm:text-[10px] text-white/90">
-                                      {jadwal.kelas}
-                                    </div>
-                                    <div className="text-[8px] sm:text-[9px] text-white/80 truncate px-1">
-                                      {jadwal.total_asprak || 0} asprak
-                                    </div>
-                                  </div>
-                                </div>
+                                  showAsprakCount={true}
+                                />
                               ))}
                             </div>
                           </td>
@@ -609,6 +587,18 @@ export default function JadwalClientPage({
             </tbody>
           </table>
         )}
+
+        {/* Legend */}
+        <div className="mt-4 flex items-center gap-4 text-xs text-muted-foreground border-t border-border/50 pt-3 px-2">
+          <div className="flex items-center gap-1.5">
+            <div className="w-3 h-3 rounded-sm ring-2 ring-inset ring-yellow-400 bg-muted"></div>
+            <span>Jadwal Pengganti</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-3 h-3 rounded-sm bg-muted border border-border"></div>
+            <span>Jadwal Reguler</span>
+          </div>
+        </div>
 
         {!loading && uniqueRooms.length === 0 && (
           <div className="flex flex-col items-center justify-center h-[300px] text-muted-foreground">

@@ -11,6 +11,7 @@ import {
 import { Jadwal } from '@/types/database';
 import { ROOMS, STATIC_SESSIONS } from '@/constants';
 import { getCourseColor } from '@/utils/colorUtils';
+import { ScheduleCell } from '@/components/jadwal/ScheduleCell';
 import React, { useMemo } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -248,78 +249,70 @@ export default function DashboardCharts({
               <p>Tidak ada jadwal praktikum untuk hari ini.</p>
             </div>
           ) : (
-            <div className="overflow-x-auto rounded-lg border border-border shadow-sm bg-card/50">
-              <table className="w-full border-collapse text-sm">
-                <thead>
-                  <tr className="bg-muted/50 border-b border-border">
-                    <th className="p-2 border-r border-border text-center font-bold min-w-[60px] text-xs uppercase text-muted-foreground">
-                      Sesi
-                    </th>
-                    {uniqueRooms.map((room) => (
-                      <th
-                        key={room}
-                        className="p-2 border-r border-border text-center font-bold min-w-[120px] whitespace-nowrap text-xs"
-                      >
-                        {room}
+            <>
+              <div className="overflow-x-auto rounded-lg border border-border shadow-sm bg-card/50">
+                <table className="w-full border-collapse text-sm">
+                  <thead>
+                    <tr className="bg-muted/50 border-b border-border">
+                      <th className="p-2 border-r border-border text-center font-bold min-w-[60px] text-xs uppercase text-muted-foreground">
+                        Sesi
                       </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {visibleSessions.map((session) => (
-                    <tr
-                      key={session.rowKey}
-                      className="hover:bg-muted/30 transition-colors border-b border-border/50"
-                    >
-                      <td className="p-2 border-r border-border text-center font-medium text-muted-foreground text-xs">
-                        {session.sesi ? <div className="font-bold">Sesi {session.sesi}</div> : null}
-                        <div className="text-[10px] opacity-80">{session.jam}</div>
-                      </td>
-                      {uniqueRooms.map((room) => {
-                        const jadwals = scheduleMatrix[session.rowKey]?.[room] || [];
-                        return (
-                          <td
-                            key={`${session.rowKey}-${room}`}
-                            className="p-0 border-r border-border h-[60px] w-[120px] relative align-top"
-                          >
-                            <div className="flex flex-col w-full h-full min-h-[60px]">
-                              {jadwals.map((jadwal, idx) => (
-                                <div
-                                  key={jadwal.id || idx}
-                                  className={`w-full flex-1 flex flex-col items-center justify-center p-1 transition-all hover:brightness-110 overflow-hidden hover:scale-105 hover:z-10 hover:shadow-lg origin-center min-h-[60px] ${
-                                    idx < jadwals.length - 1 ? 'border-b border-border/50' : ''
-                                  }`}
-                                  style={{
-                                    backgroundColor:
-                                      jadwal.mata_kuliah?.warna ||
-                                      getCourseColor(jadwal.mata_kuliah?.nama_lengkap || ''),
-                                  }}
-                                  title={`${jadwal.mata_kuliah?.nama_lengkap} - ${jadwal.kelas}`}
-                                >
-                                  <div className="text-center leading-tight">
-                                    <div className="font-bold text-[10px] sm:text-xs text-white drop-shadow-md truncate w-full px-1">
-                                      {jadwal.mata_kuliah?.praktikum?.nama ||
-                                        jadwal.mata_kuliah?.nama_lengkap ||
-                                        'Unknown'}
-                                    </div>
-                                    <div className="text-[9px] sm:text-[10px] text-white/90">
-                                      {jadwal.kelas}
-                                    </div>
-                                    <div className="text-[8px] sm:text-[9px] text-white/80 truncate px-1">
-                                      {(jadwal.dosen || '-').split(' ')[0]}
-                                    </div>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </td>
-                        );
-                      })}
+                      {uniqueRooms.map((room) => (
+                        <th
+                          key={room}
+                          className="p-2 border-r border-border text-center font-bold min-w-[120px] whitespace-nowrap text-xs"
+                        >
+                          {room}
+                        </th>
+                      ))}
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {visibleSessions.map((session) => (
+                      <tr
+                        key={session.rowKey}
+                        className="hover:bg-muted/30 transition-colors border-b border-border/50"
+                      >
+                        <td className="p-2 border-r border-border text-center font-medium text-muted-foreground text-xs">
+                          {session.sesi ? <div className="font-bold">Sesi {session.sesi}</div> : null}
+                          <div className="text-[10px] opacity-80">{session.jam}</div>
+                        </td>
+                        {uniqueRooms.map((room) => {
+                          const jadwals = scheduleMatrix[session.rowKey]?.[room] || [];
+                          return (
+                            <td
+                              key={`${session.rowKey}-${room}`}
+                              className="p-0 border-r border-border h-[60px] w-[120px] relative align-top"
+                            >
+                              <div className="flex flex-col w-full h-full min-h-[60px]">
+                                {jadwals.map((jadwal, idx) => (
+                                  <ScheduleCell
+                                    key={jadwal.id || idx}
+                                    jadwal={jadwal}
+                                    showAsprakCount={true}
+                                  />
+                                ))}
+                              </div>
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {/* Legend */}
+              <div className="mt-4 flex items-center gap-4 text-xs text-muted-foreground border-t border-border/50 pt-3">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3 h-3 rounded-sm ring-2 ring-inset ring-yellow-400 bg-muted"></div>
+                  <span>Jadwal Pengganti</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3 h-3 rounded-sm bg-muted border border-border"></div>
+                  <span>Jadwal Reguler</span>
+                </div>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
