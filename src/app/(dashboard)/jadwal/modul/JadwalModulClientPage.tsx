@@ -101,12 +101,34 @@ export default function JadwalModulClientPage() {
   };
 
   const isMonday = (dateStr: string | null): boolean => {
-    if (!dateStr) return true; // Treat empty as valid for now, or handled by null check
+    if (!dateStr) return true;
     const d = new Date(dateStr);
-    return d.getDay() === 1; // 1 is Monday
+    return d.getDay() === 1;
   };
 
-  const hasInvalidDates = rows.some((row) => row.tanggal_mulai && !isMonday(row.tanggal_mulai));
+  const isSequentiallyValid = (modul: number, dateStr: string | null): { valid: boolean; error?: string } => {
+    if (!dateStr) return { valid: true };
+    
+    // Find previous module with a date
+    const prevRowsWithDate = rows.filter(r => r.modul < modul && r.tanggal_mulai);
+    if (prevRowsWithDate.length > 0) {
+      const lastPrev = prevRowsWithDate[prevRowsWithDate.length - 1];
+      if (lastPrev.tanggal_mulai && dateStr < lastPrev.tanggal_mulai) {
+        return { valid: false, error: `Sebelum M${lastPrev.modul}` };
+      }
+    }
+
+    if (!isMonday(dateStr)) {
+      return { valid: false, error: 'Bukan Senin' };
+    }
+
+    return { valid: true };
+  };
+
+  const hasInvalidDates = rows.some((row) => {
+    const { valid } = isSequentiallyValid(row.modul, row.tanggal_mulai);
+    return !valid;
+  });
 
   const handleGenerate = () => {
     const startM = parseInt(startModul, 10);
@@ -118,8 +140,9 @@ export default function JadwalModulClientPage() {
       return;
     }
 
-    if (!isMonday(anchor)) {
-      toast.error(`Tanggal Modul ${startM} harus hari Senin untuk generate.`);
+    const { valid, error } = isSequentiallyValid(startM, anchor);
+    if (!valid) {
+      toast.error(`Tanggal Modul ${startM} tidak valid: ${error}.`);
       return;
     }
 
@@ -145,7 +168,7 @@ export default function JadwalModulClientPage() {
       return;
     }
     if (hasInvalidDates) {
-      toast.error('Gagal menyimpan: Ada modul yang tidak dimulai di hari Senin');
+      toast.error('Gagal menyimpan: Ada urutan tanggal yang tidak valid atau bukan hari Senin');
       return;
     }
 
@@ -208,7 +231,7 @@ export default function JadwalModulClientPage() {
           <div className="divide-y divide-border/50 max-h-[500px] overflow-auto">
             {rows.map((row) => {
               const dayName = getDayName(row.tanggal_mulai);
-              const isValid = isMonday(row.tanggal_mulai);
+              const { valid, error } = isSequentiallyValid(row.modul, row.tanggal_mulai);
 
               return (
                 <div
@@ -220,7 +243,7 @@ export default function JadwalModulClientPage() {
                     <Input
                       type="date"
                       className={`h-9 max-w-[200px] ${
-                        !isValid ? 'border-destructive text-destructive focus-visible:ring-destructive' : ''
+                        !valid ? 'border-destructive text-destructive focus-visible:ring-destructive' : ''
                       }`}
                       value={row.tanggal_mulai ?? ''}
                       onChange={(e) => handleChangeDate(row.modul, e.target.value)}
@@ -229,11 +252,11 @@ export default function JadwalModulClientPage() {
                     {row.tanggal_mulai && (
                       <span
                         className={`text-xs font-medium px-2 py-1 rounded-sm ${
-                          isValid ? 'bg-emerald-50 text-emerald-700' : 'bg-destructive/10 text-destructive'
+                          valid ? 'bg-emerald-50 text-emerald-700' : 'bg-destructive/10 text-destructive'
                         }`}
                       >
                         {dayName}
-                        {!isValid && ' (Harus Senin)'}
+                        {!valid && ` (${error})`}
                       </span>
                     )}
                   </div>
