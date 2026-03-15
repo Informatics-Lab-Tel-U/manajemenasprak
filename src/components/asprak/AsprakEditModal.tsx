@@ -79,17 +79,19 @@ export default function AsprakEditModal({
       let calculatedAngkatan = asprak.angkatan || 0;
       if (calculatedAngkatan > 0 && calculatedAngkatan < 100) calculatedAngkatan += 2000;
 
-      const conflictInDB = existingAspraks.some((a) => {
-        if (a.kode.toUpperCase() !== up) return false;
-        // Ignore self match
-        if (a.kode.toUpperCase() === asprak.kode.toUpperCase()) return false;
-
-        const gap = calculatedAngkatan - a.angkatan;
-        return gap < ACTIVE_YEARS_THRESHOLD; // Use central threshold
+      const conflictInDB = existingAspraks.find((a) => {
+        return a.kode.toUpperCase() === up && a.kode.toUpperCase() !== asprak.kode.toUpperCase();
       });
 
       if (conflictInDB) {
-        setKodeError('Kode sudah digunakan (< 5 tahun)');
+        const gap = calculatedAngkatan - conflictInDB.angkatan;
+        
+        if (gap < 1) {
+          setKodeError('KODE KERAS: Kode sedang aktif digunakan!');
+          return;
+        }
+
+        setKodeError('Kode digunakan (cooldown 1-6 thn)');
         return;
       }
     }
@@ -186,7 +188,7 @@ export default function AsprakEditModal({
             <Label htmlFor="force-override" className="text-xs font-medium leading-tight">
               Paksa gunakan Kode ini
               <p className="text-[10px] text-muted-foreground font-normal mt-0.5">
-                Mengabaikan peringatan bentrok kode (&gt; 5 tahun) dari database.
+                Mengabaikan peringatan bentrok (cooldown 1-6 thn).
               </p>
             </Label>
           </div>

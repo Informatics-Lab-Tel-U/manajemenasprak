@@ -23,6 +23,7 @@ import {
   UpsertAsprakInput,
 } from '@/lib/fetchers/asprakFetcher';
 import { fetchPraktikumByTerm } from '@/lib/fetchers/praktikumFetcher';
+import { ACTIVE_YEARS_THRESHOLD } from '@/constants';
 // Manual debounce helper if hook doesn't exist
 function useDebounceValue<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
@@ -53,11 +54,12 @@ export default function AsprakForm({ onSubmit, onCancel }: AsprakFormProps) {
   const [kode, setKode] = useState('');
   const [angkatan, setAngkatan] = useState<string>('2023');
   const [forceOverride, setForceOverride] = useState(false);
+  const [isManualCode, setIsManualCode] = useState(false);
 
   // Validation States
   const [nimStatus, setNimStatus] = useState<'idle' | 'checking' | 'valid' | 'taken'>('idle');
   const [codeStatus, setCodeStatus] = useState<
-    'idle' | 'generating' | 'valid' | 'invalid_length' | 'taken'
+    'idle' | 'generating' | 'valid' | 'invalid_length' | 'taken' | 'hard_conflict'
   >('idle');
   const [ruleInfo, setRuleInfo] = useState('');
 
@@ -113,36 +115,6 @@ export default function AsprakForm({ onSubmit, onCancel }: AsprakFormProps) {
     check();
   }, [debouncedNim]);
 
-  // Code Generation Effect
-  useEffect(() => {
-    // Only auto-generate if user hasn't typed a custom valid code?
-    // Or always overwrite? The prompt implies "auto generate" behavior similar to CSV.
-    // We'll generate.
-    if (!debouncedNama || debouncedNama.length < 3) return;
-
-    // If code is already manually set to something valid (length 3), maybe don't overwrite?
-    // But biasanya "Auto" berarti bereaksi terhadap Nama.
-    // Kita gunakan logika sederhana: generate.
-
-    async function gen() {
-      setCodeStatus('generating');
-      const res = await generateCode(debouncedNama);
-      if (res.ok && res.data) {
-        setKode(res.data.code);
-        setRuleInfo(res.data.rule);
-
-        if (res.data.rule === 'FAILED') {
-          setCodeStatus('invalid_length');
-        } else {
-          validateKodeMatch(res.data.code, forceOverride, angkatan);
-        }
-      } else {
-        setCodeStatus('idle');
-      }
-    }
-    gen();
-  }, [debouncedNama]); // Removed existingCodes dependency to avoid loops, though it's stable.
-
   const validateKodeMatch = useCallback(
     (up: string, force: boolean, currentAngkatanStr: string) => {
       const safeUp = up || '';
@@ -160,15 +132,20 @@ export default function AsprakForm({ onSubmit, onCancel }: AsprakFormProps) {
         let calculatedAngkatan = formAngkatan;
         if (calculatedAngkatan > 0 && calculatedAngkatan < 100) calculatedAngkatan += 2000;
 
-        const conflictInDB = existingAspraks.some((a) => {
-          if (a.kode.toUpperCase() !== up) return false;
-          const gap = calculatedAngkatan - a.angkatan;
-          return gap < 5; // CODE_RECYCLE_YEARS
-        });
+        const conflictInDB = existingAspraks.find((a) => a.kode.toUpperCase() === up);
 
         if (conflictInDB) {
-          setCodeStatus('taken');
-          return;
+          const gap = calculatedAngkatan - conflictInDB.angkatan;
+          
+          if (gap < 1) {
+            setCodeStatus('hard_conflict');
+            return;
+          }
+
+          if (!force) {
+            setCodeStatus('taken');
+            return;
+          }
         }
       }
 
@@ -177,11 +154,44 @@ export default function AsprakForm({ onSubmit, onCancel }: AsprakFormProps) {
     [existingAspraks]
   );
 
+  useEffect(() => {
+    // When name changes, we ALWAYS attempt to re-generate the code
+    // and reset the manual override flag.
+    if (!debouncedNama || debouncedNama.trim().length < 3) {
+      if (!isManualCode) {
+        setKode('');
+        setRuleInfo('');
+        setCodeStatus('idle');
+      }
+      return;
+    }
+
+    async function gen() {
+      setCodeStatus('generating');
+      const res = await generateCode(debouncedNama, forceOverride);
+      if (res.ok && res.data) {
+        setKode(res.data.code);
+        setRuleInfo(res.data.rule);
+        setIsManualCode(false); // Reset to auto state
+
+        if (res.data.rule === 'FAILED') {
+          setCodeStatus('invalid_length');
+        } else {
+          validateKodeMatch(res.data.code, forceOverride, angkatan);
+        }
+      } else {
+        setCodeStatus('idle');
+      }
+    }
+    gen();
+  }, [debouncedNama, forceOverride, angkatan, validateKodeMatch]);
+
   // Handle manual input change
   const handleCodeChange = (val: string) => {
     const up = val.toUpperCase().replace(/[^A-Z]/g, '');
     setKode(up);
-    setRuleInfo('Manual Input');
+    setRuleInfo('Manual');
+    setIsManualCode(true); // Mark as manual
     validateKodeMatch(up, forceOverride, angkatan);
   };
 
@@ -258,8 +268,8 @@ export default function AsprakForm({ onSubmit, onCancel }: AsprakFormProps) {
       toast.error('NIM sudah terdaftar!');
       return;
     }
-    if (codeStatus === 'taken') {
-      toast.error('Kode Asprak sudah digunakan!');
+    if (codeStatus === 'taken' || codeStatus === 'hard_conflict') {
+      toast.error(codeStatus === 'hard_conflict' ? 'Kode sedang aktif digunakan!' : 'Kode Asprak sudah digunakan!');
       return;
     }
     if (codeStatus === 'invalid_length') {
@@ -389,13 +399,20 @@ export default function AsprakForm({ onSubmit, onCancel }: AsprakFormProps) {
               )}
             </div>
             {codeStatus === 'taken' && (
-              <p className="text-[10px] text-destructive mt-1">Kode sudah digunakan.</p>
+              <p className="text-[10px] text-destructive mt-1">Kode digunakan (cooldown 1-6 thn).</p>
+            )}
+            {codeStatus === 'hard_conflict' && (
+              <p className="text-[10px] text-destructive mt-1 font-bold">Kode sedang aktif digunakan!</p>
             )}
             {codeStatus === 'invalid_length' && (
               <p className="text-[10px] text-destructive mt-1">Harus pas 3 huruf.</p>
             )}
             {codeStatus === 'valid' && ruleInfo && (
-              <p className="text-[10px] text-muted-foreground mt-1">OK ({ruleInfo})</p>
+              <p
+                className={`text-[10px] mt-1 ${isManualCode ? 'text-blue-500 font-medium' : 'text-muted-foreground'}`}
+              >
+                {isManualCode ? 'Manual Input' : `Auto: ${ruleInfo}`}
+              </p>
             )}
 
             <div className="flex items-start space-x-2 bg-muted/30 p-2 rounded-md border mt-2">
@@ -411,7 +428,7 @@ export default function AsprakForm({ onSubmit, onCancel }: AsprakFormProps) {
               >
                 Paksa gunakan kode
                 <p className="text-muted-foreground font-normal mt-0.5">
-                  Abaikan peringatan bentrok (kode &gt; 5 thn)
+                  Abaikan peringatan bentrok (cooldown 1-6 thn)
                 </p>
               </Label>
             </div>
@@ -550,6 +567,7 @@ export default function AsprakForm({ onSubmit, onCancel }: AsprakFormProps) {
             nimStatus === 'checking' ||
             codeStatus === 'invalid_length' ||
             codeStatus === 'taken' ||
+            codeStatus === 'hard_conflict' ||
             codeStatus === 'generating'
           }
         >

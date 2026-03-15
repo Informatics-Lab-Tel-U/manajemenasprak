@@ -89,7 +89,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ ok: true, data: { exists } });
       }
       case 'generate-code': {
-        const result = await asprakService.generateUniqueCode(body.name, supabase);
+        const result = await asprakService.generateUniqueCode(body.name, supabase, body.forceOverride);
         return NextResponse.json({ ok: true, data: result });
       }
       default:
