@@ -181,3 +181,32 @@ export async function upsertJadwalPengganti(
     return { ok: false, error: error.message };
   }
 }
+
+export async function fetchJadwalPenggantiByTerm(term: string): Promise<ServiceResult<any[]>> {
+  try {
+    const res = await fetch(
+      `/api/jadwal?action=pengganti-by-term&term=${encodeURIComponent(term)}`,
+      {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        cache: 'no-store',
+      }
+    );
+    const result = await res.json();
+    return result;
+  } catch (error: any) {
+    return { ok: false, error: error.message };
+  }
+}
+
+export async function deleteJadwalPengganti(id: string): Promise<ServiceResult<null>> {
+  try {
+    const res = await fetch(`/api/jadwal?id=${id}&action=delete-pengganti`, {
+      method: 'DELETE',
+    });
+    const result = await res.json();
+    return result;
+  } catch (error: any) {
+    return { ok: false, error: error.message };
+  }
+}
