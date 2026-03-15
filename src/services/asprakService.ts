@@ -23,11 +23,15 @@ export async function checkNimExists(
 
 export async function generateUniqueCode(
   nama: string,
-  supabaseClient?: SupabaseClient
+  supabaseClient?: SupabaseClient,
+  forceOverride: boolean = false
 ): Promise<{ code: string; rule: string }> {
   const supabase = supabaseClient || globalAdmin;
   const existingCodes = await getExistingCodes(supabase);
-  const usedCodesSet = new Set(existingCodes);
+  
+  // If forceOverride is true, we act as if NO codes are used 
+  // so the generator picks the absolute best Rule 3.1 code.
+  const usedCodesSet = forceOverride ? new Set<string>() : new Set(existingCodes);
 
   try {
     const result = generateAsprakCode(nama, usedCodesSet);
@@ -305,7 +309,19 @@ async function handleCodeConflictAndExpire(
   // Check each owner for conflicts
   for (const owner of codeOwners) {
     const conflictCheck = checkCodeConflict(owner, nim);
-    if (conflictCheck.hasConflict && !forceOverride) {
+    if (!conflictCheck.hasConflict) continue;
+
+    // Hard Conflict check: If they are in the same angkatan (gap < 1), 
+    // we block them NO MATTER WHAT to avoid duplicates in the same year.
+    // We compare raw numbers because angkatan here is already 4-digit.
+    const currentYear = new Date().getFullYear();
+    const gap = currentYear - (owner.angkatan || 0);
+
+    if (gap < 1) {
+      throw new Error(`KODE KERAS: Kode '${newCode}' sedang aktif digunakan oleh ${owner.nama_lengkap}.`);
+    }
+
+    if (!forceOverride) {
       throw new Error(generateConflictErrorMessage(newCode, owner));
     }
   }

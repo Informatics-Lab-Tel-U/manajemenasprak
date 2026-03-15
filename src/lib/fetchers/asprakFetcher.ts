@@ -264,17 +264,18 @@ export async function checkNim(nim: string): Promise<ServiceResult<boolean>> {
 }
 
 export async function generateCode(
-  name: string
+  name: string,
+  forceOverride: boolean = false
 ): Promise<ServiceResult<{ code: string; rule: string }>> {
   try {
     const res = await fetch('/api/asprak', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'generate-code', name }),
+      body: JSON.stringify({ action: 'generate-code', name, forceOverride }),
     });
     const json = await res.json();
     if (!res.ok) return { ok: false, error: json.error };
-    return { ok: true, data: json };
+    return { ok: true, data: json.data };
   } catch (e: any) {
     return { ok: false, error: e.message };
   }
