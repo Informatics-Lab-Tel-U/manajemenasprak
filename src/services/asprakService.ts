@@ -295,24 +295,19 @@ async function handleCodeConflictAndExpire(
   forceOverride: boolean,
   supabase: SupabaseClient
 ): Promise<void> {
-  const { data: codeOwner } = await supabase
+  const { data: codeOwners } = await supabase
     .from('asprak')
     .select('*')
-    .eq('kode', newCode)
-    .maybeSingle();
+    .eq('kode', newCode);
 
-  const conflictCheck = checkCodeConflict(codeOwner, nim);
-  if (conflictCheck.hasConflict && conflictCheck.existingOwner && !forceOverride) {
-    throw new Error(generateConflictErrorMessage(newCode, conflictCheck.existingOwner));
-  }
+  if (!codeOwners || codeOwners.length === 0) return;
 
-  if (codeOwner && codeOwner.nim !== nim) {
-    await supabase
-      .from('asprak')
-      .update({
-        kode: `${codeOwner.kode}_EXPIRED_${codeOwner.id.substring(0, 4)}`,
-      })
-      .eq('id', codeOwner.id);
+  // Check each owner for conflicts
+  for (const owner of codeOwners) {
+    const conflictCheck = checkCodeConflict(owner, nim);
+    if (conflictCheck.hasConflict && !forceOverride) {
+      throw new Error(generateConflictErrorMessage(newCode, owner));
+    }
   }
 }
 
