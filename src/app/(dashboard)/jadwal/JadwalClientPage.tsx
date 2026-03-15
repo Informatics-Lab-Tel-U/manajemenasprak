@@ -11,22 +11,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import {
-  Filter,
-  X,
-  Clock,
-  MapPin,
-  User,
-  Users,
-  ChevronRight,
-  Plus,
-  Upload,
-  PaintBucket,
-} from 'lucide-react';
+import { Filter, X, Clock, MapPin, User, Users, ChevronRight, Plus, Upload, PaintBucket } from 'lucide-react';
 import { Jadwal, MataKuliah } from '@/types/database';
 import { JadwalModal } from '@/components/jadwal/JadwalModal';
 import JadwalImportCSVModal from '@/components/jadwal/JadwalImportCSVModal';
 import { GroupColorModal } from '@/components/jadwal/GroupColorModal';
+import { JadwalPenggantiModal } from '@/components/jadwal/JadwalPenggantiModal';
 import {
   CreateJadwalInput,
   UpdateJadwalInput,
@@ -118,9 +108,10 @@ export default function JadwalClientPage({
   const [selectedJadwal, setSelectedJadwal] = useState<Jadwal | null>(null);
   const [showSessionId, setShowSessionId] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isPenggantiModalOpen, setIsPenggantiModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isColorModalOpen, setIsColorModalOpen] = useState(false);
-  const [modalInitialData, setModalInitialData] = useState<Jadwal | null>(null);
+  const [modalInitialData, setModalInitialData] = useState<any | null>(null);
 
   const handleOpenAdd = () => {
     setModalInitialData(null);
@@ -129,56 +120,38 @@ export default function JadwalClientPage({
 
   const handleOpenEdit = (jadwal: Jadwal) => {
     setModalInitialData(jadwal);
-    setIsModalOpen(true);
+    if (selectedModul !== 'Default') {
+      setIsPenggantiModalOpen(true);
+    } else {
+      setIsModalOpen(true);
+    }
     setSelectedJadwal(null); // Close detail modal
   };
 
   const handleModalSubmit = async (
-    input: CreateJadwalInput | UpdateJadwalInput | CreateJadwalPenggantiInput
+    input: CreateJadwalInput | UpdateJadwalInput
   ) => {
     const hari = 'hari' in input ? input.hari : '';
     const sesi = 'sesi' in input ? input.sesi : null;
     const ruangan = 'ruangan' in input ? input.ruangan : '';
-    const id_jadwal = 'id_jadwal' in input ? input.id_jadwal : undefined;
     const id = 'id' in input ? input.id : undefined;
     const inputKelas = 'kelas' in input ? (input.kelas as string) : '';
     const isEditingPJJ = inputKelas.toUpperCase().includes('PJJ');
 
-    const currentId = selectedModul !== 'Default' ? id_jadwal : id;
-
-    // Check for scheduling conflicts
+    // Check for scheduling conflicts in Default mode
     let conflict: Jadwal | undefined;
 
-    if (selectedModul === 'Default') {
-      conflict = rawJadwalList.find((j) => {
-        const isExistingPJJ = j.kelas?.toUpperCase().includes('PJJ');
-        if (isEditingPJJ || isExistingPJJ) return false;
+    conflict = rawJadwalList.find((j) => {
+      const isExistingPJJ = j.kelas?.toUpperCase().includes('PJJ');
+      if (isEditingPJJ || isExistingPJJ) return false;
 
-        return (
-          Number(j.id) !== Number(currentId) &&
-          j.hari === hari &&
-          j.sesi === Number(sesi) &&
-          j.ruangan === ruangan
-        );
-      });
-    } else {
-      const effectiveJadwal = rawJadwalList.map((j) => {
-        const substitute = jadwalPengganti.find((jp) => Number(jp.id_jadwal) === Number(j.id));
-        return substitute ? { ...j, ...substitute } : j;
-      });
-
-      conflict = effectiveJadwal.find((j) => {
-        const isExistingPJJ = j.kelas?.toUpperCase().includes('PJJ');
-        if (isEditingPJJ || isExistingPJJ) return false;
-
-        return (
-          Number(j.id) !== Number(currentId) &&
-          j.hari === hari &&
-          j.sesi === Number(sesi) &&
-          j.ruangan === ruangan
-        );
-      });
-    }
+      return (
+        Number(j.id) !== Number(id) &&
+        j.hari === hari &&
+        j.sesi === Number(sesi) &&
+        j.ruangan === ruangan
+      );
+    });
 
     const conflictName = conflict?.mata_kuliah?.nama_lengkap || 'Unknown Course';
     const conflictClass = conflict?.kelas || 'Unknown Class';
@@ -191,16 +164,25 @@ export default function JadwalClientPage({
     }
 
     const result =
-      selectedModul !== 'Default'
-        ? await upsertPengganti(input)
-        : 'id' in input && !('modul' in input)
-          ? await editJadwal(input as UpdateJadwalInput)
-          : await addJadwal(input as CreateJadwalInput);
+      'id' in input
+        ? await editJadwal(input as UpdateJadwalInput)
+        : await addJadwal(input as CreateJadwalInput);
 
     if (!result.ok) {
       toast.error(`Gagal: ${result.error}`);
     } else {
       toast.success('Jadwal berhasil disimpan');
+    }
+  };
+
+  const handlePenggantiSubmit = async (input: any) => {
+    const result = await upsertPengganti(input);
+    if (!result.ok) {
+      toast.error(`Gagal: ${result.error}`);
+      return false;
+    } else {
+      toast.success('Jadwal pengganti berhasil disimpan');
+      return true;
     }
   };
 
@@ -459,21 +441,21 @@ export default function JadwalClientPage({
             onClick={handleOpenAdd}
             className="flex-1 sm:flex-none min-w-0 md:whitespace-nowrap"
           >
-            <Plus size={18} className="flex-shrink-0" />
+            <Plus size={18} className="shrink-0" />
             <span className="hidden sm:inline ml-2">Tambah Jadwal</span>
           </Button>
           <Button
             onClick={() => setIsImportModalOpen(true)}
             className="flex-1 sm:flex-none min-w-0 md:whitespace-nowrap"
           >
-            <Upload size={18} className="flex-shrink-0" />
+            <Upload size={18} className="shrink-0" />
             <span className="hidden sm:inline ml-2">Import CSV</span>
           </Button>
           <Button
             variant="secondary"
             onClick={() => setIsColorModalOpen(true)}
             title="Atur Warna Grup"
-            className="px-2 sm:px-3 flex-shrink-0"
+            className="px-2 sm:px-3 shrink-0"
           >
             <PaintBucket size={18} />
           </Button>
@@ -758,7 +740,32 @@ export default function JadwalClientPage({
         initialData={modalInitialData}
         mataKuliahList={mataKuliahList}
         isLoading={loading}
-        selectedModul={selectedModul}
+      />
+
+      <JadwalPenggantiModal
+        isOpen={isPenggantiModalOpen}
+        onClose={() => setIsPenggantiModalOpen(false)}
+        onSubmit={handlePenggantiSubmit}
+        initialData={
+          modalInitialData
+            ? {
+                id: modalInitialData.id,
+                id_jadwal: modalInitialData.id,
+                modul: parseInt(selectedModul.replace('Modul ', '')) || 1,
+                tanggal: modalInitialData.tanggal || '',
+                hari: modalInitialData.hari || 'SENIN',
+                sesi: modalInitialData.sesi || 1,
+                jam: modalInitialData.jam || '06:30',
+                ruangan: modalInitialData.ruangan || '',
+                jadwal: modalInitialData,
+              }
+            : null
+        }
+        mataKuliahList={mataKuliahList}
+        allJadwal={rawJadwalList}
+        isLoading={loading}
+        currentTerm={selectedTerm}
+        disableModul={selectedModul !== 'Default'}
       />
 
       <JadwalImportCSVModal

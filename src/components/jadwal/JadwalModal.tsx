@@ -34,7 +34,6 @@ interface JadwalModalProps {
   initialData?: Jadwal | null;
   mataKuliahList: MataKuliah[];
   isLoading?: boolean;
-  selectedModul?: string;
 }
 
 export function JadwalModal({
@@ -44,26 +43,21 @@ export function JadwalModal({
   initialData,
   mataKuliahList,
   isLoading = false,
-  selectedModul = 'Default',
 }: JadwalModalProps) {
   const isEdit = !!initialData;
-  const isSubstitute = selectedModul !== 'Default';
-  // If substitute mode, always editable (because we are creating an override)
-  // If default mode, follow the existing logic (create=editable, edit=readonly initially)
-  const [isDetailsEditable, setIsDetailsEditable] = useState(isSubstitute ? true : !isEdit);
+  const [isDetailsEditable, setIsDetailsEditable] = useState(!isEdit);
 
   const [formData, setFormData] = useState<
-    Partial<CreateJadwalInput> & { tanggal?: string; total_asprak?: number | '' }
+    Partial<CreateJadwalInput> & { total_asprak?: number | '' }
   >({
     id_mk: '',
     kelas: '',
     hari: 'SENIN',
     sesi: 1,
-    jam: '06:30', // Default start time for session 1
+    jam: '06:30',
     ruangan: '',
     total_asprak: 1,
     dosen: '',
-    tanggal: '',
   });
 
   const [selectedTerm, setSelectedTerm] = useState<string>('');
@@ -95,7 +89,6 @@ export function JadwalModal({
   useEffect(() => {
     if (isOpen) {
       if (initialData) {
-        // setIsDetailsEditable(selectedModul !== 'Default' ? true : false); // Handled by standard re-evaluation or derived logic if needed, but here it's fine just ignoring, or set via key/effect correctly without causing sync warnings. Actually, we can move this to a separate logic block.
         setFormData({
           id_mk: initialData.id_mk.toString(),
           kelas: initialData.kelas,
@@ -105,10 +98,8 @@ export function JadwalModal({
           ruangan: initialData.ruangan || '',
           total_asprak: initialData.total_asprak,
           dosen: initialData.dosen || '',
-          tanggal: (initialData as any).tanggal || '',
         });
 
-        // Identify the associated term and praktikum name to pre-select
         const currentMK = mataKuliahList.find((mk) => mk.id === initialData.id_mk);
         if (currentMK?.praktikum) {
           setSelectedTerm(currentMK.praktikum.tahun_ajaran || '');
@@ -118,10 +109,8 @@ export function JadwalModal({
         setIsPJJ(initialData.kelas.toUpperCase().includes('PJJ'));
         setIsCustomJam(!initialData.sesi || initialData.sesi === 0);
       } else {
-        // Default to Senin Sesi 1
         const defaultDay = 'SENIN';
         const defaultSession = STATIC_SESSIONS[defaultDay][0];
-        // setIsDetailsEditable(true); // Default to editable for create
         setFormData({
           id_mk: '',
           kelas: '',
@@ -131,7 +120,6 @@ export function JadwalModal({
           ruangan: '',
           total_asprak: 1,
           dosen: '',
-          tanggal: '',
         });
         setSelectedTerm('');
         setSelectedPraktikum('');
@@ -139,27 +127,21 @@ export function JadwalModal({
         setIsCustomJam(false);
       }
     }
-  }, [isOpen, initialData, selectedModul, mataKuliahList]);
+  }, [isOpen, initialData, mataKuliahList]);
 
-  // Handle editability state sync separately without breaking the flow
+  // Handle editability state sync separately 
   useEffect(() => {
     if (isOpen) {
-      if (initialData) {
-        setIsDetailsEditable(selectedModul !== 'Default');
-      } else {
-        setIsDetailsEditable(true);
-      }
+      setIsDetailsEditable(!initialData);
     }
-  }, [isOpen, initialData, selectedModul]);
+  }, [isOpen, initialData]);
 
   const handleChange = (field: keyof CreateJadwalInput, value: any) => {
     setFormData((prev) => {
       const newData = { ...prev, [field]: value };
 
-      // Auto-update jam when hari or sesi changes and not in custom jam mode
       if ((field === 'hari' || field === 'sesi') && !isCustomJam) {
         const currentDay = field === 'hari' ? value : newData.hari;
-        // If day changed, reset session to first available session of that day
         let currentSessionId =
           field === 'hari'
             ? STATIC_SESSIONS[currentDay][0].sesi
@@ -167,11 +149,9 @@ export function JadwalModal({
               ? value
               : newData.sesi;
 
-        // Ensure session exists for the day
         const daySessions = STATIC_SESSIONS[currentDay];
         let sessionObj = daySessions.find((s) => s.sesi === currentSessionId);
 
-        // If not found, default to first session of new day
         if (!sessionObj) {
           sessionObj = daySessions[0];
           currentSessionId = sessionObj.sesi;
@@ -185,7 +165,7 @@ export function JadwalModal({
     });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (
       !formData.id_mk ||
@@ -196,11 +176,6 @@ export function JadwalModal({
       !formData.jam
     ) {
       toast.error('Mohon isi semua field yang wajib');
-      return;
-    }
-
-    if (selectedModul !== 'Default' && !formData.tanggal) {
-      toast.error('Tanggal wajib diisi untuk jadwal pengganti');
       return;
     }
 
@@ -216,10 +191,7 @@ export function JadwalModal({
 
     const input: any = { ...baseInput };
 
-    if (selectedModul !== 'Default') {
-      input.modul = parseInt(selectedModul.replace('Modul ', ''));
-      input.id_jadwal = initialData?.id;
-    } else if (isEdit) {
+    if (isEdit) {
       input.id = initialData?.id;
     }
 
@@ -227,26 +199,17 @@ export function JadwalModal({
     onClose();
   };
 
-  const getFilteredMataKuliah = () => {
-    // Logic to filter MK if needed, e.g. show only relevant ones, but for now show all
-    return mataKuliahList;
-  };
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>
-            {selectedModul !== 'Default'
-              ? `Edit Jadwal Pengganti (${selectedModul})`
-              : isEdit
-                ? 'Edit Jadwal'
-                : 'Tambah Jadwal'}
+            {isEdit ? 'Edit Jadwal' : 'Tambah Jadwal'}
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4 py-4">
-          {isEdit && selectedModul === 'Default' && (
+        <form onSubmit={handleFormSubmit} className="space-y-4 py-4">
+          {isEdit && (
             <div className="flex items-center space-x-2 p-2 bg-muted/30 rounded-lg border border-border/50">
               <Switch
                 id="edit-mode"
@@ -259,21 +222,7 @@ export function JadwalModal({
             </div>
           )}
 
-          {selectedModul !== 'Default' && (
-            <div className="space-y-2">
-              <Label htmlFor="tanggal">Tanggal Pengganti</Label>
-              <Input
-                id="tanggal"
-                type="date"
-                value={formData.tanggal}
-                onChange={(e) => setFormData((prev) => ({ ...prev, tanggal: e.target.value }))}
-                required
-              />
-            </div>
-          )}
-
           <div className="grid grid-cols-1 gap-4">
-            {/* 1. Tahun Ajaran */}
             <div className="space-y-2">
               <Label htmlFor="term">Tahun Ajaran</Label>
               <Select
@@ -283,7 +232,7 @@ export function JadwalModal({
                   setSelectedPraktikum('');
                   handleChange('id_mk', '');
                 }}
-                disabled={selectedModul !== 'Default' ? true : !isDetailsEditable}
+                disabled={!isDetailsEditable}
               >
                 <SelectTrigger className="w-full disabled:opacity-70 disabled:cursor-not-allowed">
                   <SelectValue placeholder="Pilih Tahun Ajaran" />
@@ -300,7 +249,6 @@ export function JadwalModal({
               </Select>
             </div>
 
-            {/* 2. Praktikum (Shows only if Term selected) */}
             <div className="space-y-2">
               <Label htmlFor="praktikum">Praktikum</Label>
               <Select
@@ -309,9 +257,7 @@ export function JadwalModal({
                   setSelectedPraktikum(val);
                   handleChange('id_mk', '');
                 }}
-                disabled={
-                  !selectedTerm || (selectedModul !== 'Default' ? true : !isDetailsEditable)
-                }
+                disabled={!selectedTerm || !isDetailsEditable}
               >
                 <SelectTrigger className="w-full disabled:opacity-70 disabled:cursor-not-allowed">
                   <SelectValue placeholder="Pilih Praktikum" />
@@ -328,15 +274,12 @@ export function JadwalModal({
               </Select>
             </div>
 
-            {/* 3. Mata Kuliah (Shows only if Praktikum selected) */}
             <div className="space-y-2">
               <Label htmlFor="id_mk">Mata Kuliah</Label>
               <Select
                 value={formData.id_mk?.toString()}
                 onValueChange={(val) => handleChange('id_mk', val)}
-                disabled={
-                  !selectedPraktikum || (selectedModul !== 'Default' ? true : !isDetailsEditable)
-                }
+                disabled={!selectedPraktikum || !isDetailsEditable}
               >
                 <SelectTrigger className="w-full disabled:opacity-70 disabled:cursor-not-allowed">
                   <SelectValue placeholder="Pilih Mata Kuliah" />
@@ -353,7 +296,6 @@ export function JadwalModal({
               </Select>
             </div>
 
-            {/* Kelas & Ruangan */}
             <div className="grid grid-cols-2 gap-4 w-full items-start">
               <div className="space-y-2 w-full">
                 <Label htmlFor="kelas">Kelas</Label>
@@ -364,7 +306,7 @@ export function JadwalModal({
                     onChange={(e) => handleChange('kelas', e.target.value)}
                     placeholder="e.g. IF-45-01"
                     required
-                    disabled={isPJJ || (selectedModul !== 'Default' ? true : !isDetailsEditable)}
+                    disabled={isPJJ || !isDetailsEditable}
                     className="disabled:opacity-70 disabled:cursor-not-allowed"
                   />
                   <div className="flex items-center space-x-2 shrink-0">
@@ -387,7 +329,7 @@ export function JadwalModal({
                           }
                         }
                       }}
-                      disabled={selectedModul !== 'Default' ? true : !isDetailsEditable}
+                      disabled={!isDetailsEditable}
                     />
                     <Label htmlFor="is_pjj">PJJ</Label>
                   </div>
@@ -398,7 +340,7 @@ export function JadwalModal({
                 <Select
                   value={formData.ruangan || (isPJJ ? 'tanpa_ruangan' : '')}
                   onValueChange={(val) => handleChange('ruangan', val)}
-                  disabled={selectedModul !== 'Default' ? true : !isDetailsEditable}
+                  disabled={!isDetailsEditable}
                 >
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Pilih Ruangan" />
@@ -419,7 +361,6 @@ export function JadwalModal({
               </div>
             </div>
 
-            {/* Hari & Sesi */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="hari">Hari</Label>
@@ -512,7 +453,6 @@ export function JadwalModal({
               </div>
             </div>
 
-            {/* Dosen */}
             <div className="space-y-2">
               <Label htmlFor="dosen">Kode Dosen</Label>
               <Input
@@ -525,7 +465,6 @@ export function JadwalModal({
               />
             </div>
 
-            {/* Total Asprak */}
             <div className="space-y-2">
               <Label htmlFor="total_asprak">Kebutuhan Asprak</Label>
               <Input
@@ -550,22 +489,14 @@ export function JadwalModal({
           </div>
 
           <DialogFooter className="flex items-center sm:justify-between w-full">
-            <div className="flex w-full sm:w-auto items-center sm:hidden justify-end space-x-2 mb-2"></div>
-
-            <div className="flex w-full items-center justify-between sm:justify-start">
-              <div className="hidden sm:block"></div>
-
+            <div className="flex w-full items-center justify-between sm:justify-end">
               <div className="flex w-full sm:w-auto justify-end space-x-2">
                 <Button variant="outline" type="button" onClick={onClose} disabled={isLoading}>
                   Batal
                 </Button>
                 <Button type="submit" disabled={isLoading}>
                   {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  {selectedModul !== 'Default'
-                    ? 'Simpan Jadwal Pengganti'
-                    : isEdit
-                      ? 'Simpan Perubahan'
-                      : 'Tambah Jadwal'}
+                  {isEdit ? 'Simpan Perubahan' : 'Tambah Jadwal'}
                 </Button>
               </div>
             </div>
