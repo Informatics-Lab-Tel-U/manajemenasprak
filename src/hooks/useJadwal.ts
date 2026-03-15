@@ -41,6 +41,7 @@ export function useJadwal(
     'Modul 12',
     'Modul 13',
     'Modul 14',
+    'Modul 15',
   ];
 
   const fetchTerms = useCallback(async () => {

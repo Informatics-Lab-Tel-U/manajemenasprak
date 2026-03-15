@@ -10,6 +10,7 @@ import {
 } from '@tanstack/react-table';
 import { ArrowUpRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Asprak } from '@/types/database';
+import { HIDE_ASLAB_YEAR } from '@/constants';
 import {
   Table,
   TableBody,
@@ -115,7 +116,7 @@ export default function AsprakTable({ data, loading, onViewDetails }: AsprakTabl
           if (role === 'ASLAB') {
             return (
               <Badge className="bg-slate-900 text-white hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200 font-bold px-2 py-0.5">
-                ASLAB {getAslabTerm(row.original.angkatan)}
+                ASLAB {!HIDE_ASLAB_YEAR && getAslabTerm(row.original.angkatan)}
               </Badge>
             );
           }

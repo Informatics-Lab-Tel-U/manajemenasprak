@@ -255,6 +255,7 @@ export default function JadwalPenggantiClientPage({
         mataKuliahList={initialMataKuliah}
         allJadwal={initialAllJadwal}
         isLoading={isSubmitting}
+        currentTerm={selectedTerm}
       />
     </div>
   );

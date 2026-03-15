@@ -3,6 +3,7 @@
  */
 
 export const ACTIVE_YEARS_THRESHOLD = 6;
+export const HIDE_ASLAB_YEAR = true;
 
 export const DAYS = ['SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU'];
 

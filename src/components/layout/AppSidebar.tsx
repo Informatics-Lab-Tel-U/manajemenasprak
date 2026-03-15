@@ -74,6 +74,7 @@ const ALL_NAV_ITEMS: NavItem[] = [
     items: [
       { label: 'Overview Jadwal', href: '/jadwal' },
       { label: 'Jadwal Pengganti', href: '/jadwal/pengganti' },
+      { label: 'Tanggal Mulai Modul', href: '/jadwal/modul' },
     ],
   },
   {

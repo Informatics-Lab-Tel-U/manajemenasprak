@@ -24,6 +24,8 @@ import { Loader2, Info } from 'lucide-react';
 import { toast } from 'sonner';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
+import { fetchModulSchedule } from '@/lib/fetchers/modulScheduleFetcher';
+
 interface JadwalPenggantiModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -32,6 +34,8 @@ interface JadwalPenggantiModalProps {
   mataKuliahList: MataKuliah[];
   allJadwal: Jadwal[];
   isLoading?: boolean;
+  currentTerm?: string;
+  disableModul?: boolean;
 }
 
 export function JadwalPenggantiModal({
@@ -42,6 +46,8 @@ export function JadwalPenggantiModal({
   mataKuliahList,
   allJadwal,
   isLoading = false,
+  currentTerm,
+  disableModul = false,
 }: JadwalPenggantiModalProps) {
   const [selectedTerm, setSelectedTerm] = useState('');
   const [selectedMKId, setSelectedMKId] = useState('');
@@ -52,8 +58,10 @@ export function JadwalPenggantiModal({
   const [sesi, setSesi] = useState<number>(1);
   const [jam, setJam] = useState('06:30');
   const [ruangan, setRuangan] = useState('');
+  
+  const [modulSchedules, setModulSchedules] = useState<any[]>([]);
 
-  // Pre-load data if editing
+  // Pre-load data if editing or set defaults if adding
   useEffect(() => {
     if (isOpen) {
       if (initialData) {
@@ -70,6 +78,7 @@ export function JadwalPenggantiModal({
         setJam(initialData.jam);
         setRuangan(initialData.ruangan);
       } else {
+        setSelectedTerm(currentTerm || '');
         setModul(1);
         setTanggal('');
         setHari('SENIN');
@@ -78,7 +87,52 @@ export function JadwalPenggantiModal({
         setRuangan('');
       }
     }
-  }, [isOpen, initialData]);
+  }, [isOpen, initialData, currentTerm]);
+
+  // Fetch TMM when selectedTerm changes
+  useEffect(() => {
+    if (isOpen && selectedTerm) {
+      const fetchTMM = async () => {
+        const result = await fetchModulSchedule(selectedTerm);
+        if (result.ok && result.data) {
+          setModulSchedules(result.data);
+        }
+      };
+      fetchTMM();
+    }
+  }, [isOpen, selectedTerm]);
+
+  const calculateDate = (m: number, h: string, schedules: any[]) => {
+    const schedule = schedules.find((s) => s.modul === m);
+    if (!schedule?.tanggal_mulai) return '';
+
+    const dayOrder = ['SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU', 'MINGGU'];
+    const targetDayIndex = dayOrder.indexOf(h.toUpperCase());
+    
+    if (targetDayIndex === -1) return schedule.tanggal_mulai;
+
+    try {
+      const d = new Date(schedule.tanggal_mulai);
+      d.setDate(d.getDate() + targetDayIndex);
+      
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    } catch {
+      return '';
+    }
+  };
+
+  // Sync date when Modul, Hari, or modulSchedules changes
+  useEffect(() => {
+    if (isOpen && modulSchedules.length > 0) {
+      const newTanggal = calculateDate(modul, hari, modulSchedules);
+      if (newTanggal) {
+        setTanggal(newTanggal);
+      }
+    }
+  }, [isOpen, modul, hari, modulSchedules]);
 
   const availableTerms = useMemo(() => {
     return Array.from(new Set(mataKuliahList.map(mk => mk.praktikum?.tahun_ajaran).filter(Boolean))) as string[];
@@ -172,7 +226,9 @@ export function JadwalPenggantiModal({
                   </SelectTrigger>
                   <SelectContent>
                     {filteredMKList.map(mk => (
-                      <SelectItem key={mk.id} value={mk.id}>{mk.nama_lengkap}</SelectItem>
+                      <SelectItem key={mk.id} value={mk.id}>
+                        {mk.nama_lengkap} - {mk.program_studi}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -208,12 +264,16 @@ export function JadwalPenggantiModal({
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Modul</Label>
-                  <Select value={modul.toString()} onValueChange={(v) => setModul(parseInt(v))}>
+                  <Select 
+                    value={modul.toString()} 
+                    onValueChange={(v) => setModul(parseInt(v))}
+                    disabled={disableModul}
+                  >
                     <SelectTrigger className="w-full">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {Array.from({ length: 16 }, (_, i) => i + 1).map(m => (
+                      {Array.from({ length: 15 }, (_, i) => i + 1).map(m => (
                         <SelectItem key={m} value={m.toString()}>Modul {m}</SelectItem>
                       ))}
                     </SelectContent>
@@ -221,7 +281,15 @@ export function JadwalPenggantiModal({
                 </div>
                 <div className="space-y-2">
                   <Label>Tanggal Pengganti</Label>
-                  <Input type="date" value={tanggal} onChange={(e) => setTanggal(e.target.value)} required className="w-full" />
+                  <Input 
+                    type="date" 
+                    value={tanggal} 
+                    onChange={(e) => setTanggal(e.target.value)} 
+                    required 
+                    readOnly
+                    className="w-full bg-muted cursor-not-allowed" 
+                  />
+                  <p className="text-[10px] text-muted-foreground italic">Ditentukan otomatis berdasarkan Modul & Hari</p>
                 </div>
               </div>
 

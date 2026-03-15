@@ -37,6 +37,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import AsprakGenerationRules from '@/components/asprak/AsprakGenerationRules';
 import AsprakDeleteDialog from '@/components/asprak/AsprakDeleteDialog';
+import { HIDE_ASLAB_YEAR } from '@/constants';
 
 interface AsprakWithAssignments extends Asprak {
   assignments?: AsprakAssignment[];
@@ -276,7 +277,11 @@ export default function AsprakClientPage({
         const start = (angkatan + 3) % 100;
         const end = (angkatan + 4) % 100;
         const term = `${start.toString().padStart(2, '0')}${end.toString().padStart(2, '0')}`;
-        roleText = `ASLAB ${term}`;
+        roleText = HIDE_ASLAB_YEAR ? 'ASLAB' : `ASLAB ${term}`;
+        // Fallback check to allow searching by the suffix even if hidden
+        if (HIDE_ASLAB_YEAR && (lowerQ.includes(term) || term.includes(lowerQ))) {
+          roleText = `ASLAB ${term}`;
+        }
       }
 
       return (
