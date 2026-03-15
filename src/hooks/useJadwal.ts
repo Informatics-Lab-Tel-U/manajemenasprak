@@ -143,15 +143,10 @@ export function useJadwal(
 
   useEffect(() => {
     if (selectedTerm) {
-      // Skip if we have initial data and haven't changed the term
-      const effectiveInitialTerm = initialTerm || initialData?.terms?.[0] || '';
-      if (initialData?.jadwal && selectedTerm === effectiveInitialTerm) {
-        setLoading(false);
-        return;
-      }
+      // Fetch if term changed OR if modul changed (and we need replacements)
       fetchJadwal();
     }
-  }, [selectedTerm, fetchJadwal, initialData?.jadwal, initialTerm]);
+  }, [selectedTerm, selectedModul, fetchJadwal]);
 
   return {
     data,
