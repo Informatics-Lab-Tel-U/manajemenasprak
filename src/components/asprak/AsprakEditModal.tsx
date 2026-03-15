@@ -14,6 +14,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
 import { Asprak, Praktikum } from '@/types/database';
 import { usePraktikum } from '@/hooks/usePraktikum';
+import { ACTIVE_YEARS_THRESHOLD } from '@/constants';
 
 interface AsprakEditModalProps {
   asprak: Asprak;
@@ -84,7 +85,7 @@ export default function AsprakEditModal({
         if (a.kode.toUpperCase() === asprak.kode.toUpperCase()) return false;
 
         const gap = calculatedAngkatan - a.angkatan;
-        return gap < 5; // CODE_RECYCLE_YEARS
+        return gap < ACTIVE_YEARS_THRESHOLD; // Use central threshold
       });
 
       if (conflictInDB) {
