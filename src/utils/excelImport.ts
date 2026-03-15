@@ -1,7 +1,7 @@
 import * as XLSX from 'xlsx';
 import { supabase } from '@/services/supabase';
 import { logger } from '@/lib/logger';
-import { checkCodeConflict, generateConflictErrorMessage, generateExpiredCode } from './conflict';
+import { checkCodeConflict, generateConflictErrorMessage } from './conflict';
 import { isAsprakInactive } from './asprak';
 
 export async function processExcelUpload(
@@ -144,14 +144,6 @@ export async function processExcelUpload(
         if (error) throw new Error(`Failed to update Asprak ${row.nim}: ${error.message}`);
         asprakCodeMap.set(row.kode, existingUser.id);
       } else {
-        if (existingCodeOwner && existingCodeOwner.nim !== row.nim.toString()) {
-          const expiredCode = generateExpiredCode(existingCodeOwner.kode, existingCodeOwner.id);
-          await supabase
-            .from('asprak')
-            .update({ kode: expiredCode })
-            .eq('id', existingCodeOwner.id);
-        }
-
         const { data: inserted, error } = await supabase
           .from('asprak')
           .insert({

@@ -1,30 +1,57 @@
 import { createClient } from '@/lib/supabase/server';
 import { Jadwal } from '@/types/database';
 
-export async function getTodaySchedule(limit: number = 5, term?: string): Promise<Jadwal[]> {
+export async function getTodaySchedule(limit: number = 100, term?: string): Promise<Jadwal[]> {
   const supabase = await createClient();
-  const today = new Date().toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
-
-  const dayMap: Record<string, string> = {
-    SUNDAY: 'MINGGU',
-    MONDAY: 'SENIN',
-    TUESDAY: 'SELASA',
-    WEDNESDAY: 'RABU',
-    THURSDAY: 'KAMIS',
-    FRIDAY: 'JUMAT',
-    SATURDAY: 'SABTU',
+  const now = new Date();
+  
+  // Use a stable date string for comparison
+  const todayStr = now.toISOString().split('T')[0];
+  const dayIndoMap: Record<string, string> = {
+    'Sunday': 'MINGGU',
+    'Monday': 'SENIN',
+    'Tuesday': 'SELASA',
+    'Wednesday': 'RABU',
+    'Thursday': 'KAMIS',
+    'Friday': 'JUMAT',
+    'Saturday': 'SABTU',
   };
-
-  const dayIndo = dayMap[today] || today;
+  const todayName = new Intl.DateTimeFormat('en-US', { weekday: 'long' }).format(now);
+  const dayIndo = dayIndoMap[todayName] || todayName.toUpperCase();
 
   if (dayIndo === 'MINGGU') {
     return [];
   }
 
-  const query = supabase
+  // 1. Resolve Term
+  let effectiveTerm = term;
+  if (!effectiveTerm) {
+    const terms = await fetchAvailableTerms();
+    effectiveTerm = terms[0] || '';
+  }
+  if (!effectiveTerm) return [];
+
+  // 2. Determine Current Module
+  const { data: moduleSchedules } = await supabase
+    .from('modul_schedule')
+    .select('modul, tanggal_mulai')
+    .eq('tahun_ajaran', effectiveTerm)
+    .order('modul', { ascending: false });
+
+  let currentModul: number | null = null;
+  if (moduleSchedules && moduleSchedules.length > 0) {
+    for (const ms of moduleSchedules) {
+      if (ms.tanggal_mulai && ms.tanggal_mulai <= todayStr) {
+        currentModul = ms.modul;
+        break;
+      }
+    }
+  }
+
+  // 3. Fetch Default Schedules for this day and term
+  const { data: defaultJadwal, error: jError } = await supabase
     .from('jadwal')
-    .select(
-      `
+    .select(`
       *,
       mata_kuliah:mata_kuliah!inner (
         nama_lengkap,
@@ -35,26 +62,49 @@ export async function getTodaySchedule(limit: number = 5, term?: string): Promis
           nama
         )
       )
-    `
-    )
-    .eq('hari', dayIndo)
-    .order('jam', { ascending: true });
+    `)
+    .eq('hari', dayIndo);
 
-  // Fetch more rows and filter in memory to reliably filter by term
-  // Supabase nested relation .eq() is unreliable for filtering
-  const { data, error } = await query;
-
-  if (error) {
-    console.error('Error fetching today schedule:', error);
+  if (jError) {
+    console.error('Error fetching default schedule:', jError);
     return [];
   }
 
-  let results = data as Jadwal[];
+  let results = (defaultJadwal as any[]).filter(
+    (j) => j.mata_kuliah?.praktikum?.tahun_ajaran === effectiveTerm
+  ) as Jadwal[];
 
-  // Filter by term in memory if provided
-  if (term) {
-    results = results.filter((j) => (j.mata_kuliah as any)?.praktikum?.tahun_ajaran === term);
+  // 4. Integrate Replacements if we have an active module
+  if (currentModul !== null) {
+    const { data: pengganti, error: pError } = await supabase
+      .from('jadwal_pengganti')
+      .select('*')
+      .eq('modul', currentModul)
+      .eq('hari', dayIndo);
+
+    if (!pError && pengganti && pengganti.length > 0) {
+      const penggantiMap = new Map();
+      pengganti.forEach((p) => penggantiMap.set(p.id_jadwal, p));
+
+      // Replace default entries with pengganti
+      results = results.map((j) => {
+        const p = penggantiMap.get(j.id);
+        if (p) {
+          return {
+            ...j,
+            ruangan: p.ruangan,
+            jam: p.jam,
+            sesi: p.sesi,
+            __is_pengganti: true,
+          } as any;
+        }
+        return j;
+      });
+    }
   }
+
+  // Final sort by time
+  results.sort((a, b) => (a.jam || '').localeCompare(b.jam || ''));
 
   return results.slice(0, limit);
 }

@@ -6,7 +6,6 @@ import { requireRole } from '@/lib/auth';
 import {
   checkCodeConflict,
   generateConflictErrorMessage,
-  generateExpiredCode,
 } from '@/utils/conflict';
 
 export async function POST(req: Request) {
@@ -153,16 +152,6 @@ export async function POST(req: Request) {
             .eq('id', existingUser.id);
           asprakCodeMap.set(row.kode, existingUser.id);
         } else {
-          if (existingCodeOwner && existingCodeOwner.nim !== row.nim.toString()) {
-            const expiredCode = generateExpiredCode(existingCodeOwner.kode, existingCodeOwner.id);
-            await supabase
-              .from('asprak')
-              .update({
-                kode: expiredCode,
-              })
-              .eq('id', existingCodeOwner.id);
-          }
-
           const { data: inserted, error } = await supabase
             .from('asprak')
             .insert({

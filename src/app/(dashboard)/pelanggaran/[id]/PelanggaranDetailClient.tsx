@@ -428,7 +428,7 @@ export default function PelanggaranDetailClient({
             <SelectContent>
               <SelectGroup>
                 <SelectLabel>Daftar Modul</SelectLabel>
-                {Array.from({ length: 14 }, (_, i) => {
+                {Array.from({ length: 15 }, (_, i) => {
                   const m = i + 1;
                   const isModulFinal = finalizedModules.includes(m);
                   return (
