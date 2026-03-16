@@ -39,6 +39,9 @@ This documentation provides comprehensive technical information about the **Sist
 4. [System Architecture](#system-architecture)
 5. [Getting Started](#getting-started)
 6. [Documentation Structure](#documentation-structure)
+7. [Contributing](#contributing)
+8. [Top Contributors](#top-contributors)
+9. [License](#license)
 
 ---
 
@@ -333,6 +336,18 @@ test: add/update tests
 
 ---
 
+## Top Contributors
+
+<div align="center">
+
+<a href="https://github.com/Informatics-Lab-Tel-U/manajemenasprak/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=Informatics-Lab-Tel-U/manajemenasprak" />
+</a>
+
+</div>
+
+---
+
 ## Support & Contact
 
 - **Team**: Informatics Laboratory Asistant Telkom University
@@ -343,20 +358,7 @@ test: add/update tests
 
 ## License
 
-**PROPRIETARY AND CONFIDENTIAL**
-
-This project is proprietary software of Informatics Laboratory, Telkom University. All rights reserved.
-
-**Restrictions:**
-
-- ❌ Unauthorized copying, modification, or distribution is strictly prohibited
-- ❌ Cannot be used for commercial purposes without explicit written permission
-- ❌ Cannot be disclosed to third parties
-- ✅ Use is limited to authorized Informatics Laboratory, Telkom University personnel and authorized partner institutions
-
-For licensing inquiries or permission requests, contact the laboratory administration.
-
-See [LICENSE](./LICENSE) file for the complete legal terms.
+This software is **proprietary and confidential**. For complete licensing terms and restrictions, see [LICENSE](./LICENSE) file.
 
 ---
 
