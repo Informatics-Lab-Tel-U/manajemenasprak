@@ -119,9 +119,6 @@ export async function DELETE(req: Request) {
 
     await asprakService.deleteAsprak(id, supabase);
 
-    const { createAuditLog } = await import('@/services/server/auditLogService');
-    await createAuditLog('Asprak', id, 'DELETE');
-
     return NextResponse.json({ ok: true, data: null });
   } catch (e: any) {
     logger.error('DELETE /api/asprak error:', e);

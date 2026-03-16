@@ -57,8 +57,6 @@ export async function POST(request: NextRequest) {
       const result = await createMataKuliah(payload, supabase);
 
       if (result) {
-        const { createAuditLog } = await import('@/services/server/auditLogService');
-        await createAuditLog('Mata_Kuliah', result.id, 'CREATE', payload);
       }
 
       return NextResponse.json({ ok: true, data: result });
@@ -98,9 +96,6 @@ export async function POST(request: NextRequest) {
       }
 
       const result = await bulkCreateMataKuliah(finalPayloads, supabase);
-
-      const { createAuditLog } = await import('@/services/server/auditLogService');
-      await createAuditLog('Mata_Kuliah', 'BULK', 'IMPORT', { count: result.inserted });
 
       return NextResponse.json({
         ok: true,
@@ -175,11 +170,6 @@ export async function PUT(request: NextRequest) {
           );
         }
       }
-
-      const { createAuditLog } = await import('@/services/server/auditLogService');
-      await createAuditLog('Mata_Kuliah', 'GLOBAL', 'COLOR_UPDATE', {
-        updated_count: totalUpdated,
-      });
 
       return NextResponse.json({
         ok: true,

@@ -1,5 +1,8 @@
-import { getStats } from '@/services/server/databaseService';
-import { getTodaySchedule, fetchAvailableTerms } from '@/services/server/jadwalService';
+import { getStats } from '@/services/databaseService';
+import {
+  getTodaySchedule,
+  getCachedAvailableTerms as fetchAvailableTerms,
+} from '@/services/jadwalService';
 import DashboardClient from '@/components/DashboardClient';
 
 export const revalidate = 0;

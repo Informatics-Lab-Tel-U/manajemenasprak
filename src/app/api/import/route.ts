@@ -224,9 +224,6 @@ export async function POST(req: Request) {
 
       logger.info(`Import complete: ${jadwalInserted} jadwal inserted`);
 
-      const { createAuditLog } = await import('@/services/server/auditLogService');
-      await createAuditLog('DATA_IMPORT', 'EXCEL', 'IMPORT', { term, count: jadwalInserted });
-
       return NextResponse.json({ success: true, message: `Imported ${jadwalInserted} schedules` });
     } catch (e: any) {
       logger.error('Import failed, rolling back...', e);

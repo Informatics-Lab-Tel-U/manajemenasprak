@@ -115,9 +115,6 @@ export async function POST(req: Request) {
       }
       await pelanggaranService.finalizePelanggaranByPraktikum(id_praktikum, user.id);
 
-      const { createAuditLog } = await import('@/services/server/auditLogService');
-      await createAuditLog('Pelanggaran', id_praktikum, 'FINALIZE_PRAKTIKUM');
-
       return NextResponse.json({ ok: true });
     }
 
@@ -138,9 +135,6 @@ export async function POST(req: Request) {
 
       await pelanggaranService.unfinalizePelanggaranByPraktikum(id_praktikum);
 
-      const { createAuditLog } = await import('@/services/server/auditLogService');
-      await createAuditLog('Pelanggaran', id_praktikum, 'UNFINALIZE_PRAKTIKUM');
-
       return NextResponse.json({ ok: true });
     }
 
@@ -153,9 +147,6 @@ export async function POST(req: Request) {
         );
       }
       await pelanggaranService.finalizePelanggaranByModul(id_praktikum, Number(modul), user.id);
-
-      const { createAuditLog } = await import('@/services/server/auditLogService');
-      await createAuditLog('Pelanggaran', id_praktikum, 'FINALIZE_MODUL', { modul: Number(modul) });
 
       return NextResponse.json({ ok: true });
     }
@@ -172,11 +163,6 @@ export async function POST(req: Request) {
         );
       }
       await pelanggaranService.unfinalizePelanggaranByModul(id_praktikum, Number(modul));
-
-      const { createAuditLog } = await import('@/services/server/auditLogService');
-      await createAuditLog('Pelanggaran', id_praktikum, 'UNFINALIZE_MODUL', {
-        modul: Number(modul),
-      });
 
       return NextResponse.json({ ok: true });
     }
@@ -204,23 +190,12 @@ export async function POST(req: Request) {
         supabase
       );
 
-      const { createAuditLog } = await import('@/services/server/auditLogService');
-      await createAuditLog('Pelanggaran', pelanggaran.id, 'CREATE', {
-        id_asprak: asprakIds[0],
-        id_jadwal,
-        jenis,
-        modul,
-      });
-
       return NextResponse.json({ ok: true, data: pelanggaran });
     }
 
     // Bulk create for multiple asprak
     const inputs = asprakIds.map((id) => ({ id_asprak: id, id_jadwal, jenis, modul }));
     const results = await pelanggaranService.bulkCreatePelanggaran(inputs, supabase);
-
-    const { createAuditLog } = await import('@/services/server/auditLogService');
-    await createAuditLog('Pelanggaran', 'BULK', 'CREATE', { count: results.length });
 
     return NextResponse.json({ ok: true, data: results });
   } catch (error: any) {
@@ -244,9 +219,6 @@ export async function DELETE(req: Request) {
     }
 
     await pelanggaranService.deletePelanggaran(id, supabase);
-
-    const { createAuditLog } = await import('@/services/server/auditLogService');
-    await createAuditLog('Pelanggaran', id, 'DELETE');
 
     return NextResponse.json({ ok: true });
   } catch (error: any) {
