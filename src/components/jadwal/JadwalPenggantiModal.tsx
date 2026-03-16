@@ -58,6 +58,38 @@ export function JadwalPenggantiModal({
   const [sesi, setSesi] = useState<number>(1);
   const [jam, setJam] = useState('06:30');
   const [ruangan, setRuangan] = useState('');
+
+  // PJJ Support
+  const isPJJ = useMemo(() => {
+    const mk = mataKuliahList.find((m) => m.id === selectedMKId);
+    const j = allJadwal.find((jad) => jad.id === selectedJadwalId);
+
+    const mkMatch =
+      mk?.nama_lengkap.toLowerCase().includes('pjj') ||
+      mk?.program_studi.toLowerCase().includes('pjj');
+    const classMatch = j?.kelas.toLowerCase().includes('pjj');
+
+    return !!(mkMatch || classMatch);
+  }, [selectedMKId, selectedJadwalId, mataKuliahList, allJadwal]);
+
+  const pjjTimes = useMemo(() => {
+    const times = [];
+    let current = 6 * 60 + 30; // 06:30
+    const end = 21 * 60 + 30; // 21:30
+
+    while (current <= end) {
+      const h = Math.floor(current / 60);
+      const m = current % 60;
+      times.push(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`);
+      current += 60; // 60 min intervals (hourly)
+    }
+    return times;
+  }, []);
+
+  const calculateSesiFromJamPJJ = (timeStr: string, day: string) => {
+    const session = STATIC_SESSIONS[day]?.find((s) => s.jam === timeStr);
+    return session ? session.sesi : 0;
+  };
   
   const [modulSchedules, setModulSchedules] = useState<any[]>([]);
 
@@ -161,13 +193,26 @@ export function JadwalPenggantiModal({
 
   const handleHariChange = (val: string) => {
     setHari(val);
-    const sessionObj = STATIC_SESSIONS[val]?.find(s => s.sesi === sesi);
-    if (sessionObj) setJam(sessionObj.jam);
+    if (isPJJ) {
+      // Recalculate sessions from current jam if PJJ
+      setSesi(calculateSesiFromJamPJJ(jam, val));
+    } else {
+      const sessionObj = STATIC_SESSIONS[val]?.find((s) => s.sesi === sesi);
+      if (sessionObj) setJam(sessionObj.jam);
+    }
+  };
+
+  const handleJamChange = (val: string) => {
+    setJam(val);
+    if (isPJJ) {
+      const calculatedSesi = calculateSesiFromJamPJJ(val, hari);
+      setSesi(calculatedSesi);
+    }
   };
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedJadwalId || !modul || !tanggal || !hari || !sesi || !jam || !ruangan) {
+    if (!selectedJadwalId || !modul || !tanggal || !hari || (sesi === undefined || sesi === null) || !jam || !ruangan) {
       toast.error('Mohon lengkapi semua field');
       return;
     }
@@ -308,17 +353,37 @@ export function JadwalPenggantiModal({
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>Sesi Pengganti</Label>
-                  <Select value={sesi.toString()} onValueChange={handleSesiChange}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {STATIC_SESSIONS[hari]?.map(s => (
-                        <SelectItem key={s.sesi} value={s.sesi.toString()}>Sesi {s.sesi} ({s.jam})</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Label>{isPJJ ? 'Jam Pengganti' : 'Sesi Pengganti'}</Label>
+                  {isPJJ ? (
+                    <Select value={jam} onValueChange={handleJamChange}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {pjjTimes.map((t) => {
+                          const calculatedSesi = calculateSesiFromJamPJJ(t, hari);
+                          return (
+                            <SelectItem key={t} value={t}>
+                              {t} {calculatedSesi > 0 ? `(Sesi ${calculatedSesi})` : ''}
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <Select value={sesi.toString()} onValueChange={handleSesiChange}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {STATIC_SESSIONS[hari]?.map((s) => (
+                          <SelectItem key={s.sesi} value={s.sesi.toString()}>
+                            Sesi {s.sesi} ({s.jam})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
                 </div>
               </div>
 
