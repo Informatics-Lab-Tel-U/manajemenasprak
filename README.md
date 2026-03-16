@@ -352,7 +352,7 @@ This project is proprietary software of Informatics Laboratory, Telkom Universit
 - ❌ Unauthorized copying, modification, or distribution is strictly prohibited
 - ❌ Cannot be used for commercial purposes without explicit written permission
 - ❌ Cannot be disclosed to third parties
-- ✅ Use is limited to authorized ITB personnel and authorized partner institutions
+- ✅ Use is limited to authorized Informatics Laboratory, Telkom University personnel and authorized partner institutions
 
 For licensing inquiries or permission requests, contact the laboratory administration.
 
