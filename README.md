@@ -44,11 +44,11 @@ This documentation provides comprehensive technical information about the **Sist
 
 ### Institution & Lab Identity
 
-| Institusi                                                         | Laboratorium                                |
-| ----------------------------------------------------------------- | ------------------------------------------- |
-| ![Telkom University](./docs/assets/logo-fakultas-informatika.png) | ![Informatics Lab](./docs/assets/iflab.png) |
-| **Fakultas Informatika**                                          | **Informatics Laboratory**                  |
-| School of Computing                                               | Telkom University                           |
+| Institusi                                                         | Laboratorium                                                            |
+| ----------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| ![Telkom University](./docs/assets/logo-fakultas-informatika.png) | <img src="./docs/assets/iflab.png" alt="Informatics Lab" width="150" /> |
+| **Fakultas Informatika**                                          | **Informatics Laboratory**                                              |
+| School of Computing                                               | Telkom University                                                       |
 
 **Sistem Manajemen Asprak** adalah aplikasi web internal yang dirancang untuk meningkatkan efisiensi administratif pengelolaan asisten praktikum di Laboratorium Informatika. Sistem ini menyediakan fitur terintegrasi untuk:
 
