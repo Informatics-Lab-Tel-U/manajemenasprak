@@ -44,12 +44,10 @@
 - Environment variable separation with .env.local for secrets
 - Security headers configured (X-Frame-Options, X-Content-Type-Options, etc)
 - HTTPS/TLS encryption required
-- Rate limiting support ready for implementation
 
 ### Known Limitations
 
 - Single-region deployment (Supabase)
-- No real-time collaboration (Supabase Realtime not fully integrated)
 - Maintenance window requires manual trigger
 - Password reset requires email verification (Supabase limitation)
 
