@@ -30,7 +30,7 @@ interface JadwalPenggantiModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (input: any) => Promise<any>;
-  initialData?: any | null; 
+  initialData?: any | null;
   mataKuliahList: MataKuliah[];
   allJadwal: Jadwal[];
   isLoading?: boolean;
@@ -90,7 +90,7 @@ export function JadwalPenggantiModal({
     const session = STATIC_SESSIONS[day]?.find((s) => s.jam === timeStr);
     return session ? session.sesi : 0;
   };
-  
+
   const [modulSchedules, setModulSchedules] = useState<any[]>([]);
 
   // Pre-load data if editing or set defaults if adding
@@ -99,7 +99,7 @@ export function JadwalPenggantiModal({
       if (initialData) {
         const j = initialData.jadwal;
         const mk = j?.mata_kuliah;
-        
+
         setSelectedTerm(mk?.praktikum?.tahun_ajaran || '');
         setSelectedMKId(j?.id_mk || '');
         setSelectedJadwalId(initialData.id_jadwal || '');
@@ -140,13 +140,13 @@ export function JadwalPenggantiModal({
 
     const dayOrder = ['SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU', 'MINGGU'];
     const targetDayIndex = dayOrder.indexOf(h.toUpperCase());
-    
+
     if (targetDayIndex === -1) return schedule.tanggal_mulai;
 
     try {
       const d = new Date(schedule.tanggal_mulai);
       d.setDate(d.getDate() + targetDayIndex);
-      
+
       const year = d.getFullYear();
       const month = String(d.getMonth() + 1).padStart(2, '0');
       const day = String(d.getDate()).padStart(2, '0');
@@ -167,27 +167,29 @@ export function JadwalPenggantiModal({
   }, [isOpen, modul, hari, modulSchedules]);
 
   const availableTerms = useMemo(() => {
-    return Array.from(new Set(mataKuliahList.map(mk => mk.praktikum?.tahun_ajaran).filter(Boolean))) as string[];
+    return Array.from(
+      new Set(mataKuliahList.map((mk) => mk.praktikum?.tahun_ajaran).filter(Boolean))
+    ) as string[];
   }, [mataKuliahList]);
 
   const filteredMKList = useMemo(() => {
     if (!selectedTerm) return [];
-    return mataKuliahList.filter(mk => mk.praktikum?.tahun_ajaran === selectedTerm);
+    return mataKuliahList.filter((mk) => mk.praktikum?.tahun_ajaran === selectedTerm);
   }, [selectedTerm, mataKuliahList]);
 
   const filteredJadwalList = useMemo(() => {
     if (!selectedMKId) return [];
-    return allJadwal.filter(j => j.id_mk === selectedMKId);
+    return allJadwal.filter((j) => j.id_mk === selectedMKId);
   }, [selectedMKId, allJadwal]);
 
   const selectedJadwal = useMemo(() => {
-    return allJadwal.find(j => j.id === selectedJadwalId);
+    return allJadwal.find((j) => j.id === selectedJadwalId);
   }, [selectedJadwalId, allJadwal]);
 
   const handleSesiChange = (val: string) => {
     const sInt = parseInt(val);
     setSesi(sInt);
-    const sessionObj = STATIC_SESSIONS[hari]?.find(s => s.sesi === sInt);
+    const sessionObj = STATIC_SESSIONS[hari]?.find((s) => s.sesi === sInt);
     if (sessionObj) setJam(sessionObj.jam);
   };
 
@@ -212,7 +214,16 @@ export function JadwalPenggantiModal({
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedJadwalId || !modul || !tanggal || !hari || (sesi === undefined || sesi === null) || !jam || !ruangan) {
+    if (
+      !selectedJadwalId ||
+      !modul ||
+      !tanggal ||
+      !hari ||
+      sesi === undefined ||
+      sesi === null ||
+      !jam ||
+      !ruangan
+    ) {
       toast.error('Mohon lengkapi semua field');
       return;
     }
@@ -237,24 +248,32 @@ export function JadwalPenggantiModal({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="flex max-h-[min(800px,90vh)] flex-col gap-0 p-0 sm:max-w-[500px]">
         <DialogHeader className="contents space-y-0 text-left">
-          <DialogTitle className="border-b px-6 py-4">{initialData ? 'Edit' : 'Tambah'} Jadwal Pengganti</DialogTitle>
+          <DialogTitle className="border-b px-6 py-4">
+            {initialData ? 'Edit' : 'Tambah'} Jadwal Pengganti
+          </DialogTitle>
         </DialogHeader>
         <ScrollArea className="flex max-h-full flex-col overflow-hidden">
           <form onSubmit={handleFormSubmit} className="space-y-4 px-6 py-4">
             <div className="grid grid-cols-1 gap-4">
               <div className="space-y-2">
                 <Label>Tahun Ajaran</Label>
-                <Select value={selectedTerm} onValueChange={(v) => {
-                  setSelectedTerm(v);
-                  setSelectedMKId('');
-                  setSelectedJadwalId('');
-                }} disabled={!!initialData}>
+                <Select
+                  value={selectedTerm}
+                  onValueChange={(v) => {
+                    setSelectedTerm(v);
+                    setSelectedMKId('');
+                    setSelectedJadwalId('');
+                  }}
+                  disabled={!!initialData}
+                >
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Pilih Tahun Ajaran" />
                   </SelectTrigger>
                   <SelectContent>
-                    {availableTerms.map(t => (
-                      <SelectItem key={t} value={t}>{t}</SelectItem>
+                    {availableTerms.map((t) => (
+                      <SelectItem key={t} value={t}>
+                        {t}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -262,15 +281,19 @@ export function JadwalPenggantiModal({
 
               <div className="space-y-2">
                 <Label>Mata Kuliah</Label>
-                <Select value={selectedMKId} onValueChange={(v) => {
-                  setSelectedMKId(v);
-                  setSelectedJadwalId('');
-                }} disabled={!selectedTerm || !!initialData}>
+                <Select
+                  value={selectedMKId}
+                  onValueChange={(v) => {
+                    setSelectedMKId(v);
+                    setSelectedJadwalId('');
+                  }}
+                  disabled={!selectedTerm || !!initialData}
+                >
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Pilih Mata Kuliah" />
                   </SelectTrigger>
                   <SelectContent>
-                    {filteredMKList.map(mk => (
+                    {filteredMKList.map((mk) => (
                       <SelectItem key={mk.id} value={mk.id}>
                         {mk.nama_lengkap} - {mk.program_studi}
                       </SelectItem>
@@ -281,13 +304,19 @@ export function JadwalPenggantiModal({
 
               <div className="space-y-2">
                 <Label>Kelas</Label>
-                <Select value={selectedJadwalId} onValueChange={setSelectedJadwalId} disabled={!selectedMKId || !!initialData}>
+                <Select
+                  value={selectedJadwalId}
+                  onValueChange={setSelectedJadwalId}
+                  disabled={!selectedMKId || !!initialData}
+                >
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Pilih Kelas" />
                   </SelectTrigger>
                   <SelectContent>
-                    {filteredJadwalList.map(j => (
-                      <SelectItem key={j.id} value={j.id}>{j.kelas}</SelectItem>
+                    {filteredJadwalList.map((j) => (
+                      <SelectItem key={j.id} value={j.id}>
+                        {j.kelas}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -297,9 +326,16 @@ export function JadwalPenggantiModal({
                 <div className="p-3 rounded-lg bg-primary/10 border border-primary/20 flex gap-3 text-sm text-primary dark:text-primary">
                   <Info size={18} className="shrink-0 mt-0.5" />
                   <div>
-                    <p className="font-semibold text-xs uppercase tracking-wider mb-1">Jadwal Asli</p>
-                    <p className="font-medium">{selectedJadwal.hari}, {selectedJadwal.jam} (Sesi {selectedJadwal.sesi || '-'})</p>
-                    <p className="text-xs opacity-80">{selectedJadwal.ruangan || 'Tanpa Ruangan'}</p>
+                    <p className="font-semibold text-xs uppercase tracking-wider mb-1">
+                      Jadwal Asli
+                    </p>
+                    <p className="font-medium">
+                      {selectedJadwal.hari}, {selectedJadwal.jam} (Sesi {selectedJadwal.sesi || '-'}
+                      )
+                    </p>
+                    <p className="text-xs opacity-80">
+                      {selectedJadwal.ruangan || 'Tanpa Ruangan'}
+                    </p>
                   </div>
                 </div>
               )}
@@ -309,8 +345,8 @@ export function JadwalPenggantiModal({
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Modul</Label>
-                  <Select 
-                    value={modul.toString()} 
+                  <Select
+                    value={modul.toString()}
                     onValueChange={(v) => setModul(parseInt(v))}
                     disabled={disableModul}
                   >
@@ -318,23 +354,27 @@ export function JadwalPenggantiModal({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {Array.from({ length: 15 }, (_, i) => i + 1).map(m => (
-                        <SelectItem key={m} value={m.toString()}>Modul {m}</SelectItem>
+                      {Array.from({ length: 15 }, (_, i) => i + 1).map((m) => (
+                        <SelectItem key={m} value={m.toString()}>
+                          Modul {m}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
                   <Label>Tanggal Pengganti</Label>
-                  <Input 
-                    type="date" 
-                    value={tanggal} 
-                    onChange={(e) => setTanggal(e.target.value)} 
-                    required 
+                  <Input
+                    type="date"
+                    value={tanggal}
+                    onChange={(e) => setTanggal(e.target.value)}
+                    required
                     readOnly
-                    className="w-full bg-muted cursor-not-allowed" 
+                    className="w-full bg-muted cursor-not-allowed"
                   />
-                  <p className="text-[10px] text-muted-foreground italic">Ditentukan otomatis berdasarkan Modul & Hari</p>
+                  <p className="text-[10px] text-muted-foreground italic">
+                    Ditentukan otomatis berdasarkan Modul & Hari
+                  </p>
                 </div>
               </div>
 
@@ -346,8 +386,10 @@ export function JadwalPenggantiModal({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {DAYS.map(d => (
-                        <SelectItem key={d} value={d}>{d}</SelectItem>
+                      {DAYS.map((d) => (
+                        <SelectItem key={d} value={d}>
+                          {d}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -395,8 +437,10 @@ export function JadwalPenggantiModal({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Tanpa Ruangan">Tanpa Ruangan (Online)</SelectItem>
-                    {ROOMS.map(r => (
-                      <SelectItem key={r} value={r}>{r}</SelectItem>
+                    {ROOMS.map((r) => (
+                      <SelectItem key={r} value={r}>
+                        {r}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>

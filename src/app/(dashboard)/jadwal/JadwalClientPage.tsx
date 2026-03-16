@@ -11,7 +11,18 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Filter, X, Clock, MapPin, User, Users, ChevronRight, Plus, Upload, PaintBucket } from 'lucide-react';
+import {
+  Filter,
+  X,
+  Clock,
+  MapPin,
+  User,
+  Users,
+  ChevronRight,
+  Plus,
+  Upload,
+  PaintBucket,
+} from 'lucide-react';
 import { Jadwal, MataKuliah } from '@/types/database';
 import { JadwalModal } from '@/components/jadwal/JadwalModal';
 import { ScheduleCell } from '@/components/jadwal/ScheduleCell';
@@ -129,9 +140,7 @@ export default function JadwalClientPage({
     setSelectedJadwal(null); // Close detail modal
   };
 
-  const handleModalSubmit = async (
-    input: CreateJadwalInput | UpdateJadwalInput
-  ) => {
+  const handleModalSubmit = async (input: CreateJadwalInput | UpdateJadwalInput) => {
     const hari = 'hari' in input ? input.hari : '';
     const sesi = 'sesi' in input ? input.sesi : null;
     const ruangan = 'ruangan' in input ? input.ruangan : '';

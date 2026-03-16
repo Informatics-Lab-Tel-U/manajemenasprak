@@ -5,4 +5,3 @@ export default async function JadwalModulPage() {
   await requireAuth();
   return <JadwalModulClientPage />;
 }
-

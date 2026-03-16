@@ -85,7 +85,7 @@ export default function AsprakEditModal({
 
       if (conflictInDB) {
         const gap = calculatedAngkatan - conflictInDB.angkatan;
-        
+
         if (gap < 1) {
           setKodeError('KODE KERAS: Kode sedang aktif digunakan!');
           return;

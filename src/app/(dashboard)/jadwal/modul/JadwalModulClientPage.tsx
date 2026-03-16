@@ -43,31 +43,28 @@ export default function JadwalModulClientPage() {
     }
   }, [tahunAjaranList, term]);
 
-  const loadRows = useCallback(
-    async (t: string) => {
-      if (!t) return;
-      setLoading(true);
-      try {
-        const res = await fetchModulSchedule(t);
-        if (res.ok && res.data) {
-          setRows(res.data);
-        } else {
-          setRows(
-            Array.from({ length: 15 }, (_, idx) => ({
-              modul: idx + 1,
-              tanggal_mulai: null,
-            }))
-          );
-          if (res.error) toast.error(res.error);
-        }
-      } catch (err: any) {
-        toast.error(err.message || 'Gagal memuat tanggal modul');
-      } finally {
-        setLoading(false);
+  const loadRows = useCallback(async (t: string) => {
+    if (!t) return;
+    setLoading(true);
+    try {
+      const res = await fetchModulSchedule(t);
+      if (res.ok && res.data) {
+        setRows(res.data);
+      } else {
+        setRows(
+          Array.from({ length: 15 }, (_, idx) => ({
+            modul: idx + 1,
+            tanggal_mulai: null,
+          }))
+        );
+        if (res.error) toast.error(res.error);
       }
-    },
-    []
-  );
+    } catch (err: any) {
+      toast.error(err.message || 'Gagal memuat tanggal modul');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     if (term) {
@@ -106,11 +103,14 @@ export default function JadwalModulClientPage() {
     return d.getDay() === 1;
   };
 
-  const isSequentiallyValid = (modul: number, dateStr: string | null): { valid: boolean; error?: string } => {
+  const isSequentiallyValid = (
+    modul: number,
+    dateStr: string | null
+  ): { valid: boolean; error?: string } => {
     if (!dateStr) return { valid: true };
-    
+
     // Find previous module with a date
-    const prevRowsWithDate = rows.filter(r => r.modul < modul && r.tanggal_mulai);
+    const prevRowsWithDate = rows.filter((r) => r.modul < modul && r.tanggal_mulai);
     if (prevRowsWithDate.length > 0) {
       const lastPrev = prevRowsWithDate[prevRowsWithDate.length - 1];
       if (lastPrev.tanggal_mulai && dateStr < lastPrev.tanggal_mulai) {
@@ -209,9 +209,7 @@ export default function JadwalModulClientPage() {
             disabled={loading || loadingTahunAjaran || tahunAjaranList.length === 0}
           >
             <SelectTrigger className="w-56 h-9">
-              <SelectValue
-                placeholder={loadingTahunAjaran ? 'Memuat...' : 'Pilih Tahun Ajaran'}
-              />
+              <SelectValue placeholder={loadingTahunAjaran ? 'Memuat...' : 'Pilih Tahun Ajaran'} />
             </SelectTrigger>
             <SelectContent>
               <SelectGroup>
@@ -243,7 +241,9 @@ export default function JadwalModulClientPage() {
                     <Input
                       type="date"
                       className={`h-9 max-w-[200px] ${
-                        !valid ? 'border-destructive text-destructive focus-visible:ring-destructive' : ''
+                        !valid
+                          ? 'border-destructive text-destructive focus-visible:ring-destructive'
+                          : ''
                       }`}
                       value={row.tanggal_mulai ?? ''}
                       onChange={(e) => handleChangeDate(row.modul, e.target.value)}
@@ -252,7 +252,9 @@ export default function JadwalModulClientPage() {
                     {row.tanggal_mulai && (
                       <span
                         className={`text-xs font-medium px-2 py-1 rounded-sm ${
-                          valid ? 'bg-emerald-50 text-emerald-700' : 'bg-destructive/10 text-destructive'
+                          valid
+                            ? 'bg-emerald-50 text-emerald-700'
+                            : 'bg-destructive/10 text-destructive'
                         }`}
                       >
                         {dayName}
@@ -285,7 +287,9 @@ export default function JadwalModulClientPage() {
               </DialogHeader>
               <div className="px-6 py-4 space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="startModul" className="text-sm font-medium">Mulai dari Modul</Label>
+                  <Label htmlFor="startModul" className="text-sm font-medium">
+                    Mulai dari Modul
+                  </Label>
                   <Select value={startModul} onValueChange={setStartModul}>
                     <SelectTrigger className="h-10">
                       <SelectValue placeholder="Pilih Modul" />
@@ -299,12 +303,18 @@ export default function JadwalModulClientPage() {
                     </SelectContent>
                   </Select>
                   <p className="text-[11px] leading-relaxed text-muted-foreground bg-muted/50 p-3 rounded-md border border-border/40">
-                    Sistem akan mengisi modul-modul berikutnya dengan interval <strong>7 hari</strong> sekali dimulai dari modul yang dipilih.
+                    Sistem akan mengisi modul-modul berikutnya dengan interval{' '}
+                    <strong>7 hari</strong> sekali dimulai dari modul yang dipilih.
                   </p>
                 </div>
               </div>
               <DialogFooter className="p-6 pt-2 flex-row gap-2 sm:justify-end bg-muted/20">
-                <Button variant="ghost" size="sm" onClick={() => setIsGenerateDialogOpen(false)} className="flex-1 sm:flex-none">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsGenerateDialogOpen(false)}
+                  className="flex-1 sm:flex-none"
+                >
                   Batal
                 </Button>
                 <Button size="sm" onClick={handleGenerate} className="flex-1 sm:flex-none px-6">
@@ -314,10 +324,10 @@ export default function JadwalModulClientPage() {
             </DialogContent>
           </Dialog>
 
-          <Button 
-            size="sm" 
-            className="px-6" 
-            onClick={handleSave} 
+          <Button
+            size="sm"
+            className="px-6"
+            onClick={handleSave}
             disabled={loading || !term || hasInvalidDates}
           >
             Simpan Perubahan
@@ -327,4 +337,3 @@ export default function JadwalModulClientPage() {
     </div>
   );
 }
-

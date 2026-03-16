@@ -129,7 +129,7 @@ export function JadwalModal({
     }
   }, [isOpen, initialData, mataKuliahList]);
 
-  // Handle editability state sync separately 
+  // Handle editability state sync separately
   useEffect(() => {
     if (isOpen) {
       setIsDetailsEditable(!initialData);
@@ -203,9 +203,7 @@ export function JadwalModal({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>
-            {isEdit ? 'Edit Jadwal' : 'Tambah Jadwal'}
-          </DialogTitle>
+          <DialogTitle>{isEdit ? 'Edit Jadwal' : 'Tambah Jadwal'}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleFormSubmit} className="space-y-4 py-4">

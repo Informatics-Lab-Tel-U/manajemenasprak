@@ -274,7 +274,9 @@ export default function DashboardCharts({
                         className="hover:bg-muted/30 transition-colors border-b border-border/50"
                       >
                         <td className="p-2 border-r border-border text-center font-medium text-muted-foreground text-xs">
-                          {session.sesi ? <div className="font-bold">Sesi {session.sesi}</div> : null}
+                          {session.sesi ? (
+                            <div className="font-bold">Sesi {session.sesi}</div>
+                          ) : null}
                           <div className="text-[10px] opacity-80">{session.jam}</div>
                         </td>
                         {uniqueRooms.map((room) => {
