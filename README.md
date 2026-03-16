@@ -42,6 +42,17 @@ This documentation provides comprehensive technical information about the **Sist
 
 ## Project Overview
 
+### Institution & Lab Identity
+
+<div style="min-width: 100%;">
+
+|                                             University                                             |                               Laboratorium                               |
+| :------------------------------------------------------------------------------------------------: | :----------------------------------------------------------------------: |
+| <img src="./docs/assets/Logo_Telkom_University_potrait.png" alt="Telkom University" width="110" /> | <img src="./docs/assets/iflab.png" alt="Informatics Lab" width="180"  /> |
+|                                       **Telkom University**                                        |                        **Informatics Laboratory**                        |
+
+</div>
+
 **Sistem Manajemen Asprak** adalah aplikasi web internal yang dirancang untuk meningkatkan efisiensi administratif pengelolaan asisten praktikum di Laboratorium Informatika. Sistem ini menyediakan fitur terintegrasi untuk:
 
 - **Manajemen Asprak**: Database asprak lengkap dengan tracking angkatan dan inisial kode
@@ -158,11 +169,11 @@ graph TD
     C --> D
     D --> E
 
-    style A fill:#4F46E5,stroke:#312E81,color:#fff
-    style B fill:#7C3AED,stroke:#5B21B6,color:#fff
-    style C fill:#EC4899,stroke:#9E1B32,color:#fff
-    style D fill:#F59E0B,stroke:#D97706,color:#fff
-    style E fill:#10B981,stroke:#047857,color:#fff
+    style A fill:#6B8CAE,stroke:#3F5A7A,color:#fff
+    style B fill:#8BAA7A,stroke:#5A7552,color:#fff
+    style C fill:#A39468,stroke:#7A6E4D,color:#fff
+    style D fill:#7AA088,stroke:#4F6B58,color:#fff
+    style E fill:#4A5C52,stroke:#2A3C32,color:#fff
 ```
 
 ### Key Design Principles
