@@ -4,6 +4,8 @@
 **Last Updated**: March 16, 2026  
 **Status**: Active
 
+⚠️ **PROPRIETARY SOFTWARE** - This software is proprietary and confidential. Unauthorized use, copying, modification, or distribution is strictly prohibited. See [LICENSE](./LICENSE) for details.
+
 ---
 
 ## Documentation Overview
@@ -341,7 +343,20 @@ test: add/update tests
 
 ## License
 
-This project is proprietary software of Laboratorium Informatika.
+**PROPRIETARY AND CONFIDENTIAL**
+
+This project is proprietary software of Informatics Laboratory, Telkom University. All rights reserved.
+
+**Restrictions:**
+
+- ❌ Unauthorized copying, modification, or distribution is strictly prohibited
+- ❌ Cannot be used for commercial purposes without explicit written permission
+- ❌ Cannot be disclosed to third parties
+- ✅ Use is limited to authorized ITB personnel and authorized partner institutions
+
+For licensing inquiries or permission requests, contact the laboratory administration.
+
+See [LICENSE](./LICENSE) file for the complete legal terms.
 
 ---
 
