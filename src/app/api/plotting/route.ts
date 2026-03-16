@@ -56,9 +56,6 @@ export async function POST(req: Request) {
       const { assignments } = body; // { asprak_id, praktikum_id }[]
       await plottingService.savePlotting(assignments, supabase);
 
-      const { createAuditLog } = await import('@/services/server/auditLogService');
-      await createAuditLog('Plotting', 'BULK', 'SAVE_PLOTTING', { count: assignments.length });
-
       return NextResponse.json({ success: true });
     }
 

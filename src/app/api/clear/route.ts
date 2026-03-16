@@ -9,9 +9,6 @@ export async function POST() {
     const supabase = await createClient();
     await clearAllData(supabase);
 
-    const { createAuditLog } = await import('@/services/server/auditLogService');
-    await createAuditLog('DATABASE', 'ALL', 'CLEAR_ALL_DATA');
-
     return NextResponse.json({ message: 'Database cleared' });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });

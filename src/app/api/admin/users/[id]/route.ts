@@ -29,9 +29,6 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         password: password,
       });
       if (authError) throw authError;
-
-      const { createAuditLog } = await import('@/services/server/auditLogService');
-      await createAuditLog('User', userId, 'UPDATE_PASSWORD');
     }
 
     // 2. Update basic profile
@@ -94,9 +91,6 @@ export async function DELETE(
       .update({ deleted_at: new Date().toISOString() })
       .eq('id', id);
     if (error) throw error;
-
-    const { createAuditLog } = await import('@/services/server/auditLogService');
-    await createAuditLog('User', id, 'DELETE');
 
     return NextResponse.json({ ok: true });
   } catch (err: any) {

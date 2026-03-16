@@ -41,13 +41,6 @@ export async function POST(request: NextRequest) {
 
     await systemService.setMaintenanceStatus(active, user.id);
 
-    const { createAuditLog } = await import('@/services/server/auditLogService');
-    await createAuditLog(
-      'System',
-      'maintenance_mode',
-      active ? 'ENABLE_MAINTENANCE' : 'DISABLE_MAINTENANCE'
-    );
-
     return NextResponse.json({ ok: true });
   } catch (error: any) {
     // Check if it's a redirect from requireRole

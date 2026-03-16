@@ -1,5 +1,5 @@
 import { requireAuth } from '@/lib/auth';
-import { getAuditLogs } from '@/services/server/auditLogService';
+import { getAuditLogs } from '@/services/auditLogService';
 import AuditLogsClientPage from './AuditLogsClientPage';
 import { redirect } from 'next/navigation';
 

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAvailableTahunAjaran } from '@/services/server/tahunAjaranService';
+import { getAvailableTerms as getAvailableTahunAjaran } from '@/services/termService';
 import { requireRole } from '@/lib/auth';
 import { logger } from '@/lib/logger';
 

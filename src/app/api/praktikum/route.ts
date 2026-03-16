@@ -64,9 +64,6 @@ export async function POST(req: Request) {
     if (action === 'bulk-import' && body.rows) {
       const result = await praktikumService.bulkUpsertPraktikum(body.rows, supabase);
 
-      const { createAuditLog } = await import('@/services/server/auditLogService');
-      await createAuditLog('Praktikum', 'BULK', 'IMPORT', { count: body.rows.length });
-
       return NextResponse.json({ ok: true, data: result });
     }
 

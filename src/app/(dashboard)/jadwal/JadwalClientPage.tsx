@@ -34,7 +34,7 @@ import {
   UpdateJadwalInput,
   CreateJadwalPenggantiInput,
 } from '@/services/jadwalService';
-import { fetchAvailableTerms } from '@/services/server/jadwalService';
+import { getAvailableTerms as fetchAvailableTerms } from '@/services/termService';
 import { useScheduleData } from '@/hooks/useScheduleData';
 import * as jadwalFetcher from '@/lib/fetchers/jadwalFetcher';
 import { DAYS, STATIC_SESSIONS } from '@/constants';
