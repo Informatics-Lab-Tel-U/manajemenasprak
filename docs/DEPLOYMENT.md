@@ -6,7 +6,7 @@
 
 ---
 
-## 📑 Table of Contents
+## Table of Contents
 
 1. [Pre-Deployment Checklist](#pre-deployment-checklist)
 2. [Production Deployment](#production-deployment)
@@ -18,7 +18,7 @@
 
 ---
 
-## ✅ Pre-Deployment Checklist
+## Pre-Deployment Checklist
 
 Before deploying to production:
 
@@ -55,7 +55,7 @@ Before deploying to production:
 
 ---
 
-## 🚀 Production Deployment
+## Production Deployment
 
 ### Option 1: Vercel (Recommended)
 
@@ -78,16 +78,16 @@ Vercel is the easiest option with built-in Next.js support.
 
 **Advantages**:
 
-- ✅ Zero-config
-- ✅ Automatic HTTPS
-- ✅ Global CDN
-- ✅ Automatic deployments on git push
-- ✅ Built-in monitoring
+- Zero-config
+- Automatic HTTPS
+- Global CDN
+- Automatic deployments on git push
+- Built-in monitoring
 
 **Disadvantages**:
 
-- ❌ Vendor lock-in (Vercel)
-- ❌ Cost per serverless execution
+- Vendor lock-in (Vercel)
+- Cost per serverless execution
 
 ### Option 2: Docker Container
 

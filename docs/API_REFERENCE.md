@@ -7,7 +7,7 @@
 
 ---
 
-## 📑 Quick Navigation
+## Quick Navigation
 
 - [Base URL & Authentication](#base-url--authentication)
 - [Error Handling](#error-handling)
@@ -20,7 +20,7 @@
 
 ---
 
-## 🌐 Base URL & Authentication
+## Base URL & Authentication
 
 ### Base URL
 
@@ -47,7 +47,7 @@ Authorization: Bearer <JWT_TOKEN>
 
 ---
 
-## ⚠️ Error Handling
+## Error Handling
 
 ### Error Response Format
 
@@ -84,7 +84,7 @@ All errors follow this standard format:
 
 ---
 
-## 👥 Asprak Endpoints
+## Asprak Endpoints
 
 ### GET /api/asprak
 

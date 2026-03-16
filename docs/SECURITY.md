@@ -7,7 +7,7 @@
 
 ---
 
-## 📑 Table of Contents
+## Table of Contents
 
 1. [Overview](#overview)
 2. [Authentication](#authentication)
@@ -20,7 +20,7 @@
 
 ---
 
-## 🛡️ Overview
+## Overview
 
 The Sistem Manajemen Asprak implements security at multiple layers:
 
@@ -39,7 +39,7 @@ The Sistem Manajemen Asprak implements security at multiple layers:
 
 ---
 
-## 🔐 Authentication
+## Authentication
 
 ### Authentication Flow
 
@@ -128,7 +128,7 @@ async function handleLogout() {
 
 ---
 
-## 👥 Authorization (RBAC)
+## Authorization (RBAC)
 
 ### Role-Based Access Control
 

@@ -7,7 +7,7 @@
 
 ---
 
-## 📑 Table of Contents
+## Table of Contents
 
 1. [Overview](#overview)
 2. [Entity Relationship Diagram](#entity-relationship-diagram)
@@ -18,7 +18,7 @@
 
 ---
 
-## 🎯 Overview
+## Overview
 
 The database uses a **relational model** optimized for:
 
@@ -36,7 +36,7 @@ The database uses a **relational model** optimized for:
 
 ---
 
-## 🔗 Entity Relationship Diagram
+## Entity Relationship Diagram
 
 ```mermaid
 erDiagram
@@ -147,7 +147,7 @@ erDiagram
 
 ---
 
-## 📋 Core Tables
+## Core Tables
 
 ### 1. `pengguna` - User Accounts
 

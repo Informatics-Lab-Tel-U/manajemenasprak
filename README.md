@@ -6,11 +6,11 @@
 
 ---
 
-## 📚 Documentation Overview
+## Documentation Overview
 
 This documentation provides comprehensive technical information about the **Sistem Manajemen Asprak (Teaching Assistant Management System)** - a web-based application for managing teaching assistants, scheduling, violation tracking, and administrative operations in an informatics laboratory.
 
-## 🎯 Quick Links
+## Quick Links
 
 ### For Developers
 
@@ -29,7 +29,7 @@ This documentation provides comprehensive technical information about the **Sist
 
 ---
 
-## 📋 Table of Contents
+## Table of Contents
 
 1. [Project Overview](#project-overview)
 2. [Technology Stack](#technology-stack)
@@ -40,7 +40,7 @@ This documentation provides comprehensive technical information about the **Sist
 
 ---
 
-## 🌟 Project Overview
+## Project Overview
 
 **Sistem Manajemen Asprak** adalah aplikasi web internal yang dirancang untuk meningkatkan efisiensi administratif pengelolaan asisten praktikum di Laboratorium Informatika. Sistem ini menyediakan fitur terintegrasi untuk:
 
@@ -63,7 +63,7 @@ Mendigitalisasi dan mengotomatisasi proses manajemen asprak yang sebelumnya bers
 
 ---
 
-## 🛠️ Technology Stack
+## Technology Stack
 
 | Component                | Technology           | Version | Purpose                                  |
 | ------------------------ | -------------------- | ------- | ---------------------------------------- |
@@ -83,9 +83,9 @@ Mendigitalisasi dan mengotomatisasi proses manajemen asprak yang sebelumnya bers
 
 ---
 
-## ✨ Key Features
+## Key Features
 
-### 1. **👥 Asprak Management**
+### 1. Asprak Management
 
 - CRUD operations untuk data asprak
 - Import/export CSV facilities
@@ -93,7 +93,7 @@ Mendigitalisasi dan mengotomatisasi proses manajemen asprak yang sebelumnya bers
 - NIM validation dan duplicate checking
 - Batch operations support
 
-### 2. **📅 Scheduling System**
+### 2. Scheduling System
 
 - Jadwal praktikum management per semester/tahun ajaran
 - Course-to-room mapping
@@ -101,7 +101,7 @@ Mendigitalisasi dan mengotomatisasi proses manajemen asprak yang sebelumnya bers
 - Replacement schedule (jadwal pengganti) handling
 - Conflict detection
 
-### 3. **🎯 Plotting & Assignment**
+### 3. Plotting & Assignment
 
 - Dynamic assignment dari asprak ke jadwal praktikum
 - Multi-term support
@@ -109,7 +109,7 @@ Mendigitalisasi dan mengotomatisasi proses manajemen asprak yang sebelumnya bers
 - Real-time conflict detection
 - Bulk import/export capabilities
 
-### 4. **⚠️ Violation Tracking**
+### 4. Violation Tracking
 
 - Pencatatan pelanggaran (disiplin asprak)
 - Module-level finalization (immutable records)
@@ -117,14 +117,14 @@ Mendigitalisasi dan mengotomatisasi proses manajemen asprak yang sebelumnya bers
 - Summary reports per asprak
 - Finalization workflow dengan audit trail
 
-### 5. **📊 Analytics & Reporting**
+### 5. Analytics & Reporting
 
 - Dashboard dengan statistik utama
 - Asprak performance metrics
 - Violation summary reports
 - Term-based filtering dan analysis
 
-### 6. **🔐 Security & Controls**
+### 6. Security & Controls
 
 - Supabase authentication integration
 - Role-based access control (RBAC)
@@ -132,7 +132,7 @@ Mendigitalisasi dan mengotomatisasi proses manajemen asprak yang sebelumnya bers
 - Row-level security (RLS) policies
 - Audit logging untuk compliance
 
-### 7. **📝 Audit Logs**
+### 7. Audit Logs
 
 - Automatic tracking setiap perubahan data
 - User identification dan timestamp
@@ -145,39 +145,24 @@ Mendigitalisasi dan mengotomatisasi proses manajemen asprak yang sebelumnya bers
 
 Sistem mengikuti **layered architecture pattern** dengan pemisahan yang jelas antara client dan server:
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                     Frontend Layer                           │
-│              (Next.js App Router - React)                   │
-│                                                              │
-│  Pages (/app/(dashboard)) → Components → Custom Hooks       │
-└─────────────────────────────────────────────────────────────┘
-                              ↓ (HTTP)
-┌─────────────────────────────────────────────────────────────┐
-│                     API Layer                                │
-│              (Next.js API Routes - /api/*)                  │
-│                                                              │
-│  Request Handler → RouteHandler → Service Call              │
-└─────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────┐
-│                 Business Logic Layer                         │
-│         (Services - asprakService, jadwalService, etc)      │
-│                                                              │
-│  CRUD Operations → Validation → Business Rules              │
-└─────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────┐
-│                 Data Access Layer                            │
-│              (Supabase Client - PostgreSQL)                 │
-│                                                              │
-│  Query → RLS Policies → Database Operations                 │
-└─────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────┐
-│                Database Layer                               │
-│           (PostgreSQL - Tables, Views, Functions)          │
-└─────────────────────────────────────────────────────────────┘
+```mermaid
+graph TD
+    A["Frontend Layer<br/>(Next.js App Router - React)<br/><br/>Pages → Components → Custom Hooks"]
+    B["API Layer<br/>(Next.js API Routes - /api/*)<br/><br/>Request Handler → Service Call"]
+    C["Business Logic Layer<br/>(Services)<br/><br/>asprakService, jadwalService,<br/>pelanggaranService, etc"]
+    D["Data Access Layer<br/>(Supabase Client)<br/><br/>Query → RLS Policies → Operations"]
+    E["Database Layer<br/>(PostgreSQL)<br/><br/>Tables, Views, Functions"]
+
+    A -->|HTTP| B
+    B --> C
+    C --> D
+    D --> E
+
+    style A fill:#4F46E5,stroke:#312E81,color:#fff
+    style B fill:#7C3AED,stroke:#5B21B6,color:#fff
+    style C fill:#EC4899,stroke:#9E1B32,color:#fff
+    style D fill:#F59E0B,stroke:#D97706,color:#fff
+    style E fill:#10B981,stroke:#047857,color:#fff
 ```
 
 ### Key Design Principles
@@ -191,7 +176,7 @@ Sistem mengikuti **layered architecture pattern** dengan pemisahan yang jelas an
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -240,7 +225,7 @@ See [Development Guide](./DEVELOPMENT.md) for detailed setup instructions.
 
 ---
 
-## 📂 Documentation Structure
+## Documentation Structure
 
 ```
 webapp/
@@ -267,7 +252,7 @@ webapp/
 
 ---
 
-## 📊 Project Structure
+## Project Structure
 
 ```
 webapp/
@@ -312,7 +297,7 @@ webapp/
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 When contributing to this project:
 
@@ -335,7 +320,7 @@ test: add/update tests
 
 ---
 
-## 📞 Support & Contact
+## Support & Contact
 
 - **Team**: Informatics Laboratory Asistant Telkom University
 - **On-Call**: Check PagerDuty
@@ -343,7 +328,7 @@ test: add/update tests
 
 ---
 
-## 📄 License
+## License
 
 This project is proprietary software of Laboratorium Informatika.
 

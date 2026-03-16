@@ -6,7 +6,7 @@
 
 ---
 
-## 📑 Table of Contents
+## Table of Contents
 
 1. [Prerequisites](#prerequisites)
 2. [Initial Setup](#initial-setup)
@@ -21,7 +21,7 @@
 
 ---
 
-## ✅ Prerequisites
+## Prerequisites
 
 ### System Requirements
 
@@ -52,7 +52,7 @@ code --version      # VS Code version
 
 ---
 
-## 🚀 Initial Setup
+## Initial Setup
 
 ### Step 1: Clone Repository
 
@@ -137,7 +137,7 @@ Navigate to http://localhost:3000 and login with sample credentials.
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 web app/

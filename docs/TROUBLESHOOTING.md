@@ -6,7 +6,7 @@
 
 ---
 
-## 📑 Table of Contents
+## Table of Contents
 
 1. [Quick Diagnostics](#quick-diagnostics)
 2. [Setup Issues](#setup-issues)
@@ -19,7 +19,7 @@
 
 ---
 
-## 🔍 Quick Diagnostics
+## Quick Diagnostics
 
 ### Health Check
 
@@ -56,7 +56,7 @@ Open DevTools (F12) and check:
 
 ---
 
-## 🔧 Setup Issues
+## Setup Issues
 
 ### Issue: "npm install" fails
 
@@ -169,7 +169,7 @@ taskkill /PID <PID> /F         # Kill process
 
 ---
 
-## 💾 Database Issues
+## Database Issues
 
 ### Issue: "Connection timeout" or "Cannot connect to database"
 

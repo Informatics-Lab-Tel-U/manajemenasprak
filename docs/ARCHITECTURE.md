@@ -7,7 +7,7 @@
 
 ---
 
-## 📑 Table of Contents
+## Table of Contents
 
 1. [Overview](#overview)
 2. [Architecture Layers](#architecture-layers)
@@ -20,7 +20,7 @@
 
 ---
 
-## 🎯 Overview
+## Overview
 
 Sistem Manajemen Asprak menggunakan **modern web application architecture** dengan pemisahan yang jelas antara frontend, backend, dan database layers. Arsitektur ini dirancang untuk:
 
@@ -32,7 +32,7 @@ Sistem Manajemen Asprak menggunakan **modern web application architecture** deng
 
 ---
 
-## 🏗️ Architecture Layers
+## Architecture Layers
 
 ### Layer 1: Frontend Layer (Client-Side)
 

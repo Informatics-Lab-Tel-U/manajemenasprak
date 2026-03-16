@@ -6,7 +6,7 @@
 
 ---
 
-## 📑 Table of Contents
+## Table of Contents
 
 1. [Overview](#overview)
 2. [Service Layer Pattern](#service-layer-pattern)
@@ -17,7 +17,7 @@
 
 ---
 
-## 🎯 Overview
+## Overview
 
 The **Services Layer** encapsulates all business logic, data operations, and validations. It acts as the bridge between HTTP request handlers (API routes) and the database.
 
@@ -45,7 +45,7 @@ API Route (HTTP Response)
 
 ---
 
-## 🏗️ Service Layer Pattern
+## Service Layer Pattern
 
 ### Service Function Template
 
@@ -103,7 +103,7 @@ export async function upsertAsprak(data: any, supabase: SupabaseClient): Promise
 
 ---
 
-## 🧠 Core Services
+## Core Services
 
 ### 1. `asprakService.ts`
 
