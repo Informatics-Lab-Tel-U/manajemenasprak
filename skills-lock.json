@@ -10,6 +10,21 @@
       "source": "softaworks/agent-toolkit",
       "sourceType": "github",
       "computedHash": "8ee0d30acc14528eff0cf0b953f5adb6185a8ed65a72a489ae9297ddfee000b0"
+    },
+    "technical-design-doc-creator": {
+      "source": "tech-leads-club/agent-skills",
+      "sourceType": "github",
+      "computedHash": "0b944b57e1c53aca75d9ac96c26e10419561525bce1a7f37ad15c9cd1de0f25a"
+    },
+    "technical-writer": {
+      "source": "onewave-ai/claude-skills",
+      "sourceType": "github",
+      "computedHash": "606a9fa4645e984fe04b8668e4ca1b21d227c303addd4aba637c5bac9efa55e4"
+    },
+    "technical-writing": {
+      "source": "supercent-io/skills-template",
+      "sourceType": "github",
+      "computedHash": "24b18a2653cdf62a8438f191117b91b7b683b9189f6acd88791ca96d6076dbf7"
     }
   }
 }

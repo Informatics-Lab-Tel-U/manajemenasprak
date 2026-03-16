@@ -1,97 +1,355 @@
-# 📋 Sistem Manajemen Asprak (Informatics Lab)
+# Sistem Manajemen Asprak - Technical Documentation
 
-Aplikasi web internal profesional untuk manajemen asisten praktikum (ASPRAK), penjadwalan, dan pencatatan pelanggaran di Laboratorium Informatika. Dibangun dengan fokus pada efisiensi administratif dan integritas data.
+**Version**: 1.0.0  
+**Last Updated**: March 16, 2026  
+**Status**: Active
 
-## 🎯 Fitur Utama
+---
 
-- **🌍 UI Terlokalisasi**: Antarmuka sepenuhnya dalam Bahasa Indonesia untuk kemudahan penggunaan.
-- **👥 Manajemen Asprak**: Database asisten lengkap dengan sistem inisial kode dan tracking angkatan.
-- **📅 Penjadwalan & Plotting**: Kelola jadwal praktikum mingguan dan penugasan asisten ke setiap sesi secara dinamis.
-- **⚠️ Sistem Pelanggaran**: Pencatatan indisipliner asisten dengan alur finalisasi yang menjamin integritas data (tidak bisa diubah setelah final).
-- **📝 Audit Logs**: Pencatatan otomatis setiap aktivitas perubahan data di sistem untuk akuntabilitas.
-- **🔐 RBAC (Role-Based Access Control)**: Dukungan multi-role dengan hak akses yang terenkondisi:
-  - **Admin**: Akses penuh ke seluruh sistem termasuk manajemen akun dan database.
-  - **Aslab**: Akses ke fitur operasional praktikum, jadwal, dan pelanggaran.
-  - **Koor Asprak**: Akses terbatas hanya untuk melihat panduan dan mengelola pelanggaran pada praktikum yang di-assign.
-- **📊 Import/Export Data**: Kemudahan migrasi data melalui format Excel (.xlsx) untuk laporan dan setup semester.
+## 📚 Documentation Overview
 
-## 🛠️ Tech Stack
+This documentation provides comprehensive technical information about the **Sistem Manajemen Asprak (Teaching Assistant Management System)** - a web-based application for managing teaching assistants, scheduling, violation tracking, and administrative operations in an informatics laboratory.
 
-- **Frontend**: [Next.js](https://nextjs.org/) 16.1 (App Router & Server Components)
-- **Backend-as-a-Service**: [Supabase](https://supabase.com/) & PostgreSQL
-- **Language**: [TypeScript](https://www.typescriptlang.org/)
-- **Styling**: [Tailwind CSS](https://tailwindcss.com/) 4.x
-- **UI Components**: [Shadcn UI](https://ui.shadcn.com/) (Radix UI)
-- **Data Table**: TanStack Table
-- **Icons**: [Lucide React](https://lucide.dev/)
-- **Charts**: [Recharts](https://recharts.org/)
+## 🎯 Quick Links
 
-## 📁 Struktur Folder Utama
+### For Developers
+
+- **[Architecture Document](./docs/ARCHITECTURE.md)** - System design, components, and data flow
+- **[API Reference](./docs/API_REFERENCE.md)** - Complete API documentation with endpoint specifications
+- **[Development Guide](./docs/DEVELOPMENT.md)** - Setup, running, testing, and debugging
+- **[Services Documentation](./docs/SERVICES.md)** - Business logic and service layer explanation
+- **[Database Schema](./docs/DATABASE.md)** - Database structure, tables, and relationships
+
+### For Operations/DevOps
+
+- **[Deployment Guide](./docs/DEPLOYMENT.md)** - Deployment procedures, configuration, and monitoring
+- **[Security & RBAC](./docs/SECURITY.md)** - Authentication, authorization, and security considerations
+- **[Troubleshooting Guide](./docs/TROUBLESHOOTING.md)** - Common issues and solutions
+- **[Changelog](./docs/CHANGELOG.md)** - Version history and releases
+
+---
+
+## 📋 Table of Contents
+
+1. [Project Overview](#project-overview)
+2. [Technology Stack](#technology-stack)
+3. [Key Features](#key-features)
+4. [System Architecture](#system-architecture)
+5. [Getting Started](#getting-started)
+6. [Documentation Structure](#documentation-structure)
+
+---
+
+## 🌟 Project Overview
+
+**Sistem Manajemen Asprak** adalah aplikasi web internal yang dirancang untuk meningkatkan efisiensi administratif pengelolaan asisten praktikum di Laboratorium Informatika. Sistem ini menyediakan fitur terintegrasi untuk:
+
+- **Manajemen Asprak**: Database asprak lengkap dengan tracking angkatan dan inisial kode
+- **Penjadwalan & Plotting**: Penugasan asprak ke sesi praktikum secara dinamis
+- **Pencatatan Pelanggaran**: Tracking indisipliner dengan alur finalisasi yang immutable
+- **Audit Logs**: Pencatatan otomatis setiap perubahan data
+- **Kontrol Akses**: RBAC (Role-Based Access Control) dengan 3 role utama
+
+### Purpose
+
+Mendigitalisasi dan mengotomatisasi proses manajemen asprak yang sebelumnya bersifat manual, meningkatkan transparansi, dan memastikan integritas data.
+
+### Target Audience
+
+- **Development Team**: Backend/Frontend engineers
+- **Lab Admin**: System administrators
+- **Lab Coordinators**: Asprak coordinators
+- **Lab Staff**: Aslab (assistant lab staff)
+
+---
+
+## 🛠️ Technology Stack
+
+| Component                | Technology           | Version | Purpose                                  |
+| ------------------------ | -------------------- | ------- | ---------------------------------------- |
+| **Frontend**             | Next.js (App Router) | 16.1    | React framework dengan Server Components |
+| **Styling**              | Tailwind CSS         | 4.x     | Utility-first CSS framework              |
+| **UI Components**        | Shadcn UI            | Latest  | Accessible component library (Radix UI)  |
+| **Backend**              | Node.js              | 18.x+   | JavaScript runtime                       |
+| **Database**             | PostgreSQL           | 14+     | Relational database via Supabase         |
+| **Backend-as-a-Service** | Supabase             | Latest  | Authentication, real-time, storage       |
+| **Language**             | TypeScript           | Latest  | Type-safe JavaScript                     |
+| **Data Table**           | TanStack Table       | Latest  | Headless table component library         |
+| **Charts**               | Recharts             | Latest  | Charting library for React               |
+| **Icons**                | Lucide React         | Latest  | Icon library                             |
+| **Testing**              | Jest/Vitest          | Latest  | Unit testing framework                   |
+| **Linting**              | ESLint               | Latest  | Code quality                             |
+| **Formatting**           | Prettier             | Latest  | Code formatter                           |
+
+---
+
+## ✨ Key Features
+
+### 1. **👥 Asprak Management**
+
+- CRUD operations untuk data asprak
+- Import/export CSV facilities
+- Automatic code generation dengan format `[PREFIX][YEAR][INCREMENT]`
+- NIM validation dan duplicate checking
+- Batch operations support
+
+### 2. **📅 Scheduling System**
+
+- Jadwal praktikum management per semester/tahun ajaran
+- Course-to-room mapping
+- Weekly schedule management
+- Replacement schedule (jadwal pengganti) handling
+- Conflict detection
+
+### 3. **🎯 Plotting & Assignment**
+
+- Dynamic assignment dari asprak ke jadwal praktikum
+- Multi-term support
+- Validation system untuk import plotting
+- Real-time conflict detection
+- Bulk import/export capabilities
+
+### 4. **⚠️ Violation Tracking**
+
+- Pencatatan pelanggaran (disiplin asprak)
+- Module-level finalization (immutable records)
+- Multi-select violation recording
+- Summary reports per asprak
+- Finalization workflow dengan audit trail
+
+### 5. **📊 Analytics & Reporting**
+
+- Dashboard dengan statistik utama
+- Asprak performance metrics
+- Violation summary reports
+- Term-based filtering dan analysis
+
+### 6. **🔐 Security & Controls**
+
+- Supabase authentication integration
+- Role-based access control (RBAC)
+- Three roles: Admin, Aslab, Koor Asprak
+- Row-level security (RLS) policies
+- Audit logging untuk compliance
+
+### 7. **📝 Audit Logs**
+
+- Automatic tracking setiap perubahan data
+- User identification dan timestamp
+- Change details recording
+- Compliance audit trail
+
+---
+
+## 🏗️ System Architecture
+
+Sistem mengikuti **layered architecture pattern** dengan pemisahan yang jelas antara client dan server:
 
 ```
-webapp/
-├── src/
-│   ├── app/                # App Router
-│   │   ├── (auth)/         # Halaman Otentikasi (Login)
-│   │   ├── (dashboard)/    # Halaman Utama (Layout Terproteksi)
-│   │   └── api/            # API Route Handlers
-│   ├── components/         # React Components
-│   │   ├── ui/             # Shadcn UI (Reusable)
-│   │   ├── layout/         # Navigation & Sidebar
-│   │   └── [feature]/      # Komponen spesifik fitur
-│   ├── hooks/              # Custom React Hooks
-│   ├── lib/                # Konfigurasi Library (Supabase, Auth)
-│   ├── services/           # Logika Bisnis Server-side
-│   └── types/              # Definisi TypeScript
-├── docs/                   # Dokumentasi Teknis & User Guide
-├── scripts/                # Utility Scripts (Seed, Test)
-└── public/                 # Asset Statis (Gambar, Logos)
+┌─────────────────────────────────────────────────────────────┐
+│                     Frontend Layer                           │
+│              (Next.js App Router - React)                   │
+│                                                              │
+│  Pages (/app/(dashboard)) → Components → Custom Hooks       │
+└─────────────────────────────────────────────────────────────┘
+                              ↓ (HTTP)
+┌─────────────────────────────────────────────────────────────┐
+│                     API Layer                                │
+│              (Next.js API Routes - /api/*)                  │
+│                                                              │
+│  Request Handler → RouteHandler → Service Call              │
+└─────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────┐
+│                 Business Logic Layer                         │
+│         (Services - asprakService, jadwalService, etc)      │
+│                                                              │
+│  CRUD Operations → Validation → Business Rules              │
+└─────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────┐
+│                 Data Access Layer                            │
+│              (Supabase Client - PostgreSQL)                 │
+│                                                              │
+│  Query → RLS Policies → Database Operations                 │
+└─────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────┐
+│                Database Layer                               │
+│           (PostgreSQL - Tables, Views, Functions)          │
+└─────────────────────────────────────────────────────────────┘
 ```
+
+### Key Design Principles
+
+1. **Client-Server Separation**: No direct client-side database access
+2. **Type Safety**: End-to-end TypeScript for reliability
+3. **Layered Architecture**: Clear separation of concerns
+4. **Immutability**: Critical data cannot be modified after finalization
+5. **Audit Trail**: All changes are logged and traceable
+6. **Role-Based Security**: Access control at multiple levels
+
+---
 
 ## 🚀 Getting Started
 
 ### Prerequisites
 
-- Node.js 18.x / 20.x
-- npm / yarn / pnpm
-- Akun Supabase (untuk database & auth)
+- **Node.js**: Version 18.x or higher
+- **npm/yarn/pnpm**: Package manager
+- **Supabase Account**: For database and authentication
+- **Git**: Version control
 
-### Instalasi
+### Quick Setup (5 minutes)
 
-1. **Clone repository**
-   ```bash
-   git clone <repository-url>
-   cd webapp
-   ```
+```bash
+# 1. Clone repository
+git clone <repository-url>
+cd webapp
 
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
+# 2. Install dependencies
+npm install
 
-3. **Setup environment variables**
-   Buat file `.env.local` dan isi kredensial Supabase Anda:
-   ```env
-   NEXT_PUBLIC_SUPABASE_URL=your-project-url
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-   SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-   ```
+# 3. Setup environment variables
+cp .env.example .env.local
+# Edit .env.local dengan Supabase credentials Anda
 
-4. **Jalankan development server**
-   ```bash
-   npm run dev
-   ```
+# 4. Run development server
+npm run dev
 
-5. Buka [http://localhost:3000](http://localhost:3000)
+# 5. Open browser
+open http://localhost:3000
+```
 
-## 🌿 Git Workflow
+### Essential Commands
 
-Gunakan [Conventional Commits](https://www.conventionalcommits.org/) dalam setiap pesan commit:
-- `feat:` (fitur baru)
-- `fix:` (perbaikan bug)
-- `docs:` (pembaruan dokumentasi)
-- `style:` (perubahan visual/formatting)
-- `refactor:` (perubahan struktur code tanpa mengubah fitur)
+```bash
+# Development
+npm run dev              # Start dev server
+npm run build           # Build for production
+npm run lint            # Run ESLint
+npm run format          # Format with Prettier
+npm run format:check    # Check formatting
+
+# Database
+npx tsx scripts/seed.ts         # Seed database
+npx tsx scripts/test_fetch.ts   # Test connection
+```
+
+See [Development Guide](./DEVELOPMENT.md) for detailed setup instructions.
 
 ---
-**Laboratorium Informatika** - *Efficiency through Technology*
+
+## 📂 Documentation Structure
+
+```
+webapp/
+├── README.md                        # This file - Overview & quick start
+└── docs/
+    ├── ARCHITECTURE.md             # System design & components
+    ├── API_REFERENCE.md            # API endpoints documentation
+    ├── DATABASE.md                 # Database schema & ERD
+    ├── SERVICES.md                 # Service layer documentation
+    ├── DEVELOPMENT.md              # Setup & development guide
+    ├── DEPLOYMENT.md               # Deployment & operations
+    ├── SECURITY.md                 # Security & RBAC
+    ├── TROUBLESHOOTING.md          # Common issues & solutions
+    └── CHANGELOG.md                # Version history
+```
+
+### How to Use This Documentation
+
+1. **New to the project?** Start with [ARCHITECTURE.md](./docs/ARCHITECTURE.md)
+2. **Need to use the API?** See [API_REFERENCE.md](./docs/API_REFERENCE.md)
+3. **Setting up development?** Follow [DEVELOPMENT.md](./docs/DEVELOPMENT.md)
+4. **Deploying to production?** Check [DEPLOYMENT.md](./docs/DEPLOYMENT.md)
+5. **Having issues?** Consult [TROUBLESHOOTING.md](./docs/TROUBLESHOOTING.md)
+
+---
+
+## 📊 Project Structure
+
+```
+webapp/
+├── src/
+│   ├── app/                          # Next.js App Router
+│   │   ├── (auth)/                   # Authentication pages
+│   │   ├── (dashboard)/              # Protected routes
+│   │   │   ├── asprak/              # Asprak management
+│   │   │   ├── jadwal/              # Schedule management
+│   │   │   ├── pelanggaran/         # Violation tracking
+│   │   │   ├── plotting/            # Assignment system
+│   │   │   └── ...                  # Other features
+│   │   └── api/                      # API routes
+│   │
+│   ├── components/                   # React components
+│   │   ├── ui/                       # Shadcn UI components
+│   │   └── [feature]/                # Feature-specific components
+│   │
+│   ├── hooks/                        # Custom React hooks
+│   │   ├── useAsprak.ts             # Asprak data fetching
+│   │   ├── useJadwal.ts             # Schedule data fetching
+│   │   └── ...                       # Other hooks
+│   │
+│   ├── services/                     # Business logic (server-side)
+│   │   ├── asprakService.ts         # Asprak operations
+│   │   ├── jadwalService.ts         # Schedule operations
+│   │   ├── pelanggaranService.ts    # Violation operations
+│   │   └── ...                       # Other services
+│   │
+│   ├── lib/                          # Utilities & configuration
+│   │   ├── supabase/                # Supabase clients
+│   │   ├── auth.ts                  # Authentication utilities
+│   │   └── ...                       # Other utilities
+│   │
+│   └── types/                        # TypeScript type definitions
+│
+├── docs/                             # Documentation (this folder)
+├── scripts/                          # Utility scripts
+├── public/                           # Static assets
+└── ...                              # Config files
+```
+
+---
+
+## 🤝 Contributing
+
+When contributing to this project:
+
+1. Follow [Conventional Commits](https://www.conventionalcommits.org/) convention
+2. Create feature branch from `main`
+3. Keep documentation updated with code changes
+4. Request code review before merging
+5. Update CHANGELOG.md for significant changes
+
+### Commit Format
+
+```
+feat: add new feature
+fix: fix bug
+docs: update documentation
+style: code formatting
+refactor: restructure code
+test: add/update tests
+```
+
+---
+
+## 📞 Support & Contact
+
+- **Team Slack**: #lab-asprak
+- **On-Call**: Check PagerDuty
+- **Issues**: GitHub Issues
+- **Email**: [lab-admin@example.com]
+
+---
+
+## 📄 License
+
+This project is proprietary software of Laboratorium Informatika.
+
+---
+
+**Last Updated**: March 16, 2026  
+**Maintained By**: Development Team  
+**Next Review**: June 16, 2026
