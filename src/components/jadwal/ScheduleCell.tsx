@@ -17,7 +17,7 @@ export const ScheduleCell: React.FC<ScheduleCellProps> = ({
   showLecturer = false,
   showAsprakCount = false,
 }) => {
-  const isPengganti = (jadwal as any).__is_pengganti;
+  const isPengganti = jadwal.is_pengganti;
 
   return (
     <div

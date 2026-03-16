@@ -144,13 +144,15 @@ export function JadwalPenggantiModal({
     if (targetDayIndex === -1) return schedule.tanggal_mulai;
 
     try {
-      const d = new Date(schedule.tanggal_mulai);
+      // Avoid UTC shift by parsing manually as local date
+      const [y, month, day] = schedule.tanggal_mulai.split('-').map(Number);
+      const d = new Date(y, month - 1, day);
       d.setDate(d.getDate() + targetDayIndex);
 
-      const year = d.getFullYear();
-      const month = String(d.getMonth() + 1).padStart(2, '0');
-      const day = String(d.getDate()).padStart(2, '0');
-      return `${year}-${month}-${day}`;
+      const resYear = d.getFullYear();
+      const resMonth = String(d.getMonth() + 1).padStart(2, '0');
+      const resDay = String(d.getDate()).padStart(2, '0');
+      return `${resYear}-${resMonth}-${resDay}`;
     } catch {
       return '';
     }

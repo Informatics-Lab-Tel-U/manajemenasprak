@@ -28,6 +28,8 @@ import {
   type ModulScheduleEntryDto,
 } from '@/lib/fetchers/modulScheduleFetcher';
 import { toast } from 'sonner';
+import { format, addDays, parseISO, isValid, getDay } from 'date-fns';
+import { id } from 'date-fns/locale';
 
 export default function JadwalModulClientPage() {
   const { tahunAjaranList, loading: loadingTahunAjaran } = useTahunAjaran();
@@ -78,20 +80,25 @@ export default function JadwalModulClientPage() {
     );
   };
 
-  const addDays = (dateStr: string, days: number): string => {
-    const d = new Date(dateStr);
-    d.setDate(d.getDate() + days);
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
+  const addDaysSafe = (dateStr: string, days: number): string => {
+    try {
+      // parseISO on YYYY-MM-DD can sometimes be interpreted as UTC.
+      // Splitting manually ensures it's treated as local date.
+      const [y, m, d] = dateStr.split('-').map(Number);
+      const date = new Date(y, m - 1, d);
+      const newDate = addDays(date, days);
+      return format(newDate, 'yyyy-MM-dd');
+    } catch {
+      return dateStr;
+    }
   };
 
   const getDayName = (dateStr: string | null): string => {
     if (!dateStr) return '';
     try {
-      const d = new Date(dateStr);
-      return new Intl.DateTimeFormat('id-ID', { weekday: 'long' }).format(d);
+      const [y, m, d] = dateStr.split('-').map(Number);
+      const date = new Date(y, m - 1, d);
+      return format(date, 'EEEE', { locale: id });
     } catch {
       return '';
     }
@@ -99,8 +106,13 @@ export default function JadwalModulClientPage() {
 
   const isMonday = (dateStr: string | null): boolean => {
     if (!dateStr) return true;
-    const d = new Date(dateStr);
-    return d.getDay() === 1;
+    try {
+      const [y, m, d] = dateStr.split('-').map(Number);
+      const date = new Date(y, m - 1, d);
+      return getDay(date) === 1; // 1 is Monday
+    } catch {
+      return false;
+    }
   };
 
   const isSequentiallyValid = (
@@ -132,7 +144,7 @@ export default function JadwalModulClientPage() {
 
   const handleGenerate = () => {
     const startM = parseInt(startModul, 10);
-    const byModul = new Map(rows.map((r) => [r.modul, r.tanggal_mulai]));
+    const byModul = new Map<number, string | null>(rows.map((r) => [r.modul, r.tanggal_mulai]));
     const anchor = byModul.get(startM);
 
     if (!anchor) {
@@ -146,9 +158,9 @@ export default function JadwalModulClientPage() {
       return;
     }
 
-    let lastDate = anchor;
+    let lastDate: string = anchor;
     for (let m = startM + 1; m <= 15; m += 1) {
-      lastDate = addDays(lastDate, 7);
+      lastDate = addDaysSafe(lastDate, 7);
       byModul.set(m, lastDate);
     }
 
