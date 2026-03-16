@@ -9,7 +9,7 @@
     [
       "@semantic-release/changelog",
       {
-        "changelogFile": "CHANGELOG.md"
+        "changelogFile": "docs/CHANGELOG.md"
       }
     ],
     [
@@ -23,7 +23,7 @@
       {
         "assets": [
           "package.json",
-          "CHANGELOG.md"
+          "docs/CHANGELOG.md"
         ],
         "message": "chore(release): ${nextRelease.version} [skip ci]"
       }
