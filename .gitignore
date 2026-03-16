@@ -80,5 +80,6 @@ ehthumbs_vista.db
 
 # agents
 .agents
+.agent
 CLAUDE.md
 .scannerwork
