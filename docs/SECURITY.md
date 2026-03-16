@@ -45,10 +45,10 @@ The Sistem Manajemen Asprak implements security at multiple layers:
 
 ```mermaid
 sequenceDiagram
-    participant User as 👤 User
-    participant Browser as 🌐 Browser
-    participant Supabase as 🔐 Supabase Auth
-    participant App as 📱 App Server
+    participant User
+    participant Browser
+    participant Supabase as Supabase Auth
+    participant App as App Server
 
     User->>Browser: Enter email/password
     Browser->>Supabase: POST /auth/login
@@ -58,7 +58,7 @@ sequenceDiagram
     Browser->>App: Request with JWT header
     App->>App: Verify JWT signature
     App->>Supabase: Validate token
-    Supabase-->>App: ✅ Valid
+    Supabase-->>App: Valid
     App-->>Browser: Return data
 ```
 
@@ -89,10 +89,10 @@ SUPABASE_SERVICE_ROLE_KEY=...       # SECRET - never expose
 
 **Security Rules**:
 
-- ✅ `NEXT_PUBLIC_*` variables → Safe to expose to frontend
-- ❌ Service role key → Handle like database password
-- ❌ Never commit `.env.local` to git (.gitignore)
-- ❌ Never log sensitive credentials
+- `NEXT_PUBLIC_*` variables: Safe to expose to frontend
+- Service role key: Handle like database password (keep secret)
+- Never commit `.env.local` to git (.gitignore)
+- Never log sensitive credentials
 
 ### Login Process
 
@@ -138,61 +138,61 @@ System has **three roles** with different permission levels:
 
 **Permissions**:
 
-- ✅ View all data
-- ✅ Create/edit/delete users
-- ✅ Create/edit/delete asprak, jadwal, pelanggaran
-- ✅ Import/export data
-- ✅ Finalize/unfinalize violations
-- ✅ Access audit logs
-- ✅ System maintenance & settings
+- View all data
+- Create/edit/delete users
+- Create/edit/delete asprak, jadwal, pelanggaran
+- Import/export data
+- Finalize/unfinalize violations
+- Access audit logs
+- System maintenance and settings
 
 **Access Matrix**:
 | Feature | View | Create | Edit | Delete |
 |---------|------|--------|------|--------|
-| Asprak | ✅ | ✅ | ✅ | ✅ |
-| Jadwal | ✅ | ✅ | ✅ | ✅ |
-| Pelanggaran | ✅ | ✅ | ✅ | ✅ |
-| Plotting | ✅ | ✅ | ✅ | ❌ |
-| User Management | ✅ | ✅ | ❌ | ❌ |
-| Audit Logs | ✅ | ❌ | ❌ | ❌ |
+| Asprak | Yes | Yes | Yes | Yes |
+| Jadwal | Yes | Yes | Yes | Yes |
+| Pelanggaran | Yes | Yes | Yes | Yes |
+| Plotting | Yes | Yes | Yes | No |
+| User Management | Yes | Yes | No | No |
+| Audit Logs | Yes | No | No | No |
 
 #### Role: ASLAB (Assistant Lab Staff)
 
 **Permissions**:
 
-- ✅ View asprak, jadwal, pelanggaran
-- ✅ Create/edit asprak
-- ✅ Create/edit jadwal
-- ✅ Create/edit/delete pelanggaran
-- ✅ Finalize violations
-- ✅ Import/export operational data
-- ❌ Delete asprak or jadwal
-- ❌ Manage users
-- ❌ Access audit logs
+- View asprak, jadwal, pelanggaran
+- Create/edit asprak
+- Create/edit jadwal
+- Create/edit/delete pelanggaran
+- Finalize violations
+- Import/export operational data
+- Restricted: Delete asprak or jadwal
+- Restricted: Manage users
+- Restricted: Access audit logs
 
 **Access Matrix**:
 | Feature | View | Create | Edit | Delete | Finalize |
 |---------|------|--------|------|--------|----------|
-| Asprak | ✅ | ✅ | ✅ | ❌ | N/A |
-| Jadwal | ✅ | ✅ | ✅ | ❌ | N/A |
-| Pelanggaran | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Asprak | Yes | Yes | Yes | No | N/A |
+| Jadwal | Yes | Yes | Yes | No | N/A |
+| Pelanggaran | Yes | Yes | Yes | Yes | Yes |
 
 #### Role: ASPRAK_KOOR (Asprak Coordinator)
 
 **Permissions**:
 
-- ✅ View asprak assigned to their course
-- ✅ View violations for their course
-- ✅ Finalize violations (for their course)
-- ❌ Create/edit/delete any data
-- ❌ View violations for other courses
-- ❌ Manage users
+- View asprak assigned to their course
+- View violations for their course
+- Finalize violations (for their course)
+- Restricted: Create/edit/delete any data
+- Restricted: View violations for other courses
+- Restricted: Manage users
 
 **Access Matrix** (Limited to assigned courses only):
 | Feature | View | Create | Edit | Delete | Finalize |
 |---------|------|--------|------|--------|----------|
-| Pelanggaran (own) | ✅ | ❌ | ❌ | ❌ | ✅ |
-| Panduan (guide) | ✅ | ❌ | ❌ | ❌ | N/A |
+| Pelanggaran (own) | Yes | No | No | No | Yes |
+| Panduan (guide) | Yes | No | No | No | N/A |
 
 ---
 
@@ -247,7 +247,7 @@ export async function POST(req: Request) {
 
 ---
 
-## 🗄️ Server-side Security
+## Server-side Security
 
 ### HTTP Headers Security
 
@@ -272,7 +272,7 @@ export function middleware(request: NextRequest) {
 Always validate user input before processing:
 
 ```typescript
-// ✅ Good - Validate input
+// Good - Validate input
 async function upsertAsprak(data: any, supabase: any) {
   // Validate required fields
   if (!data.nim || !data.nama_lengkap) {
@@ -297,27 +297,27 @@ Next.js provides built-in CSRF protection for forms and API routes.
 Never build SQL queries with string concatenation. Use parameterized queries:
 
 ```typescript
-// ❌ Bad - SQL Injection vulnerability
+// Incorrect - SQL Injection vulnerability
 const query = `SELECT * FROM asprak WHERE nim = '${nim}'`;
 
-// ✅ Good - Parameterized query via Supabase
+// Correct - Parameterized query via Supabase
 const { data } = await supabase.from('asprak').select('*').eq('nim', nim); // Parameter safely handled
 ```
 
 ### Environment Variables
 
 ```typescript
-// ✅ Good - Access via process.env or config
+// Correct - Access via process.env or config
 const apiUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 
-// ❌ Bad - Hardcoding secrets
-const apiUrl = 'https://...'; // Never!
-const secretKey = 'sk_live_...'; // Never hardcode!
+// Incorrect - Hardcoding secrets
+const apiUrl = 'https://...'; // Never hardcode
+const secretKey = 'sk_live_...'; // Never hardcode
 ```
 
 ---
 
-## 🔒 Database Security
+## Database Security
 
 ### Row-Level Security (RLS) Policies
 
@@ -374,37 +374,37 @@ if (violation.is_finalized && attempting_to_update) {
 
 ---
 
-## 📊 Data Protection
+## Data Protection
 
 ### Data at Rest (Encryption)
 
-- Supabase encrypts database at rest: ✅ Enabled by default
-- Sensitive data (credentials, secrets): ✅ Stored securely
+- Supabase encrypts database at rest: Enabled by default
+- Sensitive data (credentials, secrets): Stored securely
 
 ### Data in Transit (HTTPS)
 
 All communication between client and server must be encrypted:
 
-- ✅ HTTPS enabled for all endpoints
-- ✅ Redirect HTTP → HTTPS
-- ✅ HSTS headers implemented
+- HTTPS enabled for all endpoints
+- Redirect HTTP to HTTPS
+- HSTS headers implemented
 
 ### Sensitive Data Handling
 
 **Principle**: Never log or expose sensitive information
 
 ```typescript
-// ❌ Bad - Logging sensitive data
+// Incorrect - Logging sensitive data
 logger.info('User created:', {
   email: user.email,
-  password: user.password, // NEVER!
+  password: user.password, // Do not log passwords
 });
 
-// ✅ Good - Log minimal info
+// Correct - Log minimal info
 logger.info('User created:', {
   userId: user.id,
   email: user.email,
-  // Don't log password
+  // Password not included
 });
 ```
 
@@ -417,7 +417,7 @@ logger.info('User created:', {
 
 ---
 
-## 📋 Audit & Compliance
+## Audit and Compliance
 
 ### Audit Logging
 
@@ -441,12 +441,12 @@ LIMIT 100;
 
 | Action                | Logged | Example                                      |
 | --------------------- | ------ | -------------------------------------------- |
-| Create asprak         | ✅     | `INSERT INTO asprak ...`                     |
-| Update jadwal         | ✅     | `UPDATE jadwal SET ...`                      |
-| Delete pelanggaran    | ✅     | `DELETE FROM pelanggaran WHERE ...`          |
-| Finalize violation    | ✅     | `UPDATE pelanggaran SET is_finalized = true` |
-| User login            | ✅     | Authentication event                         |
-| Authorization failure | ✅     | Access denied event                          |
+| Create asprak         | Yes    | `INSERT INTO asprak ...`                     |
+| Update jadwal         | Yes    | `UPDATE jadwal SET ...`                      |
+| Delete pelanggaran    | Yes    | `DELETE FROM pelanggaran WHERE ...`          |
+| Finalize violation    | Yes    | `UPDATE pelanggaran SET is_finalized = true` |
+| User login            | Yes    | Authentication event                         |
+| Authorization failure | Yes    | Access denied event                          |
 
 ### Auditable Information
 
@@ -459,22 +459,22 @@ For each audit log entry:
 
 ### Data Retention
 
-- Active data: ✅ Kept indefinitely
-- Audit logs: ✅ Kept for 3 years minimum
-- Backup copies: ✅ Multiple backups (Supabase handles)
+- Active data: Kept indefinitely
+- Audit logs: Kept for 3 years minimum
+- Backup copies: Multiple backups (Supabase handles)
 
 ### Compliance Features
 
-- ✅ RBAC for access control
-- ✅ Audit trail for accountability
-- ✅ Immutable violation records (prevents tampering)
-- ✅ User activity logging
-- ✅ Data encryption at rest and in transit
-- ✅ Regular backups
+- RBAC for access control
+- Audit trail for accountability
+- Immutable violation records (prevents tampering)
+- User activity logging
+- Data encryption at rest and in transit
+- Regular backups
 
 ---
 
-## ✅ Security Checklist
+## Security Checklist
 
 ### Development
 
@@ -516,7 +516,7 @@ For each audit log entry:
 
 ---
 
-## 🚨 Security Incident Response
+## Security Incident Response
 
 ### If you suspect a security breach:
 
@@ -540,7 +540,7 @@ For each audit log entry:
 
 ---
 
-## 🔗 Related Documents
+## Related Documents
 
 - [Architecture Document](./ARCHITECTURE.md)
 - [Database Schema](./DATABASE.md)

@@ -4,6 +4,8 @@
 **Last Updated**: March 16, 2026  
 **Status**: Active
 
+⚠️ **PROPRIETARY SOFTWARE** - This software is proprietary and confidential. Unauthorized use, copying, modification, or distribution is strictly prohibited. See [LICENSE](./LICENSE) for details.
+
 ---
 
 ## Documentation Overview
@@ -37,6 +39,9 @@ This documentation provides comprehensive technical information about the **Sist
 4. [System Architecture](#system-architecture)
 5. [Getting Started](#getting-started)
 6. [Documentation Structure](#documentation-structure)
+7. [Contributing](#contributing)
+8. [Top Contributors](#top-contributors)
+9. [License](#license)
 
 ---
 
@@ -331,6 +336,18 @@ test: add/update tests
 
 ---
 
+## Top Contributors
+
+<div align="center">
+
+<a href="https://github.com/Informatics-Lab-Tel-U/manajemenasprak/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=Informatics-Lab-Tel-U/manajemenasprak" />
+</a>
+
+</div>
+
+---
+
 ## Support & Contact
 
 - **Team**: Informatics Laboratory Asistant Telkom University
@@ -341,7 +358,7 @@ test: add/update tests
 
 ## License
 
-This project is proprietary software of Laboratorium Informatika.
+This software is **proprietary and confidential**. For complete licensing terms and restrictions, see [LICENSE](./LICENSE) file.
 
 ---
 
