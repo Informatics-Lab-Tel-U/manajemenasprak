@@ -210,7 +210,6 @@ export default function DatabaseClientPage({
     }
   };
 
-
   const handleExport = async () => {
     if (!exportTerm) {
       setStatus({ type: 'error', message: 'Silakan pilih tahun ajaran yang akan diexport' });
@@ -594,7 +593,6 @@ export default function DatabaseClientPage({
           </div>
         )}
       </section>
-
 
       {/* Section: Export & Template */}
       <section className="pb-10 mb-10 border-b border-border/40">

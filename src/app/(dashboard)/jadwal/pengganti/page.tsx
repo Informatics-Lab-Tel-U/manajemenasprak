@@ -11,7 +11,7 @@ export const metadata = {
 
 export default async function JadwalPenggantiPage() {
   const supabase = await createClient();
-  
+
   // Parallel data fetching for performance
   const [terms, mkResult, allJadwal] = await Promise.all([
     getAvailableTerms(supabase),
@@ -20,7 +20,7 @@ export default async function JadwalPenggantiPage() {
   ]);
 
   return (
-    <JadwalPenggantiClientPage 
+    <JadwalPenggantiClientPage
       initialTerms={terms}
       initialMataKuliah={mkResult}
       initialAllJadwal={allJadwal}

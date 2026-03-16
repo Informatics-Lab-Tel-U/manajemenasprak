@@ -1,6 +1,9 @@
 'use client';
 
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
+import { format } from 'date-fns';
+import { id } from 'date-fns/locale';
+import { useScheduleData } from '@/hooks/useScheduleData';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   ChartConfig,
@@ -51,8 +54,6 @@ export default function DashboardCharts({
 
   // Schedule Matrix Logic
   const todayDate = new Date();
-  const days = ['MINGGU', 'SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU'];
-  const currentDayName = days[todayDate.getDay()];
 
   const uniqueRooms = useMemo(() => {
     // We can use the global ROOMS constant or derive from today's schedule
@@ -62,114 +63,33 @@ export default function DashboardCharts({
 
   // Filter Logic
   const [programType, setProgramType] = React.useState<'REGULER' | 'PJJ'>('REGULER');
+  // Calculate currentDayName if not already present (it should be 'SENIN'-'MINGGU')
+  const currentDayNameRaw = format(todayDate, 'EEEE', { locale: id }).toUpperCase();
+  const currentDayName =
+    currentDayNameRaw === 'SENIN' ||
+    currentDayNameRaw === 'SELASA' ||
+    currentDayNameRaw === 'RABU' ||
+    currentDayNameRaw === 'KAMIS' ||
+    currentDayNameRaw === 'JUMAT' ||
+    currentDayNameRaw === 'SABTU' ||
+    currentDayNameRaw === 'MINGGU'
+      ? currentDayNameRaw
+      : 'SENIN';
 
-  const filteredSchedule = useMemo(() => {
-    return todaySchedule.filter((j) => {
-      const isPJJ =
-        j.mata_kuliah?.program_studi?.toUpperCase().includes('PJJ') ||
-        j.kelas?.toUpperCase().includes('PJJ');
+  // Use the unified useScheduleData hook for today's schedule
+  const {
+    processedJadwalList,
+    scheduleMatrix: fullMatrix,
+    dynamicSessionsByDay,
+  } = useScheduleData({
+    rawJadwalList: todaySchedule,
+    filterDay: currentDayName,
+    programType,
+  });
 
-      if (programType === 'PJJ') {
-        return isPJJ;
-      } else {
-        return !isPJJ;
-      }
-    });
-  }, [todaySchedule, programType]);
-
-  const scheduleMatrix = useMemo(() => {
-    const matrix: Record<string, Record<string, Jadwal[]>> = {};
-
-    const staticForDay = STATIC_SESSIONS[currentDayName] || [];
-    const staticJamToSesi = new Map<string, number>();
-    staticForDay.forEach((s) => staticJamToSesi.set(s.jam, s.sesi));
-
-    filteredSchedule.forEach((j) => {
-      let jamStr = j.jam || '';
-      if (jamStr.split(':').length === 3) jamStr = jamStr.split(':').slice(0, 2).join(':');
-
-      let sesi = j.sesi;
-      if (!sesi || sesi === 0) {
-        if (jamStr && staticJamToSesi.has(jamStr)) sesi = staticJamToSesi.get(jamStr)!;
-      }
-
-      const rowKey =
-        sesi !== null && sesi !== undefined && sesi !== 0 ? sesi.toString() : jamStr || 'Unknown';
-      const roomKey = j.ruangan || 'Tanpa Ruangan';
-
-      if (!matrix[rowKey]) matrix[rowKey] = {};
-      if (!matrix[rowKey][roomKey]) matrix[rowKey][roomKey] = [];
-
-      const normalizedJ = { ...j, jam: jamStr, sesi: sesi ?? undefined };
-      matrix[rowKey][roomKey].push(normalizedJ as Jadwal);
-    });
-    return matrix;
-  }, [filteredSchedule, currentDayName]);
-
-  const visibleSessions = useMemo(() => {
-    const staticForDay = STATIC_SESSIONS[currentDayName] || [];
-    const staticJamToSesi = new Map<string, number>();
-    staticForDay.forEach((s) => staticJamToSesi.set(s.jam, s.sesi));
-
-    const sessionsAsKeys = new Map<string, { sesi: number | null; jam: string; rowKey: string }>();
-
-    // Add static sessions (except session 5 if empty, matching JadwalClientPage style)
-    staticForDay.forEach((s) => {
-      if (s.sesi !== 5) {
-        const rowKey = s.sesi !== null && s.sesi !== undefined ? s.sesi.toString() : s.jam;
-        sessionsAsKeys.set(rowKey, { sesi: s.sesi, jam: s.jam, rowKey });
-      }
-    });
-
-    // Add dynamic keys from current schedule
-    filteredSchedule.forEach((j) => {
-      let jamStr = j.jam || '';
-      if (jamStr.split(':').length === 3) jamStr = jamStr.split(':').slice(0, 2).join(':');
-
-      let sesi = j.sesi;
-      if (!sesi || sesi === 0) {
-        if (jamStr && staticJamToSesi.has(jamStr)) sesi = staticJamToSesi.get(jamStr)!;
-      }
-
-      const rowKey =
-        sesi !== null && sesi !== undefined && sesi !== 0 ? sesi.toString() : jamStr || 'Unknown';
-
-      if (!sessionsAsKeys.has(rowKey)) {
-        sessionsAsKeys.set(rowKey, { sesi: sesi || null, jam: jamStr || '-', rowKey });
-      } else {
-        const existing = sessionsAsKeys.get(rowKey)!;
-        if (!existing.jam || existing.jam === '-' || (!sesi && existing.sesi === null)) {
-          sessionsAsKeys.set(rowKey, {
-            sesi: sesi || existing.sesi,
-            jam: jamStr || existing.jam,
-            rowKey,
-          });
-        }
-      }
-    });
-
-    const parseTime = (jamStr: string) => {
-      const m = jamStr.match(/(\d{1,2}):(\d{2})/);
-      if (m) return parseInt(m[1]) * 60 + parseInt(m[2]);
-      return 9999;
-    };
-
-    const sortedSessions = Array.from(sessionsAsKeys.values()).sort((a, b) => {
-      const timeA = parseTime(a.jam);
-      const timeB = parseTime(b.jam);
-      if (timeA !== 9999 || timeB !== 9999) return timeA - timeB;
-      return (a.sesi ?? 999) - (b.sesi ?? 999);
-    });
-
-    // Visibility rules: hide session 5 if no data
-    const lastStaticSession = staticForDay[staticForDay.length - 1];
-    return lastStaticSession
-      ? sortedSessions.filter((s) => {
-          if (s.sesi !== lastStaticSession.sesi) return true;
-          return scheduleMatrix[s.rowKey] !== undefined;
-        })
-      : sortedSessions;
-  }, [currentDayName, filteredSchedule, scheduleMatrix]);
+  // Extract today's matrix and sessions from the hook results
+  const scheduleMatrix = fullMatrix[currentDayName] || {};
+  const visibleSessions = dynamicSessionsByDay[currentDayName] || [];
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -244,7 +164,7 @@ export default function DashboardCharts({
                 </table>
               </div>
             </div>
-          ) : filteredSchedule.length === 0 ? (
+          ) : processedJadwalList.length === 0 ? (
             <div className="flex flex-col items-center justify-center p-8 text-muted-foreground bg-muted/20 rounded-lg border border-dashed">
               <p>Tidak ada jadwal praktikum untuk hari ini.</p>
             </div>
@@ -274,7 +194,9 @@ export default function DashboardCharts({
                         className="hover:bg-muted/30 transition-colors border-b border-border/50"
                       >
                         <td className="p-2 border-r border-border text-center font-medium text-muted-foreground text-xs">
-                          {session.sesi ? <div className="font-bold">Sesi {session.sesi}</div> : null}
+                          {session.sesi ? (
+                            <div className="font-bold">Sesi {session.sesi}</div>
+                          ) : null}
                           <div className="text-[10px] opacity-80">{session.jam}</div>
                         </td>
                         {uniqueRooms.map((room) => {

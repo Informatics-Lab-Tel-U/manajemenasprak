@@ -81,4 +81,3 @@ function buildDefaultRows(): ModulScheduleEntry[] {
   }
   return rows;
 }
-

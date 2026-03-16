@@ -136,7 +136,7 @@ export default function AsprakForm({ onSubmit, onCancel }: AsprakFormProps) {
 
         if (conflictInDB) {
           const gap = calculatedAngkatan - conflictInDB.angkatan;
-          
+
           if (gap < 1) {
             setCodeStatus('hard_conflict');
             return;
@@ -269,7 +269,11 @@ export default function AsprakForm({ onSubmit, onCancel }: AsprakFormProps) {
       return;
     }
     if (codeStatus === 'taken' || codeStatus === 'hard_conflict') {
-      toast.error(codeStatus === 'hard_conflict' ? 'Kode sedang aktif digunakan!' : 'Kode Asprak sudah digunakan!');
+      toast.error(
+        codeStatus === 'hard_conflict'
+          ? 'Kode sedang aktif digunakan!'
+          : 'Kode Asprak sudah digunakan!'
+      );
       return;
     }
     if (codeStatus === 'invalid_length') {
@@ -399,10 +403,14 @@ export default function AsprakForm({ onSubmit, onCancel }: AsprakFormProps) {
               )}
             </div>
             {codeStatus === 'taken' && (
-              <p className="text-[10px] text-destructive mt-1">Kode digunakan (cooldown 1-6 thn).</p>
+              <p className="text-[10px] text-destructive mt-1">
+                Kode digunakan (cooldown 1-6 thn).
+              </p>
             )}
             {codeStatus === 'hard_conflict' && (
-              <p className="text-[10px] text-destructive mt-1 font-bold">Kode sedang aktif digunakan!</p>
+              <p className="text-[10px] text-destructive mt-1 font-bold">
+                Kode sedang aktif digunakan!
+              </p>
             )}
             {codeStatus === 'invalid_length' && (
               <p className="text-[10px] text-destructive mt-1">Harus pas 3 huruf.</p>

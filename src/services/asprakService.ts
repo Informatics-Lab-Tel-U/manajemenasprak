@@ -28,8 +28,8 @@ export async function generateUniqueCode(
 ): Promise<{ code: string; rule: string }> {
   const supabase = supabaseClient || globalAdmin;
   const existingCodes = await getExistingCodes(supabase);
-  
-  // If forceOverride is true, we act as if NO codes are used 
+
+  // If forceOverride is true, we act as if NO codes are used
   // so the generator picks the absolute best Rule 3.1 code.
   const usedCodesSet = forceOverride ? new Set<string>() : new Set(existingCodes);
 
@@ -299,10 +299,7 @@ async function handleCodeConflictAndExpire(
   forceOverride: boolean,
   supabase: SupabaseClient
 ): Promise<void> {
-  const { data: codeOwners } = await supabase
-    .from('asprak')
-    .select('*')
-    .eq('kode', newCode);
+  const { data: codeOwners } = await supabase.from('asprak').select('*').eq('kode', newCode);
 
   if (!codeOwners || codeOwners.length === 0) return;
 
@@ -311,14 +308,16 @@ async function handleCodeConflictAndExpire(
     const conflictCheck = checkCodeConflict(owner, nim);
     if (!conflictCheck.hasConflict) continue;
 
-    // Hard Conflict check: If they are in the same angkatan (gap < 1), 
+    // Hard Conflict check: If they are in the same angkatan (gap < 1),
     // we block them NO MATTER WHAT to avoid duplicates in the same year.
     // We compare raw numbers because angkatan here is already 4-digit.
     const currentYear = new Date().getFullYear();
     const gap = currentYear - (owner.angkatan || 0);
 
     if (gap < 1) {
-      throw new Error(`KODE KERAS: Kode '${newCode}' sedang aktif digunakan oleh ${owner.nama_lengkap}.`);
+      throw new Error(
+        `KODE KERAS: Kode '${newCode}' sedang aktif digunakan oleh ${owner.nama_lengkap}.`
+      );
     }
 
     if (!forceOverride) {

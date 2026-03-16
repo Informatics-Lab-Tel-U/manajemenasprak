@@ -37,4 +37,3 @@ export async function saveModulSchedule(
     return { ok: false, error: error.message };
   }
 }
-

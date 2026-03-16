@@ -21,16 +21,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { 
-  Plus, 
-  Calendar, 
-  Clock, 
-  MapPin, 
-  Trash2, 
-  Edit,
-  History,
-  FilterX
-} from 'lucide-react';
+import { Plus, Calendar, Clock, MapPin, Trash2, Edit, History, FilterX } from 'lucide-react';
 import { toast } from 'sonner';
 import * as jadwalFetcher from '@/lib/fetchers/jadwalFetcher';
 import { JadwalPenggantiModal } from '@/components/jadwal/JadwalPenggantiModal';
@@ -52,7 +43,7 @@ export default function JadwalPenggantiClientPage({
   const [selectedTerm, setSelectedTerm] = useState(initialTerms[0] || '');
   const [penggantiList, setPenggantiList] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalInitialData, setModalInitialData] = useState<any | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -99,7 +90,7 @@ export default function JadwalPenggantiClientPage({
 
   const handleDelete = async (itemId: string) => {
     if (!confirm('Apakah Anda yakin ingin menghapus jadwal pengganti ini?')) return;
-    
+
     const result = await jadwalFetcher.deleteJadwalPengganti(itemId);
     if (result.ok) {
       toast.success('Jadwal pengganti berhasil dihapus');
@@ -113,7 +104,7 @@ export default function JadwalPenggantiClientPage({
     setIsSubmitting(true);
     const result = await jadwalFetcher.upsertJadwalPengganti(input);
     setIsSubmitting(false);
-    
+
     if (result.ok) {
       toast.success('Jadwal pengganti berhasil disimpan');
       fetchPengganti();
@@ -129,7 +120,9 @@ export default function JadwalPenggantiClientPage({
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Manage Jadwal Pengganti</h1>
-          <p className="text-sm text-muted-foreground mt-1">Kelola semua jadwal pengganti praktikum</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            Kelola semua jadwal pengganti praktikum
+          </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
@@ -138,16 +131,15 @@ export default function JadwalPenggantiClientPage({
               <SelectValue placeholder="Pilih Term" />
             </SelectTrigger>
             <SelectContent>
-              {terms.map(t => (
-                <SelectItem key={t} value={t}>{t}</SelectItem>
+              {terms.map((t) => (
+                <SelectItem key={t} value={t}>
+                  {t}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
-          
-          <Button
-            onClick={handleAdd}
-            className="flex-1 sm:flex-none min-w-0 md:whitespace-nowrap"
-          >
+
+          <Button onClick={handleAdd} className="flex-1 sm:flex-none min-w-0 md:whitespace-nowrap">
             <Plus size={18} className="flex-shrink-0" />
             <span className="hidden sm:inline ml-2">Tambah Pengganti</span>
           </Button>
@@ -172,7 +164,9 @@ export default function JadwalPenggantiClientPage({
                 Array.from({ length: 5 }).map((_, i) => (
                   <TableRow key={i}>
                     {Array.from({ length: 6 }).map((_, j) => (
-                      <TableCell key={j}><Skeleton className="h-6 w-full" /></TableCell>
+                      <TableCell key={j}>
+                        <Skeleton className="h-6 w-full" />
+                      </TableCell>
                     ))}
                   </TableRow>
                 ))
@@ -188,7 +182,9 @@ export default function JadwalPenggantiClientPage({
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline" className="bg-background">{item.jadwal?.kelas}</Badge>
+                      <Badge variant="outline" className="bg-background">
+                        {item.jadwal?.kelas}
+                      </Badge>
                     </TableCell>
                     <TableCell>
                       <Badge className="bg-primary/10 text-primary hover:bg-primary/20 border-none">
@@ -221,10 +217,20 @@ export default function JadwalPenggantiClientPage({
                     </TableCell>
                     <TableCell className="text-center">
                       <div className="flex justify-center gap-1">
-                        <Button variant="ghost" size="icon" onClick={() => handleEdit(item)} className="h-8 w-8 text-primary hover:text-primary/80 hover:bg-primary/10">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleEdit(item)}
+                          className="h-8 w-8 text-primary hover:text-primary/80 hover:bg-primary/10"
+                        >
                           <Edit size={16} />
                         </Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleDelete(item.id)} className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDelete(item.id)}
+                          className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
+                        >
                           <Trash2 size={16} />
                         </Button>
                       </div>
@@ -237,7 +243,9 @@ export default function JadwalPenggantiClientPage({
                     <div className="flex flex-col items-center justify-center text-muted-foreground gap-2">
                       <FilterX size={40} className="opacity-20" />
                       <p>Tidak ada jadwal pengganti ditemukan untuk term ini.</p>
-                      <Button variant="link" onClick={handleAdd}>Tambah Jadwal Pengganti Pertama</Button>
+                      <Button variant="link" onClick={handleAdd}>
+                        Tambah Jadwal Pengganti Pertama
+                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>

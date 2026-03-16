@@ -409,7 +409,8 @@ export async function getJadwalPenggantiByTerm(
   const supabase = supabaseClient || globalAdmin;
   const { data, error } = await supabase
     .from('jadwal_pengganti')
-    .select(`
+    .select(
+      `
       *,
       jadwal:jadwal!inner (
         id, id_mk, kelas, hari, sesi, jam, ruangan,
@@ -420,7 +421,8 @@ export async function getJadwalPenggantiByTerm(
           )
         )
       )
-    `)
+    `
+    )
     .eq('jadwal.mata_kuliah.praktikum.tahun_ajaran', term)
     .order('tanggal', { ascending: true });
 

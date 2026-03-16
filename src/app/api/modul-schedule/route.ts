@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { logger } from '@/lib/logger';
+import { requireRole } from '@/lib/auth';
 import {
   getModulScheduleByTerm,
   upsertModulScheduleForTerm,
@@ -9,6 +10,7 @@ import {
 
 export async function GET(req: Request) {
   try {
+    await requireRole(['ADMIN', 'ASLAB', 'ASPRAK_KOOR']);
     const supabase = await createClient();
     const { searchParams } = new URL(req.url);
     const term = searchParams.get('term');
@@ -30,6 +32,7 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
+    await requireRole(['ADMIN', 'ASLAB', 'ASPRAK_KOOR']);
     const supabase = await createClient();
     const body = await req.json();
 
@@ -56,4 +59,3 @@ export async function POST(req: Request) {
     );
   }
 }
-
