@@ -337,10 +337,9 @@ test: add/update tests
 
 ## 📞 Support & Contact
 
-- **Team Slack**: #lab-asprak
+- **Team**: Informatics Laboratory Asistant Telkom University
 - **On-Call**: Check PagerDuty
 - **Issues**: GitHub Issues
-- **Email**: [lab-admin@example.com]
 
 ---
 
