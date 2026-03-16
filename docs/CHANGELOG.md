@@ -44,35 +44,12 @@
 - Environment variable separation with .env.local for secrets
 - Security headers configured (X-Frame-Options, X-Content-Type-Options, etc)
 - HTTPS/TLS encryption required
-- Rate limiting support ready for implementation
 
 ### Known Limitations
 
 - Single-region deployment (Supabase)
-- No real-time collaboration (Supabase Realtime not fully integrated)
 - Maintenance window requires manual trigger
 - Password reset requires email verification (Supabase limitation)
-
----
-
-## v1.1.0 (Planned)
-
-### Added or Changed
-
-- Advanced reporting and visualization capabilities
-- Export to PDF functionality for reports and data
-- Email notifications system for violation alerts
-- Data import from Excel with template support
-- Multi-language support (English, Indonesian)
-- Mobile-responsive UI optimization
-- Advanced search and filtering capabilities
-- Batch operations interface for administrators
-- Performance optimization for large datasets
-- Caching layer implementation
-- GraphQL API option alongside REST
-- WebSocket real-time updates integration
-- Two-factor authentication (2FA)
-- OAuth integration (LDAP, SSO)
 
 ---
 
@@ -81,37 +58,6 @@
 | Version | Release Date | Status   | Description                                                             |
 | ------- | ------------ | -------- | ----------------------------------------------------------------------- |
 | 1.0.0   | 2026-03-16   | Released | First production-ready version with core features, RBAC, and audit logs |
-| 1.1.0   | TBD          | Planned  | Advanced features, reporting, and integrations                          |
-| 2.0.0   | TBD          | Future   | Mobile app, GraphQL, advanced analytics                                 |
-
----
-
-## Upgrade Guide
-
-### Upgrading from 1.0.0 → 1.1.0
-
-```bash
-# 1. Backup database
-# Via Supabase Dashboard → Settings → Backups
-
-# 2. Pull latest code
-git pull origin main
-
-# 3. Install dependencies (if changed)
-npm install
-
-# 4. Build
-npm run build
-
-# 5. Test locally
-npm run test
-
-# 6. Deploy
-# Vercel: Auto-deploys on push
-# Manual: npm run build && npm start
-
-# 7. Verify all features work and review audit logs
-```
 
 ---
 

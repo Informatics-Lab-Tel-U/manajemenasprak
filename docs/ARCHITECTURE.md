@@ -566,10 +566,9 @@ graph TB
 
 ### External Services
 
-| Service  | Purpose                  | Integration Point    |
-| -------- | ------------------------ | -------------------- |
-| Supabase | Database & Auth          | `/src/lib/supabase/` |
-| Email    | Notifications (if added) | Future integration   |
+| Service  | Purpose         | Integration Point    |
+| -------- | --------------- | -------------------- |
+| Supabase | Database & Auth | `/src/lib/supabase/` |
 
 ### Data Import/Export
 
