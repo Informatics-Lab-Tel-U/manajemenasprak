@@ -174,11 +174,27 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
                         <CollapsibleContent>
                           <SidebarMenuSub>
                             {visibleSubItems.map((subItem) => {
-                              // Precise active matching checking query params
                               const [basePath, query] = subItem.href.split('?');
+
+                              const isBaseActive = pathname === basePath;
+                              const isPrefixActive = pathname.startsWith(basePath + '/');
+                              const queryMatches =
+                                !query || searchParams?.toString().includes(query);
+
+                              const hasMoreSpecificMatch =
+                                (isBaseActive || isPrefixActive) &&
+                                visibleSubItems.some((other) => {
+                                  const [otherPath] = other.href.split('?');
+                                  return (
+                                    otherPath.length > basePath.length &&
+                                    pathname.startsWith(otherPath)
+                                  );
+                                });
+
                               const isSubActive =
-                                pathname.startsWith(basePath) &&
-                                (!query || searchParams?.toString().includes(query));
+                                (isBaseActive || isPrefixActive) &&
+                                queryMatches &&
+                                !hasMoreSpecificMatch;
 
                               return (
                                 <SidebarMenuSubItem key={subItem.href}>
