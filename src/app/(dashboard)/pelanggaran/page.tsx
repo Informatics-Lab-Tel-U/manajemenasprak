@@ -1,10 +1,8 @@
 import { requireAuth } from '@/lib/auth';
 import { createClient } from '@/lib/supabase/server';
 import PelanggaranClientPage from './PelanggaranClientPage';
-import type { Praktikum, Asprak, Jadwal } from '@/types/database';
 import * as pelanggaranService from '@/services/pelanggaranService';
 import * as praktikumService from '@/services/praktikumService';
-import * as asprakService from '@/services/asprakService';
 
 export const dynamic = 'force-dynamic';
 

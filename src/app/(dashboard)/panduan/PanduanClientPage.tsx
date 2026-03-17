@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React from 'react';
 import {
   BookOpen,
   Database,
@@ -8,7 +8,6 @@ import {
   ArrowRight,
   AlertTriangle,
   Info,
-  Download,
   GitGraph,
   Library,
   Calendar,

@@ -1,7 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
-import { toast } from 'sonner';
+import { useState, useEffect } from 'react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { X, Loader2 } from 'lucide-react';
 import MataKuliahCSVPreview, { MataKuliahCSVRow } from '../../mata-kuliah/MataKuliahCSVPreview';
@@ -31,11 +30,6 @@ export default function StepMataKuliah({
     []
   );
   const [existingMataKuliah, setExistingMataKuliah] = useState<MataKuliahGrouped[]>([]);
-
-  const isValidProdi = (prodi: string) => {
-    const base = prodi?.replace('-PJJ', '') || '';
-    return ['IF', 'IT', 'SE', 'DS'].includes(base);
-  };
 
   // Fetch valid praktikums AND existing MK for the term
   useEffect(() => {

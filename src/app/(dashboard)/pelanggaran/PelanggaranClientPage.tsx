@@ -3,7 +3,6 @@
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import { CheckCircle2, ArrowRight, Filter } from 'lucide-react';
-import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -14,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import type { Praktikum, Asprak, Jadwal } from '@/types/database';
+import type { Praktikum } from '@/types/database';
 import { cn } from '@/lib/utils';
 import { usePelanggaran } from '@/hooks/usePelanggaran';
 import { PelanggaranCardSkeleton } from '@/components/pelanggaran/PelanggaranCardSkeleton';
@@ -47,8 +46,6 @@ export default function PelanggaranClientPage({
     tahunAjaranList: initialTahunAjaranList,
     countMap: initialCountMap,
   });
-
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   // ── Hydration fix ──
   const [mounted, setMounted] = React.useState(false);

@@ -14,7 +14,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
 import { Asprak, Praktikum } from '@/types/database';
 import { usePraktikum } from '@/hooks/usePraktikum';
-import { ACTIVE_YEARS_THRESHOLD } from '@/constants';
 
 interface AsprakEditModalProps {
   asprak: Asprak;

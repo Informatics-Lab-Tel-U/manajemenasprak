@@ -28,7 +28,7 @@ import {
   type ModulScheduleEntryDto,
 } from '@/lib/fetchers/modulScheduleFetcher';
 import { toast } from 'sonner';
-import { format, addDays, parseISO, isValid, getDay } from 'date-fns';
+import { format, addDays, getDay } from 'date-fns';
 import { id } from 'date-fns/locale';
 
 export default function JadwalModulClientPage() {

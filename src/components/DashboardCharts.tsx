@@ -12,8 +12,7 @@ import {
   ChartTooltipContent,
 } from '@/components/ui/chart';
 import { Jadwal } from '@/types/database';
-import { ROOMS, STATIC_SESSIONS } from '@/constants';
-import { getCourseColor } from '@/utils/colorUtils';
+import { ROOMS } from '@/constants';
 import { ScheduleCell } from '@/components/jadwal/ScheduleCell';
 import React, { useMemo } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -22,13 +21,11 @@ export default function DashboardCharts({
   asprakByAngkatan,
   jadwalByDay,
   todaySchedule,
-  selectedTerm,
   loading,
 }: {
   asprakByAngkatan: { name: string; count: number }[];
   jadwalByDay: { name: string; count: number }[];
   todaySchedule: Jadwal[];
-  selectedTerm: string;
   loading: boolean;
 }) {
   const dataAsprak = [...asprakByAngkatan].sort((a, b) => parseInt(a.name) - parseInt(b.name));

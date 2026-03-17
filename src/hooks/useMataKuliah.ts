@@ -1,6 +1,5 @@
 import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
-import { MataKuliah, Praktikum } from '@/types/database';
 import type { MataKuliahGrouped } from '@/services/mataKuliahService';
 
 export function useMataKuliah() {

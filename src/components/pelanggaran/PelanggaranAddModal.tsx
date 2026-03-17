@@ -1,14 +1,7 @@
 'use client';
 
-import { useState } from 'react';
 import PelanggaranForm from './PelanggaranForm';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog';
+import { Dialog } from '@/components/ui/dialog';
 import type { Asprak, Jadwal, Praktikum } from '@/types/database';
 
 interface PelanggaranAddModalProps {

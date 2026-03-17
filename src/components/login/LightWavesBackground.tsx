@@ -53,7 +53,7 @@ export function LightWavesBackground({
   const containerRef = useRef<HTMLDivElement>(null);
   const wavesRef = useRef<Wave[]>([]);
   const animationRef = useRef<number | null>(null);
-  const startTimeRef = useRef(Date.now());
+  const startTimeRef = useRef(0);
   const [isDark, setIsDark] = useState<boolean>(true);
 
   // Watch for theme class changes on <html>
@@ -247,6 +247,7 @@ export function LightWavesBackground({
       animationRef.current = requestAnimationFrame(draw);
     };
 
+    startTimeRef.current = Date.now();
     animationRef.current = requestAnimationFrame(draw);
 
     return () => {

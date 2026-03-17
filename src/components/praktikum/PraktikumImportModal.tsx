@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import Papa from 'papaparse';
 import { FileSpreadsheet, Upload, FileText, X, Download } from 'lucide-react';
@@ -40,7 +40,6 @@ export default function PraktikumImportModal({
   existingPraktikums,
 }: PraktikumImportModalProps) {
   const [step, setStep] = useState<Step>('upload');
-  const [fileName, setFileName] = useState<string | null>(null);
   const [previewRows, setPreviewRows] = useState<PraktikumPreviewRow[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -49,7 +48,6 @@ export default function PraktikumImportModal({
   const processCSV = useCallback(
     (file: File) => {
       setError(null);
-      setFileName(file.name);
 
       Papa.parse<any>(file, {
         header: true,
@@ -174,7 +172,6 @@ export default function PraktikumImportModal({
   const handleClose = () => {
     setStep('upload');
     setPreviewRows([]);
-    setFileName(null);
     setError(null);
     setSaving(false);
     onClose();
@@ -273,7 +270,6 @@ export default function PraktikumImportModal({
                   onBack={() => {
                     setStep('upload');
                     setPreviewRows([]);
-                    setFileName(null);
                   }}
                   onToggleSelect={handleToggleSelect}
                   onToggleAll={handleToggleAll}

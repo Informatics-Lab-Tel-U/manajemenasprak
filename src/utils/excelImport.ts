@@ -2,7 +2,6 @@ import * as XLSX from 'xlsx';
 import { supabase } from '@/services/supabase';
 import { logger } from '@/lib/logger';
 import { checkCodeConflict, generateConflictErrorMessage } from './conflict';
-import { isAsprakInactive } from './asprak';
 
 export async function processExcelUpload(
   file: File,

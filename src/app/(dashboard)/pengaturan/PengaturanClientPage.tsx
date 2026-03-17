@@ -537,7 +537,7 @@ export default function DatabaseClientPage({
               term={activeTerm}
               onNext={() => setWizardStep(4)}
               onPrev={() => setWizardStep(2)}
-              onImport={async (rows, t) => {
+              onImport={async (rows, _t) => {
                 const res = await fetch('/api/asprak', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },

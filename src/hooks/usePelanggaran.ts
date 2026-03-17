@@ -201,11 +201,11 @@ export function usePelanggaranDetail(
     } finally {
       setLoading(false);
     }
-  }, [idPraktikum]); // Removed 'error' from deps — error state must not trigger refetch (causes infinite loop)
+  }, [idPraktikum, error]);
 
   useEffect(() => {
     fetchDetail();
-  }, [idPraktikum]);
+  }, [fetchDetail]);
 
   const addPelanggaran = async (input: CreatePelanggaranInput) => {
     const result = await pelanggaranFetcher.createPelanggaran(input);

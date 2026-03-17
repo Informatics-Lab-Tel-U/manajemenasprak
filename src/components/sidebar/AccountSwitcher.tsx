@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronsUpDown, LogOut, User } from 'lucide-react';
+import { ChevronsUpDown, LogOut } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import {
   DropdownMenu,

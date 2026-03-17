@@ -51,7 +51,7 @@ export default function PraktikumManualModal({
     try {
       const exists = await onCheckExists(nama, term);
       setStatus(exists ? 'exists' : 'available');
-    } catch (e: any) {
+    } catch {
       setStatus('idle');
     }
   };
@@ -62,8 +62,8 @@ export default function PraktikumManualModal({
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (_e: React.FormEvent) => {
+    _e.preventDefault();
     if (!nama || !term) return;
 
     setLoading(true);

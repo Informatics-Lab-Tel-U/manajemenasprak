@@ -70,7 +70,7 @@ export function useDashboard(
     }
     // User changed the term selector: refetch
     fetchDashboardData(selectedTerm);
-  }, [selectedTerm]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [selectedTerm, fetchDashboardData, hasMounted]);
 
   return {
     terms,
