@@ -45,7 +45,6 @@ export default function PlottingImportModal({
   const [step, setStep] = useState<'upload' | 'preview'>('upload');
   const [selectedTerm, setSelectedTerm] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
-  const [fileName, setFileName] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const [previewRows, setPreviewRows] = useState<ExtendedPreviewRow[]>([]);
@@ -53,7 +52,6 @@ export default function PlottingImportModal({
   // CSV Processing
   const processCSV = (file: File) => {
     setError(null);
-    setFileName(file.name);
     setLoading(true);
 
     Papa.parse(file, {
@@ -171,7 +169,6 @@ export default function PlottingImportModal({
   const handleClose = () => {
     setStep('upload');
     setPreviewRows([]);
-    setFileName(null);
     setError(null);
     onOpenChange(false);
   };

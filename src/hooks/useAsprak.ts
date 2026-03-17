@@ -34,7 +34,9 @@ export function useAsprak(
   const [hasInitializedLatest, setHasInitializedLatest] = useState(!!initialData?.terms);
   // Use ref so fetchTerms doesn't re-create every time hasInitializedLatest changes
   const hasInitializedLatestRef = useRef(hasInitializedLatest);
-  hasInitializedLatestRef.current = hasInitializedLatest;
+  useEffect(() => {
+    hasInitializedLatestRef.current = hasInitializedLatest;
+  }, [hasInitializedLatest]);
 
   const fetchTerms = useCallback(async () => {
     if (terms.length > 0) return; // Skip if already have terms
@@ -104,7 +106,7 @@ export function useAsprak(
       return;
     }
     fetchAll();
-  }, [fetchAll, selectedTerm, initialData?.asprakList, initialTerm]);
+  }, [fetchAll, selectedTerm, initialData, initialTerm]);
 
   return {
     data,

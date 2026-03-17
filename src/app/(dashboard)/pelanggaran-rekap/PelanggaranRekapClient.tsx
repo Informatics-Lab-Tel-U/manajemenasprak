@@ -37,7 +37,7 @@ interface Props {
   userRole: Role;
 }
 
-export default function PelanggaranRekapClient({ initialTahunAjaranList, userRole }: Props) {
+export default function PelanggaranRekapClient({ initialTahunAjaranList }: Props) {
   const [tahunAjaran, setTahunAjaran] = React.useState(initialTahunAjaranList[0] || '');
   const [modul, setModul] = React.useState<string>('1');
   const [minCount, setMinCount] = React.useState<number>(1);
@@ -50,7 +50,7 @@ export default function PelanggaranRekapClient({ initialTahunAjaranList, userRol
     if (initialTahunAjaranList[0]) {
       handleFetch(initialTahunAjaranList[0], '1', 1);
     }
-  }, []);
+  }, [initialTahunAjaranList]);
 
   async function handleFetch(t: string, m: string, c: number) {
     setLoading(true);

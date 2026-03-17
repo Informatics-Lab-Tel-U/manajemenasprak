@@ -6,7 +6,6 @@ import type { MataKuliahGrouped } from '@/services/mataKuliahService';
 interface MataKuliahListProps {
   groupedData: MataKuliahGrouped[];
   loading: boolean;
-  onRefresh: () => void;
 }
 
 function MataKuliahCardSkeleton() {
@@ -34,7 +33,7 @@ function MataKuliahCardSkeleton() {
   );
 }
 
-export default function MataKuliahList({ groupedData, loading, onRefresh }: MataKuliahListProps) {
+export default function MataKuliahList({ groupedData, loading }: MataKuliahListProps) {
   if (loading) {
     return (
       <div className="space-y-8 animate-pulse">

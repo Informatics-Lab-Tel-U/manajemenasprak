@@ -127,7 +127,7 @@ export function ManajemenAkunFormModal({ open, onOpenChange, mode, user, onSucce
           setSelectedTahun(existingTahun);
           setSelectedPraktikumId(existingPraktikumId);
         }
-      } catch (e: any) {
+      } catch {
         if (!cancelled) toast.error('Gagal memuat data praktikum');
       } finally {
         if (!cancelled) setLoadingPraktikum(false);
@@ -180,8 +180,8 @@ export function ManajemenAkunFormModal({ open, onOpenChange, mode, user, onSucce
     [praktikumList, selectedTahun]
   );
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleSubmit(_e: React.FormEvent) {
+    _e.preventDefault();
     setIsLoading(true);
 
     try {

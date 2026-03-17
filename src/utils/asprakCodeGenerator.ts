@@ -147,29 +147,6 @@ export function rulesFor3Words(words: string[]): string[] {
   return candidates;
 }
 
-function rulesForNWords(words: string[]): string[] {
-  const w1 = words[0];
-  const w2 = words[1];
-  const wLast = words[words.length - 1];
-  const wMid = words[Math.floor(words.length / 2)];
-  const candidates: string[] = [];
-
-  // N.1: first of first 3 words
-  candidates.push(safeChar(words[0], 0) + safeChar(words[1], 0) + safeChar(words[2], 0));
-  // N.2: first(w1), first(w2), first(wLast)
-  candidates.push(safeChar(w1, 0) + safeChar(w2, 0) + safeChar(wLast, 0));
-  // N.3: first(w1) + first2(w2)
-  candidates.push(safeChar(w1, 0) + safeChar(w2, 0) + safeChar(w2, 1));
-  // N.4: first(w1), first(wMid), first(wLast)
-  candidates.push(safeChar(w1, 0) + safeChar(wMid, 0) + safeChar(wLast, 0));
-  // N.5: first2(w1) + first(wLast)
-  candidates.push(safeChar(w1, 0) + safeChar(w1, 1) + safeChar(wLast, 0));
-  // N.6: first(w1) + first(w2) + second(wLast)
-  candidates.push(safeChar(w1, 0) + safeChar(w2, 0) + safeChar(wLast, 1));
-
-  return candidates;
-}
-
 // ─── Fallback: Strategic Positions ───────────────────────────────────────────
 
 function getStrategicPool(words: string[]): string[] {

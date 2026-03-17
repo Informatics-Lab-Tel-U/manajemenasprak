@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { Download, Plus, Upload } from 'lucide-react';
+import { Plus, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { usePraktikum } from '@/hooks/usePraktikum';

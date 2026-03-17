@@ -2,7 +2,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { CheckCircle, AlertTriangle, ArrowLeft, Save, XCircle, HelpCircle } from 'lucide-react';
+import { CheckCircle, ArrowLeft, Save, XCircle, HelpCircle } from 'lucide-react';
 
 export interface PlottingPreviewRow {
   index: number;

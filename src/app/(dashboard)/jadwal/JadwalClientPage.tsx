@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { useJadwal } from '@/hooks/useJadwal';
 import {
   Select,
@@ -29,18 +29,11 @@ import { ScheduleCell } from '@/components/jadwal/ScheduleCell';
 import JadwalImportCSVModal from '@/components/jadwal/JadwalImportCSVModal';
 import { GroupColorModal } from '@/components/jadwal/GroupColorModal';
 import { JadwalPenggantiModal } from '@/components/jadwal/JadwalPenggantiModal';
-import {
-  CreateJadwalInput,
-  UpdateJadwalInput,
-  CreateJadwalPenggantiInput,
-} from '@/services/jadwalService';
-import { getAvailableTerms as fetchAvailableTerms } from '@/services/termService';
+import { CreateJadwalInput, UpdateJadwalInput } from '@/services/jadwalService';
 import { useScheduleData } from '@/hooks/useScheduleData';
 import * as jadwalFetcher from '@/lib/fetchers/jadwalFetcher';
-import { DAYS, STATIC_SESSIONS } from '@/constants';
 import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton';
-import { getCourseColor } from '@/utils/colorUtils';
 
 interface JadwalClientPageProps {
   initialJadwal: Jadwal[];
@@ -151,9 +144,7 @@ export default function JadwalClientPage({
     const isEditingPJJ = inputKelas.toUpperCase().includes('PJJ');
 
     // Check for scheduling conflicts in Default mode
-    let conflict: Jadwal | undefined;
-
-    conflict = rawJadwalList.find((j) => {
+    const conflict = rawJadwalList.find((j) => {
       const isExistingPJJ = j.kelas?.toUpperCase().includes('PJJ');
       if (isEditingPJJ || isExistingPJJ) return false;
 

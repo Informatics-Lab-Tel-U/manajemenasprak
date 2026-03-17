@@ -44,7 +44,7 @@ export function usePraktikum(initialData?: { praktikumNames: { id: string; nama:
       return;
     }
     fetchPraktikumNames();
-  }, [fetchPraktikumNames, initialData]);
+  }, [fetchPraktikumNames, initialData, praktikumNames.length]);
 
   const getDetails = useCallback(async (id: string) => {
     const result = await praktikumFetcher.fetchPraktikumDetails(id);

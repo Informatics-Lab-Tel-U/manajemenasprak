@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Calendar, Clock, MapPin, Users } from 'lucide-react';
+import { Loader2, Calendar, Clock, MapPin } from 'lucide-react';
 import type { PraktikumWithStats, PraktikumDetails } from '@/services/praktikumService';
 import { usePraktikum } from '@/hooks/usePraktikum';
 

@@ -1,5 +1,4 @@
 import 'server-only';
-import { createServerClient } from '@supabase/ssr';
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;

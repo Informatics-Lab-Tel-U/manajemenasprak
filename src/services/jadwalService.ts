@@ -80,7 +80,7 @@ export async function getScheduleForValidation(term: string, supabaseClient?: Su
 }
 
 export async function getTodaySchedule(
-  limit: number = 20,
+  limit: number = 5,
   term?: string,
   supabaseClient?: SupabaseClient
 ): Promise<Jadwal[]> {
@@ -121,6 +121,9 @@ export async function getTodaySchedule(
     normalQuery = normalQuery.eq('mata_kuliah.praktikum.tahun_ajaran', term);
   }
 
+  // Apply limit to normal query
+  normalQuery = normalQuery.limit(limit);
+
   // 4. Fetch replacement schedules for today
   let penggantiQuery = supabase
     .from('jadwal_pengganti')
@@ -146,6 +149,9 @@ export async function getTodaySchedule(
   if (term) {
     penggantiQuery = penggantiQuery.eq('jadwal.mata_kuliah.praktikum.tahun_ajaran', term);
   }
+
+  // Apply limit to replacement query
+  penggantiQuery = penggantiQuery.limit(limit);
 
   const [normalResult, penggantiResult] = await Promise.all([normalQuery, penggantiQuery]);
 

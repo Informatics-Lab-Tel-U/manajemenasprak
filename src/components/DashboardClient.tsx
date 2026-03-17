@@ -1,10 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { Users, BookOpen, AlertTriangle, Calendar } from 'lucide-react';
 import DashboardCharts from '@/components/DashboardCharts';
 import { StatCard } from '@/components/ui/StatCard';
-import { Badge } from '@/components/ui/badge';
 import {
   Select,
   SelectContent,
@@ -17,8 +15,6 @@ import { SelectGroup } from '@radix-ui/react-select';
 import type { DashboardStats } from '@/services/databaseService';
 import { Jadwal } from '@/types/database';
 import { useDashboard } from '@/hooks/useDashboard';
-import { Button } from './ui/button';
-import { Card, CardHeader, CardContent } from './ui/card';
 import { Skeleton } from './ui/skeleton';
 
 interface DashboardClientProps {
@@ -32,8 +28,11 @@ export default function DashboardClient({
   initialSchedule,
   initialTerms,
 }: DashboardClientProps) {
-  const { terms, selectedTerm, setSelectedTerm, stats, todaySchedule, loading, error } =
-    useDashboard(initialTerms, initialStats, initialSchedule);
+  const { terms, selectedTerm, setSelectedTerm, stats, todaySchedule, loading } = useDashboard(
+    initialTerms,
+    initialStats,
+    initialSchedule
+  );
 
   return (
     <>
@@ -110,7 +109,6 @@ export default function DashboardClient({
           asprakByAngkatan={stats.asprakByAngkatan}
           jadwalByDay={stats.jadwalByDay}
           todaySchedule={todaySchedule}
-          selectedTerm={selectedTerm}
           loading={loading}
         />
       </div>

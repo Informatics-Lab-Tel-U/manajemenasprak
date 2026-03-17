@@ -46,7 +46,6 @@ interface AsprakWithAssignments extends Asprak {
 interface AsprakClientPageProps {
   initialAsprakList: Asprak[];
   initialTerms: string[];
-  initialPraktikumNames: { id: string; nama: string }[];
   initialExistingCodes: string[];
   initialExistingNims: ExistingNimInfo[];
   initialExistingAspraks: ExistingAsprakInfo[];
@@ -55,7 +54,6 @@ interface AsprakClientPageProps {
 export default function AsprakClientPage({
   initialAsprakList,
   initialTerms,
-  initialPraktikumNames,
   initialExistingCodes,
   initialExistingNims,
   initialExistingAspraks,
@@ -96,7 +94,7 @@ export default function AsprakClientPage({
     terms: initialTerms,
   });
 
-  const { praktikumNames: availablePraktikums } = usePraktikum(); // Still useful for other methods, but maybe we can hydrate it too?
+  const {} = usePraktikum(); // Still useful for other methods, but maybe we can hydrate it too?
   // For now let's keep it simple and just use the initial ones for listing if needed.
 
   const [existingCodes, setExistingCodes] = useState<string[]>(initialExistingCodes);

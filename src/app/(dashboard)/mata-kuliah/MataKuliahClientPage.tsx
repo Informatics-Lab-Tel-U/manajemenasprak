@@ -154,7 +154,7 @@ export default function MataKuliahClientPage({
       </div>
 
       <div className="min-h-[400px]">
-        <MataKuliahList groupedData={filteredData} loading={isLoading} onRefresh={() => {}} />
+        <MataKuliahList groupedData={filteredData} loading={isLoading} />
       </div>
 
       {showImportModal && (

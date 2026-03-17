@@ -65,7 +65,6 @@ import { usePelanggaranDetail } from '@/hooks/usePelanggaran';
 interface Props {
   praktikum?: Praktikum;
   initialViolations?: Pelanggaran[];
-  initialIsFinalized?: boolean;
   role: Role;
   idPraktikum: string;
 }
@@ -112,7 +111,6 @@ function SortHeader({ column, label }: { column: any; label: string }) {
 export default function PelanggaranDetailClient({
   praktikum: initialPraktikum,
   initialViolations,
-  initialIsFinalized,
   role,
   idPraktikum,
 }: Props) {
@@ -123,7 +121,7 @@ export default function PelanggaranDetailClient({
     asprakList,
     jadwalList,
     loading,
-    error,
+    error: _error,
     isFinalized,
     selectedModul,
     setSelectedModul,
@@ -146,6 +144,10 @@ export default function PelanggaranDetailClient({
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [showUnfinalize, setShowUnfinalize] = React.useState(false);
   const [isUnfinalizing, setIsUnfinalizing] = React.useState(false);
+  const [violationToDelete, setViolationToDelete] = React.useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = React.useState(false);
+  const canFinalize =
+    (role === 'ADMIN' || role === 'ASLAB' || role === 'ASPRAK_KOOR') && !isFinalized;
 
   // ── Hydration fix ──
   const [mounted, setMounted] = React.useState(false);
@@ -157,34 +159,6 @@ export default function PelanggaranDetailClient({
   const filteredViolations = React.useMemo(() => {
     return violations.filter((v) => v.modul === Number(selectedModul));
   }, [violations, selectedModul]);
-
-  async function handleAddViolation(data: {
-    id_asprak: string[];
-    id_jadwal: string;
-    jenis: string;
-    modul: number;
-  }) {
-    setIsSubmitting(true);
-    try {
-      const result = await addPelanggaran(data);
-      if (!result.ok) throw new Error(result.error || 'Gagal mencatat pelanggaran');
-
-      toast.success(
-        data.id_asprak.length > 1
-          ? `${data.id_asprak.length} pelanggaran berhasil dicatat!`
-          : 'Pelanggaran berhasil dicatat!'
-      );
-      setIsAddOpen(false);
-      refresh();
-    } catch (err: any) {
-      toast.error(err.message ?? 'Gagal mencatat pelanggaran');
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
-
-  const canFinalize =
-    (role === 'ADMIN' || role === 'ASLAB' || role === 'ASPRAK_KOOR') && !isFinalized;
 
   // ── Violation log columns ─────────────────────────────────────
   const columns = React.useMemo<ColumnDef<Pelanggaran>[]>(
@@ -265,8 +239,9 @@ export default function PelanggaranDetailClient({
         ),
       },
     ],
-    []
+    [isFinalized, setViolationToDelete]
   );
+
   // ── Sorting & Filtering ─────────────────────────────────────
   const table = useReactTable({
     data: filteredViolations,
@@ -289,8 +264,30 @@ export default function PelanggaranDetailClient({
     return Array.from(set).sort();
   }, [violations]);
 
-  const [violationToDelete, setViolationToDelete] = React.useState<string | null>(null);
-  const [isDeleting, setIsDeleting] = React.useState(false);
+  async function handleAddViolation(data: {
+    id_asprak: string[];
+    id_jadwal: string;
+    jenis: string;
+    modul: number;
+  }) {
+    setIsSubmitting(true);
+    try {
+      const result = await addPelanggaran(data);
+      if (!result.ok) throw new Error(result.error || 'Gagal mencatat pelanggaran');
+
+      toast.success(
+        data.id_asprak.length > 1
+          ? `${data.id_asprak.length} pelanggaran berhasil dicatat!`
+          : 'Pelanggaran berhasil dicatat!'
+      );
+      setIsAddOpen(false);
+      refresh();
+    } catch (err: any) {
+      toast.error(err.message ?? 'Gagal mencatat pelanggaran');
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
 
   async function handleDeleteViolation() {
     if (!violationToDelete) return;

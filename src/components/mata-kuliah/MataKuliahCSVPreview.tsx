@@ -1,4 +1,3 @@
-import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -51,9 +50,7 @@ export default function MataKuliahCSVPreview({
   onToggleAll,
   onSkip,
 }: MataKuliahCSVPreviewProps) {
-  const totalOk = rows.filter((r) => r.status === 'ok').length;
   const totalError = rows.filter((r) => r.status === 'error').length;
-  const totalWarning = rows.filter((r) => r.status === 'warning').length;
 
   const selectableRows = rows.filter((r) => r.status !== 'error');
   const selectedCount = selectableRows.filter((r) => r.selected).length;

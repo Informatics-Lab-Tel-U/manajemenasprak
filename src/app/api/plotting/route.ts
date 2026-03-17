@@ -4,14 +4,9 @@ import * as plottingService from '@/services/plottingService';
 import { logger } from '@/lib/logger';
 import { requireRole } from '@/lib/auth';
 
-export async function GET(req: Request) {
+export async function GET(_req: Request) {
   try {
     await requireRole(['ADMIN', 'ASLAB', 'ASPRAK_KOOR']); // Plotting can be viewed by Koor
-    const supabase = await createClient();
-    const url = new URL(req.url);
-    const term = url.searchParams.get('term') || undefined;
-    const page = parseInt(url.searchParams.get('page') || '1');
-    const limit = parseInt(url.searchParams.get('limit') || '1000'); // Default high for client side pagination if needed
 
     // If we use server side pagination:
     // const result = await plottingService.getPlottingList(page, limit, term);

@@ -67,11 +67,6 @@ export default function MataKuliahImportModal({
   const term = useMemo(() => buildTermString(termYear, termSem), [termYear, termSem]);
   const isTermValid = term.length > 0 && !isNaN(parseInt(termYear));
 
-  const isValidProdi = (prodi: string) => {
-    const base = prodi?.replace('-PJJ', '') || '';
-    return ['IF', 'IT', 'SE', 'DS'].includes(base);
-  };
-
   // Fetch valid praktikums AND key existing data whenever the term changes inside the modal
   useEffect(() => {
     let active = true;

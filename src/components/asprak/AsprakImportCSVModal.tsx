@@ -55,9 +55,6 @@ export interface ExistingAsprakInfo {
   angkatan: number;
 }
 
-/** How many years before a code can be recycled */
-const CODE_RECYCLE_YEARS = 5;
-
 interface AsprakImportCSVModalProps {
   existingCodes: string[];
   existingNims: ExistingNimInfo[];
@@ -112,62 +109,59 @@ export default function AsprakImportCSVModal({
 
   // ─── CSV Parsing ─────────────────────────────────────────────────────────
 
-  const processCSV = useCallback(
-    (file: File) => {
-      setError(null);
-      setFileName(file.name);
+  const processCSV = useCallback((file: File) => {
+    setError(null);
+    setFileName(file.name);
 
-      Papa.parse<RawCSVRow>(file, {
-        header: true,
-        skipEmptyLines: true,
-        transformHeader: (header: string) => {
-          const h = header.trim().toLowerCase();
-          if (h.includes('nama')) return 'nama_lengkap';
-          if (h.includes('nim')) return 'nim';
-          if (h.includes('kode')) return 'kode';
-          if (h.includes('role') || h.includes('peran')) return 'role';
-          if (h.includes('angkatan') || h.includes('tahun')) return 'angkatan';
-          return h.replace(/[^a-z0-9]/g, '_');
-        },
-        complete: (results) => {
-          const { data, errors } = results;
+    Papa.parse<RawCSVRow>(file, {
+      header: true,
+      skipEmptyLines: true,
+      transformHeader: (header: string) => {
+        const h = header.trim().toLowerCase();
+        if (h.includes('nama')) return 'nama_lengkap';
+        if (h.includes('nim')) return 'nim';
+        if (h.includes('kode')) return 'kode';
+        if (h.includes('role') || h.includes('peran')) return 'role';
+        if (h.includes('angkatan') || h.includes('tahun')) return 'angkatan';
+        return h.replace(/[^a-z0-9]/g, '_');
+      },
+      complete: (results) => {
+        const { data, errors } = results;
 
-          if (errors.length > 0) {
-            setError(`CSV parsing error: ${errors[0].message}`);
-            return;
-          }
+        if (errors.length > 0) {
+          setError(`CSV parsing error: ${errors[0].message}`);
+          return;
+        }
 
-          if (data.length === 0) {
-            setError('CSV kosong — tidak ada data yang ditemukan.');
-            return;
-          }
+        if (data.length === 0) {
+          setError('CSV kosong — tidak ada data yang ditemukan.');
+          return;
+        }
 
-          // Validate required columns
-          const firstRow = data[0];
-          const requiredCols = ['nama_lengkap', 'nim'];
-          const missingCols = requiredCols.filter((col) => !(col in firstRow));
-          if (missingCols.length > 0) {
-            setError(
-              `Kolom wajib tidak ditemukan: ${missingCols.join(', ')}. Kolom yang ada: ${Object.keys(firstRow).join(', ')}`
-            );
-            return;
-          }
+        // Validate required columns
+        const firstRow = data[0];
+        const requiredCols = ['nama_lengkap', 'nim'];
+        const missingCols = requiredCols.filter((col) => !(col in firstRow));
+        if (missingCols.length > 0) {
+          setError(
+            `Kolom wajib tidak ditemukan: ${missingCols.join(', ')}. Kolom yang ada: ${Object.keys(firstRow).join(', ')}`
+          );
+          return;
+        }
 
-          // Build preview rows with code generation
-          try {
-            setParsedData(data);
-            setStep('preview');
-          } catch (e: any) {
-            setError(`Error saat generate kode: ${e instanceof Error ? e.message : String(e)}`);
-          }
-        },
-        error: (err: Error) => {
-          setError(`Failed to parse CSV: ${err.message}`);
-        },
-      });
-    },
-    [existingCodes, existingNims]
-  );
+        // Build preview rows with code generation
+        try {
+          setParsedData(data);
+          setStep('preview');
+        } catch (e: any) {
+          setError(`Error saat generate kode: ${e instanceof Error ? e.message : String(e)}`);
+        }
+      },
+      error: (err: Error) => {
+        setError(`Failed to parse CSV: ${err.message}`);
+      },
+    });
+  }, []);
 
   // Re-run validation when data or forceOverride changes
   useEffect(() => {

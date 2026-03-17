@@ -3,13 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Jadwal, MataKuliah } from '@/types/database';
 import { DAYS, STATIC_SESSIONS, ROOMS } from '@/constants';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   Select,
   SelectContent,

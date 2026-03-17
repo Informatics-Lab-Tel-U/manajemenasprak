@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Jadwal, MataKuliah } from '@/types/database';
 import {
   Table,
@@ -13,7 +13,6 @@ import {
 import {
   Select,
   SelectContent,
-  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -21,12 +20,10 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Plus, Calendar, Clock, MapPin, Trash2, Edit, History, FilterX } from 'lucide-react';
+import { Plus, Trash2, Edit, FilterX } from 'lucide-react';
 import { toast } from 'sonner';
 import * as jadwalFetcher from '@/lib/fetchers/jadwalFetcher';
 import { JadwalPenggantiModal } from '@/components/jadwal/JadwalPenggantiModal';
-import { format } from 'date-fns';
-import { id } from 'date-fns/locale';
 
 interface JadwalPenggantiClientPageProps {
   initialTerms: string[];
@@ -62,21 +59,21 @@ export default function JadwalPenggantiClientPage({
     return startTime;
   };
 
-  const fetchPengganti = async () => {
+  const fetchPengganti = React.useCallback(async () => {
     if (!selectedTerm) return;
     setLoading(true);
     const result = await jadwalFetcher.fetchJadwalPenggantiByTerm(selectedTerm);
     if (result.ok && result.data) {
       setPenggantiList(result.data);
     } else {
-      toast.error('Gagal mengambil data jadwal pengganti');
+      toast.error('Gagal mengambil data jadwal jadwal pengganti');
     }
     setLoading(false);
-  };
+  }, [selectedTerm]);
 
   useEffect(() => {
     fetchPengganti();
-  }, [selectedTerm]);
+  }, [fetchPengganti]);
 
   const handleAdd = () => {
     setModalInitialData(null);

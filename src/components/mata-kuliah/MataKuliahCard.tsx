@@ -1,5 +1,5 @@
 import { Card } from '@/components/ui/card';
-import { User, BookOpen } from 'lucide-react';
+import { BookOpen } from 'lucide-react';
 import { MataKuliahWithPraktikum } from '@/services/mataKuliahService';
 import { cn } from '@/lib/utils';
 

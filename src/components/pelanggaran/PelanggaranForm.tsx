@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -10,23 +10,13 @@ import {
   SelectContent,
   SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import {
-  Loader2,
-  Search,
-  X,
-  ChevronDown,
-  ChevronRight,
-  Users,
-  Calendar,
-  AlertCircle,
-} from 'lucide-react';
+import { Loader2, Search, X, ChevronRight, Users, Calendar } from 'lucide-react';
 import { toast } from 'sonner';
-import type { Asprak, Jadwal, Praktikum, JadwalPengganti } from '@/types/database';
+import type { Asprak, Jadwal, Praktikum } from '@/types/database';
 import { Field, FieldGroup } from '@/components/ui/field';
 
 import {
@@ -85,6 +75,8 @@ export default function PelanggaranForm({
   const [selectedTahunAjaran, setSelectedTahunAjaran] = useState(initialTahunAjaran);
   const [selectedPraktikumId, setSelectedPraktikumId] = useState(initialPraktikumId);
 
+  const [modul, setModul] = useState<string>(initialModul);
+
   // Sync state if initial props change (e.g. after data fetch in parent)
   useEffect(() => {
     if (initialTahunAjaran) setSelectedTahunAjaran(initialTahunAjaran);
@@ -96,7 +88,6 @@ export default function PelanggaranForm({
   const [selectedAsprakIds, setSelectedAsprakIds] = useState<string[]>([]);
   const [idJadwal, setIdJadwal] = useState('');
   const [jenis, setJenis] = useState('');
-  const [modul, setModul] = useState<string>(initialModul);
 
   // ── Side panel state ──
   const [sidePanel, setSidePanel] = useState<SidePanel>(null);

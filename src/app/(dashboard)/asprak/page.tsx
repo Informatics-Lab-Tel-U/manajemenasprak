@@ -14,9 +14,8 @@ export default async function AsprakPage() {
   await requireAuth();
 
   // Parallelize all initial data fetching with cached versions for deduplication
-  const [terms, praktikumNames, existingCodes, allAsprak] = await Promise.all([
+  const [terms, existingCodes, allAsprak] = await Promise.all([
     getCachedAvailableTerms(),
-    getUniquePraktikumNames(),
     getExistingCodes(),
     getCachedAllAsprak(),
   ]);
@@ -35,7 +34,6 @@ export default async function AsprakPage() {
       <AsprakClientPage
         initialAsprakList={initialAsprakList}
         initialTerms={terms}
-        initialPraktikumNames={praktikumNames}
         initialExistingCodes={existingCodes}
         initialExistingNims={initialExistingNims}
         initialExistingAspraks={initialExistingAspraks}

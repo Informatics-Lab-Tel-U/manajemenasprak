@@ -1,9 +1,8 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { X, Loader2 } from 'lucide-react';
-import * as jadwalFetcher from '@/lib/fetchers/jadwalFetcher';
 import JadwalCSVPreview, { JadwalPreviewRow } from '../../jadwal/JadwalCSVPreview';
 import {
   validateJadwalConflicts,

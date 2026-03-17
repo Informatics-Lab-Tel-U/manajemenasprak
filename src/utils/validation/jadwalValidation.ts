@@ -1,6 +1,5 @@
 import { JadwalPreviewRow } from '@/components/jadwal/JadwalCSVPreview';
 import * as jadwalFetcher from '@/lib/fetchers/jadwalFetcher';
-import { MataKuliah } from '@/types/database';
 
 const VALID_DAYS = ['SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU'];
 

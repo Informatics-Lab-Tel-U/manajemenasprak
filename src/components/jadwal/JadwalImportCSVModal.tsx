@@ -10,12 +10,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { MataKuliah } from '@/types/database';
 import type { CreateJadwalInput } from '@/services/jadwalService';
-import * as jadwalFetcher from '@/lib/fetchers/jadwalFetcher';
 import JadwalCSVPreview, { JadwalPreviewRow } from './JadwalCSVPreview';
 import {
   validateJadwalConflicts,
@@ -48,7 +45,6 @@ interface JadwalImportCSVModalProps {
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const REQUIRED_COLS = ['kelas', 'hari', 'sesi', 'jam', 'ruangan']; // removed mata_kuliah, checking nama_singkat dynamically
-const VALID_DAYS = ['SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU'];
 
 // ─── Component ───────────────────────────────────────────────────────────────
 

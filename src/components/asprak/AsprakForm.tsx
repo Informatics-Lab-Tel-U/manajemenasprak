@@ -19,11 +19,9 @@ import {
   checkNim,
   generateCode,
   fetchAvailableTerms,
-  fetchExistingCodes,
   UpsertAsprakInput,
 } from '@/lib/fetchers/asprakFetcher';
 import { fetchPraktikumByTerm } from '@/lib/fetchers/praktikumFetcher';
-import { ACTIVE_YEARS_THRESHOLD } from '@/constants';
 // Manual debounce helper if hook doesn't exist
 function useDebounceValue<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
@@ -66,9 +64,7 @@ export default function AsprakForm({ onSubmit, onCancel }: AsprakFormProps) {
   // Data
   const [assignments, setAssignments] = useState<AssignmentBlock[]>([]);
   const [availableTerms, setAvailableTerms] = useState<string[]>([]);
-  const [existingCodes, setExistingCodes] = useState<Set<string>>(new Set());
   const [existingAspraks, setExistingAspraks] = useState<{ kode: string; angkatan: number }[]>([]);
-  const [loadingTerms, setLoadingTerms] = useState(false);
   const [submitLoading, setSubmitLoading] = useState(false);
 
   // Debounced Values
@@ -78,7 +74,6 @@ export default function AsprakForm({ onSubmit, onCancel }: AsprakFormProps) {
   // Initial Fetch
   useEffect(() => {
     async function loadData() {
-      setLoadingTerms(true);
       const [termsRes, allInfoRes] = await Promise.all([
         fetchAvailableTerms(),
         fetch('/api/asprak?action=all-info').then((r) => r.json()),
@@ -89,9 +84,7 @@ export default function AsprakForm({ onSubmit, onCancel }: AsprakFormProps) {
       }
       if (allInfoRes.ok && allInfoRes.data) {
         setExistingAspraks(allInfoRes.data);
-        setExistingCodes(new Set(allInfoRes.data.map((a: any) => a.kode)));
       }
-      setLoadingTerms(false);
     }
     loadData();
   }, []);
@@ -184,7 +177,7 @@ export default function AsprakForm({ onSubmit, onCancel }: AsprakFormProps) {
       }
     }
     gen();
-  }, [debouncedNama, forceOverride, angkatan, validateKodeMatch]);
+  }, [debouncedNama, forceOverride, angkatan, validateKodeMatch, isManualCode]);
 
   // Handle manual input change
   const handleCodeChange = (val: string) => {
@@ -472,7 +465,7 @@ export default function AsprakForm({ onSubmit, onCancel }: AsprakFormProps) {
         </div>
 
         <div className="space-y-3">
-          {assignments.map((block, idx) => {
+          {assignments.map((block) => {
             const disabledTerms = getDisabledTerms(block.id);
             return (
               <Card key={block.id} className="relative bg-muted/20 border-border/50 shadow-sm">
