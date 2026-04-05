@@ -17,6 +17,9 @@ export function useAsprak(
     terms?: string[];
   }
 ) {
+  const initialDataRef = useRef(initialData);
+  const initialRenderRef = useRef(true);
+
   const [data, setData] = useState<Asprak[]>(initialData?.asprakList || []);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -99,14 +102,19 @@ export function useAsprak(
   }, [fetchTerms]);
 
   useEffect(() => {
-    // If we have initial data and the term hasn't changed from initial, skip the fetch
-    const effectiveInitialTerm = initialTerm || initialData?.terms?.[0] || 'all';
-    if (initialData?.asprakList && selectedTerm === effectiveInitialTerm) {
-      setLoading(false);
-      return;
+    // On the first render, if we have initial data matching the selected term, skip fetching
+    const effectiveInitialTerm = initialTerm || initialDataRef.current?.terms?.[0] || 'all';
+    
+    if (initialRenderRef.current) {
+      initialRenderRef.current = false;
+      if (initialDataRef.current?.asprakList && selectedTerm === effectiveInitialTerm) {
+        setLoading(false);
+        return;
+      }
     }
+
     fetchAll();
-  }, [fetchAll, selectedTerm, initialData, initialTerm]);
+  }, [fetchAll, selectedTerm, initialTerm]);
 
   return {
     data,

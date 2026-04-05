@@ -26,7 +26,6 @@ import AsprakDetailsModal from '@/components/asprak/AsprakDetailsModal';
 import AsprakEditModal from '@/components/asprak/AsprakEditModal';
 import PlottingImportModal from '@/components/plotting/PlottingImportModal';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -345,12 +344,10 @@ export default function AsprakClientPage({
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-        <TabsList className="mb-6">
-          <TabsTrigger value="data">Data Asprak</TabsTrigger>
-          <TabsTrigger value="rules">Aturan Kode</TabsTrigger>
-        </TabsList>
-        <TabsContent value="data">
+      <div className="w-full">
+        {activeTab === 'rules' ? (
+          <AsprakGenerationRules />
+        ) : (
           <div className="card glass p-6 flex flex-col gap-6 border border-border/50">
             <AsprakFilters
               searchQuery={searchQuery}
@@ -362,12 +359,8 @@ export default function AsprakClientPage({
 
             <AsprakTable data={filteredList} loading={loading} onViewDetails={handleView} />
           </div>
-        </TabsContent>
-
-        <TabsContent value="rules">
-          <AsprakGenerationRules />
-        </TabsContent>
-      </Tabs>
+        )}
+      </div>
 
       {/* Manual Add Modal */}
       {showAddModal && (
