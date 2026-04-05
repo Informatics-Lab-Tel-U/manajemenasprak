@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/compare/v1.0.0...v1.1.0) (2026-04-05)
+
+
+### Features
+
+* replace mata kuliah with praktikum dropdown in jadwal pengganti modal and add smart kelas sorting in jadwal pengganti modal ([be142ba](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/commit/be142ba364f163a6af5a70f5be90ff0c8b562aae))
+
 # 1.0.0 (2026-03-16)
 
 
