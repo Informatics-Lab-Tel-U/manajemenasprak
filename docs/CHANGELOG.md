@@ -1,3 +1,15 @@
+# [1.2.0](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/compare/v1.1.0...v1.2.0) (2026-04-05)
+
+
+### Bug Fixes
+
+* toaster not showed up ([b01c21b](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/commit/b01c21bcdfc19ddcf9144fb2d3e41d0be7fb227c))
+
+
+### Features
+
+* sort by column on jadwal pengganti page ([a5a15d5](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/commit/a5a15d5d1dd7a340ca68979a5dae4994cbd6b3bf))
+
 # [1.1.0](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/compare/v1.0.0...v1.1.0) (2026-04-05)
 
 
