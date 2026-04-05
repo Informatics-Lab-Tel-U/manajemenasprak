@@ -7,6 +7,7 @@ export async function fetchAllPraktikum(): Promise<ServiceResult<Praktikum[]>> {
     const res = await fetch('/api/praktikum?action=all', {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
+      cache: 'no-store',
     });
     const result = await res.json();
     return result;
@@ -20,6 +21,7 @@ export async function fetchPraktikumDetails(id: string): Promise<ServiceResult<P
     const res = await fetch(`/api/praktikum?action=details&id=${id}`, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
+      cache: 'no-store',
     });
     const result = await res.json();
     return result;
@@ -35,6 +37,7 @@ export async function fetchUniquePraktikumNames(): Promise<
     const res = await fetch('/api/praktikum?action=names', {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
+      cache: 'no-store',
     });
     const result = await res.json();
     return result;
@@ -65,6 +68,7 @@ export async function fetchMataKuliah(): Promise<ServiceResult<MataKuliah[]>> {
     const res = await fetch('/api/praktikum?action=mata-kuliah', {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
+      cache: 'no-store',
     });
     const result = await res.json();
     return result;
@@ -80,6 +84,7 @@ export async function fetchPraktikumByTerm(
     const res = await fetch(`/api/praktikum?action=by-term&term=${encodeURIComponent(term)}`, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
+      cache: 'no-store',
     });
     const result = await res.json();
     return result;

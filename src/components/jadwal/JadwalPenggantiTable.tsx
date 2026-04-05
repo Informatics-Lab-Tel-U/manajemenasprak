@@ -105,25 +105,6 @@ export default function JadwalPenggantiTable({
         ),
       },
       {
-        id: 'jadwal_asli',
-        header: 'Jadwal Asli',
-        cell: ({ row }) => {
-          const item = row.original;
-          return (
-            <div className="flex flex-col gap-0.5">
-              <span className="text-sm font-semibold text-foreground">
-                {item.jadwal?.hari}, {formatTime(item.jadwal?.jam)}
-              </span>
-              <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground uppercase font-medium">
-                <span>SESI {item.jadwal?.sesi || '-'}</span>
-                <span>•</span>
-                <span>{item.jadwal?.ruangan || 'N/A'}</span>
-              </div>
-            </div>
-          );
-        },
-      },
-      {
         accessorKey: 'hari',
         header: ({ column }) => (
           <Button

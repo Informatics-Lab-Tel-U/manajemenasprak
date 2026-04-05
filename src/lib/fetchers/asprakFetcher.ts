@@ -45,7 +45,7 @@ export async function fetchPlottingData(
     url.searchParams.append('action', 'plotting');
     if (term) url.searchParams.append('term', term);
 
-    const res = await fetch(url.toString());
+    const res = await fetch(url.toString(), { cache: 'no-store' });
     const json = await res.json();
 
     if (!res.ok) {
@@ -62,7 +62,7 @@ export async function fetchPlottingData(
 export async function fetchAllAsprak(term?: string): Promise<ServiceResult<Asprak[]>> {
   try {
     const url = term ? `/api/asprak?term=${encodeURIComponent(term)}` : '/api/asprak';
-    const res = await fetch(url);
+    const res = await fetch(url, { cache: 'no-store' });
     const json = await res.json();
 
     if (!res.ok) {
@@ -178,7 +178,7 @@ export async function fetchAsprakAssignments(
 
 export async function fetchExistingCodes(): Promise<ServiceResult<string[]>> {
   try {
-    const res = await fetch('/api/asprak?action=codes');
+    const res = await fetch('/api/asprak?action=codes', { cache: 'no-store' });
     const json = await res.json();
 
     if (!res.ok) {
@@ -194,7 +194,7 @@ export async function fetchExistingCodes(): Promise<ServiceResult<string[]>> {
 
 export async function fetchAvailableTerms(): Promise<ServiceResult<string[]>> {
   try {
-    const res = await fetch('/api/asprak?action=terms');
+    const res = await fetch('/api/asprak?action=terms', { cache: 'no-store' });
     const json = await res.json();
 
     if (!res.ok) {
