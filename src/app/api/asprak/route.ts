@@ -19,27 +19,23 @@ export async function GET(req: Request) {
     const action = params.get('action');
     const term = params.get('term') || undefined;
 
-    const cacheHeaders = {
-      'Cache-Control': 'public, max-age=60, stale-while-revalidate=300',
-    };
-
     if (action === 'plotting') {
       const data = await asprakService.getAspraksWithAssignments(term, supabase);
-      return NextResponse.json({ ok: true, data }, { headers: cacheHeaders });
+      return NextResponse.json({ ok: true, data });
     }
 
     if (action === 'codes') {
       const codes = await asprakService.getExistingCodes(supabase);
-      return NextResponse.json({ ok: true, data: codes }, { headers: cacheHeaders });
+      return NextResponse.json({ ok: true, data: codes });
     }
 
     if (action === 'terms') {
       const terms = await getAvailableTerms(supabase);
-      return NextResponse.json({ ok: true, data: terms }, { headers: cacheHeaders });
+      return NextResponse.json({ ok: true, data: terms });
     }
 
     const data = await asprakService.getAllAsprak(term, supabase);
-    return NextResponse.json({ ok: true, data }, { headers: cacheHeaders });
+    return NextResponse.json({ ok: true, data });
   } catch (e: any) {
     logger.error('GET /api/asprak error:', e);
     return NextResponse.json({ ok: false, error: e.message }, { status: 500 });

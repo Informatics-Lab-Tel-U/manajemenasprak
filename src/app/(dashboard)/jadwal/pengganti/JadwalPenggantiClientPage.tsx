@@ -10,6 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import JadwalPenggantiTable from '@/components/jadwal/JadwalPenggantiTable';
 import {
   Select,
   SelectContent,
@@ -20,6 +21,16 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Plus, Trash2, Edit, FilterX } from 'lucide-react';
 import { toast } from 'sonner';
 import * as jadwalFetcher from '@/lib/fetchers/jadwalFetcher';
@@ -44,6 +55,7 @@ export default function JadwalPenggantiClientPage({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalInitialData, setModalInitialData] = useState<any | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const formatTime = (time: string | undefined | null) => {
     if (!time) return '-';
@@ -85,29 +97,34 @@ export default function JadwalPenggantiClientPage({
     setIsModalOpen(true);
   };
 
-  const handleDelete = async (itemId: string) => {
-    if (!confirm('Apakah Anda yakin ingin menghapus jadwal pengganti ini?')) return;
+  const handleDelete = (itemId: string) => {
+    setDeleteId(itemId);
+  };
 
-    const result = await jadwalFetcher.deleteJadwalPengganti(itemId);
+  const confirmDelete = async () => {
+    if (!deleteId) return;
+
+    const result = await jadwalFetcher.deleteJadwalPengganti(deleteId);
     if (result.ok) {
       toast.success('Jadwal pengganti berhasil dihapus');
       fetchPengganti();
     } else {
       toast.error('Gagal menghapus: ' + result.error);
     }
+    setDeleteId(null);
   };
 
   const handleSubmit = async (input: any) => {
     setIsSubmitting(true);
     const result = await jadwalFetcher.upsertJadwalPengganti(input);
-    setIsSubmitting(false);
-
     if (result.ok) {
       toast.success('Jadwal pengganti berhasil disimpan');
-      fetchPengganti();
+      await fetchPengganti();
+      setIsSubmitting(false);
       return true;
     } else {
       toast.error('Gagal menyimpan: ' + result.error);
+      setIsSubmitting(false);
       return false;
     }
   };
@@ -143,114 +160,12 @@ export default function JadwalPenggantiClientPage({
         </div>
       </div>
 
-      <div className="rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm overflow-hidden shadow-sm">
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader className="bg-muted/30">
-              <TableRow>
-                <TableHead className="w-[200px]">Mata Kuliah</TableHead>
-                <TableHead>Kelas</TableHead>
-                <TableHead>Modul</TableHead>
-                <TableHead className="min-w-[180px]">Jadwal Asli</TableHead>
-                <TableHead className="min-w-[200px]">Jadwal Pengganti</TableHead>
-                <TableHead className="text-center">Aksi</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
-                Array.from({ length: 5 }).map((_, i) => (
-                  <TableRow key={i}>
-                    {Array.from({ length: 6 }).map((_, j) => (
-                      <TableCell key={j}>
-                        <Skeleton className="h-6 w-full" />
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))
-              ) : penggantiList.length > 0 ? (
-                penggantiList.map((item) => (
-                  <TableRow key={item.id} className="hover:bg-muted/20 transition-colors group">
-                    <TableCell className="font-medium">
-                      <div className="flex flex-col">
-                        <span>{item.jadwal?.mata_kuliah?.nama_lengkap}</span>
-                        <span className="text-[10px] text-muted-foreground uppercase tracking-wider">
-                          {item.jadwal?.mata_kuliah?.praktikum?.nama}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="bg-background">
-                        {item.jadwal?.kelas}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className="bg-primary/10 text-primary hover:bg-primary/20 border-none">
-                        Modul {item.modul}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-col gap-0.5">
-                        <span className="text-sm font-semibold text-foreground">
-                          {formatTime(item.jadwal?.jam)}
-                        </span>
-                        <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground uppercase font-medium">
-                          <span>SESI {item.jadwal?.sesi || '-'}</span>
-                          <span>•</span>
-                          <span>{item.jadwal?.ruangan || 'N/A'}</span>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-col gap-0.5">
-                        <span className="text-sm font-semibold text-primary">
-                          {formatTime(item.jam)}
-                        </span>
-                        <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground uppercase font-medium">
-                          <span>SESI {item.sesi}</span>
-                          <span className="text-primary/50">•</span>
-                          <span className="text-primary/80">{item.ruangan}</span>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <div className="flex justify-center gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleEdit(item)}
-                          className="h-8 w-8 text-primary hover:text-primary/80 hover:bg-primary/10"
-                        >
-                          <Edit size={16} />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDelete(item.id)}
-                          className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
-                        >
-                          <Trash2 size={16} />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={6} className="h-48 text-center">
-                    <div className="flex flex-col items-center justify-center text-muted-foreground gap-2">
-                      <FilterX size={40} className="opacity-20" />
-                      <p>Tidak ada jadwal pengganti ditemukan untuk term ini.</p>
-                      <Button variant="link" onClick={handleAdd}>
-                        Tambah Jadwal Pengganti Pertama
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      </div>
+      <JadwalPenggantiTable
+        data={penggantiList}
+        loading={loading}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+      />
 
       <JadwalPenggantiModal
         isOpen={isModalOpen}
@@ -262,6 +177,27 @@ export default function JadwalPenggantiClientPage({
         isLoading={isSubmitting}
         currentTerm={selectedTerm}
       />
+
+      <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Hapus Jadwal Pengganti?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tindakan ini tidak dapat dibatalkan. Jadwal pengganti ini akan dihapus secara
+              permanen dari sistem.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Batal</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              variant="destructive"
+            >
+              Hapus
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

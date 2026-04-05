@@ -14,10 +14,10 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Loader2, Info } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
+import { Info } from 'lucide-react';
 import { toast } from 'sonner';
 import { ScrollArea } from '@/components/ui/scroll-area';
-
 import { fetchModulSchedule } from '@/lib/fetchers/modulScheduleFetcher';
 
 interface JadwalPenggantiModalProps {
@@ -544,7 +544,7 @@ export function JadwalPenggantiModal({
                 Batal
               </Button>
               <Button type="submit" disabled={isLoading}>
-                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {isLoading && <Spinner className="mr-2 h-4 w-4" />}
                 {initialData ? 'Simpan Perubahan' : 'Tambah Jadwal Pengganti'}
               </Button>
             </div>

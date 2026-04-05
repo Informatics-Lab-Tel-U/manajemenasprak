@@ -74,7 +74,9 @@ export async function createJadwal(input: CreateJadwalInput): Promise<ServiceRes
 
 export async function fetchScheduleForValidation(term: string): Promise<ServiceResult<any[]>> {
   try {
-    const res = await fetch(`/api/jadwal?action=validation&term=${encodeURIComponent(term)}`);
+    const res = await fetch(`/api/jadwal?action=validation&term=${encodeURIComponent(term)}`, {
+      cache: 'no-store',
+    });
     const result = await res.json();
     return result;
   } catch (error: any) {
