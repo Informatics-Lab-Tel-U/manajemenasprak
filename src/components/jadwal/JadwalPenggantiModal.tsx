@@ -44,6 +44,8 @@ export function JadwalPenggantiModal({
   disableModul = false,
 }: JadwalPenggantiModalProps) {
   const [selectedTerm, setSelectedTerm] = useState('');
+  const [selectedPraktikum, setSelectedPraktikum] = useState('');
+  // selectedMKId is kept in state but resolved automatically from the selected jadwal — not exposed in UI
   const [selectedMKId, setSelectedMKId] = useState('');
   const [selectedJadwalId, setSelectedJadwalId] = useState('');
   const [modul, setModul] = useState<number>(1);
@@ -53,18 +55,11 @@ export function JadwalPenggantiModal({
   const [jam, setJam] = useState('06:30');
   const [ruangan, setRuangan] = useState('');
 
-  // PJJ Support
+  // Detect PJJ from the selected jadwal's kelas suffix
   const isPJJ = useMemo(() => {
-    const mk = mataKuliahList.find((m) => m.id === selectedMKId);
     const j = allJadwal.find((jad) => jad.id === selectedJadwalId);
-
-    const mkMatch =
-      mk?.nama_lengkap.toLowerCase().includes('pjj') ||
-      mk?.program_studi.toLowerCase().includes('pjj');
-    const classMatch = j?.kelas.toLowerCase().includes('pjj');
-
-    return !!(mkMatch || classMatch);
-  }, [selectedMKId, selectedJadwalId, mataKuliahList, allJadwal]);
+    return !!(j?.kelas?.toLowerCase().includes('pjj'));
+  }, [selectedJadwalId, allJadwal]);
 
   const pjjTimes = useMemo(() => {
     const times = [];
@@ -87,14 +82,103 @@ export function JadwalPenggantiModal({
 
   const [modulSchedules, setModulSchedules] = useState<any[]>([]);
 
+  // --- Derived lists ---
+
+  // Unique terms from mataKuliahList
+  const availableTerms = useMemo(() => {
+    return Array.from(
+      new Set(mataKuliahList.map((mk) => mk.praktikum?.tahun_ajaran).filter(Boolean))
+    ) as string[];
+  }, [mataKuliahList]);
+
+  // Unique praktikum names for the selected term (from mataKuliahList)
+  const availablePraktikum = useMemo(() => {
+    if (!selectedTerm) return [];
+    return Array.from(
+      new Set(
+        mataKuliahList
+          .filter((mk) => mk.praktikum?.tahun_ajaran === selectedTerm)
+          .map((mk) => mk.praktikum?.nama)
+          .filter(Boolean)
+      )
+    ) as string[];
+  }, [selectedTerm, mataKuliahList]);
+
+  // jadwal list filtered by term + praktikum (global kelas list), sorted:
+  // IF 01..N → IF INT → IF PJJ → IT → DS → SE
+  const filteredJadwalList = useMemo(() => {
+    if (!selectedTerm || !selectedPraktikum) return [];
+
+    const filtered = allJadwal.filter(
+      (j) =>
+        j.mata_kuliah?.praktikum?.tahun_ajaran === selectedTerm &&
+        j.mata_kuliah?.praktikum?.nama === selectedPraktikum
+    );
+
+    const PREFIX_ORDER = ['IF', 'IT', 'DS', 'SE'];
+
+    const sortKelas = (a: string, b: string): number => {
+      const upper = (s: string) => s.toUpperCase();
+      const prefix = (s: string) => s.split('-')[0].toUpperCase();
+
+      const prefixRank = (s: string) => {
+        const idx = PREFIX_ORDER.indexOf(prefix(s));
+        return idx === -1 ? 99 : idx;
+      };
+
+      const isPJJ = (s: string) => upper(s).includes('PJJ');
+      const isINT = (s: string) => upper(s).includes('INT');
+
+      // 1. Primary sort: prefix group
+      const pr = prefixRank(a) - prefixRank(b);
+      if (pr !== 0) return pr;
+
+      // 2. PJJ after non-PJJ within same prefix
+      const pjjA = isPJJ(a);
+      const pjjB = isPJJ(b);
+      if (pjjA !== pjjB) return pjjA ? 1 : -1;
+
+      // 3. INT after regular numbers (within same PJJ status)
+      const intA = isINT(a);
+      const intB = isINT(b);
+      if (intA !== intB) return intA ? 1 : -1;
+
+      // 4. Numeric sort on the last segment
+      const numericSuffix = (s: string) => {
+        const cleaned = s.toUpperCase().replace('PJJ', '').replace(/[-\s]+$/, '');
+        const parts = cleaned.split('-');
+        const last = parts[parts.length - 1].replace(/\D/g, '');
+        const n = parseInt(last, 10);
+        return isNaN(n) ? 9999 : n;
+      };
+      return numericSuffix(a) - numericSuffix(b);
+    };
+
+    return [...filtered].sort((a, b) => sortKelas(a.kelas, b.kelas));
+  }, [selectedTerm, selectedPraktikum, allJadwal]);
+
+  // The currently selected jadwal object
+  const selectedJadwal = useMemo(() => {
+    return allJadwal.find((j) => j.id === selectedJadwalId);
+  }, [selectedJadwalId, allJadwal]);
+
+  // Auto-resolve MK from selected jadwal
+  useEffect(() => {
+    if (selectedJadwal) {
+      setSelectedMKId(selectedJadwal.id_mk ?? '');
+    }
+  }, [selectedJadwal]);
+
   // Pre-load data if editing or set defaults if adding
   useEffect(() => {
     if (isOpen) {
       if (initialData) {
-        const j = initialData.jadwal;
-        const mk = j?.mata_kuliah;
+        const j = initialData.jadwal as Jadwal | undefined;
+        const term = j?.mata_kuliah?.praktikum?.tahun_ajaran || '';
+        const praktikumNama = j?.mata_kuliah?.praktikum?.nama || '';
 
-        setSelectedTerm(mk?.praktikum?.tahun_ajaran || '');
+        setSelectedTerm(term);
+        setSelectedPraktikum(praktikumNama);
         setSelectedMKId(j?.id_mk || '');
         setSelectedJadwalId(initialData.id_jadwal || '');
         setModul(initialData.modul);
@@ -105,6 +189,9 @@ export function JadwalPenggantiModal({
         setRuangan(initialData.ruangan);
       } else {
         setSelectedTerm(currentTerm || '');
+        setSelectedPraktikum('');
+        setSelectedMKId('');
+        setSelectedJadwalId('');
         setModul(1);
         setTanggal('');
         setHari('SENIN');
@@ -161,26 +248,6 @@ export function JadwalPenggantiModal({
       }
     }
   }, [isOpen, modul, hari, modulSchedules]);
-
-  const availableTerms = useMemo(() => {
-    return Array.from(
-      new Set(mataKuliahList.map((mk) => mk.praktikum?.tahun_ajaran).filter(Boolean))
-    ) as string[];
-  }, [mataKuliahList]);
-
-  const filteredMKList = useMemo(() => {
-    if (!selectedTerm) return [];
-    return mataKuliahList.filter((mk) => mk.praktikum?.tahun_ajaran === selectedTerm);
-  }, [selectedTerm, mataKuliahList]);
-
-  const filteredJadwalList = useMemo(() => {
-    if (!selectedMKId) return [];
-    return allJadwal.filter((j) => j.id_mk === selectedMKId);
-  }, [selectedMKId, allJadwal]);
-
-  const selectedJadwal = useMemo(() => {
-    return allJadwal.find((j) => j.id === selectedJadwalId);
-  }, [selectedJadwalId, allJadwal]);
 
   const handleSesiChange = (val: string) => {
     const sInt = parseInt(val);
@@ -251,12 +318,14 @@ export function JadwalPenggantiModal({
         <ScrollArea className="flex max-h-full flex-col overflow-hidden">
           <form onSubmit={handleFormSubmit} className="space-y-4 px-6 py-4">
             <div className="grid grid-cols-1 gap-4">
+              {/* Tahun Ajaran */}
               <div className="space-y-2">
                 <Label>Tahun Ajaran</Label>
                 <Select
                   value={selectedTerm}
                   onValueChange={(v) => {
                     setSelectedTerm(v);
+                    setSelectedPraktikum('');
                     setSelectedMKId('');
                     setSelectedJadwalId('');
                   }}
@@ -275,21 +344,41 @@ export function JadwalPenggantiModal({
                 </Select>
               </div>
 
+              {/* Praktikum (menggantikan Mata Kuliah di UI) */}
               <div className="space-y-2">
-                <Label>Mata Kuliah</Label>
+                <Label>Praktikum</Label>
                 <Select
-                  value={selectedMKId}
+                  value={selectedPraktikum}
                   onValueChange={(v) => {
-                    setSelectedMKId(v);
+                    setSelectedPraktikum(v);
+                    setSelectedMKId('');
                     setSelectedJadwalId('');
                   }}
                   disabled={!selectedTerm || !!initialData}
                 >
                   <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Pilih Mata Kuliah" />
+                    <SelectValue placeholder="Pilih Praktikum" />
                   </SelectTrigger>
                   <SelectContent>
-                    {filteredMKList.map((mk) => (
+                    {availablePraktikum.map((prak) => (
+                      <SelectItem key={prak} value={prak}>
+                        {prak}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Mata Kuliah — hidden dari UI, tetap ada di kode untuk referensi */}
+              {/* 
+              <div className="space-y-2 hidden">
+                <Label>Mata Kuliah</Label>
+                <Select value={selectedMKId} disabled>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Ditentukan otomatis dari kelas" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {mataKuliahList.filter(mk => mk.praktikum?.tahun_ajaran === selectedTerm).map((mk) => (
                       <SelectItem key={mk.id} value={mk.id}>
                         {mk.nama_lengkap} - {mk.program_studi}
                       </SelectItem>
@@ -297,13 +386,15 @@ export function JadwalPenggantiModal({
                   </SelectContent>
                 </Select>
               </div>
+              */}
 
+              {/* Kelas — global dropdown berdasarkan term + praktikum */}
               <div className="space-y-2">
                 <Label>Kelas</Label>
                 <Select
                   value={selectedJadwalId}
                   onValueChange={setSelectedJadwalId}
-                  disabled={!selectedMKId || !!initialData}
+                  disabled={!selectedPraktikum || !!initialData}
                 >
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Pilih Kelas" />
@@ -332,6 +423,11 @@ export function JadwalPenggantiModal({
                     <p className="text-xs opacity-80">
                       {selectedJadwal.ruangan || 'Tanpa Ruangan'}
                     </p>
+                    {selectedJadwal.mata_kuliah && (
+                      <p className="text-xs opacity-70 mt-0.5">
+                        {selectedJadwal.mata_kuliah.nama_lengkap} ({selectedJadwal.mata_kuliah.program_studi})
+                      </p>
+                    )}
                   </div>
                 </div>
               )}
@@ -369,7 +465,7 @@ export function JadwalPenggantiModal({
                     className="w-full bg-muted cursor-not-allowed"
                   />
                   <p className="text-[10px] text-muted-foreground italic">
-                    Ditentukan otomatis berdasarkan Modul & Hari
+                    Ditentukan otomatis berdasarkan Modul &amp; Hari
                   </p>
                 </div>
               </div>

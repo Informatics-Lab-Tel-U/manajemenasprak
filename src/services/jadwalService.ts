@@ -343,7 +343,11 @@ export async function getAllJadwal(supabaseClient?: SupabaseClient): Promise<Jad
       mata_kuliah:mata_kuliah (
         nama_lengkap,
         program_studi,
-        warna
+        warna,
+        praktikum:praktikum (
+          nama,
+          tahun_ajaran
+        )
       )
       `
     )
