@@ -346,7 +346,7 @@ export default function AsprakClientPage({
 
       <div className="w-full">
         {activeTab === 'rules' ? (
-          <AsprakGenerationRules />
+          <AsprakGenerationRules existingCodes={existingCodes} />
         ) : (
           <div className="card glass p-6 flex flex-col gap-6 border border-border/50">
             <AsprakFilters
