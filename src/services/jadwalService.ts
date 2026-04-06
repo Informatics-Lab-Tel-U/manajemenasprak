@@ -85,17 +85,20 @@ export async function getTodaySchedule(
   supabaseClient?: SupabaseClient
 ): Promise<Jadwal[]> {
   const supabase = supabaseClient || globalAdmin;
-  const now = new Date();
+  
+  // Force calculations to use WIB (UTC+7) timezone regardless of server locale (e.g. Vercel UTC)
+  const nowUtc = new Date();
+  const nowWib = new Date(nowUtc.getTime() + 7 * 60 * 60 * 1000);
 
-  // 1. Get current day name (SENIN, etc.)
-  const dayIndex = now.getDay();
+  // 1. Get current day name (SENIN, etc.) in WIB
+  const dayIndex = nowWib.getUTCDay();
   const weekdays = ['SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU'];
   const todayName = dayIndex === 0 ? 'MINGGU' : weekdays[dayIndex - 1];
 
-  // 2. Get today's local date string (YYYY-MM-DD)
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
+  // 2. Get today's local date string (YYYY-MM-DD) in WIB
+  const year = nowWib.getUTCFullYear();
+  const month = String(nowWib.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(nowWib.getUTCDate()).padStart(2, '0');
   const todayDateStr = `${year}-${month}-${day}`;
 
   // 3. Fetch regular schedules for today
