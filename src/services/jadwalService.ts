@@ -169,7 +169,7 @@ export async function getTodaySchedule(
         ruangan: p.ruangan,
         tanggal: p.tanggal,
         modul: p.modul,
-        __is_pengganti: true,
+        is_pengganti: true,
       });
     });
   }
