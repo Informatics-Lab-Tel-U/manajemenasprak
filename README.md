@@ -58,7 +58,9 @@ This documentation provides comprehensive technical information about the **Sist
 
 </div>
 
-**Sistem Manajemen Asprak** adalah aplikasi web internal yang dirancang untuk meningkatkan efisiensi administratif pengelolaan asisten praktikum di Laboratorium Informatika. Sistem ini menyediakan fitur terintegrasi untuk:
+**Sistem Manajemen Asprak** adalah platform operasional berbasis web untuk pengelolaan siklus kerja asisten praktikum di Laboratorium Informatika. Platform ini dirancang untuk menggantikan proses manual berbasis file dan menyatukan data, alur kerja, serta kontrol akses dalam satu sistem terpusat.
+
+Sistem ini menyediakan fitur terintegrasi untuk:
 
 - **Manajemen Asprak**: Database asprak lengkap dengan tracking angkatan dan inisial kode
 - **Penjadwalan & Plotting**: Penugasan asprak ke sesi praktikum secara dinamis
@@ -69,6 +71,22 @@ This documentation provides comprehensive technical information about the **Sist
 ### Purpose
 
 Mendigitalisasi dan mengotomatisasi proses manajemen asprak yang sebelumnya bersifat manual, meningkatkan transparansi, dan memastikan integritas data.
+
+### Latar Belakang: Dari Excel ke Platform Terintegrasi
+
+Sebelumnya, proses operasional aslab banyak mengandalkan file Excel terpisah untuk pendataan asprak, plotting, jadwal, dan pelanggaran. Pola ini menimbulkan beberapa kendala utama:
+
+- **Data tersebar dan rawan tidak sinkron** antar file/versi
+- **Proses rekap dan validasi lambat** karena banyak langkah manual
+- **Risiko human error tinggi** saat input, salin data, atau finalisasi
+- **Jejak perubahan terbatas** sehingga sulit audit dan penelusuran
+
+Melalui platform ini, kendala tersebut disolusikan dengan:
+
+- **Single source of truth**: seluruh data inti dikelola terpusat di database
+- **Alur kerja terstruktur**: manajemen asprak, plotting, jadwal, dan pelanggaran berjalan dalam sistem yang sama
+- **Kontrol kualitas data**: validasi, pembatasan akses berbasis role, dan finalisasi data yang terjaga
+- **Akuntabilitas operasional**: audit log otomatis untuk setiap perubahan penting
 
 ### Target Audience
 
