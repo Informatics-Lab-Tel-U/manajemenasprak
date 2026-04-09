@@ -16,17 +16,23 @@ import { ROOMS } from '@/constants';
 import { ScheduleCell } from '@/components/jadwal/ScheduleCell';
 import React, { useMemo } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useJaga } from '@/hooks/useJaga';
+import { getJagaShiftsByDay } from '@/utils/jagaUtils';
 
 export default function DashboardCharts({
   asprakByAngkatan,
   jadwalByDay,
   todaySchedule,
   loading,
+  term,
+  userRole,
 }: {
   asprakByAngkatan: { name: string; count: number }[];
   jadwalByDay: { name: string; count: number }[];
   todaySchedule: Jadwal[];
   loading: boolean;
+  term: string;
+  userRole?: string;
 }) {
   const dataAsprak = [...asprakByAngkatan].sort((a, b) => parseInt(a.name) - parseInt(b.name));
 
@@ -88,10 +94,13 @@ export default function DashboardCharts({
   const scheduleMatrix = fullMatrix[currentDayName] || {};
   const visibleSessions = dynamicSessionsByDay[currentDayName] || [];
 
+  const { jagaList } = useJaga(term, 0, currentDayName);
+  const shiftInfos = getJagaShiftsByDay(currentDayName);
+
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div className="grid grid-cols-1 gap-6">
       {/* Schedule Visualization */}
-      <Card className="col-span-full border-border/50 shadow-sm bg-card">
+      <Card className="col-span-full border-border/50 shadow-sm bg-card flex flex-col">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle>
@@ -124,7 +133,7 @@ export default function DashboardCharts({
             </button>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-6">
           {loading ? (
             <div className="space-y-4">
               <div className="overflow-x-auto rounded-lg border border-border bg-card/50">
@@ -171,7 +180,11 @@ export default function DashboardCharts({
                 <table className="w-full border-collapse text-sm">
                   <thead>
                     <tr className="bg-muted/50 border-b border-border">
-                      <th className="p-2 border-r border-border text-center font-bold min-w-[60px] text-xs uppercase text-muted-foreground">
+                      <th className="p-2 border-r-0 text-center font-bold min-w-[120px] text-xs uppercase text-muted-foreground bg-transparent">
+                        Penjagaan
+                      </th>
+                      <th className="w-4 bg-transparent border-none"></th>
+                      <th className="p-2 border-r border-l border-border text-center font-bold min-w-[60px] text-xs uppercase text-muted-foreground">
                         Sesi
                       </th>
                       {uniqueRooms.map((room) => (
@@ -185,12 +198,38 @@ export default function DashboardCharts({
                     </tr>
                   </thead>
                   <tbody>
-                    {visibleSessions.map((session) => (
+                    {visibleSessions.map((session) => {
+                      const matchedShift = shiftInfos.find(s => s.shift === session.sesi) || shiftInfos[(session.sesi || 1) - 1];
+                      const shiftJaga = jagaList.filter(j => j.shift?.toString() === matchedShift?.shift?.toString());
+
+                      return (
                       <tr
                         key={session.rowKey}
                         className="hover:bg-muted/30 transition-colors border-b border-border/50"
                       >
-                        <td className="p-2 border-r border-border text-center font-medium text-muted-foreground text-xs">
+                        <td className="p-2 border-r-0 text-center align-top relative bg-muted/5">
+                           <div className="flex flex-wrap gap-1 justify-center max-w-[120px] mx-auto min-h-[40px] items-center">
+                           {shiftJaga.length > 0 ? (
+                              shiftJaga.map(j => (
+                                <div 
+                                  key={j.id} 
+                                  className={`text-[10px] px-1.5 py-0.5 rounded-sm font-medium ${
+                                    j.asprak?.role === 'ASLAB' 
+                                      ? 'bg-blue-100 text-blue-800 border border-blue-200 dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-800/50' 
+                                      : 'bg-slate-100 text-slate-800 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700'
+                                  }`}
+                                  title={`${j.asprak?.nama_lengkap} (${j.asprak?.nim})`}
+                                >
+                                  {j.asprak?.kode || 'Unknown'}
+                                </div>
+                              ))
+                           ) : (
+                              <span className="text-[10px] text-muted-foreground italic">-</span>
+                           )}
+                           </div>
+                        </td>
+                        <td className="w-4 bg-transparent border-none"></td>
+                        <td className="p-2 border-r border-l border-border text-center font-medium text-muted-foreground text-xs">
                           {session.sesi ? (
                             <div className="font-bold">Sesi {session.sesi}</div>
                           ) : null}
@@ -216,7 +255,8 @@ export default function DashboardCharts({
                           );
                         })}
                       </tr>
-                    ))}
+                    );
+                  })}
                   </tbody>
                 </table>
               </div>
@@ -241,6 +281,7 @@ export default function DashboardCharts({
           )}
         </CardContent>
       </Card>
+
       {/* Chart 1: Asprak per Angkatan */}
       <Card className="border-border/50 shadow-sm bg-card">
         <CardHeader>
