@@ -115,3 +115,16 @@ export type AuditLog = {
 export type AuditLogWithUser = AuditLog & {
   pengguna?: Pick<Pengguna, 'nama_lengkap' | 'role'>;
 };
+
+export type JadwalJaga = {
+  id: string;
+  id_asprak: string;
+  tahun_ajaran: string;
+  modul: number;
+  hari: string;
+  shift: number;
+  created_at: string;
+  updated_at: string;
+  asprak?: Pick<Asprak, 'nama_lengkap' | 'nim' | 'kode' | 'role'>;
+};
+

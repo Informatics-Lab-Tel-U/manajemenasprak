@@ -14,6 +14,7 @@ import {
   Settings,
   Notebook,
   Logs,
+  Shield,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -84,6 +85,15 @@ const ALL_NAV_ITEMS: NavItem[] = [
     items: [
       { label: 'Kelola Pelanggaran', href: '/pelanggaran' },
       { label: 'Lihat Pelanggaran', href: '/pelanggaran-rekap' },
+    ],
+  },
+  {
+    label: 'Jadwal Jaga',
+    href: '#',
+    icon: Shield,
+    items: [
+      { label: 'Input Jaga', href: '/jadwal-jaga' },
+      { label: 'Rekap Jaga', href: '/jadwal-jaga/rekap' },
     ],
   },
   { label: 'Manajemen Akun', href: '/manajemen-akun', icon: Notebook },
