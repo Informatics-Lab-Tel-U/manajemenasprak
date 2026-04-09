@@ -413,11 +413,17 @@ export default function JadwalClientPage({
         {/* Legend */}
         <div className="mt-4 flex items-center gap-4 text-xs text-muted-foreground border-t border-border/50 pt-3 px-2">
           <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-sm ring-2 ring-inset ring-yellow-400 bg-muted"></div>
+            <div 
+              className="w-4 h-4 bg-muted rounded-[2px]"
+              style={{
+                background: `linear-gradient(var(--muted), var(--muted)) padding-box, repeating-linear-gradient(45deg, #facc15, #facc15 5px, #ffffff 5px, #ffffff 10px) border-box`,
+                border: '3px solid transparent',
+              }}
+            ></div>
             <span>Jadwal Pengganti</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-sm bg-muted border border-border"></div>
+            <div className="w-3.5 h-3.5 rounded-sm bg-muted border border-border"></div>
             <span>Jadwal Reguler</span>
           </div>
         </div>

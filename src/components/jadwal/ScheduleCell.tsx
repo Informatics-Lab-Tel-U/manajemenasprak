@@ -18,6 +18,7 @@ export const ScheduleCell: React.FC<ScheduleCellProps> = ({
   showAsprakCount = false,
 }) => {
   const isPengganti = jadwal.is_pengganti;
+  const bgColor = jadwal.mata_kuliah?.warna || getCourseColor(jadwal.mata_kuliah?.nama_lengkap || '');
 
   return (
     <div
@@ -26,11 +27,17 @@ export const ScheduleCell: React.FC<ScheduleCellProps> = ({
         onClick
           ? 'cursor-pointer hover:brightness-110 hover:scale-105 hover:z-20 hover:shadow-lg'
           : ''
-      } ${isPengganti ? 'ring-4 ring-inset ring-yellow-400 z-10' : ''}`}
-      style={{
-        backgroundColor:
-          jadwal.mata_kuliah?.warna || getCourseColor(jadwal.mata_kuliah?.nama_lengkap || ''),
-      }}
+      } ${isPengganti ? 'z-10' : ''}`}
+      style={
+        isPengganti
+          ? {
+              background: `linear-gradient(${bgColor}, ${bgColor}) padding-box, repeating-linear-gradient(45deg, #facc15, #facc15 10px, #ffffff 10px, #ffffff 20px) border-box`,
+              border: '4px solid transparent',
+            }
+          : {
+              backgroundColor: bgColor,
+            }
+      }
       title={
         onClick ? 'Click for details' : `${jadwal.mata_kuliah?.nama_lengkap} - ${jadwal.kelas}`
       }
