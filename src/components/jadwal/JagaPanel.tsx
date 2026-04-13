@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle, Edit2, Plus, Shield, X } from 'lucide-react';
 import { useJaga } from '@/hooks/useJaga';
@@ -27,9 +26,19 @@ interface JagaPanelProps {
   filterDay?: string; // Optional: "SENIN", etc.
   hideInputButton?: boolean;
   userRole?: string;
+  onRefreshTrigger?: number;
+  onEdit?: (data: any) => void;
 }
 
-export default function JagaPanel({ term, selectedModul, filterDay, hideInputButton, userRole }: JagaPanelProps) {
+export default function JagaPanel({ 
+  term, 
+  selectedModul, 
+  filterDay, 
+  hideInputButton, 
+  userRole,
+  onRefreshTrigger,
+  onEdit
+}: JagaPanelProps) {
   const isDefault = selectedModul === 'Default';
   const modulNum = isDefault ? 0 : parseInt(selectedModul.replace('Modul ', ''));
 
@@ -37,24 +46,13 @@ export default function JagaPanel({ term, selectedModul, filterDay, hideInputBut
   const activeDay = (filterDay || localDay).toUpperCase();
 
   const { jagaList, loading, refresh } = useJaga(isDefault ? '' : term, isDefault ? undefined : modulNum, activeDay);
-  
-  const [konfigurasiModul, setKonfigurasiModul] = useState<any[]>([]);
 
+  // Sync refresh with parent trigger
   useEffect(() => {
-    if (term) {
-      fetch(`/api/modul-schedule?term=${term}`)
-        .then(res => res.json())
-        .then(data => {
-          if (data.ok && data.data) {
-            setKonfigurasiModul(data.data);
-          }
-        })
-        .catch(console.error);
+    if (onRefreshTrigger !== undefined && onRefreshTrigger > 0) {
+      refresh();
     }
-  }, [term]);
-
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingEntry, setEditingEntry] = useState<any>(null);
+  }, [onRefreshTrigger, refresh]);
 
   // Delete Confirmation State
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -134,9 +132,9 @@ export default function JagaPanel({ term, selectedModul, filterDay, hideInputBut
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                    <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                   <span className="font-bold text-sm tracking-tight text-foreground/90">Shift {shiftInfo.shift}</span>
+                   <span className="font-bold text-base tracking-tight text-foreground/90">Shift {shiftInfo.shift}</span>
                 </div>
-                <span className="text-[10px] font-bold text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-full border border-border/30">{shiftInfo.jam}</span>
+                <span className="text-xs font-bold text-muted-foreground bg-muted/50 px-2.5 py-1 rounded-full border border-border/30">{shiftInfo.jam}</span>
               </div>
               
               <div className="flex flex-wrap gap-2">
@@ -144,7 +142,7 @@ export default function JagaPanel({ term, selectedModul, filterDay, hideInputBut
                   shiftJaga.map(j => (
                     <div 
                       key={j.id} 
-                      className={`group relative flex items-center gap-1.5 text-[11px] px-2.5 py-1.5 rounded-md font-semibold transition-all shadow-sm border
+                      className={`group relative flex items-center gap-1.5 text-xs px-3 py-2 rounded-md font-semibold transition-all shadow-sm border
                         ${
                           j.asprak?.role === 'ASLAB' 
                             ? 'bg-blue-50/50 text-blue-700 border-blue-200/60 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800/40' 
@@ -158,13 +156,14 @@ export default function JagaPanel({ term, selectedModul, filterDay, hideInputBut
                       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-1 border-l pl-1 border-current/20">
                          <button 
                            onClick={() => {
-                             setEditingEntry({
-                               id: j.id,
-                               id_asprak: j.id_asprak,
-                               hari: j.hari,
-                               shift: j.shift
-                             });
-                             setIsModalOpen(true);
+                             if (onEdit) {
+                               onEdit({
+                                 id: j.id,
+                                 id_asprak: j.id_asprak,
+                                 hari: j.hari,
+                                 shift: j.shift
+                               });
+                             }
                            }}
                            className="hover:text-primary transition-colors p-0.5"
                            title="Edit"
@@ -205,47 +204,25 @@ export default function JagaPanel({ term, selectedModul, filterDay, hideInputBut
 
   return (
     <>
-      <Card className="h-full border-border/50 shadow-sm flex flex-col">
-        <CardHeader className="pb-3 border-b border-border/50 flex flex-row items-start justify-between space-y-0">
-          <div>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Shield className="w-5 h-5 text-primary" />
-              Penjagaan
-            </CardTitle>
-            <CardDescription className="mt-1">
-              {isDefault ? 'Pilih Modul' : `Jadwal Jaga - ${selectedModul}`}
-            </CardDescription>
-          </div>
-          {!hideInputButton && (
-            <Button 
-              size="sm" 
-              variant="outline" 
-              className="h-8 gap-1.5"
-              disabled={isDefault}
-              onClick={() => setIsModalOpen(true)}
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Input Jaga</span>
-            </Button>
-          )}
-        </CardHeader>
-        <CardContent className="flex-1 overflow-y-auto p-4">
-          <div className="mb-4">
-             <div className="text-xs text-muted-foreground mb-2 flex items-center justify-between">
+      <div className="flex flex-col h-full">
+        {/* Konten — langsung tanpa header button */}
+        <div className="flex-1 overflow-y-auto no-scrollbar">
+          <div className="mb-4 pt-1">
+             <div className="text-sm text-muted-foreground mb-2 flex items-center justify-between">
                 <span>Menampilkan shift untuk hari:</span>
                 <span className="font-semibold text-foreground">{activeDay.toUpperCase()}</span>
              </div>
              {!filterDay && (
-               <div className="flex gap-1 overflow-x-auto pb-2">
+               <div className="flex gap-1.5 overflow-x-auto pb-2">
                  {['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'].map(d => (
                    <button
                      key={d}
                      onClick={() => setLocalDay(d)}
-                     className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ${
-                       activeDay.toUpperCase() === d.toUpperCase()
-                         ? 'bg-primary text-primary-foreground'
-                         : 'bg-muted hover:bg-muted/80'
-                     }`}
+                     className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors border
+                       ${activeDay.toUpperCase() === d.toUpperCase()
+                         ? 'bg-primary text-primary-foreground border-primary'
+                         : 'bg-muted/50 hover:bg-muted border-transparent'
+                       }`}
                    >
                      {d}
                    </button>
@@ -254,23 +231,8 @@ export default function JagaPanel({ term, selectedModul, filterDay, hideInputBut
              )}
           </div>
           {renderContent()}
-        </CardContent>
-      </Card>
-
-      <JagaInputModal 
-        isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false);
-          setEditingEntry(null);
-        }}
-        term={term}
-        selectedModul={modulNum}
-        konfigurasiModul={konfigurasiModul}
-        defaultDay={activeDay}
-        userRole={userRole}
-        onSuccess={refresh}
-        editData={editingEntry}
-      />
+        </div>
+      </div>
 
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>

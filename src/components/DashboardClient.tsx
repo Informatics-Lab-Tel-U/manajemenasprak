@@ -21,6 +21,7 @@ interface DashboardClientProps {
   initialStats: DashboardStats;
   initialSchedule: Jadwal[];
   initialTerms: string[];
+  activeModul: number;
   userRole?: string;
 }
 
@@ -28,6 +29,7 @@ export default function DashboardClient({
   initialStats,
   initialSchedule,
   initialTerms,
+  activeModul,
   userRole,
 }: DashboardClientProps) {
   const { terms, selectedTerm, setSelectedTerm, stats, todaySchedule, loading } = useDashboard(
@@ -113,6 +115,7 @@ export default function DashboardClient({
           todaySchedule={todaySchedule}
           loading={loading}
           term={selectedTerm}
+          activeModul={activeModul}
           userRole={userRole}
         />
       </div>

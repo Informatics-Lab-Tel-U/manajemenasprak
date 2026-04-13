@@ -1,5 +1,5 @@
 export const getJagaShiftsByDay = (hari: string) => {
-  const upperDay = hari.toUpperCase();
+  const upperDay = (hari || 'SENIN').toUpperCase();
   const isJumatSabtu = upperDay === 'JUMAT' || upperDay === 'SABTU';
 
   if (isJumatSabtu) {

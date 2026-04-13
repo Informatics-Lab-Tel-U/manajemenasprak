@@ -31,6 +31,7 @@ export default function DashboardCharts({
   todaySchedule,
   loading,
   term,
+  activeModul,
   userRole,
 }: {
   asprakByAngkatan: { name: string; count: number }[];
@@ -38,6 +39,7 @@ export default function DashboardCharts({
   todaySchedule: Jadwal[];
   loading: boolean;
   term: string;
+  activeModul: number;
   userRole?: string;
 }) {
   const dataAsprak = [...asprakByAngkatan].sort((a, b) => parseInt(a.name) - parseInt(b.name));
@@ -98,9 +100,9 @@ export default function DashboardCharts({
 
   // Extract today's matrix and sessions from the hook results
   const scheduleMatrix = fullMatrix[currentDayName] || {};
-  const visibleSessions = dynamicSessionsByDay[currentDayName] || [];
+  const  visibleSessions = dynamicSessionsByDay[currentDayName] || [];
 
-  const { jagaList } = useJaga(term, 0, currentDayName);
+  const { jagaList } = useJaga(term, activeModul, currentDayName);
   const shiftInfos = getJagaShiftsByDay(currentDayName);
 
   return (
@@ -186,8 +188,9 @@ export default function DashboardCharts({
                 <table className="w-full border-collapse text-sm">
                   <thead>
                     <tr className="bg-muted/50 border-b border-border">
-                      <th className="p-2 border-r-0 text-center font-bold min-w-[120px] text-xs uppercase text-muted-foreground bg-transparent">
-                        Penjagaan
+                      <th className="p-2 border-r-0 text-center font-bold min-w-[120px] text-[10px] uppercase text-muted-foreground bg-transparent leading-tight">
+                        Penjagaan<br/>
+                        <span className="text-primary/70">(Modul {activeModul})</span>
                       </th>
                       <th className="w-4 bg-transparent border-none"></th>
                       <th className="p-2 border-r border-l border-border text-center font-bold min-w-[60px] text-xs uppercase text-muted-foreground">

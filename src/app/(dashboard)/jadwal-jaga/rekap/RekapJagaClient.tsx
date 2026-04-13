@@ -43,22 +43,22 @@ export default function RekapJagaClient({ initialTerms }: { initialTerms: string
     return (
       <div className="overflow-x-auto rounded-lg border border-border">
         <table className="w-full text-sm text-left">
-          <thead className="bg-muted/50 border-b border-border text-xs uppercase text-muted-foreground">
+          <thead className="bg-muted/50 border-b border-border text-[13px] uppercase text-muted-foreground/80">
             <tr>
-              <th className="px-4 py-3 font-semibold text-center border-r border-border sticky left-0 bg-muted/50 w-[80px]">Kode</th>
+              <th className="px-4 py-4 font-bold text-center border-r border-border sticky left-0 bg-muted/50 w-[90px]">KODE</th>
               {weeks.map(w => (
-                <th key={w} className="px-2 py-3 font-semibold text-center border-r border-border min-w-[36px]">
+                <th key={w} className="px-2 py-4 font-bold text-center border-r border-border min-w-[40px]">
                   W{w}
                 </th>
               ))}
-              <th className="px-3 py-3 font-bold text-center bg-primary/5 text-primary">TOTAL</th>
+              <th className="px-3 py-4 font-bold text-center bg-primary/5 text-primary">TOTAL</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border/50 bg-card">
             {data.map((row) => (
               <tr key={row.id} className="hover:bg-muted/30 transition-colors">
-                <td className="px-4 py-2 font-medium text-center border-r border-border sticky left-0 bg-card shadow-[1px_0_0_rgba(0,0,0,0.05)] dark:shadow-[1px_0_0_rgba(255,255,255,0.05)]">
-                  <span className={`px-2 py-1 rounded inline-block w-full ${row.role === 'ASLAB' ? 'bg-blue-100/50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'}`}>
+                <td className="px-4 py-3 font-bold text-center border-r border-border sticky left-0 bg-card shadow-[1px_0_0_rgba(0,0,0,0.05)] dark:shadow-[1px_0_0_rgba(255,255,255,0.05)]">
+                  <span className={`px-2.5 py-1.5 rounded-md inline-block w-full text-xs font-bold ${row.role === 'ASLAB' ? 'bg-blue-100/50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'}`}>
                     {row.kode}
                   </span>
                 </td>

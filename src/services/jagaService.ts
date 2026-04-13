@@ -25,7 +25,7 @@ export async function getJadwalJaga(
     `)
     .eq('tahun_ajaran', term);
 
-  if (modul) {
+  if (typeof modul === 'number' && modul !== 0) {
     query = query.eq('modul', modul);
   }
 
