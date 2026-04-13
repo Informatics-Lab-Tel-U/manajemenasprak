@@ -446,7 +446,7 @@ export function JadwalPenggantiModal({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {Array.from({ length: 15 }, (_, i) => i + 1).map((m) => (
+                      {Array.from({ length: 16 }, (_, i) => i + 1).map((m) => (
                         <SelectItem key={m} value={m.toString()}>
                           Modul {m}
                         </SelectItem>

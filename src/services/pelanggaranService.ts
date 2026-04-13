@@ -224,8 +224,8 @@ export async function finalizePelanggaranByPraktikum(
 ): Promise<void> {
   const supabase = globalAdmin;
 
-  // We finalize all 15 modules
-  const inserts = Array.from({ length: 15 }, (_, i) => ({
+  // We finalize all 16 modules
+  const inserts = Array.from({ length: 16 }, (_, i) => ({
     id_praktikum,
     modul: i + 1,
     is_finalized: true,

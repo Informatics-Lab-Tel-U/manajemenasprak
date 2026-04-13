@@ -54,7 +54,7 @@ export default function JadwalModulClientPage() {
         setRows(res.data);
       } else {
         setRows(
-          Array.from({ length: 15 }, (_, idx) => ({
+          Array.from({ length: 16 }, (_, idx) => ({
             modul: idx + 1,
             tanggal_mulai: null,
           }))
@@ -159,7 +159,7 @@ export default function JadwalModulClientPage() {
     }
 
     let lastDate: string = anchor;
-    for (let m = startM + 1; m <= 15; m += 1) {
+    for (let m = startM + 1; m <= 16; m += 1) {
       lastDate = addDaysSafe(lastDate, 7);
       byModul.set(m, lastDate);
     }
@@ -209,7 +209,7 @@ export default function JadwalModulClientPage() {
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Tanggal Mulai Praktikum per Modul</h1>
             <p className="text-sm text-muted-foreground mt-1">
-              Atur tanggal mulai praktikum untuk setiap modul (1-15) per tahun ajaran.
+              Atur tanggal mulai praktikum untuk setiap modul (1-16) per tahun ajaran.
             </p>
           </div>
         </div>

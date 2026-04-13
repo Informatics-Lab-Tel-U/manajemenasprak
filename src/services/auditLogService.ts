@@ -29,3 +29,22 @@ export async function getAuditLogs(
     count: count || 0,
   };
 }
+
+/**
+ * Create a new audit log entry
+ */
+export async function createAuditLog(input: {
+  table_name: string;
+  record_id: string;
+  operation: 'INSERT' | 'UPDATE' | 'DELETE';
+  old_values?: any;
+  new_values?: any;
+  id_pengguna?: string;
+}) {
+  const { error } = await admin.from('audit_log').insert(input);
+
+  if (error) {
+    console.error('Failed to create audit log:', error);
+    // We don't throw here to avoid failing the main operation if logging fails
+  }
+}

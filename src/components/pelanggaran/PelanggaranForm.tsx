@@ -496,7 +496,7 @@ export default function PelanggaranForm({
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
-                        {Array.from({ length: 15 }, (_, i) => (
+                        {Array.from({ length: 16 }, (_, i) => (
                           <SelectItem key={i + 1} value={String(i + 1)}>
                             Modul {i + 1}
                           </SelectItem>

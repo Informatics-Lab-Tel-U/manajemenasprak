@@ -8,12 +8,15 @@ export function useJaga(term: string, modul?: number, hari?: string) {
 
   const loadData = useCallback(async () => {
     setLoading(true);
+    setJagaList([]); // Reset list to prevent showing stale data from previous modules
+
     if (!term) {
       setLoading(false);
       return;
     }
+    
     const { data } = await fetchJadwalJaga(term, modul, hari);
-    if (data) setJagaList(data);
+    setJagaList(data || []); // Ensure we set an empty array if data is missing or undefined
     setLoading(false);
   }, [term, modul, hari]);
 
@@ -35,6 +38,9 @@ export function useRekapJaga(term: string) {
 
   const loadData = useCallback(async () => {
     setLoading(true);
+    setRekapAslab([]);
+    setRekapAsprak([]);
+
     if (!term) {
       setLoading(false);
       return;
