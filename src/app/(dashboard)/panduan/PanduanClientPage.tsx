@@ -15,6 +15,7 @@ import {
   Settings,
   ShieldCheck,
   Eye,
+  Shield,
 } from 'lucide-react';
 
 import {
@@ -318,6 +319,53 @@ const PanduanClientPageComponent = function PanduanClientPage({ role }: PanduanC
                         <strong>Tips:</strong> Gunakan menu <em>Plotting Asprak</em> untuk melihat
                         beban kerja setiap asisten dan menghindari jadwal bentrok.
                       </p>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+
+                {/* 7. Penjagaan (Jadwal Jaga) */}
+                <AccordionItem value="penjagaan" className="border rounded-xl px-4 bg-card/30">
+                  <AccordionTrigger className="hover:no-underline py-4">
+                    <div className="flex items-center gap-3 text-muted-foreground">
+                      <Shield size={20} />
+                      <div className="text-left text-foreground">
+                        <h3 className="font-semibold text-base">Manajemen Penjagaan</h3>
+                        <p className="text-sm font-normal text-muted-foreground">
+                          Input dan rekap jadwal jaga Aslab/Asprak per Modul.
+                        </p>
+                      </div>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="pt-2 pb-10 space-y-6">
+                    <p className="text-sm text-muted-foreground">
+                      Fitur ini digunakan untuk mendata kehadiran asisten yang bertugas menjaga praktikum di setiap modul (W1-W16).
+                    </p>
+                    
+                    <div className="space-y-4">
+                      <h4 className="font-medium text-sm flex items-center gap-2">
+                        <Info size={14} className="text-primary" />
+                        Cara Input Jadwal Jaga
+                      </h4>
+                      <ul className="list-decimal list-inside text-sm text-muted-foreground space-y-2 ml-1">
+                        <li>Pilih <strong>Modul</strong> (W1 s.d W16) dan <strong>Term</strong> pada header halaman.</li>
+                        <li>Klik tombol <Badge variant="outline">+ Input Jaga</Badge>.</li>
+                        <li>Pilih <strong>Asisten</strong>, <strong>Hari</strong>, dan <strong>Shift</strong> jam kerja.</li>
+                        <li>
+                          <strong>Bulk Input:</strong> Centang <span className="italic">"Terapkan ke semua modul"</span> jika asisten tersebut memiliki jadwal jaga tetap di hari/shift yang sama untuk seluruh semester.
+                        </li>
+                      </ul>
+                    </div>
+
+                    <div className="space-y-4">
+                      <h4 className="font-medium text-sm flex items-center gap-2">
+                        <Eye size={14} className="text-primary" />
+                        Visibilitas & Rekap
+                      </h4>
+                      <ul className="list-disc list-inside text-sm text-muted-foreground space-y-2 ml-1">
+                        <li><strong>Dashboard:</strong> Muncul di kolom "Penjagaan" pada tabel jadwal harian. Arahkan kursor ke kode asisten untuk melihat nama lengkap.</li>
+                        <li><strong>Warna Role:</strong> Kode berwarna <span className="text-blue-600 font-bold">Biru</span> adalah <strong>ASLAB</strong>, sedangkan <span className="text-slate-600 font-bold">Abu-abu</span> adalah <strong>ASPRAK</strong>.</li>
+                        <li><strong>Rekap Jaga:</strong> Akumulasi total shift jaga setiap asisten dapat dilihat pada menu <em>Rekap Jaga</em>.</li>
+                      </ul>
                     </div>
                   </AccordionContent>
                 </AccordionItem>

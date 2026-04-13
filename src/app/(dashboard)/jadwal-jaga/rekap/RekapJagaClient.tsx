@@ -38,7 +38,7 @@ export default function RekapJagaClient({ initialTerms }: { initialTerms: string
       );
     }
 
-    const weeks = Array.from({ length: 15 }, (_, i) => i + 1);
+    const weeks = Array.from({ length: 16 }, (_, i) => i + 1);
 
     return (
       <div className="overflow-x-auto rounded-lg border border-border">

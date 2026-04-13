@@ -14,7 +14,7 @@ export default function JadwalJagaClient({ initialTerms, userRole }: { initialTe
   const [selectedTerm, setSelectedTerm] = useState(initialTerms[0] || '');
   const [selectedModul, setSelectedModul] = useState('Modul 1');
 
-  const moduls = Array.from({ length: 15 }, (_, i) => `Modul ${i + 1}`);
+  const moduls = Array.from({ length: 16 }, (_, i) => `Modul ${i + 1}`);
 
   return (
     <div className="container space-y-6">

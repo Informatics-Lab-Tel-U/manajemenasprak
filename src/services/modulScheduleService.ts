@@ -11,7 +11,7 @@ export type ModulScheduleEntry = {
   tanggal_mulai: string | null;
 };
 
-const TOTAL_MODUL = 15;
+const TOTAL_MODUL = 16;
 
 export async function getModulScheduleByTerm(
   term: string,
