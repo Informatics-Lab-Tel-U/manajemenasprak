@@ -1,3 +1,11 @@
+## [1.2.1](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/compare/v1.2.0...v1.2.1) (2026-04-13)
+
+
+### Bug Fixes
+
+* fix guard schedule by module ([754ae2a](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/commit/754ae2a950f3e963ac76cce8d3c3f4c4da87ca1f))
+* jadwal jaga tampil dan input ([0c2f35f](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/commit/0c2f35fd5a27321b7e66ebbe1b651b94780b2269))
+
 # [1.2.0](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/compare/v1.1.0...v1.2.0) (2026-04-05)
 
 
