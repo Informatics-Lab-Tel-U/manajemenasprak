@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { Filter, Search, Loader2 } from 'lucide-react';
+import { Filter, Search, Loader2, ArrowUpDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -39,23 +39,24 @@ interface Props {
 
 export default function PelanggaranRekapClient({ initialTahunAjaranList }: Props) {
   const [tahunAjaran, setTahunAjaran] = React.useState(initialTahunAjaranList[0] || '');
-  const [modul, setModul] = React.useState<string>('1');
+  const [modul, setModul] = React.useState<string>('all');
   const [minCount, setMinCount] = React.useState<number>(1);
   const [loading, setLoading] = React.useState(false);
   const [data, setData] = React.useState<PelanggaranSummaryEntry[]>([]);
   const [mounted, setMounted] = React.useState(false);
+  const [sortConfig, setSortConfig] = React.useState<{ key: 'mk' | 'asprak'; direction: 'asc' | 'desc' } | null>(null);
 
   React.useEffect(() => {
     setMounted(true);
     if (initialTahunAjaranList[0]) {
-      handleFetch(initialTahunAjaranList[0], '1', 1);
+      handleFetch(initialTahunAjaranList[0], 'all', 1);
     }
   }, [initialTahunAjaranList]);
 
   async function handleFetch(t: string, m: string, c: number) {
     setLoading(true);
     try {
-      const modulVal = Number(m);
+      const modulVal = m === 'all' ? 0 : Number(m);
       const res = await fetchPelanggaranSummary(t, modulVal, c);
       if (res.ok) {
         setData(res.data || []);
@@ -116,12 +117,13 @@ export default function PelanggaranRekapClient({ initialTahunAjaranList }: Props
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-muted-foreground">Batas Modul</label>
+                <label className="text-xs font-medium text-muted-foreground">Target Modul</label>
                 <Select value={modul} onValueChange={setModul}>
                   <SelectTrigger className="h-9 w-full">
                     <SelectValue placeholder="Pilih Modul" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="all">Semua Modul</SelectItem>
                     {Array.from({ length: 16 }, (_, i) => (
                       <SelectItem key={i + 1} value={String(i + 1)}>
                         Modul {i + 1}
@@ -168,6 +170,36 @@ export default function PelanggaranRekapClient({ initialTahunAjaranList }: Props
           }))
         );
 
+        const sortedViolations = [...flatViolations];
+        if (sortConfig !== null) {
+          sortedViolations.sort((a, b) => {
+            let aValue = '';
+            let bValue = '';
+            if (sortConfig.key === 'mk') {
+               aValue = a.jadwal?.mata_kuliah?.praktikum?.nama ?? '';
+               bValue = b.jadwal?.mata_kuliah?.praktikum?.nama ?? '';
+            } else if (sortConfig.key === 'asprak') {
+               aValue = a._kode_asprak ?? '';
+               bValue = b._kode_asprak ?? '';
+            }
+            if (aValue < bValue) {
+              return sortConfig.direction === 'asc' ? -1 : 1;
+            }
+            if (aValue > bValue) {
+              return sortConfig.direction === 'asc' ? 1 : -1;
+            }
+            return 0;
+          });
+        }
+
+        const handleSort = (key: 'mk' | 'asprak') => {
+          let direction: 'asc' | 'desc' = 'asc';
+          if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
+            direction = 'desc';
+          }
+          setSortConfig({ key, direction });
+        };
+
         return (
           <div className="card glass border border-border/50 overflow-hidden">
             <div className="px-6 py-4 flex items-center justify-between border-b border-border/50 bg-muted/20">
@@ -179,8 +211,24 @@ export default function PelanggaranRekapClient({ initialTahunAjaranList }: Props
                 <Table className="table-fixed w-full">
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-[20%]">MK</TableHead>
-                      <TableHead className="w-[18%]">Kode Asprak</TableHead>
+                      <TableHead 
+                        className="w-[20%] cursor-pointer select-none hover:bg-muted/50 transition-colors" 
+                        onClick={() => handleSort('mk')}
+                      >
+                        <div className="flex items-center gap-2">
+                          MK
+                          <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                      </TableHead>
+                      <TableHead 
+                        className="w-[18%] cursor-pointer select-none hover:bg-muted/50 transition-colors" 
+                        onClick={() => handleSort('asprak')}
+                      >
+                        <div className="flex items-center gap-2">
+                          Kode Asprak
+                          <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                      </TableHead>
                       <TableHead className="w-[14%] text-center">Kelas</TableHead>
                       <TableHead className="w-[20%]">Jenis</TableHead>
                       <TableHead className="w-[14%] text-center">Modul</TableHead>
@@ -224,7 +272,7 @@ export default function PelanggaranRekapClient({ initialTahunAjaranList }: Props
                         </TableCell>
                       </TableRow>
                     ) : (
-                      flatViolations.map((v) => (
+                      sortedViolations.map((v) => (
                         <TableRow key={v.id} className="hover:bg-muted/50 transition-colors">
                           <TableCell className="text-sm truncate">
                             <div className="font-medium truncate">

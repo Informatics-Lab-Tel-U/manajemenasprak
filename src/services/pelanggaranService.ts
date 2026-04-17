@@ -412,26 +412,40 @@ export async function getPelanggaranSummary(
 ): Promise<PelanggaranSummaryEntry[]> {
   const supabase = supabaseClient || globalAdmin;
 
-  let query = supabase.from('pelanggaran').select(PELANGGARAN_SELECT);
+  // Allow modul to be undefined or 0, pass 0 to RPC
+  const targetModul = modul || 0;
 
-  if (modul) {
-    query = query.lte('modul', modul);
-  }
+  // 1. Fetch filtered violation IDs from the database RPC
+  const { data: idData, error: rpcError } = await supabase.rpc('get_filtered_pelanggaran_ids', {
+    p_tahun_ajaran: tahunAjaran,
+    p_target_modul: targetModul,
+    p_min_rank: minCount,
+  });
 
-  const { data, error } = await query;
-  if (error) {
-    logger.error('Error fetching violation summary:', error);
+  if (rpcError) {
+    logger.error('Error calling get_filtered_pelanggaran_ids:', rpcError);
     return [];
   }
 
-  // Client-side filter for tahun_ajaran as it's deep in relations
-  const violations = (data as Pelanggaran[]).filter((p) => {
-    const mk = p.jadwal?.mata_kuliah as any;
-    return mk?.praktikum?.tahun_ajaran === tahunAjaran;
-  });
+  const ids = idData?.map((row: any) => row.id) || [];
+  if (ids.length === 0) return [];
 
+  // 2. Fetch full related data for those IDs
+  const { data, error } = await supabase
+    .from('pelanggaran')
+    .select(PELANGGARAN_SELECT)
+    .in('id', ids)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    logger.error('Error fetching violation summary details:', error);
+    return [];
+  }
+
+  const violations = data as Pelanggaran[];
   const summaryMap = new Map<string, PelanggaranSummaryEntry>();
 
+  // 3. Group by asprak (formatting for the frontend, not for logic)
   for (const v of violations) {
     const asprakId = v.id_asprak;
     if (!asprakId) continue;
@@ -450,7 +464,8 @@ export async function getPelanggaranSummary(
     entry.violations.push(v);
   }
 
-  return Array.from(summaryMap.values())
-    .filter((entry) => entry.total_pelanggaran >= minCount)
-    .sort((a, b) => b.total_pelanggaran - a.total_pelanggaran);
+  // Filtering is already handled by the DB, just sort by total_pelanggaran descending
+  return Array.from(summaryMap.values()).sort(
+    (a, b) => b.total_pelanggaran - a.total_pelanggaran
+  );
 }
