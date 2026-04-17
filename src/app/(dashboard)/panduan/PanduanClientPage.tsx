@@ -471,6 +471,47 @@ const PanduanClientPageComponent = function PanduanClientPage({ role }: PanduanC
 
                 <div>
                   <h4 className="font-medium mb-3 flex items-center gap-2">
+                    <Eye size={16} />
+                    Melihat & Filter Rekap Pelanggaran
+                  </h4>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Halaman <strong>Rekap Pelanggaran</strong> menyediakan filter cerdas dengan pendekatan ranking kronologis:
+                  </p>
+                  <ul className="list-disc list-inside text-sm text-muted-foreground space-y-2">
+                    <li>
+                      <strong>Ranking Global:</strong> Pelanggaran diurutkan secara kronologis (ke-1, ke-2, ke-3) lintas seluruh modul bagi setiap asprak.
+                    </li>
+                    <li>
+                      <strong>Target Modul:</strong> Hanya menampilkan pelanggaran yang terjadi di modul yang Anda pilih. Jika Anda memilih opsi <strong>Semua Modul</strong>, sistem akan menampilkan data pelanggaran tanpa dibatasi oleh modul tertentu.
+                    </li>
+                    <li>
+                      <strong>Min. Pelanggaran:</strong> Sistem hanya akan memunculkan data pelanggaran yang urutan kronologisnya (ranking) mencapai angka minimal yang Anda tentukan (misalnya, hanya memunculkan pelanggaran ke-3 atau ke-4 dari seorang asprak, meskipun Anda hanya sedang melihat data di Modul 5).
+                    </li>
+                    <div className="mt-2 mb-3 p-4 bg-muted/30 border rounded-lg text-xs space-y-2">
+                      <p className="font-semibold text-foreground/80 mb-1">Contoh Studi Kasus Asprak "KZN" dengan [Target Modul: 5] & [Min. Pelanggaran: 3]</p>
+                      <ul className="list-disc list-inside space-y-1 text-muted-foreground ml-1">
+                        <li>
+                          <strong className="text-foreground/70">Kasus 1:</strong> Modul 3 (1 pelg), Modul 4 (1 pelg), Modul 5 (3 pelg) <br />
+                          <span className="ml-5">➔ <strong>Hasil:</strong> Tampil 3 data dari Modul 5 (karena ketiganya adalah pelanggaran ke-3, ke-4, dan ke-5).</span>
+                        </li>
+                        <li>
+                          <strong className="text-foreground/70">Kasus 2:</strong> Modul 4 (1 pelg), Modul 5 (3 pelg) <br />
+                          <span className="ml-5">➔ <strong>Hasil:</strong> Tampil 2 data dari Modul 5 (hanya pelanggaran ke-3 dan ke-4).</span>
+                        </li>
+                        <li>
+                          <strong className="text-foreground/70">Kasus 3:</strong> Modul 5 (3 pelg) <br />
+                          <span className="ml-5">➔ <strong>Hasil:</strong> Tampil 1 data dari Modul 5 (hanya pelanggaran ke-3).</span>
+                        </li>
+                      </ul>
+                    </div>
+                    <li>
+                      <strong>Sorting Tabel:</strong> Klik pada header <strong>MK</strong> atau <strong>Kode Asprak</strong> untuk mengurutkan data pelanggaran secara ascending/descending.
+                    </li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h4 className="font-medium mb-3 flex items-center gap-2">
                     <FileSpreadsheet size={16} />
                     Export Excel
                   </h4>
