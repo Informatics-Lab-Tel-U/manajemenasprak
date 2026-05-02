@@ -1,3 +1,10 @@
+## [1.2.2](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/compare/v1.2.1...v1.2.2) (2026-05-02)
+
+
+### Bug Fixes
+
+* fix selected data on edit modal ([25483e1](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/commit/25483e1e9203ea6bea37826b00362577ed098d5c))
+
 ## [1.2.1](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/compare/v1.2.0...v1.2.1) (2026-04-13)
 
 
