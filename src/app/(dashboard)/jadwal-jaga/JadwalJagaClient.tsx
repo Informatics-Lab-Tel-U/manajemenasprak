@@ -46,6 +46,7 @@ export default function JadwalJagaClient({ initialTerms, userRole }: { initialTe
 
   const handleEdit = (data: any) => {
     setEditingData(data);
+    console.log(data);
     setIsModalOpen(true);
   };
 
