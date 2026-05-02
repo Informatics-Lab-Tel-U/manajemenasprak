@@ -118,9 +118,7 @@ export default function JagaPanel({
       );
     }
 
-    // Filter jaga by the currently viewed day (if not already filtered by API)
     const dayJaga = jagaList.filter(j => j.hari.toUpperCase() === activeDay.toUpperCase());
-
 
     return (
       <div className="mt-4 space-y-3">

@@ -84,14 +84,11 @@ export default function JagaInputModal({
     setLoading(true);
     const supabase = createClient();
     
-    // Check validity using the passed userRole
     const allowed = canInputJagaForModul(selectedModul, konfigurasiModul, userRole);
     setCanInput(allowed);
 
-    // Fetch asprak
     const { data } = await fetchAllAsprak(term);
     if (data) {
-      // Sort ASLAB first, then ASPRAK, then by Kode
       const sorted = [...data].sort((a, b) => {
         if (a.role === 'ASLAB' && b.role !== 'ASLAB') return -1;
         if (a.role !== 'ASLAB' && b.role === 'ASLAB') return 1;
@@ -103,6 +100,21 @@ export default function JagaInputModal({
     setLoading(false);
   };
 
+  useEffect(() => {
+  if (isOpen) {
+    if (editData) {
+      setSelectedAsprakId(editData.id_asprak || '');
+      setSelectedHari(editData.hari || defaultDay);
+      setSelectedShift(editData.shift?.toString() || '');
+    } else {
+      setSelectedAsprakId('');
+      setSelectedHari(defaultDay);
+      setSelectedShift('');
+    }
+    loadDependencies();
+  }
+}, [isOpen, editData, defaultDay])
+
   const handleSubmit = async () => {
     if (!selectedAsprakId || !selectedHari || !selectedShift) {
       toast.error('Harap lengkapi semua data form');
@@ -113,7 +125,6 @@ export default function JagaInputModal({
     
     let result;
     if (editData) {
-      // Update mode
       const { success, error } = await updateJadwalJaga(editData.id, {
         id_asprak: selectedAsprakId,
         hari: selectedHari,
@@ -121,7 +132,6 @@ export default function JagaInputModal({
       });
       result = { success, error };
     } else {
-      // Create mode
       const { success, error } = applyToAllModuls
         ? await bulkAddJadwalJaga({
             id_asprak: selectedAsprakId,
@@ -173,7 +183,7 @@ export default function JagaInputModal({
             </AlertDescription>
           </Alert>
         ) : (
-          <div className="grid gap-4 py-4">
+          <div className="grid gap-4 py-4 w-full">
             <div className="flex flex-col gap-2">
               <Label htmlFor="asprak">Pilih ASLAB / ASPRAK</Label>
               <Popover open={openAsprak} onOpenChange={setOpenAsprak}>
@@ -262,17 +272,17 @@ export default function JagaInputModal({
               </Popover>
             </div>
 
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2 w-full">
               <Label htmlFor="hari">Hari</Label>
               <Select 
                 value={selectedHari} 
                 onValueChange={(val) => {
                   setSelectedHari(val);
-                  setSelectedShift(''); // reset shift on day change
-                }} 
+                  setSelectedShift(''); 
+                }}
                 disabled={loading}
               >
-                <SelectTrigger>
+                <SelectTrigger className='w-full'>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -285,7 +295,7 @@ export default function JagaInputModal({
             <div className="flex flex-col gap-2">
               <Label htmlFor="shift">Pilih Sesi Jam (Shift)</Label>
               <Select value={selectedShift} onValueChange={setSelectedShift} disabled={loading}>
-                <SelectTrigger>
+                <SelectTrigger className='w-full'>
                   <SelectValue placeholder="-- Pilih Sesi --" />
                 </SelectTrigger>
                 <SelectContent>
