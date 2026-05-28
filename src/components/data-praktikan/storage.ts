@@ -1,8 +1,9 @@
 export type PraktikanRow = {
-  id: string;
+  id: string | number;
   nama: string;
   kelas: string;
-  kode_asprak: string;
+  kode_asprak: string | null;
+  mata_kuliah: string;
   source: 'manual' | 'import';
 };
 

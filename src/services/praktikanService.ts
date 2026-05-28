@@ -37,6 +37,11 @@ export type CreatePraktikanResult = {
   data: PraktikanRecord[];
 };
 
+export type PraktikanOptions = {
+  kelas: string[];
+  mata_kuliah: string[];
+};
+
 function getClient(supabaseClient?: SupabaseClient) {
   return supabaseClient ?? globalAdmin;
 }
@@ -121,6 +126,26 @@ export async function getPraktikanList(
   }
 
   return (data ?? []) as PraktikanRecord[];
+}
+
+export async function getPraktikanOptions(
+  supabaseClient?: SupabaseClient
+): Promise<PraktikanOptions> {
+  const supabase = getClient(supabaseClient);
+
+  const { data, error } = await supabase.rpc('get_praktikan_options').single();
+
+  if (error) {
+    logger.error('Error fetching praktikan options:', error);
+    throw new Error(`Gagal mengambil opsi data praktikan: ${error.message}`);
+  }
+
+  const options = data as PraktikanOptions | null;
+
+  return {
+    kelas: options?.kelas ?? [],
+    mata_kuliah: options?.mata_kuliah ?? [],
+  };
 }
 
 export async function createPraktikan(

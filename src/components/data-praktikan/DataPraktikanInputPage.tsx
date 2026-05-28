@@ -3,11 +3,12 @@
 import { ChangeEvent, useMemo, useState } from 'react';
 import Link from 'next/link';
 import Papa from 'papaparse';
-import { Check, FileSpreadsheet, Plus, Save, Upload } from 'lucide-react';
+import { Check, ClipboardList, FileSpreadsheet, Plus, Save, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import {
@@ -19,7 +20,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
-import { appendPraktikanRows, makePraktikanId, type PraktikanRow } from './storage';
+import { makePraktikanId, type PraktikanRow } from './storage';
 
 type PreviewRow = PraktikanRow & {
   selected: boolean;
@@ -49,13 +50,28 @@ function findColumn(headers: string[], matchers: string[]) {
 function isHeaderRow(row: string[]) {
   const headers = row.map(normalizeHeader);
   return headers.some((header) =>
-    ['nama', 'name', 'nim', 'kelas', 'class', 'asprak', 'aspak', 'kode', 'kode_asprak'].some(
-      (candidate) => header.includes(candidate)
-    )
+    [
+      'nama',
+      'name',
+      'nim',
+      'kelas',
+      'class',
+      'asprak',
+      'aspak',
+      'kode',
+      'kode_asprak',
+      'mata_kuliah',
+      'matkul',
+      'mk',
+    ].some((candidate) => header.includes(candidate))
   );
 }
 
-function rowsFromMatrix(matrix: SheetMatrix, defaultKelas: string): PreviewRow[] {
+function rowsFromMatrix(
+  matrix: SheetMatrix,
+  defaultKelas: string,
+  defaultMataKuliah: string
+): PreviewRow[] {
   const cleaned = matrix
     .map((row) => row.map((value) => String(value ?? '').trim()))
     .filter((row) => row.some(Boolean));
@@ -69,6 +85,7 @@ function rowsFromMatrix(matrix: SheetMatrix, defaultKelas: string): PreviewRow[]
   const namaIndex = hasHeader ? findColumn(headers, ['nama', 'name', 'nim']) : 0;
   const kelasIndex = hasHeader ? findColumn(headers, ['kelas', 'class']) : -1;
   const kodeIndex = hasHeader ? findColumn(headers, ['kode', 'asprak', 'aspak']) : 1;
+  const mataKuliahIndex = hasHeader ? findColumn(headers, ['mata_kuliah', 'matkul', 'mk']) : -1;
 
   let lastKodeAsprak = '';
 
@@ -78,10 +95,12 @@ function rowsFromMatrix(matrix: SheetMatrix, defaultKelas: string): PreviewRow[]
 
     const nama = cell(row, namaIndex).toUpperCase();
     const kelas = (cell(row, kelasIndex) || defaultKelas).toUpperCase();
+    const mata_kuliah = (cell(row, mataKuliahIndex) || defaultMataKuliah).toUpperCase();
     const kode_asprak = rawKode || lastKodeAsprak;
     const missing = [
       !nama ? 'nama kosong' : '',
       !kelas ? 'kelas kosong' : '',
+      !mata_kuliah ? 'mata_kuliah kosong' : '',
       !kode_asprak ? 'kode_asprak kosong' : '',
     ].filter(Boolean);
 
@@ -90,6 +109,7 @@ function rowsFromMatrix(matrix: SheetMatrix, defaultKelas: string): PreviewRow[]
       nama,
       kelas,
       kode_asprak,
+      mata_kuliah,
       source: 'import',
       selected: missing.length === 0,
       status: missing.length === 0 ? 'ok' : 'warning',
@@ -111,7 +131,8 @@ function updatePreviewStatus(row: PreviewRow): PreviewRow {
   const missing = [
     !row.nama.trim() ? 'nama kosong' : '',
     !row.kelas.trim() ? 'kelas kosong' : '',
-    !row.kode_asprak.trim() ? 'kode_asprak kosong' : '',
+    !row.mata_kuliah.trim() ? 'mata_kuliah kosong' : '',
+    !row.kode_asprak?.trim() ? 'kode_asprak kosong' : '',
   ].filter(Boolean);
 
   return {
@@ -126,37 +147,59 @@ export default function DataPraktikanInputPage() {
   const [inputMode, setInputMode] = useState<InputMode>('manual');
   const [manualNama, setManualNama] = useState('');
   const [manualKelas, setManualKelas] = useState('');
+  const [manualMataKuliah, setManualMataKuliah] = useState('');
   const [manualKodeAsprak, setManualKodeAsprak] = useState('');
   const [defaultKelas, setDefaultKelas] = useState('');
+  const [defaultMataKuliah, setDefaultMataKuliah] = useState('');
   const [pasteValue, setPasteValue] = useState('');
   const [fileName, setFileName] = useState('');
   const [previewRows, setPreviewRows] = useState<PreviewRow[]>([]);
   const [parsing, setParsing] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const selectedPreviewRows = useMemo(
     () => previewRows.filter((row) => row.selected && row.status !== 'error').length,
     [previewRows]
   );
 
-  const handleManualSubmit = () => {
+  const handleManualSubmit = async () => {
     const nama = manualNama.trim().toUpperCase();
     const kelas = manualKelas.trim().toUpperCase();
+    const mata_kuliah = manualMataKuliah.trim().toUpperCase();
     const kode_asprak = manualKodeAsprak.trim().toUpperCase();
 
-    if (!nama || !kelas || !kode_asprak) {
-      toast.error('Nama, kelas, dan kode asprak wajib diisi.');
+    if (!nama || !kelas || !mata_kuliah || !kode_asprak) {
+      toast.error('Nama, kelas, mata kuliah, dan kode asprak wajib diisi.');
       return;
     }
 
-    appendPraktikanRows([{ id: makePraktikanId(), nama, kelas, kode_asprak, source: 'manual' }]);
-    setManualNama('');
-    setManualKelas('');
-    setManualKodeAsprak('');
-    toast.success('Data praktikan ditambahkan.');
+    setSaving(true);
+    try {
+      const response = await fetch('/api/praktikan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: { nama, kelas, mata_kuliah, kode_asprak } }),
+      });
+      const result = await response.json();
+
+      if (!response.ok || !result.ok) {
+        throw new Error(result.error || 'Gagal menyimpan data praktikan.');
+      }
+
+      setManualNama('');
+      setManualKelas('');
+      setManualMataKuliah('');
+      setManualKodeAsprak('');
+      toast.success('Data praktikan ditambahkan ke database.');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Gagal menyimpan data praktikan.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const applyPreviewRows = (matrix: SheetMatrix, label: string) => {
-    const parsedRows = rowsFromMatrix(matrix, defaultKelas);
+    const parsedRows = rowsFromMatrix(matrix, defaultKelas, defaultMataKuliah);
     setPreviewRows(parsedRows);
     toast.success(`${parsedRows.length} baris dari ${label} siap ditinjau.`);
   };
@@ -223,8 +266,8 @@ export default function DataPraktikanInputPage() {
   };
 
   const handlePreviewEdit = (
-    id: string,
-    field: keyof Pick<PreviewRow, 'nama' | 'kelas' | 'kode_asprak'>,
+    id: string | number,
+    field: keyof Pick<PreviewRow, 'nama' | 'kelas' | 'mata_kuliah' | 'kode_asprak'>,
     value: string
   ) => {
     setPreviewRows((current) =>
@@ -234,7 +277,7 @@ export default function DataPraktikanInputPage() {
     );
   };
 
-  const handleTogglePreview = (id: string) => {
+  const handleTogglePreview = (id: string | number) => {
     setPreviewRows((current) =>
       current.map((row) =>
         row.id === id && row.status !== 'error' ? { ...row, selected: !row.selected } : row
@@ -242,254 +285,337 @@ export default function DataPraktikanInputPage() {
     );
   };
 
-  const handleAddPreviewRows = () => {
+  const handleAddPreviewRows = async () => {
     const selected = previewRows.filter((row) => row.selected && row.status !== 'error');
     if (selected.length === 0) {
       toast.error('Pilih minimal satu baris preview.');
       return;
     }
 
-    appendPraktikanRows(
-      selected.map(({ selected: _selected, status: _status, note: _note, ...row }) => row)
-    );
-    setPreviewRows([]);
-    setPasteValue('');
-    setFileName('');
-    toast.success(`${selected.length} data praktikan ditambahkan.`);
+    setSaving(true);
+    try {
+      const response = await fetch('/api/praktikan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          rows: selected.map((row) => ({
+            nama: row.nama,
+            kelas: row.kelas,
+            mata_kuliah: row.mata_kuliah,
+            kode_asprak: row.kode_asprak,
+          })),
+        }),
+      });
+      const result = await response.json();
+
+      if (!response.ok || !result.ok) {
+        throw new Error(result.error || 'Gagal menyimpan data praktikan.');
+      }
+
+      setPreviewRows([]);
+      setPasteValue('');
+      setFileName('');
+      toast.success(`${result.data?.inserted ?? selected.length} data praktikan disimpan.`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Gagal menyimpan data praktikan.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
     <div className="container space-y-8">
-      <header className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Input Data Praktikan</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Input manual, upload file, atau paste data dari Excel/CSV. Data belum menyentuh
-            database.
-          </p>
-        </div>
-        <Button asChild variant="outline">
-          <Link href="/data-praktikan/view">Lihat Data</Link>
-        </Button>
-      </header>
-
-      <section className="rounded-lg border bg-background p-5">
-        <div className="mb-5 grid gap-4 md:grid-cols-[minmax(260px,360px)_1fr] md:items-start">
-          <div className="relative grid h-11 grid-cols-2 rounded-md border border-sky-200 bg-sky-50/60 p-1 dark:border-sky-900/60 dark:bg-sky-950/30">
-            <div
-              className={cn(
-                'absolute bottom-1 top-1 w-[calc(50%-0.25rem)] rounded-sm bg-sky-600 shadow-sm transition-transform duration-200',
-                inputMode === 'import' && 'translate-x-full'
-              )}
-            />
-            <button
-              type="button"
-              onClick={() => setInputMode('manual')}
-              className={cn(
-                'relative z-10 inline-flex items-center justify-center gap-2 rounded-sm px-3 text-sm font-medium transition-colors',
-                inputMode === 'manual'
-                  ? 'text-white'
-                  : 'text-sky-800 hover:text-sky-950 dark:text-sky-200'
-              )}
-            >
-              <Plus size={16} />
-              Individual
-            </button>
-            <button
-              type="button"
-              onClick={() => setInputMode('import')}
-              className={cn(
-                'relative z-10 inline-flex items-center justify-center gap-2 rounded-sm px-3 text-sm font-medium transition-colors',
-                inputMode === 'import'
-                  ? 'text-white'
-                  : 'text-sky-800 hover:text-sky-950 dark:text-sky-200'
-              )}
-            >
-              <Upload size={16} />
-              Import
-            </button>
-          </div>
+      <header className="overflow-hidden rounded-2xl border bg-[linear-gradient(135deg,hsl(var(--background)),rgba(16,185,129,0.10))] p-6 shadow-sm">
+        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
-            <h2 className="font-semibold">
-              {inputMode === 'manual' ? 'Input Individual' : 'Import Otomatis'}
-            </h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {inputMode === 'manual'
-                ? 'Tambahkan satu praktikan dengan nama, kelas, dan kode asprak.'
-                : 'Paste data dari Excel/CSV atau upload file, lalu tinjau sebelum ditambahkan.'}
+            <Badge className="mb-3 border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-900/70 dark:bg-emerald-950/40 dark:text-emerald-300">
+              Data Praktikan
+            </Badge>
+            <h1 className="text-2xl font-bold tracking-tight">Input Data Praktikan</h1>
+            <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+              Tambahkan data satu per satu atau import banyak baris dari Excel/CSV, lalu validasi di
+              preview sebelum masuk database.
             </p>
           </div>
+          <Button asChild variant="outline" className="bg-background/80">
+            <Link href="/data-praktikan/view">Lihat Data</Link>
+          </Button>
+        </div>
+      </header>
+
+      <section className="rounded-md border bg-background shadow-sm">
+        <div className="border-b p-5">
+          <div className="grid gap-4 lg:grid-cols-[minmax(280px,420px)_1fr] lg:items-center">
+            <div className="relative grid h-12 grid-cols-2 rounded-full border border-emerald-200 bg-emerald-50/70 p-1 dark:border-emerald-900/60 dark:bg-emerald-950/30">
+              <div
+                className={cn(
+                  'absolute inset-y-1 left-1 w-[calc(50%-0.5rem)] rounded-full bg-emerald-600 shadow-sm transition-transform duration-200 ease-out',
+                  inputMode === 'import' && 'translate-x-[calc(100%+0.5rem)]'
+                )}
+              />
+              <button
+                type="button"
+                onClick={() => setInputMode('manual')}
+                className={cn(
+                  'relative z-10 inline-flex items-center justify-center gap-2 rounded-full px-3 text-sm font-semibold transition-colors',
+                  inputMode === 'manual'
+                    ? 'text-white'
+                    : 'text-emerald-900 hover:text-emerald-950 dark:text-emerald-200'
+                )}
+              >
+                <Plus size={16} />
+                Individual
+              </button>
+              <button
+                type="button"
+                onClick={() => setInputMode('import')}
+                className={cn(
+                  'relative z-10 inline-flex items-center justify-center gap-2 rounded-md px-3 text-sm font-semibold transition-colors',
+                  inputMode === 'import'
+                    ? 'text-white'
+                    : 'text-emerald-900 hover:text-emerald-950 dark:text-emerald-200'
+                )}
+              >
+                <Upload size={16} />
+                Import
+              </button>
+            </div>
+            <div className="space-y-1">
+              <h2 className="text-lg font-semibold">
+                {inputMode === 'manual' ? 'Input individual' : 'Import otomatis'}
+              </h2>
+            </div>
+          </div>
         </div>
 
-        {inputMode === 'manual' ? (
-          <FieldGroup className="grid gap-4 md:grid-cols-3">
-            <Field>
-              <FieldLabel>Nama</FieldLabel>
-              <Input
-                value={manualNama}
-                onChange={(event) => setManualNama(event.target.value)}
-                placeholder="Nama praktikan"
-              />
-            </Field>
-            <Field>
-              <FieldLabel>Kelas</FieldLabel>
-              <Input
-                value={manualKelas}
-                onChange={(event) => setManualKelas(event.target.value)}
-                placeholder="IF-GABREM"
-              />
-            </Field>
-            <Field>
-              <FieldLabel>Kode Asprak</FieldLabel>
-              <Input
-                value={manualKodeAsprak}
-                onChange={(event) => setManualKodeAsprak(event.target.value)}
-                placeholder="AFF"
-              />
-            </Field>
-            <Button onClick={handleManualSubmit} className="md:col-span-3 md:w-fit">
-              <Save size={16} />
-              Tambahkan
-            </Button>
-          </FieldGroup>
-        ) : (
-          <FieldGroup className="gap-4">
-            <div className="grid gap-4 lg:grid-cols-[minmax(220px,320px)_1fr]">
+        <div className="p-5">
+          {inputMode === 'manual' ? (
+            <FieldGroup className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
               <Field>
-                <FieldLabel>Kelas Default</FieldLabel>
+                <FieldLabel>Nama</FieldLabel>
                 <Input
-                  value={defaultKelas}
-                  onChange={(event) => setDefaultKelas(event.target.value)}
-                  placeholder="Dipakai untuk format tanpa kolom kelas"
+                  value={manualNama}
+                  onChange={(event) => setManualNama(event.target.value)}
+                  placeholder="Nama praktikan"
+                  className="h-11"
                 />
-                <FieldDescription>
-                  Format dua kolom akan memakai kelas default ini. Kode kosong diisi dari kode
-                  asprak sebelumnya.
-                </FieldDescription>
               </Field>
               <Field>
-                <FieldLabel>Paste dari Excel / CSV</FieldLabel>
-                <textarea
-                  value={pasteValue}
-                  onChange={(event) => setPasteValue(event.target.value)}
-                  placeholder={'Nama\tKode Asprak\nAQIL MUJAHID\tRGG\nRAJA ASYRAF\t'}
-                  className="min-h-36 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm outline-none transition-[color,box-shadow] placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                <FieldLabel>Kelas</FieldLabel>
+                <Input
+                  value={manualKelas}
+                  onChange={(event) => setManualKelas(event.target.value)}
+                  placeholder="IF-GABREM"
+                  className="h-11"
                 />
-                <FieldDescription>
-                  Sistem mendeteksi header `NIM/Kelas/ASPRAK` atau format dua kolom secara otomatis.
-                </FieldDescription>
               </Field>
-            </div>
-            <div className="flex flex-col gap-3 md:flex-row md:items-end">
-              <Button variant="outline" onClick={handlePastePreview}>
-                <FileSpreadsheet size={16} />
-                Preview Paste
+              <Field>
+                <FieldLabel>Mata Kuliah</FieldLabel>
+                <Input
+                  value={manualMataKuliah}
+                  onChange={(event) => setManualMataKuliah(event.target.value)}
+                  placeholder="ALPRO"
+                  className="h-11"
+                />
+              </Field>
+              <Field>
+                <FieldLabel>Kode Asprak</FieldLabel>
+                <Input
+                  value={manualKodeAsprak}
+                  onChange={(event) => setManualKodeAsprak(event.target.value)}
+                  placeholder="AFF"
+                  className="h-11"
+                />
+              </Field>
+              <Button
+                onClick={handleManualSubmit}
+                disabled={saving}
+                className="bg-emerald-600 hover:bg-emerald-700 md:col-span-2 xl:col-span-4 xl:w-fit"
+              >
+                <Save size={16} />
+                {saving ? 'Menyimpan...' : 'Tambahkan'}
               </Button>
-              <Field className="md:max-w-sm">
-                <FieldLabel>Upload File</FieldLabel>
-                <Input accept=".csv,.xlsx,.xls" type="file" onChange={handleFileChange} />
-                {fileName && (
+            </FieldGroup>
+          ) : (
+            <FieldGroup className="gap-5">
+              <div className="grid gap-5 xl:grid-cols-[360px_1fr]">
+                <div className="space-y-4 rounded-xl border bg-muted/20 p-4">
+                  <Field>
+                    <FieldLabel>Kelas Default</FieldLabel>
+                    <Input
+                      value={defaultKelas}
+                      onChange={(event) => setDefaultKelas(event.target.value)}
+                      placeholder="Dipakai untuk format tanpa kolom kelas"
+                      className="h-11 bg-background"
+                    />
+                  </Field>
+                  <Field>
+                    <FieldLabel>Mata Kuliah Default</FieldLabel>
+                    <Input
+                      value={defaultMataKuliah}
+                      onChange={(event) => setDefaultMataKuliah(event.target.value)}
+                      placeholder="Dipakai jika kolom mata kuliah tidak ada"
+                      className="h-11 bg-background"
+                    />
+                    <FieldDescription>
+                      Format dua kolom memakai nilai default ini. Kode kosong diisi dari kode asprak
+                      sebelumnya.
+                    </FieldDescription>
+                  </Field>
+                </div>
+
+                <Field>
+                  <FieldLabel>Paste dari Excel / CSV</FieldLabel>
+                  <textarea
+                    value={pasteValue}
+                    onChange={(event) => setPasteValue(event.target.value)}
+                    placeholder={'Nama\tKode Asprak\nAQIL MUJAHID\tRGG\nRAJA ASYRAF\t'}
+                    className="min-h-48 w-full resize-y rounded-xl border border-input bg-background px-4 py-3 font-mono text-sm outline-none transition-[color,box-shadow] placeholder:text-muted-foreground focus-visible:border-emerald-500 focus-visible:ring-[3px] focus-visible:ring-emerald-500/20"
+                  />
                   <FieldDescription>
-                    File aktif: <span className="font-medium text-foreground">{fileName}</span>
+                    Header `NIM/Kelas/ASPRAK` dan format dua kolom dideteksi otomatis.
                   </FieldDescription>
-                )}
-              </Field>
-            </div>
-          </FieldGroup>
-        )}
+                </Field>
+              </div>
+
+              <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end">
+                <label
+                  htmlFor="praktikan-file-upload"
+                  className="group flex cursor-pointer flex-col gap-3 rounded-xl border border-dashed border-emerald-300 bg-emerald-50/50 p-5 transition hover:border-emerald-500 hover:bg-emerald-50 dark:border-emerald-900/70 dark:bg-emerald-950/20 dark:hover:bg-emerald-950/30"
+                >
+                  <input
+                    id="praktikan-file-upload"
+                    accept=".csv,.xlsx,.xls"
+                    type="file"
+                    onChange={handleFileChange}
+                    className="sr-only"
+                  />
+                  <span className="flex items-center gap-3">
+                    <span className="grid size-10 place-items-center rounded-full bg-emerald-600 text-white shadow-sm transition group-hover:scale-105">
+                      <Upload size={18} />
+                    </span>
+                    <span>
+                      <span className="block text-sm font-semibold">Upload CSV atau Excel</span>
+                      <span className="block text-sm text-muted-foreground">
+                        Klik area ini untuk memilih file `.csv`, `.xlsx`, atau `.xls`.
+                      </span>
+                    </span>
+                  </span>
+                  {fileName && (
+                    <span className="w-fit rounded-full bg-background px-3 py-1 text-xs font-medium text-emerald-700 shadow-sm dark:text-emerald-300">
+                      File aktif: {fileName}
+                    </span>
+                  )}
+                </label>
+
+                <Button variant="outline" onClick={handlePastePreview} className="h-11">
+                  <FileSpreadsheet size={16} />
+                  Preview Paste
+                </Button>
+              </div>
+            </FieldGroup>
+          )}
+        </div>
       </section>
 
-      <section>
-        <div className="min-w-0 rounded-lg border bg-background">
-          <div className="flex flex-col gap-3 border-b p-4 md:flex-row md:items-center md:justify-between">
-            <div>
-              <h2 className="font-semibold">Preview Import</h2>
+      <section className="overflow-hidden rounded-2xl border bg-background shadow-sm">
+        <div className="flex flex-col gap-3 border-b bg-muted/20 p-5 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h2 className="font-semibold">Preview Import</h2>
+            <p className="text-sm text-muted-foreground">
+              Edit, pilih, dan validasi baris sebelum dikirim ke database.
+            </p>
+          </div>
+          <Button
+            onClick={handleAddPreviewRows}
+            disabled={parsing || saving || selectedPreviewRows === 0}
+            className="w-full bg-emerald-600 hover:bg-emerald-700 md:w-auto"
+          >
+            <Check size={16} />
+            {saving ? 'Menyimpan...' : `Tambahkan ${selectedPreviewRows || ''}`}
+          </Button>
+        </div>
+        <div className="max-h-[640px] overflow-auto p-5">
+          {previewRows.length === 0 ? (
+            <div className="flex min-h-64 flex-col items-center justify-center rounded-xl border border-dashed bg-muted/20 text-center">
+              <ClipboardList className="mb-3 text-emerald-600" size={38} />
+              <p className="font-medium">{parsing ? 'Membaca file...' : 'Belum ada preview'}</p>
               <p className="text-sm text-muted-foreground">
-                Edit baris sebelum ditambahkan ke daftar lokal.
+                Paste data atau upload CSV/Excel untuk mulai validasi.
               </p>
             </div>
-            <Button
-              onClick={handleAddPreviewRows}
-              disabled={parsing || selectedPreviewRows === 0}
-              className="w-full md:w-auto"
-            >
-              <Check size={16} />
-              Tambahkan {selectedPreviewRows || ''}
-            </Button>
-          </div>
-          <div className="max-h-[640px] overflow-auto p-4">
-            {previewRows.length === 0 ? (
-              <div className="flex min-h-64 flex-col items-center justify-center rounded-md border border-dashed text-center">
-                <FileSpreadsheet className="mb-3 text-muted-foreground" size={36} />
-                <p className="font-medium">{parsing ? 'Membaca file...' : 'Belum ada preview'}</p>
-                <p className="text-sm text-muted-foreground">
-                  Paste data atau upload CSV/Excel untuk mulai validasi.
-                </p>
-              </div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-12">Pilih</TableHead>
-                    <TableHead>Nama</TableHead>
-                    <TableHead>Kelas</TableHead>
-                    <TableHead>Kode</TableHead>
-                    <TableHead>Status</TableHead>
+          ) : (
+            <Table>
+              <TableHeader className="sticky top-0 z-10 bg-background">
+                <TableRow>
+                  <TableHead className="w-12">Pilih</TableHead>
+                  <TableHead>Nama</TableHead>
+                  <TableHead>Kelas</TableHead>
+                  <TableHead>Mata Kuliah</TableHead>
+                  <TableHead>Kode</TableHead>
+                  <TableHead>Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {previewRows.map((row) => (
+                  <TableRow key={row.id}>
+                    <TableCell>
+                      <Checkbox
+                        checked={row.selected}
+                        disabled={row.status === 'error'}
+                        onCheckedChange={() => handleTogglePreview(row.id)}
+                        className="data-[state=checked]:border-emerald-600 data-[state=checked]:bg-emerald-600"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        value={row.nama}
+                        onChange={(event) => handlePreviewEdit(row.id, 'nama', event.target.value)}
+                        className="min-w-56"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        value={row.kelas}
+                        onChange={(event) => handlePreviewEdit(row.id, 'kelas', event.target.value)}
+                        className="min-w-32"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        value={row.mata_kuliah}
+                        onChange={(event) =>
+                          handlePreviewEdit(row.id, 'mata_kuliah', event.target.value)
+                        }
+                        className="min-w-32"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        value={row.kode_asprak ?? ''}
+                        onChange={(event) =>
+                          handlePreviewEdit(row.id, 'kode_asprak', event.target.value)
+                        }
+                        className="min-w-24"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={row.status === 'ok' ? 'secondary' : 'outline'}
+                        className={cn(
+                          row.status === 'ok' &&
+                            'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300',
+                          row.status !== 'ok' && 'border-amber-500 text-amber-600'
+                        )}
+                      >
+                        {row.note}
+                      </Badge>
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {previewRows.map((row) => (
-                    <TableRow key={row.id}>
-                      <TableCell>
-                        <input
-                          type="checkbox"
-                          checked={row.selected}
-                          disabled={row.status === 'error'}
-                          onChange={() => handleTogglePreview(row.id)}
-                          className="size-4"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Input
-                          value={row.nama}
-                          onChange={(event) =>
-                            handlePreviewEdit(row.id, 'nama', event.target.value)
-                          }
-                          className="min-w-56"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Input
-                          value={row.kelas}
-                          onChange={(event) =>
-                            handlePreviewEdit(row.id, 'kelas', event.target.value)
-                          }
-                          className="min-w-32"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Input
-                          value={row.kode_asprak}
-                          onChange={(event) =>
-                            handlePreviewEdit(row.id, 'kode_asprak', event.target.value)
-                          }
-                          className="min-w-24"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={row.status === 'ok' ? 'secondary' : 'outline'}
-                          className={cn(row.status !== 'ok' && 'border-amber-500 text-amber-600')}
-                        >
-                          {row.note}
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </div>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </div>
       </section>
     </div>
