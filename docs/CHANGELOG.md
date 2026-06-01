@@ -1,3 +1,12 @@
+# [1.3.0](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/compare/v1.2.2...v1.3.0) (2026-06-01)
+
+
+### Features
+
+* add new praktikan service ([dd8e09c](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/commit/dd8e09c14f14538c65dac608582a9714f17207af))
+* add praktikan management page (ui) ([8463d18](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/commit/8463d18ec69250ec876e9a122c877b44781d13b3))
+* add sql function and apikey protected endpoint ([3046f0a](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/commit/3046f0ad7adc11482bc8c28c68c4d16bb3f8cb83))
+
 ## [1.2.2](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/compare/v1.2.1...v1.2.2) (2026-05-02)
 
 
