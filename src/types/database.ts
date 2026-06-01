@@ -128,3 +128,10 @@ export type JadwalJaga = {
   asprak?: Pick<Asprak, 'nama_lengkap' | 'nim' | 'kode' | 'role'>;
 };
 
+export type Praktikan = {
+  id: string;
+  nama: string;
+  kode_asprak: string;
+  kelas: string;
+  mata_kuliah: string;
+};

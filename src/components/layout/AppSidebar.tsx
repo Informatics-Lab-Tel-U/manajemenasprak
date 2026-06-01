@@ -15,6 +15,7 @@ import {
   Notebook,
   Logs,
   Shield,
+  UserRoundCheck,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -58,6 +59,15 @@ type NavItem = {
 const ALL_NAV_ITEMS: NavItem[] = [
   { label: 'Overview', href: '/', icon: Home },
   { label: 'Data Praktikum', href: '/praktikum', icon: BookOpen },
+  {
+    label: 'Data Praktikan',
+    href: '#',
+    icon: UserRoundCheck,
+    items: [
+      { label: 'Input Data', href: '/data-praktikan/input' },
+      { label: 'Lihat Data', href: '/data-praktikan/view' },
+    ],
+  },
   { label: 'Mata Kuliah', href: '/mata-kuliah', icon: BookOpen },
   {
     label: 'Data Asisten Praktikum',

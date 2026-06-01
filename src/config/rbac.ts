@@ -25,6 +25,7 @@ export const ROLE_ALLOWED_PATHS: Record<Role, string[]> = {
   ADMIN: [
     '/',
     '/praktikum',
+    '/data-praktikan',
     '/mata-kuliah',
     '/asprak',
     '/plotting',
@@ -41,6 +42,7 @@ export const ROLE_ALLOWED_PATHS: Record<Role, string[]> = {
   ASLAB: [
     '/',
     '/praktikum',
+    '/data-praktikan',
     '/mata-kuliah',
     '/asprak',
     '/plotting',
