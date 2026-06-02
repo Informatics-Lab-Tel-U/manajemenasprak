@@ -1,6 +1,7 @@
 import { getStats } from '@/services/databaseService';
 import {
-  getTodaySchedule,
+  getJadwalByTerm,
+  getJadwalPengganti,
   getCachedAvailableTerms as fetchAvailableTerms,
 } from '@/services/jadwalService';
 import { getModulScheduleByTerm } from '@/services/modulScheduleService';
@@ -21,21 +22,23 @@ export default async function Home() {
   const nowWib = new Date(nowUtc.getTime() + 7 * 60 * 60 * 1000);
   const todayStr = nowWib.toISOString().split('T')[0];
   
-  const [initialStats, initialSchedule, initialModuls] = await Promise.all([
-    getStats(latestTerm),
-    getTodaySchedule(100, latestTerm),
-    getModulScheduleByTerm(latestTerm),
-  ]);
-
+  const initialModuls = await getModulScheduleByTerm(latestTerm);
   const activeModul = initialModuls
     .filter(m => m.tanggal_mulai && m.tanggal_mulai <= todayStr)
     .sort((a, b) => b.modul - a.modul)[0]?.modul || 1;
+
+  const [initialStats, initialJadwal, initialPengganti] = await Promise.all([
+    getStats(latestTerm),
+    getJadwalByTerm(latestTerm),
+    getJadwalPengganti(activeModul),
+  ]);
 
   return (
     <div className="container">
       <DashboardClient
         initialStats={initialStats}
-        initialSchedule={initialSchedule}
+        initialJadwal={initialJadwal}
+        initialPengganti={initialPengganti}
         initialTerms={initialTerms}
         activeModul={activeModul}
         userRole={user.pengguna.role}
