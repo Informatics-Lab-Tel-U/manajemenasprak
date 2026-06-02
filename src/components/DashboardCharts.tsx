@@ -17,7 +17,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { Jadwal } from '@/types/database';
+import { Jadwal, JadwalPengganti } from '@/types/database';
 import { ROOMS } from '@/constants';
 import { ScheduleCell } from '@/components/jadwal/ScheduleCell';
 import React, { useMemo } from 'react';
@@ -28,7 +28,8 @@ import { getJagaShiftsByDay } from '@/utils/jagaUtils';
 export default function DashboardCharts({
   asprakByAngkatan,
   jadwalByDay,
-  todaySchedule,
+  rawJadwal,
+  jadwalPengganti,
   loading,
   term,
   activeModul,
@@ -36,7 +37,8 @@ export default function DashboardCharts({
 }: {
   asprakByAngkatan: { name: string; count: number }[];
   jadwalByDay: { name: string; count: number }[];
-  todaySchedule: Jadwal[];
+  rawJadwal: Jadwal[];
+  jadwalPengganti: JadwalPengganti[];
   loading: boolean;
   term: string;
   activeModul: number;
@@ -87,13 +89,16 @@ export default function DashboardCharts({
       ? currentDayNameRaw
       : 'SENIN';
 
-  // Use the unified useScheduleData hook for today's schedule
+  // Use the unified useScheduleData hook — same logic as JadwalClientPage
+  // Apply pengganti overlay for the active modul before filtering to today
   const {
     processedJadwalList,
     scheduleMatrix: fullMatrix,
     dynamicSessionsByDay,
   } = useScheduleData({
-    rawJadwalList: todaySchedule,
+    rawJadwalList: rawJadwal,
+    jadwalPengganti: jadwalPengganti,
+    selectedModul: `Modul ${activeModul}`,
     filterDay: currentDayName,
     programType,
   });

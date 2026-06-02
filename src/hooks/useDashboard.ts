@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Jadwal } from '@/types/database';
+import { Jadwal, JadwalPengganti } from '@/types/database';
 import * as jadwalFetcher from '@/lib/fetchers/jadwalFetcher';
 import type { DashboardStats } from '@/services/databaseService';
 
@@ -10,7 +10,8 @@ export interface UseDashboardResult {
   selectedTerm: string;
   setSelectedTerm: (term: string) => void;
   stats: DashboardStats;
-  todaySchedule: Jadwal[];
+  rawJadwal: Jadwal[];
+  jadwalPengganti: JadwalPengganti[];
   loading: boolean;
   error: Error | null;
 }
@@ -18,11 +19,14 @@ export interface UseDashboardResult {
 export function useDashboard(
   initialTerms: string[],
   initialStats: DashboardStats,
-  initialSchedule: Jadwal[]
+  initialJadwal: Jadwal[],
+  initialPengganti: JadwalPengganti[],
+  activeModul: number
 ): UseDashboardResult {
   // initialTerms is already sorted descending by fetchAvailableTerms (latest first)
   const [terms] = useState<string[]>(initialTerms);
-  const [todaySchedule, setTodaySchedule] = useState<Jadwal[]>(initialSchedule);
+  const [rawJadwal, setRawJadwal] = useState<Jadwal[]>(initialJadwal);
+  const [jadwalPengganti, setJadwalPengganti] = useState<JadwalPengganti[]>(initialPengganti);
   // Use initialTerms[0] which is guaranteed to be the latest term
   const [selectedTerm, setSelectedTerm] = useState(initialTerms[0] || '');
   const [stats, setStats] = useState<DashboardStats>(initialStats);
@@ -38,13 +42,18 @@ export function useDashboard(
 
     setLoading(true);
     try {
-      const [scheduleResult, statsRes] = await Promise.all([
-        jadwalFetcher.fetchTodaySchedule(100, term),
+      const [jadwalResult, penggantiResult, statsRes] = await Promise.all([
+        jadwalFetcher.fetchJadwalByTerm(term),
+        jadwalFetcher.fetchJadwalPengganti(activeModul),
         fetch(`/api/stats?term=${encodeURIComponent(term)}`),
       ]);
 
-      if (scheduleResult.ok && scheduleResult.data) {
-        setTodaySchedule(scheduleResult.data);
+      if (jadwalResult.ok && jadwalResult.data) {
+        setRawJadwal(jadwalResult.data);
+      }
+
+      if (penggantiResult.ok && penggantiResult.data) {
+        setJadwalPengganti(penggantiResult.data);
       }
 
       const statsJson = await statsRes.json();
@@ -60,7 +69,7 @@ export function useDashboard(
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [activeModul]);
 
   useEffect(() => {
     if (!hasMounted) {
@@ -77,7 +86,8 @@ export function useDashboard(
     selectedTerm,
     setSelectedTerm,
     stats,
-    todaySchedule,
+    rawJadwal,
+    jadwalPengganti,
     loading,
     error,
   };

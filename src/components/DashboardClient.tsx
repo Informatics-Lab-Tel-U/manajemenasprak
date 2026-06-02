@@ -13,13 +13,18 @@ import {
 } from '@/components/ui/select';
 import { SelectGroup } from '@radix-ui/react-select';
 import type { DashboardStats } from '@/services/databaseService';
-import { Jadwal } from '@/types/database';
+import { Jadwal, JadwalPengganti } from '@/types/database';
 import { useDashboard } from '@/hooks/useDashboard';
 import { Skeleton } from './ui/skeleton';
+import { useScheduleData } from '@/hooks/useScheduleData';
+import React from 'react';
+import { format } from 'date-fns';
+import { id } from 'date-fns/locale';
 
 interface DashboardClientProps {
   initialStats: DashboardStats;
-  initialSchedule: Jadwal[];
+  initialJadwal: Jadwal[];
+  initialPengganti: JadwalPengganti[];
   initialTerms: string[];
   activeModul: number;
   userRole?: string;
@@ -27,16 +32,29 @@ interface DashboardClientProps {
 
 export default function DashboardClient({
   initialStats,
-  initialSchedule,
+  initialJadwal,
+  initialPengganti,
   initialTerms,
   activeModul,
   userRole,
 }: DashboardClientProps) {
-  const { terms, selectedTerm, setSelectedTerm, stats, todaySchedule, loading } = useDashboard(
-    initialTerms,
-    initialStats,
-    initialSchedule
-  );
+  const { terms, selectedTerm, setSelectedTerm, stats, rawJadwal, jadwalPengganti, loading } =
+    useDashboard(initialTerms, initialStats, initialJadwal, initialPengganti, activeModul);
+
+  // Derive today's day name (WIB)
+  const todayDate = new Date();
+  const currentDayNameRaw = format(todayDate, 'EEEE', { locale: id }).toUpperCase();
+  const validDays = ['SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU', 'MINGGU'];
+  const currentDayName = validDays.includes(currentDayNameRaw) ? currentDayNameRaw : 'SENIN';
+
+  // Build "today's effective schedule" using the same hook as JadwalClientPage
+  // Filter to today's day, apply pengganti overlay, then count unique visible classes
+  const { processedJadwalList } = useScheduleData({
+    rawJadwalList: rawJadwal,
+    jadwalPengganti: jadwalPengganti,
+    selectedModul: `Modul ${activeModul}`,
+    filterDay: currentDayName,
+  });
 
   return (
     <>
@@ -100,7 +118,7 @@ export default function DashboardClient({
 
         <StatCard
           title="Jadwal Hari Ini"
-          value={todaySchedule.length}
+          value={processedJadwalList.length}
           subtitle="Sesi hari ini"
           icon={Calendar}
           color="green"
@@ -112,7 +130,8 @@ export default function DashboardClient({
         <DashboardCharts
           asprakByAngkatan={stats.asprakByAngkatan}
           jadwalByDay={stats.jadwalByDay}
-          todaySchedule={todaySchedule}
+          rawJadwal={rawJadwal}
+          jadwalPengganti={jadwalPengganti}
           loading={loading}
           term={selectedTerm}
           activeModul={activeModul}
