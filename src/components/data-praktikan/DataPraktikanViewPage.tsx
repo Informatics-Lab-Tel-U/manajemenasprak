@@ -95,21 +95,37 @@ export default function DataPraktikanViewPage() {
 
   const fetchOptions = useCallback(async () => {
     try {
-      const response = await fetch('/api/praktikan?action=options');
-      const result = await response.json();
+      const mataKuliahResponse = await fetch('/api/praktikan/mata-kuliah');
+      const mataKuliahResult = await mataKuliahResponse.json();
 
-      if (!response.ok || !result.ok) {
-        throw new Error(result.error || 'Gagal mengambil opsi data praktikan.');
+      if (!mataKuliahResponse.ok || !mataKuliahResult.ok) {
+        throw new Error(mataKuliahResult.error || 'Gagal mengambil opsi mata kuliah.');
+      }
+
+      let kelas: string[] = [];
+      if (mataKuliahFilter.trim()) {
+        const params = new URLSearchParams({ mata_kuliah: mataKuliahFilter.trim() });
+        const kelasResponse = await fetch(`/api/praktikan/kelas?${params.toString()}`);
+        const kelasResult = await kelasResponse.json();
+
+        if (!kelasResponse.ok || !kelasResult.ok) {
+          throw new Error(kelasResult.error || 'Gagal mengambil opsi kelas.');
+        }
+
+        kelas = kelasResult.data ?? [];
       }
 
       setOptions({
-        kelas: result.data?.kelas ?? [],
-        mata_kuliah: result.data?.mata_kuliah ?? [],
+        kelas,
+        mata_kuliah: mataKuliahResult.data ?? [],
       });
+
+      if (kelasFilter && !kelas.includes(kelasFilter)) setKelasFilter('');
+      if (kelasToDelete && !kelas.includes(kelasToDelete)) setKelasToDelete('');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Gagal mengambil opsi data praktikan.');
     }
-  }, []);
+  }, [kelasFilter, kelasToDelete, mataKuliahFilter]);
 
   useEffect(() => {
     fetchRows();
@@ -132,6 +148,11 @@ export default function DataPraktikanViewPage() {
     const uniqueKelas = new Set(rows.map((row) => row.kelas).filter(Boolean)).size;
     return { total: rows.length, uniqueAsprak, uniqueKelas };
   }, [rows]);
+
+  const kelasDeleteOptions = useMemo(
+    () => Array.from(new Set(rows.map((row) => row.kelas).filter(Boolean))).sort(),
+    [rows]
+  );
 
   const handleDeletePerson = async () => {
     if (!personToDelete) return;
@@ -300,22 +321,6 @@ export default function DataPraktikanViewPage() {
               className="h-11 bg-background xl:min-w-[320px] xl:flex-1"
             />
             <Select
-              value={kelasFilter || ALL_KELAS_VALUE}
-              onValueChange={(value) => setKelasFilter(value === ALL_KELAS_VALUE ? '' : value)}
-            >
-              <SelectTrigger className="h-11 bg-background xl:w-[190px]">
-                <SelectValue placeholder="Semua kelas" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={ALL_KELAS_VALUE}>Semua kelas</SelectItem>
-                {options.kelas.map((kelas) => (
-                  <SelectItem key={kelas} value={kelas}>
-                    {kelas}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select
               value={mataKuliahFilter || ALL_MATA_KULIAH_VALUE}
               onValueChange={(value) =>
                 setMataKuliahFilter(value === ALL_MATA_KULIAH_VALUE ? '' : value)
@@ -329,6 +334,25 @@ export default function DataPraktikanViewPage() {
                 {options.mata_kuliah.map((mataKuliah) => (
                   <SelectItem key={mataKuliah} value={mataKuliah}>
                     {mataKuliah}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select
+              value={kelasFilter || ALL_KELAS_VALUE}
+              onValueChange={(value) => setKelasFilter(value === ALL_KELAS_VALUE ? '' : value)}
+              disabled={!mataKuliahFilter}
+            >
+              <SelectTrigger className="h-11 bg-background xl:w-[190px]">
+                <SelectValue
+                  placeholder={mataKuliahFilter ? 'Semua kelas' : 'Pilih mata kuliah'}
+                />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ALL_KELAS_VALUE}>Semua kelas</SelectItem>
+                {options.kelas.map((kelas) => (
+                  <SelectItem key={kelas} value={kelas}>
+                    {kelas}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -351,7 +375,7 @@ export default function DataPraktikanViewPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value={NO_DELETE_VALUE}>Bulk delete kelas</SelectItem>
-                {options.kelas.map((kelas) => (
+                {kelasDeleteOptions.map((kelas) => (
                   <SelectItem key={kelas} value={kelas}>
                     {kelas}
                   </SelectItem>
