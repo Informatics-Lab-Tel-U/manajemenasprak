@@ -66,6 +66,24 @@ function normalizeOptional(value: unknown) {
   return normalized || null;
 }
 
+function getMataKuliahSearchAliases(value: unknown) {
+  const normalized = normalizeRequired(value, 'mata_kuliah');
+  const aliases = [
+    normalized,
+    normalized.replace(/[\s_]+/g, '-'),
+    normalized.replace(/[-_]+/g, ' '),
+    normalized.replace(/[\s_-]+/g, ''),
+  ];
+
+  return Array.from(new Set(aliases.filter(Boolean)));
+}
+
+function buildMataKuliahLikeFilter(value: unknown) {
+  return getMataKuliahSearchAliases(value)
+    .map((alias) => `mata_kuliah.ilike.%${alias}%`)
+    .join(',');
+}
+
 function normalizeCreateInput(input: CreatePraktikanInput) {
   return {
     nama: normalizeRequired(input.nama, 'nama'),
@@ -115,7 +133,7 @@ export async function getPraktikanList(
   }
 
   if (filters.mata_kuliah) {
-    query = query.eq('mata_kuliah', filters.mata_kuliah.trim().toUpperCase());
+    query = query.or(buildMataKuliahLikeFilter(filters.mata_kuliah));
   }
 
   const { data, error } = await query;
@@ -126,6 +144,74 @@ export async function getPraktikanList(
   }
 
   return (data ?? []) as PraktikanRecord[];
+}
+
+export function getActiveTahunAjaran(date = new Date()) {
+  const year = date.getFullYear();
+  const month = date.getMonth();
+  const startsCurrentYear = month >= 6;
+  const start = startsCurrentYear ? year : year - 1;
+  const end = startsCurrentYear ? year + 1 : year;
+  const startYear = String(start).slice(-2).padStart(2, '0');
+  const endYear = String(end).slice(-2).padStart(2, '0');
+  const semester = month >= 1 && month <= 5 ? '2' : '1';
+
+  return `${startYear}${endYear}-${semester}`;
+}
+
+export async function getActivePraktikumMataKuliahOptions(
+  supabaseClient?: SupabaseClient
+): Promise<string[]> {
+  const supabase = getClient(supabaseClient);
+  const activeTahunAjaran = getActiveTahunAjaran();
+
+  const { data, error } = await supabase
+    .from('praktikum')
+    .select('nama')
+    .ilike('tahun_ajaran', `%${activeTahunAjaran}%`)
+    .order('nama', { ascending: true });
+
+  if (error) {
+    logger.error(`Error fetching praktikum mata kuliah for ${activeTahunAjaran}:`, error);
+    throw new Error(`Gagal mengambil mata kuliah praktikum: ${error.message}`);
+  }
+
+  const seen = new Set<string>();
+  return (data ?? [])
+    .map((row: { nama?: string | null }) => String(row.nama ?? '').trim().toUpperCase())
+    .filter((nama) => {
+      if (!nama || seen.has(nama)) return false;
+      seen.add(nama);
+      return true;
+    });
+}
+
+export async function getPraktikanKelasByMataKuliah(
+  mataKuliah: string | null | undefined,
+  supabaseClient?: SupabaseClient
+): Promise<string[]> {
+  const supabase = getClient(supabaseClient);
+  const normalizedMataKuliah = normalizeRequired(mataKuliah, 'mata_kuliah');
+
+  const { data, error } = await supabase
+    .from('praktikan')
+    .select('kelas')
+    .or(buildMataKuliahLikeFilter(normalizedMataKuliah))
+    .order('kelas', { ascending: true });
+
+  if (error) {
+    logger.error(`Error fetching praktikan kelas for ${normalizedMataKuliah}:`, error);
+    throw new Error(`Gagal mengambil kelas praktikan: ${error.message}`);
+  }
+
+  const seen = new Set<string>();
+  return (data ?? [])
+    .map((row: { kelas?: string | null }) => String(row.kelas ?? '').trim().toUpperCase())
+    .filter((kelas) => {
+      if (!kelas || seen.has(kelas)) return false;
+      seen.add(kelas);
+      return true;
+    });
 }
 
 export async function getPraktikanOptions(

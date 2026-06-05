@@ -70,7 +70,9 @@ export async function updateSession(request: NextRequest) {
     // Allow external API-key flow for praktikan GET/OPTIONS.
     // Route-level handler still enforces API key or session role.
     if (
-      (pathname === '/api/praktikan' || pathname === '/api/praktikan/') &&
+      (pathname === '/api/praktikan' ||
+        pathname === '/api/praktikan/' ||
+        pathname.startsWith('/api/praktikan/')) &&
       (request.method === 'GET' || request.method === 'OPTIONS')
     ) {
       return supabaseResponse;
