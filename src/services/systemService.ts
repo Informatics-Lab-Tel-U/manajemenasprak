@@ -1,24 +1,18 @@
 import 'server-only';
-import { createAdminClient } from '@/lib/supabase/admin';
+import { createClient } from '@/lib/supabase/server';
 import { logger } from '@/lib/logger';
 
-const globalAdmin = createAdminClient();
-
-/**
- * Fetch maintenance mode status from system_config table.
- */
 export async function getMaintenanceStatus(): Promise<boolean> {
   try {
-    const { data, error } = await globalAdmin
+    const supabase = await createClient();
+    const { data, error } = await supabase
       .from('system_config')
       .select('value_bool')
       .eq('key', 'maintenance_mode')
       .single();
 
     if (error) {
-      // If table doesn't exist yet or other error, default to false
       if (error.code !== 'PGRST116') {
-        // PGRST116 is not found
         logger.error('Error fetching maintenance status:', error);
       }
       return false;
@@ -31,11 +25,9 @@ export async function getMaintenanceStatus(): Promise<boolean> {
   }
 }
 
-/**
- * Update maintenance mode status (Admin only).
- */
 export async function setMaintenanceStatus(active: boolean, userId: string): Promise<void> {
-  const { error } = await globalAdmin.from('system_config').upsert({
+  const supabase = await createClient();
+  const { error } = await supabase.from('system_config').upsert({
     key: 'maintenance_mode',
     value_bool: active,
     updated_at: new Date().toISOString(),

@@ -1,9 +1,8 @@
 import 'server-only';
 import { SupabaseClient } from '@supabase/supabase-js';
+import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { logger } from '@/lib/logger';
-
-const globalAdmin = createAdminClient();
 
 export interface DashboardStats {
   asprakCount: number;
@@ -17,9 +16,8 @@ export async function getStats(
   initialTerm?: string,
   supabaseClient?: SupabaseClient
 ): Promise<DashboardStats> {
-  const supabase = supabaseClient || globalAdmin;
+  const supabase = supabaseClient ?? await createClient();
 
-  // If no term provided, fetch the latest one dynamically
   if (!initialTerm) {
     const { data: termData } = await supabase
       .from('praktikum')
@@ -99,7 +97,7 @@ export async function getStats(
 }
 
 export async function clearAllData(supabaseClient?: SupabaseClient) {
-  const supabase = supabaseClient || globalAdmin;
+  const supabase = supabaseClient ?? createAdminClient();
   logger.info('Clearing all database data...');
 
   const tables = [

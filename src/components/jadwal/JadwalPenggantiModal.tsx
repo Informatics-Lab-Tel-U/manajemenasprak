@@ -46,7 +46,7 @@ export function JadwalPenggantiModal({
   const [selectedTerm, setSelectedTerm] = useState('');
   const [selectedPraktikum, setSelectedPraktikum] = useState('');
   // selectedMKId is kept in state but resolved automatically from the selected jadwal — not exposed in UI
-  const [selectedMKId, setSelectedMKId] = useState('');
+
   const [selectedJadwalId, setSelectedJadwalId] = useState('');
   const [modul, setModul] = useState<number>(1);
   const [tanggal, setTanggal] = useState('');
@@ -162,12 +162,6 @@ export function JadwalPenggantiModal({
     return allJadwal.find((j) => j.id === selectedJadwalId);
   }, [selectedJadwalId, allJadwal]);
 
-  // Auto-resolve MK from selected jadwal
-  useEffect(() => {
-    if (selectedJadwal) {
-      setSelectedMKId(selectedJadwal.id_mk ?? '');
-    }
-  }, [selectedJadwal]);
 
   // Pre-load data if editing or set defaults if adding
   useEffect(() => {
@@ -179,7 +173,6 @@ export function JadwalPenggantiModal({
 
         setSelectedTerm(term);
         setSelectedPraktikum(praktikumNama);
-        setSelectedMKId(j?.id_mk || '');
         setSelectedJadwalId(initialData.id_jadwal || '');
         setModul(initialData.modul);
         setTanggal(initialData.tanggal);
@@ -190,7 +183,6 @@ export function JadwalPenggantiModal({
       } else {
         setSelectedTerm(currentTerm || '');
         setSelectedPraktikum('');
-        setSelectedMKId('');
         setSelectedJadwalId('');
         setModul(1);
         setTanggal('');
@@ -326,7 +318,6 @@ export function JadwalPenggantiModal({
                   onValueChange={(v) => {
                     setSelectedTerm(v);
                     setSelectedPraktikum('');
-                    setSelectedMKId('');
                     setSelectedJadwalId('');
                   }}
                   disabled={!!initialData}
@@ -351,7 +342,6 @@ export function JadwalPenggantiModal({
                   value={selectedPraktikum}
                   onValueChange={(v) => {
                     setSelectedPraktikum(v);
-                    setSelectedMKId('');
                     setSelectedJadwalId('');
                   }}
                   disabled={!selectedTerm || !!initialData}

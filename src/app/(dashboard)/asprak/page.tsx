@@ -6,7 +6,6 @@ import {
   getExistingCodes,
   getCachedAllAsprak,
 } from '@/services/asprakService';
-import { getUniquePraktikumNames } from '@/services/praktikumService';
 import AsprakClientPage from './AsprakClientPage';
 import AsprakLoading from './loading';
 

@@ -12,7 +12,6 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Shield } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function RekapJagaClient({ initialTerms }: { initialTerms: string[] }) {
   const [selectedTerm, setSelectedTerm] = useState(initialTerms[0] || '');

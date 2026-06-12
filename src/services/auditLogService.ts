@@ -2,15 +2,11 @@ import 'server-only';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { AuditLogWithUser } from '@/types/database';
 
-const admin = createAdminClient();
-
-/**
- * Fetch audit logs with pagination and user details
- */
 export async function getAuditLogs(
   page: number = 1,
   pageSize: number = 10
 ): Promise<{ logs: AuditLogWithUser[]; count: number }> {
+  const admin = createAdminClient();
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
 
@@ -30,21 +26,24 @@ export async function getAuditLogs(
   };
 }
 
-/**
- * Create a new audit log entry
- */
-export async function createAuditLog(input: {
+export async function createAuditLog(params: {
   table_name: string;
-  record_id: string;
+  record_id: string | number;
   operation: 'INSERT' | 'UPDATE' | 'DELETE';
-  old_values?: any;
-  new_values?: any;
-  id_pengguna?: string;
-}) {
-  const { error } = await admin.from('audit_log').insert(input);
+  old_values?: Record<string, unknown>;
+  new_values?: Record<string, unknown>;
+}): Promise<void> {
+  const admin = createAdminClient();
+
+  const { error } = await admin.from('audit_log').insert({
+    table_name: params.table_name,
+    record_id: String(params.record_id),
+    operation: params.operation,
+    old_values: params.old_values ?? null,
+    new_values: params.new_values ?? null,
+  });
 
   if (error) {
     console.error('Failed to create audit log:', error);
-    // We don't throw here to avoid failing the main operation if logging fails
   }
 }

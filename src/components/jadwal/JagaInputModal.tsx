@@ -23,7 +23,6 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { createClient } from '@/lib/supabase/client';
 import { fetchAllAsprak } from '@/lib/fetchers/asprakFetcher';
 import { addJadwalJaga, bulkAddJadwalJaga, updateJadwalJaga } from '@/lib/fetchers/jagaFetcher';
 import { Asprak } from '@/types/database';
@@ -73,16 +72,8 @@ export default function JagaInputModal({
 
   const [canInput, setCanInput] = useState(true);
 
-  useEffect(() => {
-    if (isOpen) {
-      loadDependencies();
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen]);
-
-  const loadDependencies = async () => {
+  const loadDependencies = React.useCallback(async () => {
     setLoading(true);
-    const supabase = createClient();
     
     const allowed = canInputJagaForModul(selectedModul, konfigurasiModul, userRole);
     setCanInput(allowed);
@@ -98,22 +89,28 @@ export default function JagaInputModal({
     }
     
     setLoading(false);
-  };
+  }, [selectedModul, konfigurasiModul, userRole, term]);
 
   useEffect(() => {
-  if (isOpen) {
-    if (editData) {
-      setSelectedAsprakId(editData.id_asprak || '');
-      setSelectedHari(editData.hari || defaultDay);
-      setSelectedShift(editData.shift?.toString() || '');
-    } else {
-      setSelectedAsprakId('');
-      setSelectedHari(defaultDay);
-      setSelectedShift('');
+    if (isOpen) {
+      loadDependencies();
     }
-    loadDependencies();
-  }
-}, [isOpen, editData, defaultDay])
+  }, [isOpen, loadDependencies]);
+
+  useEffect(() => {
+    if (isOpen) {
+      if (editData) {
+        setSelectedAsprakId(editData.id_asprak || '');
+        setSelectedHari(editData.hari || defaultDay);
+        setSelectedShift(editData.shift?.toString() || '');
+      } else {
+        setSelectedAsprakId('');
+        setSelectedHari(defaultDay);
+        setSelectedShift('');
+      }
+      loadDependencies();
+    }
+  }, [isOpen, editData, defaultDay, loadDependencies]);
 
   const handleSubmit = async () => {
     if (!selectedAsprakId || !selectedHari || !selectedShift) {

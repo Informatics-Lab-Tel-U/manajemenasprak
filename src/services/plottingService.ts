@@ -1,10 +1,10 @@
 import 'server-only';
 import { SupabaseClient } from '@supabase/supabase-js';
-import { createAdminClient } from '@/lib/supabase/admin';
+import { createClient } from '@/lib/supabase/server';
 import { logger } from '@/lib/logger';
 
 export interface PlottingItem {
-  id: number; // Asprak_Praktikum ID
+  id: number;
   asprak: {
     id: string;
     kode: string;
@@ -23,9 +23,6 @@ export interface PlottingListResult {
   total: number;
 }
 
-// Admin Supabase client (bypasses RLS). This service is only used from API routes/server.
-const globalAdmin = createAdminClient();
-
 export async function getPlottingList(
   page: number,
   limit: number,
@@ -33,7 +30,7 @@ export async function getPlottingList(
   praktikumId?: string,
   supabaseClient?: SupabaseClient
 ): Promise<PlottingListResult> {
-  const supabase = supabaseClient || globalAdmin;
+  const supabase = supabaseClient ?? await createClient();
   const from = (page - 1) * limit;
   const to = from + limit - 1;
 
@@ -50,7 +47,6 @@ export async function getPlottingList(
     { count: 'exact' }
   );
 
-  // Apply filters
   if (term && term !== 'all') {
     query = query.eq('praktikum.tahun_ajaran', term);
   }
@@ -58,11 +54,6 @@ export async function getPlottingList(
   if (praktikumId && praktikumId !== 'all') {
     query = query.eq('id_praktikum', praktikumId);
   }
-
-  // Sort by Asprak Code then Praktikum Name
-  // Note: Sorting on joined columns can be tricky with Supabase JS client depending on version.
-  // Usually we sort on main table or joined table with specific syntax.
-  // For now let's just paginate. Sorting might be default or need special handling.
 
   query = query.range(from, to);
 
@@ -82,7 +73,7 @@ export async function getPlottingList(
 export interface ValidatePlottingRow {
   kode_asprak: string;
   mk_singkat: string;
-  selected_asprak_id?: string; // If user resolves ambiguity
+  selected_asprak_id?: string;
 }
 
 export interface ValidationResult {
@@ -101,11 +92,7 @@ export async function validatePlottingImport(
   term: string,
   supabaseClient?: SupabaseClient
 ): Promise<ValidationResult> {
-  const supabase = supabaseClient || globalAdmin;
-
-  // 1. Fetch ALL Aspraks and Praktikums for lookup to minimize queries
-  // Or fetch in batches. If rows are huge (1000+), fetching all codes might be better.
-  // Aspraks: We need to map code -> ID(s).
+  const supabase = supabaseClient ?? await createClient();
 
   const { data: allAspraks } = await supabase
     .from('asprak')
@@ -118,15 +105,14 @@ export async function validatePlottingImport(
     asprakMap.set(a.kode, existing);
   });
 
-  // Praktikums: Map name -> ID for the SPECIFIED term.
   const { data: termPraktikums } = await supabase
     .from('praktikum')
     .select('id, nama')
     .eq('tahun_ajaran', term);
 
-  const praktikumMap = new Map<string, string>(); // name -> id
+  const praktikumMap = new Map<string, string>();
   termPraktikums?.forEach((p) => {
-    praktikumMap.set(p.nama.toUpperCase(), p.id); // keys uppercase
+    praktikumMap.set(p.nama.toUpperCase(), p.id);
   });
 
   const praktikumIds = Array.from(praktikumMap.values());
@@ -152,7 +138,6 @@ export async function validatePlottingImport(
     const code = row.kode_asprak.trim();
     const mkName = row.mk_singkat.trim().toUpperCase();
 
-    // Check Praktikum
     const praktikumId = praktikumMap.get(mkName);
     if (!praktikumId) {
       result.invalidRows.push({
@@ -162,8 +147,6 @@ export async function validatePlottingImport(
       continue;
     }
 
-    // Check Asprak
-    // If user provided selected_asprak_id (manual resolution), valid.
     if (row.selected_asprak_id) {
       if (existingAssignments.has(`${row.selected_asprak_id}_${praktikumId}`)) {
         result.invalidRows.push({ original: row, reason: `Sudah terdaftar di Praktikum ini` });
@@ -177,7 +160,7 @@ export async function validatePlottingImport(
       continue;
     }
 
-    const candidates = asprakMap.get(code); // Returns array
+    const candidates = asprakMap.get(code);
 
     if (!candidates || candidates.length === 0) {
       result.invalidRows.push({ original: row, reason: `Asprak code '${code}' not found` });
@@ -193,8 +176,6 @@ export async function validatePlottingImport(
         });
       }
     } else {
-      // Ambiguous
-      // Filter out candidates that are already registered
       const availableCandidates = candidates.filter(
         (c) => !existingAssignments.has(`${c.id}_${praktikumId}`)
       );
@@ -228,11 +209,10 @@ export async function savePlotting(
   assignments: { asprak_id: string; praktikum_id: string }[],
   supabaseClient?: SupabaseClient
 ) {
-  const supabase = supabaseClient || globalAdmin;
+  const supabase = supabaseClient ?? await createClient();
 
   if (!assignments || assignments.length === 0) return;
 
-  // Transform to DB rows and ensure uniqueness in the payload itself
   const uniqueAssignments = new Map<string, { id_asprak: string; id_praktikum: string }>();
   assignments.forEach((a) => {
     uniqueAssignments.set(`${a.asprak_id}_${a.praktikum_id}`, {
@@ -242,10 +222,8 @@ export async function savePlotting(
   });
   const payloadRows = Array.from(uniqueAssignments.values());
 
-  // Fetch existing mappings to avoid duplicate insertions
   const asprakIds = Array.from(new Set(payloadRows.map((row) => row.id_asprak)));
 
-  // Batch fetch existing assignments if necessary
   const { data: existing, error: fetchError } = await supabase
     .from('asprak_praktikum')
     .select('id_asprak, id_praktikum')
@@ -258,7 +236,6 @@ export async function savePlotting(
 
   const existingSet = new Set((existing || []).map((e) => `${e.id_asprak}_${e.id_praktikum}`));
 
-  // Filter out rows that already exist in the database
   const toInsert = payloadRows.filter(
     (row) => !existingSet.has(`${row.id_asprak}_${row.id_praktikum}`)
   );
@@ -274,7 +251,7 @@ export async function savePlotting(
 }
 
 export async function deletePlotting(id: number, supabaseClient?: SupabaseClient) {
-  const supabase = supabaseClient || globalAdmin;
+  const supabase = supabaseClient ?? await createClient();
   const { error } = await supabase.from('asprak_praktikum').delete().eq('id', id);
   if (error) throw new Error(error.message);
 }
