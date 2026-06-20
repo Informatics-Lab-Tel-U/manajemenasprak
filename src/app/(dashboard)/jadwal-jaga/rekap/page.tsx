@@ -9,6 +9,6 @@ export const metadata = {
 
 export default async function RekapJagaPage() {
   const terms = await getCachedAvailableTerms();
-  
+
   return <RekapJagaClient initialTerms={terms} />;
 }

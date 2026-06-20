@@ -22,7 +22,7 @@ export async function getMataKuliahByTerm(
   term: string | null,
   supabaseClient?: SupabaseClient
 ): Promise<MataKuliahGrouped[]> {
-  const supabase = supabaseClient ?? await createClient();
+  const supabase = supabaseClient ?? (await createClient());
   let query = supabase.from('mata_kuliah').select(`
       *,
       praktikum:praktikum!inner (
@@ -74,7 +74,7 @@ export async function createMataKuliah(
   payload: CreateMataKuliahPayload,
   supabaseClient?: SupabaseClient
 ): Promise<MataKuliah | null> {
-  const supabase = supabaseClient ?? await createClient();
+  const supabase = supabaseClient ?? (await createClient());
   const { data, error } = await supabase.from('mata_kuliah').insert(payload).select().single();
 
   if (error) {
@@ -94,7 +94,7 @@ export async function bulkCreateMataKuliah(
   payloads: CreateMataKuliahPayload[],
   supabaseClient?: SupabaseClient
 ): Promise<BulkImportMataKuliahResult> {
-  const supabase = supabaseClient ?? await createClient();
+  const supabase = supabaseClient ?? (await createClient());
   const result: BulkImportMataKuliahResult = { inserted: 0, errors: [] };
 
   if (payloads.length === 0) return result;
@@ -125,7 +125,7 @@ export async function checkMataKuliahExists(
   programStudi: string,
   supabaseClient?: SupabaseClient
 ): Promise<boolean> {
-  const supabase = supabaseClient ?? await createClient();
+  const supabase = supabaseClient ?? (await createClient());
   const { count, error } = await supabase
     .from('mata_kuliah')
     .select('*', { count: 'exact', head: true })
@@ -145,7 +145,7 @@ export async function updateMataKuliahColorByPraktikumName(
   warna: string,
   supabaseClient?: SupabaseClient
 ): Promise<number> {
-  const supabase = supabaseClient ?? await createClient();
+  const supabase = supabaseClient ?? (await createClient());
 
   const { data: praktikums, error: pError } = await supabase
     .from('praktikum')

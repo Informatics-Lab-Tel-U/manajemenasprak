@@ -92,13 +92,11 @@ export async function POST(request: NextRequest) {
     const userId = newUser.user.id;
 
     // 2. INSERT pengguna profile (Bukan UPDATE, karena trigger sudah dimatikan)
-    const { error: insertError } = await admin
-      .from('pengguna')
-      .insert({
-        id: userId,
-        nama_lengkap: nama_lengkap,
-        role: role
-      });
+    const { error: insertError } = await admin.from('pengguna').insert({
+      id: userId,
+      nama_lengkap: nama_lengkap,
+      role: role,
+    });
 
     // IMPLEMENTASI ROLLBACK: Jika gagal insert profil, hapus auth user agar tidak yatim
     if (insertError) {
@@ -115,9 +113,7 @@ export async function POST(request: NextRequest) {
       }));
 
       // Gunakan admin client juga di sini untuk memastikan kelancaran insert server-side
-      const { error: assignError } = await admin
-        .from('asprak_koordinator')
-        .insert(assignmentRows);
+      const { error: assignError } = await admin.from('asprak_koordinator').insert(assignmentRows);
 
       if (assignError) {
         // Non-fatal — user is created, log the assignment failure

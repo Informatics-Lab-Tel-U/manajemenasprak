@@ -153,9 +153,12 @@ export async function unfinalizePelanggaran(idPraktikum: string): Promise<Servic
 
 export async function fetchFinalizedModules(idPraktikum: string): Promise<ServiceResult<number[]>> {
   try {
-    const res = await fetch(`/api/pelanggaran?action=finalized-modules&idPraktikum=${idPraktikum}`, {
-      cache: 'no-store',
-    });
+    const res = await fetch(
+      `/api/pelanggaran?action=finalized-modules&idPraktikum=${idPraktikum}`,
+      {
+        cache: 'no-store',
+      }
+    );
     const result = await res.json();
     return result;
   } catch (error: any) {

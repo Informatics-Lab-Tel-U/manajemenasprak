@@ -58,7 +58,7 @@ export function JadwalPenggantiModal({
   // Detect PJJ from the selected jadwal's kelas suffix
   const isPJJ = useMemo(() => {
     const j = allJadwal.find((jad) => jad.id === selectedJadwalId);
-    return !!(j?.kelas?.toLowerCase().includes('pjj'));
+    return !!j?.kelas?.toLowerCase().includes('pjj');
   }, [selectedJadwalId, allJadwal]);
 
   const pjjTimes = useMemo(() => {
@@ -145,7 +145,10 @@ export function JadwalPenggantiModal({
 
       // 4. Numeric sort on the last segment
       const numericSuffix = (s: string) => {
-        const cleaned = s.toUpperCase().replace('PJJ', '').replace(/[-\s]+$/, '');
+        const cleaned = s
+          .toUpperCase()
+          .replace('PJJ', '')
+          .replace(/[-\s]+$/, '');
         const parts = cleaned.split('-');
         const last = parts[parts.length - 1].replace(/\D/g, '');
         const n = parseInt(last, 10);
@@ -161,7 +164,6 @@ export function JadwalPenggantiModal({
   const selectedJadwal = useMemo(() => {
     return allJadwal.find((j) => j.id === selectedJadwalId);
   }, [selectedJadwalId, allJadwal]);
-
 
   // Pre-load data if editing or set defaults if adding
   useEffect(() => {
@@ -415,7 +417,8 @@ export function JadwalPenggantiModal({
                     </p>
                     {selectedJadwal.mata_kuliah && (
                       <p className="text-xs opacity-70 mt-0.5">
-                        {selectedJadwal.mata_kuliah.nama_lengkap} ({selectedJadwal.mata_kuliah.program_studi})
+                        {selectedJadwal.mata_kuliah.nama_lengkap} (
+                        {selectedJadwal.mata_kuliah.program_studi})
                       </p>
                     )}
                   </div>

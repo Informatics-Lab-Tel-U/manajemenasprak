@@ -41,7 +41,7 @@ export type PraktikanOptions = {
 };
 
 async function getClient(supabaseClient?: SupabaseClient) {
-  return supabaseClient ?? await createClient();
+  return supabaseClient ?? (await createClient());
 }
 
 function normalizeRequired(value: unknown, field: string) {
@@ -176,7 +176,11 @@ export async function getActivePraktikumMataKuliahOptions(
 
   const seen = new Set<string>();
   return (data ?? [])
-    .map((row: { nama?: string | null }) => String(row.nama ?? '').trim().toUpperCase())
+    .map((row: { nama?: string | null }) =>
+      String(row.nama ?? '')
+        .trim()
+        .toUpperCase()
+    )
     .filter((nama) => {
       if (!nama || seen.has(nama)) return false;
       seen.add(nama);
@@ -204,7 +208,11 @@ export async function getPraktikanKelasByMataKuliah(
 
   const seen = new Set<string>();
   return (data ?? [])
-    .map((row: { kelas?: string | null }) => String(row.kelas ?? '').trim().toUpperCase())
+    .map((row: { kelas?: string | null }) =>
+      String(row.kelas ?? '')
+        .trim()
+        .toUpperCase()
+    )
     .filter((kelas) => {
       if (!kelas || seen.has(kelas)) return false;
       seen.add(kelas);

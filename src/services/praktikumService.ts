@@ -24,7 +24,7 @@ export async function getPraktikumById(
   id: string,
   supabaseClient?: SupabaseClient
 ): Promise<Praktikum | null> {
-  const supabase = supabaseClient ?? await createClient();
+  const supabase = supabaseClient ?? (await createClient());
   const { data, error } = await supabase.from('praktikum').select('*').eq('id', id).single();
   if (error) {
     if (error.code !== 'PGRST116') {
@@ -36,7 +36,7 @@ export async function getPraktikumById(
 }
 
 export async function getAllPraktikum(supabaseClient?: SupabaseClient): Promise<Praktikum[]> {
-  const supabase = supabaseClient ?? await createClient();
+  const supabase = supabaseClient ?? (await createClient());
   const { data, error } = await supabase.from('praktikum').select('*').order('nama');
 
   if (error) {
@@ -49,7 +49,7 @@ export async function getAllPraktikum(supabaseClient?: SupabaseClient): Promise<
 export async function getUniquePraktikumNames(
   supabaseClient?: SupabaseClient
 ): Promise<{ id: string; nama: string }[]> {
-  const supabase = supabaseClient ?? await createClient();
+  const supabase = supabaseClient ?? (await createClient());
   const { data } = await supabase.from('praktikum').select('id, nama, tahun_ajaran').order('nama');
   if (!data) return [];
 
@@ -64,7 +64,7 @@ export async function getPraktikumByTerm(
   term?: string,
   supabaseClient?: SupabaseClient
 ): Promise<any[]> {
-  const supabase = supabaseClient ?? await createClient();
+  const supabase = supabaseClient ?? (await createClient());
   let query = supabase.from('praktikum').select('*, asprak_praktikum(count)').order('nama');
 
   if (term && term !== 'all') {
@@ -88,7 +88,7 @@ export async function getPraktikumDetails(
   praktikumId: string,
   supabaseClient?: SupabaseClient
 ): Promise<PraktikumDetails> {
-  const supabase = supabaseClient ?? await createClient();
+  const supabase = supabaseClient ?? (await createClient());
   const { data: mks, error: mkError } = await supabase
     .from('mata_kuliah')
     .select('id')
@@ -132,7 +132,7 @@ export async function getOrCreatePraktikum(
   tahunAjaran: string,
   supabaseClient?: SupabaseClient
 ): Promise<Praktikum> {
-  const supabase = supabaseClient ?? await createClient();
+  const supabase = supabaseClient ?? (await createClient());
   const { data: existing } = await supabase
     .from('praktikum')
     .select('*')
@@ -156,7 +156,7 @@ export async function getOrCreatePraktikum(
 }
 
 export async function getAllMataKuliah(supabaseClient?: SupabaseClient): Promise<MataKuliah[]> {
-  const supabase = supabaseClient ?? await createClient();
+  const supabase = supabaseClient ?? (await createClient());
   const { data, error } = await supabase
     .from('mata_kuliah')
     .select('*, praktikum:praktikum(nama, tahun_ajaran)')
@@ -180,7 +180,7 @@ export async function createMataKuliah(
   input: CreateMataKuliahInput,
   supabaseClient?: SupabaseClient
 ): Promise<MataKuliah> {
-  const supabase = supabaseClient ?? await createClient();
+  const supabase = supabaseClient ?? (await createClient());
   const { data, error } = await supabase.from('mata_kuliah').insert(input).select().single();
 
   if (error) {
@@ -194,7 +194,7 @@ export async function deletePraktikumByIds(
   ids: string[],
   supabaseClient?: SupabaseClient
 ): Promise<void> {
-  const supabase = supabaseClient ?? await createClient();
+  const supabase = supabaseClient ?? (await createClient());
   if (ids.length === 0) return;
   await supabase.from('praktikum').delete().in('id', ids);
 }
@@ -203,7 +203,7 @@ export async function deleteMataKuliahByIds(
   ids: string[],
   supabaseClient?: SupabaseClient
 ): Promise<void> {
-  const supabase = supabaseClient ?? await createClient();
+  const supabase = supabaseClient ?? (await createClient());
   if (ids.length === 0) return;
   await supabase.from('mata_kuliah').delete().in('id', ids);
 }
@@ -212,7 +212,7 @@ export async function deleteAsprakPraktikumByIds(
   ids: number[],
   supabaseClient?: SupabaseClient
 ): Promise<void> {
-  const supabase = supabaseClient ?? await createClient();
+  const supabase = supabaseClient ?? (await createClient());
   if (ids.length === 0) return;
   await supabase.from('asprak_praktikum').delete().in('id', ids);
 }
@@ -227,7 +227,7 @@ export async function bulkUpsertPraktikum(
   rows: { nama: string; tahun_ajaran: string }[],
   supabaseClient?: SupabaseClient
 ): Promise<BulkImportPraktikumResult> {
-  const supabase = supabaseClient ?? await createClient();
+  const supabase = supabaseClient ?? (await createClient());
   const result: BulkImportPraktikumResult = { inserted: 0, skipped: 0, errors: [] };
 
   if (rows.length === 0) return result;
@@ -274,7 +274,7 @@ export async function bulkUpsertPraktikum(
 }
 
 export async function getTahunAjaranList(supabaseClient?: SupabaseClient): Promise<string[]> {
-  const supabase = supabaseClient ?? await createClient();
+  const supabase = supabaseClient ?? (await createClient());
   const { data, error } = await supabase.from('praktikum').select('tahun_ajaran');
   if (error) {
     logger.error('Error fetching tahun ajaran list:', error);

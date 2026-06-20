@@ -13,7 +13,13 @@ import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import JagaInputModal from '@/components/jadwal/JagaInputModal';
 
-export default function JadwalJagaClient({ initialTerms, userRole }: { initialTerms: string[], userRole?: string }) {
+export default function JadwalJagaClient({
+  initialTerms,
+  userRole,
+}: {
+  initialTerms: string[];
+  userRole?: string;
+}) {
   const [selectedTerm, setSelectedTerm] = useState(initialTerms[0] || '');
   const [selectedModul, setSelectedModul] = useState('Modul 1');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -27,8 +33,8 @@ export default function JadwalJagaClient({ initialTerms, userRole }: { initialTe
   useEffect(() => {
     if (selectedTerm) {
       fetch(`/api/modul-schedule?term=${selectedTerm}`)
-        .then(res => res.json())
-        .then(data => {
+        .then((res) => res.json())
+        .then((data) => {
           if (data.ok && data.data) {
             setKonfigurasiModul(data.data);
           }
@@ -37,7 +43,7 @@ export default function JadwalJagaClient({ initialTerms, userRole }: { initialTe
     }
   }, [selectedTerm]);
 
-  const handleRefresh = () => setRefreshTrigger(prev => prev + 1);
+  const handleRefresh = () => setRefreshTrigger((prev) => prev + 1);
 
   const handleAdd = () => {
     setEditingData(null);
@@ -59,7 +65,7 @@ export default function JadwalJagaClient({ initialTerms, userRole }: { initialTe
             Input dan kelola jadwal jaga Asisten Praktikum
           </p>
         </div>
-        
+
         <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
           <Select value={selectedModul} onValueChange={setSelectedModul}>
             <SelectTrigger className="w-full sm:w-[160px] bg-card/50 backdrop-blur-sm">
@@ -87,8 +93,8 @@ export default function JadwalJagaClient({ initialTerms, userRole }: { initialTe
             </SelectContent>
           </Select>
 
-          <Button 
-            onClick={handleAdd} 
+          <Button
+            onClick={handleAdd}
             className="flex-1 sm:flex-none min-w-0 md:whitespace-nowrap rounded-lg shadow-sm"
           >
             <Plus size={18} className="flex-shrink-0" />
@@ -98,7 +104,7 @@ export default function JadwalJagaClient({ initialTerms, userRole }: { initialTe
       </div>
 
       <div className="h-[600px]">
-        <JagaPanel 
+        <JagaPanel
           term={selectedTerm}
           selectedModul={selectedModul}
           userRole={userRole}
@@ -107,7 +113,7 @@ export default function JadwalJagaClient({ initialTerms, userRole }: { initialTe
         />
       </div>
 
-      <JagaInputModal 
+      <JagaInputModal
         isOpen={isModalOpen}
         onClose={() => {
           setIsModalOpen(false);

@@ -1,6 +1,10 @@
 import { JadwalJaga } from '@/types/database';
 
-export async function fetchJadwalJaga(term: string, modul?: number, hari?: string): Promise<{ data?: JadwalJaga[]; error?: string }> {
+export async function fetchJadwalJaga(
+  term: string,
+  modul?: number,
+  hari?: string
+): Promise<{ data?: JadwalJaga[]; error?: string }> {
   try {
     const params = new URLSearchParams({ term });
     if (modul) params.append('modul', modul.toString());
@@ -19,7 +23,13 @@ export async function fetchJadwalJaga(term: string, modul?: number, hari?: strin
   }
 }
 
-export async function addJadwalJaga(payload: { id_asprak: string; tahun_ajaran: string; modul: number; hari: string; shift: number }): Promise<{ success?: boolean; error?: string }> {
+export async function addJadwalJaga(payload: {
+  id_asprak: string;
+  tahun_ajaran: string;
+  modul: number;
+  hari: string;
+  shift: number;
+}): Promise<{ success?: boolean; error?: string }> {
   try {
     const res = await fetch('/api/jaga', {
       method: 'POST',
@@ -59,7 +69,16 @@ export async function deleteJadwalJaga(id: string): Promise<{ success?: boolean;
   }
 }
 
-export async function updateJadwalJaga(id: string, payload: Partial<{ id_asprak: string; tahun_ajaran: string; modul: number; hari: string; shift: number }>): Promise<{ success?: boolean; error?: string }> {
+export async function updateJadwalJaga(
+  id: string,
+  payload: Partial<{
+    id_asprak: string;
+    tahun_ajaran: string;
+    modul: number;
+    hari: string;
+    shift: number;
+  }>
+): Promise<{ success?: boolean; error?: string }> {
   try {
     const res = await fetch('/api/jaga', {
       method: 'PUT',
@@ -81,7 +100,13 @@ export async function updateJadwalJaga(id: string, payload: Partial<{ id_asprak:
   }
 }
 
-export async function bulkAddJadwalJaga(payload: { id_asprak: string; tahun_ajaran: string; moduls: number[]; hari: string; shift: number }): Promise<{ success?: boolean; error?: string }> {
+export async function bulkAddJadwalJaga(payload: {
+  id_asprak: string;
+  tahun_ajaran: string;
+  moduls: number[];
+  hari: string;
+  shift: number;
+}): Promise<{ success?: boolean; error?: string }> {
   try {
     const res = await fetch('/api/jaga', {
       method: 'POST',
@@ -103,7 +128,13 @@ export async function bulkAddJadwalJaga(payload: { id_asprak: string; tahun_ajar
   }
 }
 
-export async function bulkDeleteJadwalJaga(payload: { id_asprak: string; tahun_ajaran: string; moduls: number[]; hari: string; shift: number }): Promise<{ success?: boolean; error?: string }> {
+export async function bulkDeleteJadwalJaga(payload: {
+  id_asprak: string;
+  tahun_ajaran: string;
+  moduls: number[];
+  hari: string;
+  shift: number;
+}): Promise<{ success?: boolean; error?: string }> {
   try {
     const params = new URLSearchParams({
       action: 'bulk-delete',
@@ -130,7 +161,9 @@ export async function bulkDeleteJadwalJaga(payload: { id_asprak: string; tahun_a
   }
 }
 
-export async function fetchRekapJagaAggregated(term: string): Promise<{ data?: any[]; error?: string }> {
+export async function fetchRekapJagaAggregated(
+  term: string
+): Promise<{ data?: any[]; error?: string }> {
   try {
     const res = await fetch(`/api/jaga/rekap?term=${term}`);
     const data = await res.json();

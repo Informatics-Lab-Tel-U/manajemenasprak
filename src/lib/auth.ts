@@ -76,9 +76,7 @@ export async function requireRole(allowedRoles: Role[], redirectTo = '/'): Promi
  * Result type for the Route Handler auth guard.
  * On failure, return `response` directly from the handler.
  */
-export type RoleGuardResult =
-  | { ok: true; user: AuthUser }
-  | { ok: false; response: NextResponse };
+export type RoleGuardResult = { ok: true; user: AuthUser } | { ok: false; response: NextResponse };
 
 /**
  * Auth + role guard for API Route Handlers (app/api/**).

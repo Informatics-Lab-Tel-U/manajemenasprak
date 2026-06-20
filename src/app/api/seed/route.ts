@@ -22,7 +22,12 @@ export async function POST(req: Request): Promise<NextResponse> {
         (error, stdout, stderr) => {
           if (error) {
             logger.error(`Seed exec error: ${error.message}`, { stderr });
-            resolve(NextResponse.json({ error: 'Gagal menjalankan proses seeding database' }, { status: 500 }));
+            resolve(
+              NextResponse.json(
+                { error: 'Gagal menjalankan proses seeding database' },
+                { status: 500 }
+              )
+            );
             return;
           }
           logger.info(`Seed output: ${stdout}`);

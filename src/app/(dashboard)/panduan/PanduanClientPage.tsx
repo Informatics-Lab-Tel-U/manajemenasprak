@@ -338,20 +338,32 @@ const PanduanClientPageComponent = function PanduanClientPage({ role }: PanduanC
                   </AccordionTrigger>
                   <AccordionContent className="pt-2 pb-10 space-y-6">
                     <p className="text-sm text-muted-foreground">
-                      Fitur ini digunakan untuk mendata kehadiran asisten yang bertugas menjaga praktikum di setiap modul (W1-W16).
+                      Fitur ini digunakan untuk mendata kehadiran asisten yang bertugas menjaga
+                      praktikum di setiap modul (W1-W16).
                     </p>
-                    
+
                     <div className="space-y-4">
                       <h4 className="font-medium text-sm flex items-center gap-2">
                         <Info size={14} className="text-primary" />
                         Cara Input Jadwal Jaga
                       </h4>
                       <ul className="list-decimal list-inside text-sm text-muted-foreground space-y-2 ml-1">
-                        <li>Pilih <strong>Modul</strong> (W1 s.d W16) dan <strong>Term</strong> pada header halaman.</li>
-                        <li>Klik tombol <Badge variant="outline">+ Input Jaga</Badge>.</li>
-                        <li>Pilih <strong>Asisten</strong>, <strong>Hari</strong>, dan <strong>Shift</strong> jam kerja.</li>
                         <li>
-                          <strong>Bulk Input:</strong> Centang <span className="italic">"Terapkan ke semua modul"</span> jika asisten tersebut memiliki jadwal jaga tetap di hari/shift yang sama untuk seluruh semester.
+                          Pilih <strong>Modul</strong> (W1 s.d W16) dan <strong>Term</strong> pada
+                          header halaman.
+                        </li>
+                        <li>
+                          Klik tombol <Badge variant="outline">+ Input Jaga</Badge>.
+                        </li>
+                        <li>
+                          Pilih <strong>Asisten</strong>, <strong>Hari</strong>, dan{' '}
+                          <strong>Shift</strong> jam kerja.
+                        </li>
+                        <li>
+                          <strong>Bulk Input:</strong> Centang{' '}
+                          <span className="italic">"Terapkan ke semua modul"</span> jika asisten
+                          tersebut memiliki jadwal jaga tetap di hari/shift yang sama untuk seluruh
+                          semester.
                         </li>
                       </ul>
                     </div>
@@ -362,9 +374,21 @@ const PanduanClientPageComponent = function PanduanClientPage({ role }: PanduanC
                         Visibilitas & Rekap
                       </h4>
                       <ul className="list-disc list-inside text-sm text-muted-foreground space-y-2 ml-1">
-                        <li><strong>Dashboard:</strong> Muncul di kolom "Penjagaan" pada tabel jadwal harian. Arahkan kursor ke kode asisten untuk melihat nama lengkap.</li>
-                        <li><strong>Warna Role:</strong> Kode berwarna <span className="text-blue-600 font-bold">Biru</span> adalah <strong>ASLAB</strong>, sedangkan <span className="text-slate-600 font-bold">Abu-abu</span> adalah <strong>ASPRAK</strong>.</li>
-                        <li><strong>Rekap Jaga:</strong> Akumulasi total shift jaga setiap asisten dapat dilihat pada menu <em>Rekap Jaga</em>.</li>
+                        <li>
+                          <strong>Dashboard:</strong> Muncul di kolom "Penjagaan" pada tabel jadwal
+                          harian. Arahkan kursor ke kode asisten untuk melihat nama lengkap.
+                        </li>
+                        <li>
+                          <strong>Warna Role:</strong> Kode berwarna{' '}
+                          <span className="text-blue-600 font-bold">Biru</span> adalah{' '}
+                          <strong>ASLAB</strong>, sedangkan{' '}
+                          <span className="text-slate-600 font-bold">Abu-abu</span> adalah{' '}
+                          <strong>ASPRAK</strong>.
+                        </li>
+                        <li>
+                          <strong>Rekap Jaga:</strong> Akumulasi total shift jaga setiap asisten
+                          dapat dilihat pada menu <em>Rekap Jaga</em>.
+                        </li>
                       </ul>
                     </div>
                   </AccordionContent>
@@ -475,37 +499,61 @@ const PanduanClientPageComponent = function PanduanClientPage({ role }: PanduanC
                     Melihat & Filter Rekap Pelanggaran
                   </h4>
                   <p className="text-sm text-muted-foreground mb-2">
-                    Halaman <strong>Rekap Pelanggaran</strong> menyediakan filter cerdas dengan pendekatan ranking kronologis:
+                    Halaman <strong>Rekap Pelanggaran</strong> menyediakan filter cerdas dengan
+                    pendekatan ranking kronologis:
                   </p>
                   <ul className="list-disc list-inside text-sm text-muted-foreground space-y-2">
                     <li>
-                      <strong>Ranking Global:</strong> Pelanggaran diurutkan secara kronologis (ke-1, ke-2, ke-3) lintas seluruh modul bagi setiap asprak.
+                      <strong>Ranking Global:</strong> Pelanggaran diurutkan secara kronologis
+                      (ke-1, ke-2, ke-3) lintas seluruh modul bagi setiap asprak.
                     </li>
                     <li>
-                      <strong>Target Modul:</strong> Hanya menampilkan pelanggaran yang terjadi di modul yang Anda pilih. Jika Anda memilih opsi <strong>Semua Modul</strong>, sistem akan menampilkan data pelanggaran tanpa dibatasi oleh modul tertentu.
+                      <strong>Target Modul:</strong> Hanya menampilkan pelanggaran yang terjadi di
+                      modul yang Anda pilih. Jika Anda memilih opsi <strong>Semua Modul</strong>,
+                      sistem akan menampilkan data pelanggaran tanpa dibatasi oleh modul tertentu.
                     </li>
                     <li>
-                      <strong>Min. Pelanggaran:</strong> Sistem hanya akan memunculkan data pelanggaran yang urutan kronologisnya (ranking) mencapai angka minimal yang Anda tentukan (misalnya, hanya memunculkan pelanggaran ke-3 atau ke-4 dari seorang asprak, meskipun Anda hanya sedang melihat data di Modul 5).
+                      <strong>Min. Pelanggaran:</strong> Sistem hanya akan memunculkan data
+                      pelanggaran yang urutan kronologisnya (ranking) mencapai angka minimal yang
+                      Anda tentukan (misalnya, hanya memunculkan pelanggaran ke-3 atau ke-4 dari
+                      seorang asprak, meskipun Anda hanya sedang melihat data di Modul 5).
                     </li>
                     <div className="mt-2 mb-3 p-4 bg-muted/30 border rounded-lg text-xs space-y-2">
-                      <p className="font-semibold text-foreground/80 mb-1">Contoh Studi Kasus Asprak "KZN" dengan [Target Modul: 5] & [Min. Pelanggaran: 3]</p>
+                      <p className="font-semibold text-foreground/80 mb-1">
+                        Contoh Studi Kasus Asprak "KZN" dengan [Target Modul: 5] & [Min.
+                        Pelanggaran: 3]
+                      </p>
                       <ul className="list-disc list-inside space-y-1 text-muted-foreground ml-1">
                         <li>
-                          <strong className="text-foreground/70">Kasus 1:</strong> Modul 3 (1 pelg), Modul 4 (1 pelg), Modul 5 (3 pelg) <br />
-                          <span className="ml-5">➔ <strong>Hasil:</strong> Tampil 3 data dari Modul 5 (karena ketiganya adalah pelanggaran ke-3, ke-4, dan ke-5).</span>
+                          <strong className="text-foreground/70">Kasus 1:</strong> Modul 3 (1 pelg),
+                          Modul 4 (1 pelg), Modul 5 (3 pelg) <br />
+                          <span className="ml-5">
+                            ➔ <strong>Hasil:</strong> Tampil 3 data dari Modul 5 (karena ketiganya
+                            adalah pelanggaran ke-3, ke-4, dan ke-5).
+                          </span>
                         </li>
                         <li>
-                          <strong className="text-foreground/70">Kasus 2:</strong> Modul 4 (1 pelg), Modul 5 (3 pelg) <br />
-                          <span className="ml-5">➔ <strong>Hasil:</strong> Tampil 2 data dari Modul 5 (hanya pelanggaran ke-3 dan ke-4).</span>
+                          <strong className="text-foreground/70">Kasus 2:</strong> Modul 4 (1 pelg),
+                          Modul 5 (3 pelg) <br />
+                          <span className="ml-5">
+                            ➔ <strong>Hasil:</strong> Tampil 2 data dari Modul 5 (hanya pelanggaran
+                            ke-3 dan ke-4).
+                          </span>
                         </li>
                         <li>
-                          <strong className="text-foreground/70">Kasus 3:</strong> Modul 5 (3 pelg) <br />
-                          <span className="ml-5">➔ <strong>Hasil:</strong> Tampil 1 data dari Modul 5 (hanya pelanggaran ke-3).</span>
+                          <strong className="text-foreground/70">Kasus 3:</strong> Modul 5 (3 pelg){' '}
+                          <br />
+                          <span className="ml-5">
+                            ➔ <strong>Hasil:</strong> Tampil 1 data dari Modul 5 (hanya pelanggaran
+                            ke-3).
+                          </span>
                         </li>
                       </ul>
                     </div>
                     <li>
-                      <strong>Sorting Tabel:</strong> Klik pada header <strong>MK</strong> atau <strong>Kode Asprak</strong> untuk mengurutkan data pelanggaran secara ascending/descending.
+                      <strong>Sorting Tabel:</strong> Klik pada header <strong>MK</strong> atau{' '}
+                      <strong>Kode Asprak</strong> untuk mengurutkan data pelanggaran secara
+                      ascending/descending.
                     </li>
                   </ul>
                 </div>

@@ -37,39 +37,42 @@ export function useDashboard(
   // correctly scoped from the server, so we skip the first refetch.
   const [hasMounted, setHasMounted] = useState(false);
 
-  const fetchDashboardData = useCallback(async (term: string) => {
-    if (!term) return;
+  const fetchDashboardData = useCallback(
+    async (term: string) => {
+      if (!term) return;
 
-    setLoading(true);
-    try {
-      const [jadwalResult, penggantiResult, statsRes] = await Promise.all([
-        jadwalFetcher.fetchJadwalByTerm(term),
-        jadwalFetcher.fetchJadwalPengganti(activeModul),
-        fetch(`/api/stats?term=${encodeURIComponent(term)}`),
-      ]);
+      setLoading(true);
+      try {
+        const [jadwalResult, penggantiResult, statsRes] = await Promise.all([
+          jadwalFetcher.fetchJadwalByTerm(term),
+          jadwalFetcher.fetchJadwalPengganti(activeModul),
+          fetch(`/api/stats?term=${encodeURIComponent(term)}`),
+        ]);
 
-      if (jadwalResult.ok && jadwalResult.data) {
-        setRawJadwal(jadwalResult.data);
-      }
+        if (jadwalResult.ok && jadwalResult.data) {
+          setRawJadwal(jadwalResult.data);
+        }
 
-      if (penggantiResult.ok && penggantiResult.data) {
-        setJadwalPengganti(penggantiResult.data);
-      }
+        if (penggantiResult.ok && penggantiResult.data) {
+          setJadwalPengganti(penggantiResult.data);
+        }
 
-      const statsJson = await statsRes.json();
-      if (statsJson?.ok && statsJson.data) {
-        setStats(statsJson.data as DashboardStats);
+        const statsJson = await statsRes.json();
+        if (statsJson?.ok && statsJson.data) {
+          setStats(statsJson.data as DashboardStats);
+        }
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          setError(err);
+        } else {
+          setError(new Error('An unknown error occurred'));
+        }
+      } finally {
+        setLoading(false);
       }
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err);
-      } else {
-        setError(new Error('An unknown error occurred'));
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, [activeModul]);
+    },
+    [activeModul]
+  );
 
   useEffect(() => {
     if (!hasMounted) {

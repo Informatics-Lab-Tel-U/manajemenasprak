@@ -14,7 +14,7 @@ export function useJaga(term: string, modul?: number, hari?: string) {
       setLoading(false);
       return;
     }
-    
+
     const { data } = await fetchJadwalJaga(term, modul, hari);
     setJagaList(data || []); // Ensure we set an empty array if data is missing or undefined
     setLoading(false);
@@ -50,7 +50,7 @@ export function useRekapJaga(term: string) {
       // Data is an array of records {modul, id_asprak, asprak: {kode, role}}
       // Group by id_asprak -> kode, role, {modul: count}
       const map = new Map<string, any>();
-      data.forEach(row => {
+      data.forEach((row) => {
         const id = row.id_asprak;
         if (!map.has(id)) {
           map.set(id, {
@@ -58,7 +58,7 @@ export function useRekapJaga(term: string) {
             kode: row.asprak?.kode || '?',
             role: row.asprak?.role || 'ASPRAK',
             w: {},
-            total: 0
+            total: 0,
           });
         }
         const user = map.get(id);
@@ -67,11 +67,10 @@ export function useRekapJaga(term: string) {
         user.total += 1;
       });
 
-      const aggregated = Array.from(map.values())
-        .sort((a, b) => a.kode.localeCompare(b.kode));
+      const aggregated = Array.from(map.values()).sort((a, b) => a.kode.localeCompare(b.kode));
 
-      setRekapAslab(aggregated.filter(x => x.role === 'ASLAB'));
-      setRekapAsprak(aggregated.filter(x => x.role === 'ASPRAK'));
+      setRekapAslab(aggregated.filter((x) => x.role === 'ASLAB'));
+      setRekapAsprak(aggregated.filter((x) => x.role === 'ASPRAK'));
     }
     setLoading(false);
   }, [term]);
@@ -84,6 +83,6 @@ export function useRekapJaga(term: string) {
     rekapAslab,
     rekapAsprak,
     loading,
-    refresh: loadData
+    refresh: loadData,
   };
 }

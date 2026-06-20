@@ -7,7 +7,7 @@ export default function Page() {
   return (
     <div className="flex flex-col md:flex-row min-h-svh w-full ">
       {/* Left panel (Branding) */}
-      <div className="w-full md:w-3/5 lg:w-2/3 flex-1 md:h-dvh relative min-h-[280px] md:min-h-0 flex flex-col">
+      <div className="w-full md:w-[52%] lg:w-[60%] flex-1 md:h-dvh relative min-h-[280px] md:min-h-0 flex flex-col">
         <div className="absolute inset-0 z-0">
           <LightWavesBackground />
         </div>
@@ -30,7 +30,7 @@ export default function Page() {
       </div>
 
       {/* Right panel (Form) */}
-      <div className="w-full md:w-2/5 lg:w-1/3 shrink-0 bg-background flex flex-col justify-center items-center py-8 z-10 rounded-t-3xl md:rounded-none md:h-dvh shadow-[0_-10px_40px_rgba(0,0,0,0.1)] md:shadow-none">
+      <div className="w-full md:w-[48%] lg:w-[40%] shrink-0 bg-background flex flex-col justify-center items-center py-8 z-10 rounded-t-3xl md:rounded-none md:h-dvh shadow-[0_-10px_40px_rgba(0,0,0,0.1)] md:shadow-none">
         <div className="p-6 w-full max-w-md lg:w-[80%]">
           <Suspense>
             <LoginForm />

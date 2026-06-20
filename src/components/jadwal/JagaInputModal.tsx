@@ -14,11 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -35,7 +31,7 @@ interface JagaInputModalProps {
   onClose: () => void;
   term: string;
   selectedModul: number;
-  konfigurasiModul: { modul: number, tanggal_mulai: string | null }[];
+  konfigurasiModul: { modul: number; tanggal_mulai: string | null }[];
   defaultDay: string;
   userRole?: string;
   onSuccess: () => void;
@@ -60,7 +56,7 @@ export default function JagaInputModal({
 }: JagaInputModalProps) {
   const [loading, setLoading] = useState(false);
   const [asprakList, setAsprakList] = useState<Asprak[]>([]);
-  
+
   const [selectedAsprakId, setSelectedAsprakId] = useState(editData?.id_asprak || '');
   const [selectedHari, setSelectedHari] = useState(editData?.hari || defaultDay);
   const [selectedShift, setSelectedShift] = useState(editData?.shift.toString() || '');
@@ -74,7 +70,7 @@ export default function JagaInputModal({
 
   const loadDependencies = React.useCallback(async () => {
     setLoading(true);
-    
+
     const allowed = canInputJagaForModul(selectedModul, konfigurasiModul, userRole);
     setCanInput(allowed);
 
@@ -87,7 +83,7 @@ export default function JagaInputModal({
       });
       setAsprakList(sorted);
     }
-    
+
     setLoading(false);
   }, [selectedModul, konfigurasiModul, userRole, term]);
 
@@ -119,7 +115,7 @@ export default function JagaInputModal({
     }
 
     setLoading(true);
-    
+
     let result;
     if (editData) {
       const { success, error } = await updateJadwalJaga(editData.id, {
@@ -153,7 +149,13 @@ export default function JagaInputModal({
       return;
     }
 
-    toast.success(editData ? 'Jadwal jaga berhasil diperbarui' : (applyToAllModuls ? 'Jadwal jaga berhasil ditambahkan ke seluruh modul' : 'Jadwal jaga berhasil ditambahkan'));
+    toast.success(
+      editData
+        ? 'Jadwal jaga berhasil diperbarui'
+        : applyToAllModuls
+          ? 'Jadwal jaga berhasil ditambahkan ke seluruh modul'
+          : 'Jadwal jaga berhasil ditambahkan'
+    );
     setLoading(false);
     onSuccess();
     onClose();
@@ -167,7 +169,9 @@ export default function JagaInputModal({
         <DialogHeader>
           <DialogTitle>{editData ? 'Edit Jadwal Jaga' : 'Input Jadwal Jaga'}</DialogTitle>
           <DialogDescription>
-            {editData ? `Memperbarui jadwal jaga untuk Modul ${selectedModul}` : `Menambahkan status jaga untuk Modul ${selectedModul}`}
+            {editData
+              ? `Memperbarui jadwal jaga untuk Modul ${selectedModul}`
+              : `Menambahkan status jaga untuk Modul ${selectedModul}`}
           </DialogDescription>
         </DialogHeader>
 
@@ -176,7 +180,8 @@ export default function JagaInputModal({
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Tidak Diizinkan</AlertTitle>
             <AlertDescription>
-              Input jaga untuk Modul {selectedModul} baru bisa dilakukan mulai hari Sabtu minggu sebelumnya.
+              Input jaga untuk Modul {selectedModul} baru bisa dilakukan mulai hari Sabtu minggu
+              sebelumnya.
             </AlertDescription>
           </Alert>
         ) : (
@@ -193,19 +198,27 @@ export default function JagaInputModal({
                     disabled={loading}
                   >
                     <div className="flex flex-col items-start min-w-0">
-                      {selectedAsprakId
-                        ? (() => {
-                            const selected = asprakList.find((a) => a.id === selectedAsprakId);
-                            return selected ? (
-                              <>
-                                <span className="font-bold text-xs text-primary">[{selected.kode}]</span>
-                                <span className="text-[11px] truncate w-full text-left font-medium">
-                                  {selected.nama_lengkap}
-                                </span>
-                              </>
-                            ) : '-- Pilih Asisten --';
-                          })()
-                        : <span className="text-muted-foreground italic text-xs">-- Pilih Asisten --</span>}
+                      {selectedAsprakId ? (
+                        (() => {
+                          const selected = asprakList.find((a) => a.id === selectedAsprakId);
+                          return selected ? (
+                            <>
+                              <span className="font-bold text-xs text-primary">
+                                [{selected.kode}]
+                              </span>
+                              <span className="text-[11px] truncate w-full text-left font-medium">
+                                {selected.nama_lengkap}
+                              </span>
+                            </>
+                          ) : (
+                            '-- Pilih Asisten --'
+                          );
+                        })()
+                      ) : (
+                        <span className="text-muted-foreground italic text-xs">
+                          -- Pilih Asisten --
+                        </span>
+                      )}
                     </div>
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50 group-hover:opacity-80 transition-opacity" />
                   </Button>
@@ -224,7 +237,9 @@ export default function JagaInputModal({
                     <div className="p-1">
                       {asprakList
                         .filter((a) =>
-                          `${a.kode} ${a.nama_lengkap}`.toLowerCase().includes(searchQuery.toLowerCase())
+                          `${a.kode} ${a.nama_lengkap}`
+                            .toLowerCase()
+                            .includes(searchQuery.toLowerCase())
                         )
                         .map((a) => (
                           <div
@@ -246,18 +261,24 @@ export default function JagaInputModal({
                               </span>
                             )}
                             <div className="flex flex-col gap-0.5 min-w-0">
-                               <div className="flex items-center gap-2">
-                                  <span className="font-bold text-xs">[{a.kode}]</span>
-                                  <span className={`text-[10px] px-1 rounded-sm uppercase font-bold border ${a.role === 'ASLAB' ? 'bg-blue-100 text-blue-700 border-blue-200' : 'bg-slate-100 text-slate-700 border-slate-200'}`}>{a.role}</span>
-                               </div>
-                               <span className="truncate text-xs text-foreground/80 font-medium">
-                                 {a.nama_lengkap}
-                               </span>
+                              <div className="flex items-center gap-2">
+                                <span className="font-bold text-xs">[{a.kode}]</span>
+                                <span
+                                  className={`text-[10px] px-1 rounded-sm uppercase font-bold border ${a.role === 'ASLAB' ? 'bg-blue-100 text-blue-700 border-blue-200' : 'bg-slate-100 text-slate-700 border-slate-200'}`}
+                                >
+                                  {a.role}
+                                </span>
+                              </div>
+                              <span className="truncate text-xs text-foreground/80 font-medium">
+                                {a.nama_lengkap}
+                              </span>
                             </div>
                           </div>
                         ))}
                       {asprakList.filter((a) =>
-                        `${a.kode} ${a.nama_lengkap}`.toLowerCase().includes(searchQuery.toLowerCase())
+                        `${a.kode} ${a.nama_lengkap}`
+                          .toLowerCase()
+                          .includes(searchQuery.toLowerCase())
                       ).length === 0 && (
                         <div className="py-6 text-center text-sm text-muted-foreground">
                           Asisten tidak ditemukan.
@@ -271,20 +292,22 @@ export default function JagaInputModal({
 
             <div className="flex flex-col gap-2 w-full">
               <Label htmlFor="hari">Hari</Label>
-              <Select 
-                value={selectedHari} 
+              <Select
+                value={selectedHari}
                 onValueChange={(val) => {
                   setSelectedHari(val);
-                  setSelectedShift(''); 
+                  setSelectedShift('');
                 }}
                 disabled={loading}
               >
-                <SelectTrigger className='w-full'>
+                <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   {['SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU'].map((h) => (
-                    <SelectItem key={h} value={h}>{h}</SelectItem>
+                    <SelectItem key={h} value={h}>
+                      {h}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -292,7 +315,7 @@ export default function JagaInputModal({
             <div className="flex flex-col gap-2">
               <Label htmlFor="shift">Pilih Sesi Jam (Shift)</Label>
               <Select value={selectedShift} onValueChange={setSelectedShift} disabled={loading}>
-                <SelectTrigger className='w-full'>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="-- Pilih Sesi --" />
                 </SelectTrigger>
                 <SelectContent>
@@ -307,10 +330,10 @@ export default function JagaInputModal({
 
             {!editData && (
               <div className="flex items-center space-x-2 p-3 rounded-lg border border-primary/20 bg-primary/5 mt-2">
-                <input 
-                  type="checkbox" 
-                  id="bulk" 
-                  className="w-4 h-4 rounded border-primary text-primary focus:ring-primary" 
+                <input
+                  type="checkbox"
+                  id="bulk"
+                  className="w-4 h-4 rounded border-primary text-primary focus:ring-primary"
                   checked={applyToAllModuls}
                   onChange={(e) => setApplyToAllModuls(e.target.checked)}
                 />
@@ -331,7 +354,9 @@ export default function JagaInputModal({
         )}
 
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Batal</Button>
+          <Button variant="outline" onClick={onClose}>
+            Batal
+          </Button>
           <Button onClick={handleSubmit} disabled={loading || !canInput}>
             {loading ? 'Menyimpan...' : 'Simpan'}
           </Button>

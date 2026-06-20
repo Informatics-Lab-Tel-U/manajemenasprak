@@ -11,12 +11,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Jadwal, JadwalPengganti } from '@/types/database';
 import { ROOMS } from '@/constants';
 import { ScheduleCell } from '@/components/jadwal/ScheduleCell';
@@ -105,7 +100,7 @@ export default function DashboardCharts({
 
   // Extract today's matrix and sessions from the hook results
   const scheduleMatrix = fullMatrix[currentDayName] || {};
-  const  visibleSessions = dynamicSessionsByDay[currentDayName] || [];
+  const visibleSessions = dynamicSessionsByDay[currentDayName] || [];
 
   const { jagaList } = useJaga(term, activeModul, currentDayName);
   const shiftInfos = getJagaShiftsByDay(currentDayName);
@@ -194,7 +189,8 @@ export default function DashboardCharts({
                   <thead>
                     <tr className="bg-muted/50 border-b border-border">
                       <th className="p-2 border-r-0 text-center font-bold min-w-[120px] text-[10px] uppercase text-muted-foreground bg-transparent leading-tight">
-                        Penjagaan<br/>
+                        Penjagaan
+                        <br />
                         <span className="text-primary/70">(Modul {activeModul})</span>
                       </th>
                       <th className="w-4 bg-transparent border-none"></th>
@@ -213,83 +209,102 @@ export default function DashboardCharts({
                   </thead>
                   <tbody>
                     {visibleSessions.map((session) => {
-                      const matchedShift = shiftInfos.find(s => s.shift === session.sesi) || shiftInfos[(session.sesi || 1) - 1];
-                      const shiftJaga = jagaList.filter(j => j.shift?.toString() === matchedShift?.shift?.toString());
+                      const matchedShift =
+                        shiftInfos.find((s) => s.shift === session.sesi) ||
+                        shiftInfos[(session.sesi || 1) - 1];
+                      const shiftJaga = jagaList.filter(
+                        (j) => j.shift?.toString() === matchedShift?.shift?.toString()
+                      );
 
                       return (
-                      <tr
-                        key={session.rowKey}
-                        className="hover:bg-muted/30 transition-colors border-b border-border/50"
-                      >
-                         <td className="p-2 border-r-0 text-center align-top relative bg-muted/5">
+                        <tr
+                          key={session.rowKey}
+                          className="hover:bg-muted/30 transition-colors border-b border-border/50"
+                        >
+                          <td className="p-2 border-r-0 text-center align-top relative bg-muted/5">
                             <div className="flex flex-wrap gap-1 justify-center max-w-[120px] mx-auto min-h-[40px] items-center">
-                            {shiftJaga.length > 0 ? (
-                               <TooltipProvider>
-                                 {shiftJaga.map(j => (
-                                   <Tooltip key={j.id}>
-                                     <TooltipTrigger asChild>
-                                       <div 
-                                         className={`text-[10px] px-1.5 py-0.5 rounded-sm font-bold transition-all hover:scale-105 cursor-default ${
-                                           j.asprak?.role === 'ASLAB' 
-                                             ? 'bg-blue-100/80 text-blue-800 border border-blue-200 dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-800/50' 
-                                             : 'bg-slate-100/80 text-slate-800 border border-slate-200 dark:bg-slate-800/60 dark:text-slate-300 dark:border-slate-700/80'
-                                         }`}
-                                       >
-                                         {j.asprak?.kode || 'Unknown'}
-                                       </div>
-                                     </TooltipTrigger>
-                                     <TooltipContent side="right" className="flex flex-col gap-1 p-2 bg-popover border border-border shadow-xl">
-                                        <div className="flex items-center gap-2 border-b pb-1 mb-1 border-border/50">
-                                           <span className={`text-[9px] px-1 rounded-sm uppercase font-black ${j.asprak?.role === 'ASLAB' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-700'}`}>{j.asprak?.role}</span>
-                                           <span className="font-bold text-xs">{j.asprak?.kode}</span>
+                              {shiftJaga.length > 0 ? (
+                                <TooltipProvider>
+                                  {shiftJaga.map((j) => (
+                                    <Tooltip key={j.id}>
+                                      <TooltipTrigger asChild>
+                                        <div
+                                          className={`text-[10px] px-1.5 py-0.5 rounded-sm font-bold transition-all hover:scale-105 cursor-default ${
+                                            j.asprak?.role === 'ASLAB'
+                                              ? 'bg-blue-100/80 text-blue-800 border border-blue-200 dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-800/50'
+                                              : 'bg-slate-100/80 text-slate-800 border border-slate-200 dark:bg-slate-800/60 dark:text-slate-300 dark:border-slate-700/80'
+                                          }`}
+                                        >
+                                          {j.asprak?.kode || 'Unknown'}
                                         </div>
-                                        <div className="font-semibold text-xs">{j.asprak?.nama_lengkap}</div>
-                                        <div className="text-[10px] text-muted-foreground">{j.asprak?.nim}</div>
-                                     </TooltipContent>
-                                   </Tooltip>
-                                 ))}
-                               </TooltipProvider>
-                            ) : (
-                               <span className="text-[10px] text-muted-foreground italic opacity-50">-</span>
-                            )}
+                                      </TooltipTrigger>
+                                      <TooltipContent
+                                        side="right"
+                                        className="flex flex-col gap-1 p-2 bg-popover border border-border shadow-xl"
+                                      >
+                                        <div className="flex items-center gap-2 border-b pb-1 mb-1 border-border/50">
+                                          <span
+                                            className={`text-[9px] px-1 rounded-sm uppercase font-black ${j.asprak?.role === 'ASLAB' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-700'}`}
+                                          >
+                                            {j.asprak?.role}
+                                          </span>
+                                          <span className="font-bold text-xs">
+                                            {j.asprak?.kode}
+                                          </span>
+                                        </div>
+                                        <div className="font-semibold text-xs">
+                                          {j.asprak?.nama_lengkap}
+                                        </div>
+                                        <div className="text-[10px] text-muted-foreground">
+                                          {j.asprak?.nim}
+                                        </div>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  ))}
+                                </TooltipProvider>
+                              ) : (
+                                <span className="text-[10px] text-muted-foreground italic opacity-50">
+                                  -
+                                </span>
+                              )}
                             </div>
-                         </td>
-                        <td className="w-4 bg-transparent border-none"></td>
-                        <td className="p-2 border-r border-l border-border text-center font-medium text-muted-foreground text-xs">
-                          {session.sesi ? (
-                            <div className="font-bold">Sesi {session.sesi}</div>
-                          ) : null}
-                          <div className="text-[10px] opacity-80">{session.jam}</div>
-                        </td>
-                        {uniqueRooms.map((room) => {
-                          const jadwals = scheduleMatrix[session.rowKey]?.[room] || [];
-                          return (
-                            <td
-                              key={`${session.rowKey}-${room}`}
-                              className="p-0 border-r border-border h-[60px] w-[120px] relative align-top"
-                            >
-                              <div className="flex flex-col w-full h-full min-h-[60px]">
-                                {jadwals.map((jadwal, idx) => (
-                                  <ScheduleCell
-                                    key={jadwal.id || idx}
-                                    jadwal={jadwal}
-                                    showAsprakCount={true}
-                                  />
-                                ))}
-                              </div>
-                            </td>
-                          );
-                        })}
-                      </tr>
-                    );
-                  })}
+                          </td>
+                          <td className="w-4 bg-transparent border-none"></td>
+                          <td className="p-2 border-r border-l border-border text-center font-medium text-muted-foreground text-xs">
+                            {session.sesi ? (
+                              <div className="font-bold">Sesi {session.sesi}</div>
+                            ) : null}
+                            <div className="text-[10px] opacity-80">{session.jam}</div>
+                          </td>
+                          {uniqueRooms.map((room) => {
+                            const jadwals = scheduleMatrix[session.rowKey]?.[room] || [];
+                            return (
+                              <td
+                                key={`${session.rowKey}-${room}`}
+                                className="p-0 border-r border-border h-[60px] w-[120px] relative align-top"
+                              >
+                                <div className="flex flex-col w-full h-full min-h-[60px]">
+                                  {jadwals.map((jadwal, idx) => (
+                                    <ScheduleCell
+                                      key={jadwal.id || idx}
+                                      jadwal={jadwal}
+                                      showAsprakCount={true}
+                                    />
+                                  ))}
+                                </div>
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
               {/* Legend */}
               <div className="mt-4 flex items-center gap-4 text-xs text-muted-foreground border-t border-border/50 pt-3">
                 <div className="flex items-center gap-1.5">
-                  <div 
+                  <div
                     className="w-4 h-4 bg-muted rounded-[2px]"
                     style={{
                       background: `linear-gradient(var(--muted), var(--muted)) padding-box, repeating-linear-gradient(45deg, #facc15, #facc15 5px, #ffffff 5px, #ffffff 10px) border-box`,

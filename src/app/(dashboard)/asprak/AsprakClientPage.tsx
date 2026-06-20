@@ -68,7 +68,6 @@ export default function AsprakClientPage({
     }
   }, [searchParams, activeTab]);
 
-
   const {
     data: asprakList,
     loading,

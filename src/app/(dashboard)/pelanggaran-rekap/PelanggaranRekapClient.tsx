@@ -44,7 +44,10 @@ export default function PelanggaranRekapClient({ initialTahunAjaranList }: Props
   const [loading, setLoading] = React.useState(false);
   const [data, setData] = React.useState<PelanggaranSummaryEntry[]>([]);
   const [mounted, setMounted] = React.useState(false);
-  const [sortConfig, setSortConfig] = React.useState<{ key: 'mk' | 'asprak'; direction: 'asc' | 'desc' } | null>(null);
+  const [sortConfig, setSortConfig] = React.useState<{
+    key: 'mk' | 'asprak';
+    direction: 'asc' | 'desc';
+  } | null>(null);
 
   React.useEffect(() => {
     setMounted(true);
@@ -176,11 +179,11 @@ export default function PelanggaranRekapClient({ initialTahunAjaranList }: Props
             let aValue = '';
             let bValue = '';
             if (sortConfig.key === 'mk') {
-               aValue = a.jadwal?.mata_kuliah?.praktikum?.nama ?? '';
-               bValue = b.jadwal?.mata_kuliah?.praktikum?.nama ?? '';
+              aValue = a.jadwal?.mata_kuliah?.praktikum?.nama ?? '';
+              bValue = b.jadwal?.mata_kuliah?.praktikum?.nama ?? '';
             } else if (sortConfig.key === 'asprak') {
-               aValue = a._kode_asprak ?? '';
-               bValue = b._kode_asprak ?? '';
+              aValue = a._kode_asprak ?? '';
+              bValue = b._kode_asprak ?? '';
             }
             if (aValue < bValue) {
               return sortConfig.direction === 'asc' ? -1 : 1;
@@ -211,8 +214,8 @@ export default function PelanggaranRekapClient({ initialTahunAjaranList }: Props
                 <Table className="table-fixed w-full">
                   <TableHeader>
                     <TableRow>
-                      <TableHead 
-                        className="w-[20%] cursor-pointer select-none hover:bg-muted/50 transition-colors" 
+                      <TableHead
+                        className="w-[20%] cursor-pointer select-none hover:bg-muted/50 transition-colors"
                         onClick={() => handleSort('mk')}
                       >
                         <div className="flex items-center gap-2">
@@ -220,8 +223,8 @@ export default function PelanggaranRekapClient({ initialTahunAjaranList }: Props
                           <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
                         </div>
                       </TableHead>
-                      <TableHead 
-                        className="w-[18%] cursor-pointer select-none hover:bg-muted/50 transition-colors" 
+                      <TableHead
+                        className="w-[18%] cursor-pointer select-none hover:bg-muted/50 transition-colors"
                         onClick={() => handleSort('asprak')}
                       >
                         <div className="flex items-center gap-2">

@@ -39,7 +39,7 @@ export type PelanggaranCountEntry = {
 export type PelanggaranCountMap = Record<string, PelanggaranCountEntry>;
 
 export async function getAllPelanggaran(supabaseClient?: SupabaseClient): Promise<Pelanggaran[]> {
-  const supabase = supabaseClient ?? await createClient();
+  const supabase = supabaseClient ?? (await createClient());
   const { data, error } = await supabase
     .from('pelanggaran')
     .select(PELANGGARAN_SELECT)
@@ -86,7 +86,7 @@ export async function getPelanggaranByFilter(
   tahunAjaran?: string,
   supabaseClient?: SupabaseClient
 ): Promise<Pelanggaran[]> {
-  const supabase = supabaseClient ?? await createClient();
+  const supabase = supabaseClient ?? (await createClient());
   let query = supabase
     .from('pelanggaran')
     .select(PELANGGARAN_SELECT)
@@ -115,7 +115,7 @@ export async function getPelanggaranByFilter(
 export async function getPelanggaranByKoor(
   supabaseClient?: SupabaseClient
 ): Promise<Pelanggaran[]> {
-  const supabase = supabaseClient ?? await createClient();
+  const supabase = supabaseClient ?? (await createClient());
   const { data, error } = await supabase
     .from('pelanggaran')
     .select(PELANGGARAN_SELECT)
@@ -175,7 +175,7 @@ export async function createPelanggaran(
   input: CreatePelanggaranInput,
   supabaseClient?: SupabaseClient
 ): Promise<Pelanggaran> {
-  const supabase = supabaseClient ?? await createClient();
+  const supabase = supabaseClient ?? (await createClient());
   const { data, error } = await supabase
     .from('pelanggaran')
     .insert(input)
@@ -193,7 +193,7 @@ export async function bulkCreatePelanggaran(
   inputs: CreatePelanggaranInput[],
   supabaseClient?: SupabaseClient
 ): Promise<Pelanggaran[]> {
-  const supabase = supabaseClient ?? await createClient();
+  const supabase = supabaseClient ?? (await createClient());
   const { data, error } = await supabase
     .from('pelanggaran')
     .insert(inputs)
@@ -261,7 +261,7 @@ export async function deletePelanggaran(
   id: string,
   supabaseClient?: SupabaseClient
 ): Promise<void> {
-  const supabase = supabaseClient ?? await createClient();
+  const supabase = supabaseClient ?? (await createClient());
   const { error } = await supabase.from('pelanggaran').delete().eq('id', id);
 
   if (error) {
@@ -273,7 +273,7 @@ export async function deletePelanggaran(
 export async function getJadwalForPelanggaran(
   supabaseClient?: SupabaseClient
 ): Promise<(Jadwal & { id_praktikum?: string | null })[]> {
-  const supabase = supabaseClient ?? await createClient();
+  const supabase = supabaseClient ?? (await createClient());
 
   const { data, error } = await supabase
     .from('jadwal')
@@ -379,7 +379,7 @@ export async function getPelanggaranSummary(
   minCount: number = 1,
   supabaseClient?: SupabaseClient
 ): Promise<PelanggaranSummaryEntry[]> {
-  const supabase = supabaseClient ?? await createClient();
+  const supabase = supabaseClient ?? (await createClient());
 
   const targetModul = modul || 0;
 
@@ -429,7 +429,5 @@ export async function getPelanggaranSummary(
     entry.violations.push(v);
   }
 
-  return Array.from(summaryMap.values()).sort(
-    (a, b) => b.total_pelanggaran - a.total_pelanggaran
-  );
+  return Array.from(summaryMap.values()).sort((a, b) => b.total_pelanggaran - a.total_pelanggaran);
 }

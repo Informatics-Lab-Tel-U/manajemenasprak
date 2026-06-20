@@ -104,7 +104,7 @@ export function useAsprak(
   useEffect(() => {
     // On the first render, if we have initial data matching the selected term, skip fetching
     const effectiveInitialTerm = initialTerm || initialDataRef.current?.terms?.[0] || 'all';
-    
+
     if (initialRenderRef.current) {
       initialRenderRef.current = false;
       if (initialDataRef.current?.asprakList && selectedTerm === effectiveInitialTerm) {
