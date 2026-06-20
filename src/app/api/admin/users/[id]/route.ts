@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { requireRole } from '@/lib/auth';
+import { requireRoleApi } from '@/lib/auth';
+import { ALL_ROLES } from '@/config/rbac';
+import { apiErrorResponse } from '@/lib/api-error';
 import type { UpdatePenggunaInput } from '@/types/api';
 
 /**
@@ -14,11 +16,27 @@ import type { UpdatePenggunaInput } from '@/types/api';
  */
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    await requireRole(['ADMIN'], '/');
+    const guard = await requireRoleApi(['ADMIN']);
+    if (!guard.ok) return guard.response;
 
     const { id: userId } = await params;
     const body: UpdatePenggunaInput = await request.json();
     const { nama_lengkap, role, praktikum_ids, password } = body;
+
+    // Whitelist role when provided.
+    if (role && !(ALL_ROLES as readonly string[]).includes(role)) {
+      return NextResponse.json({ ok: false, error: 'Role tidak valid.' }, { status: 400 });
+    }
+
+    // Enforce minimum password length when provided.
+    if (password !== undefined) {
+      if (typeof password !== 'string' || password.length < 8) {
+        return NextResponse.json(
+          { ok: false, error: 'Password minimal 8 karakter.' },
+          { status: 400 }
+        );
+      }
+    }
 
     const admin = createAdminClient();
     const supabase = await createClient();
@@ -37,7 +55,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     if (role) updateData.role = role;
 
     if (Object.keys(updateData).length > 0) {
-      const { error } = await supabase.from('pengguna').update(updateData).eq('id', userId);
+      const { error } = await admin.from('pengguna').update(updateData).eq('id', userId);
       if (error) throw error;
     }
 
@@ -66,8 +84,8 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     }
 
     return NextResponse.json({ ok: true });
-  } catch (err: any) {
-    return NextResponse.json({ ok: false, error: err.message }, { status: 500 });
+  } catch (err) {
+    return apiErrorResponse(err, 'PATCH /api/admin/users/[id]');
   }
 }
 
@@ -81,7 +99,8 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await requireRole(['ADMIN'], '/');
+    const guard = await requireRoleApi(['ADMIN']);
+    if (!guard.ok) return guard.response;
 
     const { id } = await params;
     const admin = createAdminClient();
@@ -93,7 +112,7 @@ export async function DELETE(
     if (error) throw error;
 
     return NextResponse.json({ ok: true });
-  } catch (err: any) {
-    return NextResponse.json({ ok: false, error: err.message }, { status: 500 });
+  } catch (err) {
+    return apiErrorResponse(err, 'DELETE /api/admin/users/[id]');
   }
 }

@@ -1,22 +1,10 @@
-/**
- * Term Service - Shared business logic for academic terms
- * Single source of truth for getAvailableTerms across the application
- */
-
 import 'server-only';
 import { SupabaseClient } from '@supabase/supabase-js';
-import { createAdminClient } from '@/lib/supabase/admin';
+import { createClient } from '@/lib/supabase/server';
 import { cache } from 'react';
 
-// Admin Supabase client (bypasses RLS). This service is only used from API routes/server.
-const globalAdmin = createAdminClient();
-
-/**
- * Fetch all available academic terms (tahun_ajaran)
- * Returns sorted list with latest first
- */
 export async function getAvailableTerms(supabaseClient?: SupabaseClient): Promise<string[]> {
-  const supabase = supabaseClient || globalAdmin;
+  const supabase = supabaseClient ?? await createClient();
   const { data } = await supabase
     .from('praktikum')
     .select('tahun_ajaran')
@@ -28,11 +16,6 @@ export async function getAvailableTerms(supabaseClient?: SupabaseClient): Promis
   );
 }
 
-/**
- * Cached version of getAvailableTerms
- * Deduplicates requests within a single render/request cycle
- * ReCache is transparent - same type signature as original function
- */
 export const getCachedAvailableTerms = cache(
   async (supabaseClient?: SupabaseClient): Promise<string[]> => {
     return getAvailableTerms(supabaseClient);

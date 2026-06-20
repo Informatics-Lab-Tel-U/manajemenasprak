@@ -7,12 +7,14 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import * as asprakService from '@/services/asprakService';
 import { getAvailableTerms } from '@/services/termService';
-import { logger } from '@/lib/logger';
-import { requireRole } from '@/lib/auth';
+import { requireRoleApi } from '@/lib/auth';
+import { apiErrorResponse } from '@/lib/api-error';
 
 export async function GET(req: Request) {
   try {
-    await requireRole(['ADMIN', 'ASLAB', 'ASPRAK_KOOR']);
+    const guard = await requireRoleApi(['ADMIN', 'ASLAB', 'ASPRAK_KOOR']);
+    if (!guard.ok) return guard.response;
+
     const supabase = await createClient();
     const url = new URL(req.url);
     const params = url.searchParams;
@@ -36,15 +38,17 @@ export async function GET(req: Request) {
 
     const data = await asprakService.getAllAsprak(term, supabase);
     return NextResponse.json({ ok: true, data });
-  } catch (e: any) {
-    logger.error('GET /api/asprak error:', e);
-    return NextResponse.json({ ok: false, error: e.message }, { status: 500 });
+  } catch (err) {
+    return apiErrorResponse(err, 'GET /api/asprak');
   }
 }
 
 export async function POST(req: Request) {
   try {
-    const user = await requireRole(['ADMIN', 'ASLAB', 'ASPRAK_KOOR']);
+    const guard = await requireRoleApi(['ADMIN', 'ASLAB', 'ASPRAK_KOOR']);
+    if (!guard.ok) return guard.response;
+    const user = guard.user;
+
     const supabase = await createClient();
     const body = await req.json();
     const { action } = body;
@@ -95,16 +99,17 @@ export async function POST(req: Request) {
       default:
         return NextResponse.json({ ok: false, error: 'Invalid action' }, { status: 400 });
     }
-  } catch (e: any) {
-    logger.error('POST /api/asprak error:', e);
-    const status = e.message.includes('conflict') ? 409 : 500;
-    return NextResponse.json({ ok: false, error: e.message }, { status });
+  } catch (err: any) {
+    const status = err.message?.includes('conflict') ? 409 : undefined;
+    return apiErrorResponse(err, 'POST /api/asprak', status ? { status } : undefined);
   }
 }
 
 export async function DELETE(req: Request) {
   try {
-    await requireRole(['ADMIN']);
+    const guard = await requireRoleApi(['ADMIN']);
+    if (!guard.ok) return guard.response;
+
     const supabase = await createClient();
     const body = await req.json();
     const { id } = body;
@@ -116,8 +121,7 @@ export async function DELETE(req: Request) {
     await asprakService.deleteAsprak(id, supabase);
 
     return NextResponse.json({ ok: true, data: null });
-  } catch (e: any) {
-    logger.error('DELETE /api/asprak error:', e);
-    return NextResponse.json({ ok: false, error: e.message }, { status: 500 });
+  } catch (err) {
+    return apiErrorResponse(err, 'DELETE /api/asprak');
   }
 }

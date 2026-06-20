@@ -33,7 +33,7 @@ export default function DashboardCharts({
   loading,
   term,
   activeModul,
-  userRole,
+  userRole: _userRole,
 }: {
   asprakByAngkatan: { name: string; count: number }[];
   jadwalByDay: { name: string; count: number }[];

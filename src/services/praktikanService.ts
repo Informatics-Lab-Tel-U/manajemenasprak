@@ -2,10 +2,8 @@ import 'server-only';
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 
-import { createAdminClient } from '@/lib/supabase/admin';
+import { createClient } from '@/lib/supabase/server';
 import { logger } from '@/lib/logger';
-
-const globalAdmin = createAdminClient();
 
 export type PraktikanId = string | number;
 
@@ -42,8 +40,8 @@ export type PraktikanOptions = {
   mata_kuliah: string[];
 };
 
-function getClient(supabaseClient?: SupabaseClient) {
-  return supabaseClient ?? globalAdmin;
+async function getClient(supabaseClient?: SupabaseClient) {
+  return supabaseClient ?? await createClient();
 }
 
 function normalizeRequired(value: unknown, field: string) {
@@ -120,7 +118,7 @@ export async function getPraktikanList(
   filters: PraktikanFilters = {},
   supabaseClient?: SupabaseClient
 ): Promise<PraktikanRecord[]> {
-  const supabase = getClient(supabaseClient);
+  const supabase = await getClient(supabaseClient);
 
   let query = supabase
     .from('praktikan')
@@ -162,7 +160,7 @@ export function getActiveTahunAjaran(date = new Date()) {
 export async function getActivePraktikumMataKuliahOptions(
   supabaseClient?: SupabaseClient
 ): Promise<string[]> {
-  const supabase = getClient(supabaseClient);
+  const supabase = await getClient(supabaseClient);
   const activeTahunAjaran = getActiveTahunAjaran();
 
   const { data, error } = await supabase
@@ -190,7 +188,7 @@ export async function getPraktikanKelasByMataKuliah(
   mataKuliah: string | null | undefined,
   supabaseClient?: SupabaseClient
 ): Promise<string[]> {
-  const supabase = getClient(supabaseClient);
+  const supabase = await getClient(supabaseClient);
   const normalizedMataKuliah = normalizeRequired(mataKuliah, 'mata_kuliah');
 
   const { data, error } = await supabase
@@ -217,7 +215,7 @@ export async function getPraktikanKelasByMataKuliah(
 export async function getPraktikanOptions(
   supabaseClient?: SupabaseClient
 ): Promise<PraktikanOptions> {
-  const supabase = getClient(supabaseClient);
+  const supabase = await getClient(supabaseClient);
 
   const { data, error } = await supabase.rpc('get_praktikan_options').single();
 
@@ -238,7 +236,7 @@ export async function createPraktikan(
   input: CreatePraktikanInput | CreatePraktikanInput[],
   supabaseClient?: SupabaseClient
 ): Promise<CreatePraktikanResult> {
-  const supabase = getClient(supabaseClient);
+  const supabase = await getClient(supabaseClient);
   const rows = Array.isArray(input) ? input : [input];
   const payload = rows.map(normalizeCreateInput);
 
@@ -267,7 +265,7 @@ export async function updatePraktikan(
   input: UpdatePraktikanInput,
   supabaseClient?: SupabaseClient
 ): Promise<PraktikanRecord> {
-  const supabase = getClient(supabaseClient);
+  const supabase = await getClient(supabaseClient);
   const praktikanId = validateId(id);
   const payload = normalizeUpdateInput(input);
 
@@ -290,7 +288,7 @@ export async function deletePraktikan(
   id: PraktikanId,
   supabaseClient?: SupabaseClient
 ): Promise<void> {
-  const supabase = getClient(supabaseClient);
+  const supabase = await getClient(supabaseClient);
   const praktikanId = validateId(id);
 
   const { error } = await supabase.from('praktikan').delete().eq('id', praktikanId);
@@ -305,7 +303,7 @@ export async function deletePraktikanByKelas(
   kelas: string,
   supabaseClient?: SupabaseClient
 ): Promise<{ deleted: number }> {
-  const supabase = getClient(supabaseClient);
+  const supabase = await getClient(supabaseClient);
   const normalizedKelas = normalizeRequired(kelas, 'kelas');
 
   const { data, error } = await supabase

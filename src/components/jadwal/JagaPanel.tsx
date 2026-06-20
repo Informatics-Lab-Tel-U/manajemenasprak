@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { AlertTriangle, Edit2, Plus, Shield, X } from 'lucide-react';
+import { AlertTriangle, Edit2, Shield, X } from 'lucide-react';
 import { useJaga } from '@/hooks/useJaga';
 import { getJagaShiftsByDay } from '@/utils/jagaUtils';
-import JagaInputModal from './JagaInputModal';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { deleteJadwalJaga, bulkDeleteJadwalJaga } from '@/lib/fetchers/jagaFetcher';
@@ -34,8 +32,8 @@ export default function JagaPanel({
   term, 
   selectedModul, 
   filterDay, 
-  hideInputButton, 
-  userRole,
+  hideInputButton: _hideInputButton, 
+  userRole: _userRole,
   onRefreshTrigger,
   onEdit
 }: JagaPanelProps) {
@@ -90,7 +88,7 @@ export default function JagaPanel({
            toast.error(error || 'Gagal menghapus');
          }
       }
-    } catch (err) {
+    } catch {
       toast.error('Gagal menghapus jadwal jaga');
     } finally {
       setIsDeleteDialogOpen(false);

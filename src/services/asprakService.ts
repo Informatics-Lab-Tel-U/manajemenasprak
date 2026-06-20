@@ -1,7 +1,7 @@
 import 'server-only';
 import { cache } from 'react';
 import { SupabaseClient } from '@supabase/supabase-js';
-import { createAdminClient } from '@/lib/supabase/admin';
+import { createClient } from '@/lib/supabase/server';
 import { Asprak } from '@/types/database';
 import type { Role } from '@/config/rbac';
 import { logger } from '@/lib/logger';
@@ -9,14 +9,11 @@ import { checkCodeConflict, generateConflictErrorMessage } from '@/utils/conflic
 import { generateAsprakCode } from '@/utils/asprakCodeGenerator';
 import { getCachedAvailableTerms as getCachedTerms } from './termService';
 
-// Admin Supabase client (bypasses RLS). This service is only used from API routes/server.
-const globalAdmin = createAdminClient();
-
 export async function checkNimExists(
   nim: string,
   supabaseClient?: SupabaseClient
 ): Promise<boolean> {
-  const supabase = supabaseClient || globalAdmin;
+  const supabase = supabaseClient ?? await createClient();
   const { data } = await supabase.from('asprak').select('id').eq('nim', nim).maybeSingle();
   return !!data;
 }
@@ -26,11 +23,9 @@ export async function generateUniqueCode(
   supabaseClient?: SupabaseClient,
   forceOverride: boolean = false
 ): Promise<{ code: string; rule: string }> {
-  const supabase = supabaseClient || globalAdmin;
+  const supabase = supabaseClient ?? await createClient();
   const existingCodes = await getExistingCodes(supabase);
 
-  // If forceOverride is true, we act as if NO codes are used
-  // so the generator picks the absolute best Rule 3.1 code.
   const usedCodesSet = forceOverride ? new Set<string>() : new Set(existingCodes);
 
   try {
@@ -45,7 +40,7 @@ export async function getAllAsprak(
   term?: string,
   supabaseClient?: SupabaseClient
 ): Promise<Asprak[]> {
-  const supabase = supabaseClient || globalAdmin;
+  const supabase = supabaseClient ?? await createClient();
 
   let query;
   if (term && term !== 'all') {
@@ -120,7 +115,7 @@ export async function getAspraksWithAssignments(
   term?: string,
   supabaseClient?: SupabaseClient
 ): Promise<AsprakWithMap[]> {
-  const supabase = supabaseClient || globalAdmin;
+  const supabase = supabaseClient ?? await createClient();
   const query = supabase
     .from('asprak')
     .select(
@@ -183,7 +178,7 @@ export async function getAspraksWithAssignments(
 }
 
 export async function deleteAsprak(id: string, supabaseClient?: SupabaseClient): Promise<void> {
-  const supabase = supabaseClient || globalAdmin;
+  const supabase = supabaseClient ?? await createClient();
   const { error } = await supabase.from('asprak').delete().eq('id', id);
   if (error) {
     logger.error(`Error deleting asprak ${id}:`, error);
@@ -192,32 +187,20 @@ export async function deleteAsprak(id: string, supabaseClient?: SupabaseClient):
 }
 
 export async function getExistingCodes(supabaseClient?: SupabaseClient): Promise<string[]> {
-  const supabase = supabaseClient || globalAdmin;
+  const supabase = supabaseClient ?? await createClient();
   const { data } = await supabase.from('asprak').select('kode');
   if (!data) return [];
   return Array.from(new Set(data.map((d) => d.kode as string))).sort((a, b) => a.localeCompare(b));
 }
 
-/**
- * Re-export getCachedAvailableTerms from termService (shared business logic)
- * This prevents code duplication across services
- */
 export const getCachedAvailableTerms = getCachedTerms;
 
-/**
- * Cached version of getAllAsprak
- * Deduplicates requests within a single render/request cycle
- */
 export const getCachedAllAsprak = cache(
   async (term?: string, supabaseClient?: SupabaseClient): Promise<Asprak[]> => {
     return getAllAsprak(term, supabaseClient);
   }
 );
 
-/**
- * Cached version of getAspraksWithAssignments
- * Deduplicates requests within a single render/request cycle
- */
 export const getCachedAspraksWithAssignments = cache(
   async (term?: string, supabaseClient?: SupabaseClient): Promise<AsprakWithMap[]> => {
     return getAspraksWithAssignments(term, supabaseClient);
@@ -228,7 +211,7 @@ export async function getAsprakAssignments(
   asprakId: number | string,
   supabaseClient?: SupabaseClient
 ) {
-  const supabase = supabaseClient || globalAdmin;
+  const supabase = supabaseClient ?? await createClient();
   const { data, error } = await supabase
     .from('asprak_praktikum')
     .select(
@@ -263,9 +246,6 @@ export interface UpsertAsprakInput {
   forceOverride?: boolean;
 }
 
-/**
- * Helper: Get or create praktikum by name and term
- */
 async function getOrCreatePraktikum(
   name: string,
   term: string,
@@ -290,9 +270,6 @@ async function getOrCreatePraktikum(
   return created.id;
 }
 
-/**
- * Helper: Handle code conflict and mark existing code as expired
- */
 async function handleCodeConflictAndExpire(
   newCode: string,
   nim: string,
@@ -303,14 +280,10 @@ async function handleCodeConflictAndExpire(
 
   if (!codeOwners || codeOwners.length === 0) return;
 
-  // Check each owner for conflicts
   for (const owner of codeOwners) {
     const conflictCheck = checkCodeConflict(owner, nim);
     if (!conflictCheck.hasConflict) continue;
 
-    // Hard Conflict check: If they are in the same angkatan (gap < 1),
-    // we block them NO MATTER WHAT to avoid duplicates in the same year.
-    // We compare raw numbers because angkatan here is already 4-digit.
     const currentYear = new Date().getFullYear();
     const gap = currentYear - (owner.angkatan || 0);
 
@@ -326,9 +299,6 @@ async function handleCodeConflictAndExpire(
   }
 }
 
-/**
- * Helper: Upsert or insert asprak record
- */
 async function upsertOrInsertAsprak(
   input: UpsertAsprakInput,
   supabase: SupabaseClient
@@ -370,9 +340,6 @@ async function upsertOrInsertAsprak(
   return newUser.id;
 }
 
-/**
- * Helper: Link asprak to praktikums
- */
 async function linkAssignments(
   asprakId: string,
   assignments: UpsertAsprakInput['assignments'],
@@ -403,7 +370,7 @@ export async function upsertAsprak(
   input: UpsertAsprakInput,
   supabaseClient?: SupabaseClient
 ): Promise<string> {
-  const supabase = supabaseClient || globalAdmin;
+  const supabase = supabaseClient ?? await createClient();
   let angkatan = input.angkatan;
   if (angkatan < 100) angkatan += 2000;
 
@@ -431,9 +398,6 @@ export interface BulkUpsertResult {
   errors: string[];
 }
 
-/**
- * Helper: Build upsert and insert payloads from rows
- */
 function buildUpsertPayloads(
   rows: BulkUpsertRow[],
   existingMap: Map<string, string>
@@ -476,7 +440,7 @@ export async function bulkUpsertAspraks(
   rows: BulkUpsertRow[],
   supabaseClient?: SupabaseClient
 ): Promise<BulkUpsertResult> {
-  const supabase = supabaseClient || globalAdmin;
+  const supabase = supabaseClient ?? await createClient();
   const result: BulkUpsertResult = { inserted: 0, updated: 0, skipped: 0, errors: [] };
 
   if (rows.length === 0) return result;
@@ -484,7 +448,6 @@ export async function bulkUpsertAspraks(
   try {
     const nims = rows.map((r) => r.nim);
 
-    // Fetch existing aspraks by NIM to determine PK for upsert
     const { data: existing } = await supabase
       .from('asprak')
       .select('id, nim, role')
@@ -495,7 +458,6 @@ export async function bulkUpsertAspraks(
     const { upsertPayload, insertPayload, skipped } = buildUpsertPayloads(rows, existingMap);
     result.skipped = skipped;
 
-    // 1. Process updates (upsert with IDs)
     if (upsertPayload.length > 0) {
       const { error } = await supabase.from('asprak').upsert(upsertPayload);
       if (error) {
@@ -505,7 +467,6 @@ export async function bulkUpsertAspraks(
       }
     }
 
-    // 2. Process inserts (insert without IDs)
     if (insertPayload.length > 0) {
       const { error } = await supabase.from('asprak').insert(insertPayload);
       if (error) {
@@ -522,9 +483,6 @@ export async function bulkUpsertAspraks(
   return result;
 }
 
-/**
- * Helper: Update asprak code if provided
- */
 async function updateAsprakCodeIfNeeded(
   asprakId: string | number,
   newKode: string | undefined,
@@ -546,9 +504,6 @@ async function updateAsprakCodeIfNeeded(
   }
 }
 
-/**
- * Helper: Calculate which assignments to delete and insert
- */
 async function calculateAssignmentChanges(
   asprakId: string | number,
   newPraktikumIds: string[],
@@ -592,7 +547,7 @@ export async function updateAsprakAssignments(
   nim?: string,
   forceOverride: boolean = false
 ): Promise<void> {
-  const supabase = supabaseClient || globalAdmin;
+  const supabase = supabaseClient ?? await createClient();
 
   await updateAsprakCodeIfNeeded(asprakId, newKode, nim, forceOverride, supabase);
 

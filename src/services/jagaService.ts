@@ -1,21 +1,17 @@
 import 'server-only';
-
 import { SupabaseClient } from '@supabase/supabase-js';
-import { createAdminClient } from '@/lib/supabase/admin';
-import { JadwalJaga } from '@/types/database';
+import { createClient } from '@/lib/supabase/server';
 import { logger } from '@/lib/logger';
+import { JadwalJaga } from '@/types/database';
 import { createAuditLog } from './auditLogService';
 
-const globalAdmin = createAdminClient();
-
-// Get list of Jadwal Jaga for a specific term, modul, and hari (or all hari if day is not provided)
 export async function getJadwalJaga(
   term: string,
   modul?: number,
   hari?: string,
   supabaseClient?: SupabaseClient
 ): Promise<JadwalJaga[]> {
-  const supabase = supabaseClient || globalAdmin;
+  const supabase = supabaseClient ?? await createClient();
 
   let query = supabase
     .from('jadwal_jaga')
@@ -55,13 +51,12 @@ export async function upsertJadwalJaga(
   input: UpsertJadwalJagaInput,
   supabaseClient?: SupabaseClient
 ): Promise<void> {
-  const supabase = supabaseClient || globalAdmin;
+  const supabase = supabaseClient ?? await createClient();
 
   const { data: created, error } = await supabase.from('jadwal_jaga').insert(input).select().single();
 
   if (error) {
     logger.error('Error inserting jadwal_jaga:', error);
-    // Usually code 23505 is unique violation in Postgres
     if (error.code === '23505') {
       throw new Error(`Asisten ini sudah terdaftar pada shift tersebut.`);
     }
@@ -83,9 +78,8 @@ export async function updateJadwalJaga(
   input: Partial<UpsertJadwalJagaInput>,
   supabaseClient?: SupabaseClient
 ): Promise<void> {
-  const supabase = supabaseClient || globalAdmin;
+  const supabase = supabaseClient ?? await createClient();
 
-  // Get old data for audit
   const { data: oldData } = await supabase.from('jadwal_jaga').select('*').eq('id', id).single();
 
   const { data: updated, error } = await supabase
@@ -115,9 +109,8 @@ export async function deleteJadwalJaga(
   id: string,
   supabaseClient?: SupabaseClient
 ): Promise<void> {
-  const supabase = supabaseClient || globalAdmin;
+  const supabase = supabaseClient ?? await createClient();
 
-  // Get old data for audit
   const { data: oldData } = await supabase.from('jadwal_jaga').select('*').eq('id', id).single();
 
   const { error } = await supabase.from('jadwal_jaga').delete().eq('id', id);
@@ -137,9 +130,6 @@ export async function deleteJadwalJaga(
   }
 }
 
-/**
- * Bulk create/upsert jaga to multiple modules
- */
 export async function bulkUpsertJadwalJaga(
   id_asprak: string,
   tahun_ajaran: string,
@@ -148,7 +138,7 @@ export async function bulkUpsertJadwalJaga(
   shift: number,
   supabaseClient?: SupabaseClient
 ): Promise<void> {
-  const supabase = supabaseClient || globalAdmin;
+  const supabase = supabaseClient ?? await createClient();
 
   const payloads = moduls.map((modul) => ({
     id_asprak,
@@ -158,11 +148,6 @@ export async function bulkUpsertJadwalJaga(
     shift,
   }));
 
-  // We use upsert if we want to overwrite, but the user said "nginput langsung ke semua modul"
-  // which implies adding if not exists. Usually we want to skip if already exists or overwrite.
-  // Given the unique constraint, we'll try to insert and ignore/report errors?
-  // Use upsert with onConflict on (id_asprak, tahun_ajaran, modul, hari, shift) if unique index exists.
-  
   const { data: created, error } = await supabase
     .from('jadwal_jaga')
     .upsert(payloads, { onConflict: 'id_asprak, tahun_ajaran, modul, hari, shift' })
@@ -178,16 +163,13 @@ export async function bulkUpsertJadwalJaga(
       await createAuditLog({
         table_name: 'jadwal_jaga',
         record_id: item.id,
-        operation: 'INSERT', // Actually UPSERT but logging as INSERT for simplicity unless changed
+        operation: 'INSERT',
         new_values: item,
       });
     }
   }
 }
 
-/**
- * Bulk delete jaga for a specific assistant on a specific day/shift across selected modules
- */
 export async function bulkDeleteJadwalJaga(
   id_asprak: string,
   tahun_ajaran: string,
@@ -196,7 +178,7 @@ export async function bulkDeleteJadwalJaga(
   shift: number,
   supabaseClient?: SupabaseClient
 ): Promise<void> {
-  const supabase = supabaseClient || globalAdmin;
+  const supabase = supabaseClient ?? await createClient();
 
   const { data: toDelete, error: fetchError } = await supabase
     .from('jadwal_jaga')
@@ -236,9 +218,8 @@ export async function getRekapJagaAggregated(
   term: string,
   supabaseClient?: SupabaseClient
 ) {
-  const supabase = supabaseClient || globalAdmin;
+  const supabase = supabaseClient ?? await createClient();
 
-  // Fetch all jaga for the term
   const { data, error } = await supabase
     .from('jadwal_jaga')
     .select(`

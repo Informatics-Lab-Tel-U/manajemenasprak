@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { requireRole } from '@/lib/auth';
+import { requireRoleApi } from '@/lib/auth';
+import { apiErrorResponse } from '@/lib/api-error';
 
 /**
  * GET /api/admin/users/assignments?id_pengguna=<uuid>
@@ -10,7 +11,8 @@ import { requireRole } from '@/lib/auth';
  */
 export async function GET(request: NextRequest) {
   try {
-    await requireRole(['ADMIN'], '/');
+    const guard = await requireRoleApi(['ADMIN']);
+    if (!guard.ok) return guard.response;
 
     const { searchParams } = new URL(request.url);
     const idPengguna = searchParams.get('id_pengguna');
@@ -48,7 +50,7 @@ export async function GET(request: NextRequest) {
     }));
 
     return NextResponse.json({ ok: true, data: result });
-  } catch (err: any) {
-    return NextResponse.json({ ok: false, error: err.message }, { status: 500 });
+  } catch (err) {
+    return apiErrorResponse(err, 'GET /api/admin/users/assignments');
   }
 }

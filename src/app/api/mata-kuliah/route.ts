@@ -7,38 +7,36 @@ import {
   updateMataKuliahColorByPraktikumName,
 } from '@/services/mataKuliahService';
 import { getOrCreatePraktikum } from '@/services/praktikumService';
-import { requireRole } from '@/lib/auth';
+import { requireRoleApi } from '@/lib/auth';
+import { apiErrorResponse } from '@/lib/api-error';
+import { logger } from '@/lib/logger';
 
 export async function GET(request: NextRequest) {
   try {
-    await requireRole(['ADMIN', 'ASLAB', 'ASPRAK_KOOR']);
+    const guard = await requireRoleApi(['ADMIN', 'ASLAB', 'ASPRAK_KOOR']);
+    if (!guard.ok) return guard.response;
+
     const supabase = await createClient();
     const searchParams = request.nextUrl.searchParams;
     const term = searchParams.get('term');
 
     const data = await getMataKuliahByTerm(term, supabase);
     return NextResponse.json({ ok: true, data });
-  } catch (error: unknown) {
-    return NextResponse.json(
-      { ok: false, error: error instanceof Error ? error.message : 'Internal server error' },
-      { status: 500 }
-    );
+  } catch (err) {
+    return apiErrorResponse(err, 'GET /api/mata-kuliah');
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    await requireRole(['ADMIN', 'ASLAB']);
+    const guard = await requireRoleApi(['ADMIN', 'ASLAB']);
+    if (!guard.ok) return guard.response;
+
     const supabase = await createClient();
     const body = await request.json();
     const { action, data, term } = body;
 
     if (action === 'create') {
-      // Handle single creation logic
-      // If praktikum doesn't exist, create it on the fly?
-      // The frontend should have handled fetching the praktikum ID or requesting creation
-
-      // Expect data to have id_praktikum usually, but let's see if we need to create praktikum first
       let praktikumId = data.id_praktikum;
 
       if (!praktikumId && data.mk_singkat && term) {
@@ -56,29 +54,13 @@ export async function POST(request: NextRequest) {
 
       const result = await createMataKuliah(payload, supabase);
 
-      if (result) {
-      }
-
       return NextResponse.json({ ok: true, data: result });
     } else if (action === 'bulk') {
-      // Bulk import logic
-      // data is array of { mk_singkat, nama_lengkap, program_studi, dosen_koor }
-      // We need to resolve mk_singkat to id_praktikum for each
-      // Optimally, fetch all praktikum for the term once
-
-      // This logic is better placed in backend to avoid multiple round trips from frontend
-      // But for transparency and reusability, let's process here.
-
-      // 1. Get all Praktikum names for the term to cache IDs
-      // Actually getOrCreatePraktikum handles existence check but calling it in loop is okay for moderate size
-
       const finalPayloads = [];
       const errors = [];
 
       for (const row of data) {
         try {
-          // Ensure Praktikum exists
-          // Row has: mk_singkat, nama_lengkap, program_studi, dosen_koor
           const praktikum = await getOrCreatePraktikum(row.mk_singkat, term, supabase);
 
           finalPayloads.push({
@@ -89,9 +71,8 @@ export async function POST(request: NextRequest) {
             warna: row.warna,
           });
         } catch (err: unknown) {
-          errors.push(
-            `Failed to prepare ${row.mk_singkat}: ${err instanceof Error ? err.message : 'Unknown error'}`
-          );
+          logger.error(`Failed to prepare ${row.mk_singkat}:`, err);
+          errors.push(`Gagal mempersiapkan mata kuliah ${row.mk_singkat}`);
         }
       }
 
@@ -107,25 +88,25 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ ok: false, error: 'Invalid action' }, { status: 400 });
-  } catch (error: any) {
-    return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+  } catch (err) {
+    return apiErrorResponse(err, 'POST /api/mata-kuliah');
   }
 }
 
 export async function PUT(request: NextRequest) {
   try {
-    await requireRole(['ADMIN', 'ASLAB']);
+    const guard = await requireRoleApi(['ADMIN', 'ASLAB']);
+    if (!guard.ok) return guard.response;
+
     const supabase = await createClient();
     const body = await request.json();
     const { action, data } = body;
 
     if (action === 'bulk-update-color') {
-      // Validate data is array of { id, warna }
       if (!Array.isArray(data)) {
         return NextResponse.json({ ok: false, error: 'Invalid data format' }, { status: 400 });
       }
 
-      // Supabase has no direct bulk update, so we update sequentially
       let updatedCount = 0;
       const errors: string[] = [];
 
@@ -138,7 +119,8 @@ export async function PUT(request: NextRequest) {
           .eq('id', item.id);
 
         if (error) {
-          errors.push(`Failed to update ${item.id}: ${error.message}`);
+          logger.error(`Failed to update ${item.id}:`, error);
+          errors.push(`Gagal memperbarui warna untuk ID ${item.id}`);
         } else {
           updatedCount++;
         }
@@ -165,9 +147,8 @@ export async function PUT(request: NextRequest) {
           const count = await updateMataKuliahColorByPraktikumName(item.nama, item.warna, supabase);
           totalUpdated += count;
         } catch (err: unknown) {
-          errors.push(
-            `Failed to update global color for ${item.nama}: ${err instanceof Error ? err.message : 'Unknown error'}`
-          );
+          logger.error(`Failed to update global color for ${item.nama}:`, err);
+          errors.push(`Gagal memperbarui warna global untuk ${item.nama}`);
         }
       }
 
@@ -178,10 +159,7 @@ export async function PUT(request: NextRequest) {
     }
 
     return NextResponse.json({ ok: false, error: 'Invalid action' }, { status: 400 });
-  } catch (error: unknown) {
-    return NextResponse.json(
-      { ok: false, error: error instanceof Error ? error.message : 'Internal server error' },
-      { status: 500 }
-    );
+  } catch (err) {
+    return apiErrorResponse(err, 'PUT /api/mata-kuliah');
   }
 }

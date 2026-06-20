@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { useSearchParams, useRouter, usePathname } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { Download, Plus, Upload, ChevronDown, Users, GitFork } from 'lucide-react';
 import { toast } from 'sonner';
 import { Asprak } from '@/types/database';
@@ -57,8 +57,6 @@ export default function AsprakClientPage({
   initialExistingNims,
   initialExistingAspraks,
 }: AsprakClientPageProps) {
-  const router = useRouter();
-  const pathname = usePathname();
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'data');
 
@@ -70,13 +68,6 @@ export default function AsprakClientPage({
     }
   }, [searchParams, activeTab]);
 
-  const handleTabChange = (value: string) => {
-    setActiveTab(value);
-    const params = new URLSearchParams(searchParams.toString());
-    params.set('tab', value);
-    // Use router.push with { scroll: false } for better transition
-    router.push(`${pathname}?${params.toString()}`, { scroll: false });
-  };
 
   const {
     data: asprakList,

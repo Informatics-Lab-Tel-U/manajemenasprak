@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { getStats } from '@/services/databaseService';
-import { requireRole } from '@/lib/auth';
+import { requireRoleApi } from '@/lib/auth';
+import { apiErrorResponse } from '@/lib/api-error';
 
 export async function GET(request: NextRequest) {
   try {
-    await requireRole(['ADMIN', 'ASLAB', 'ASPRAK_KOOR']);
+    const guard = await requireRoleApi(['ADMIN', 'ASLAB', 'ASPRAK_KOOR']);
+    if (!guard.ok) return guard.response;
+
     const supabase = await createClient();
     const { searchParams } = new URL(request.url);
     const term = searchParams.get('term') || undefined;
@@ -13,8 +16,7 @@ export async function GET(request: NextRequest) {
     const stats = await getStats(term, supabase);
 
     return NextResponse.json({ ok: true, data: stats });
-  } catch (error: any) {
-    console.error('Error fetching stats:', error);
-    return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+  } catch (err) {
+    return apiErrorResponse(err, 'GET /api/stats');
   }
 }

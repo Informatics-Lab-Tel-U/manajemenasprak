@@ -1,15 +1,12 @@
 import 'server-only';
-
 import { SupabaseClient } from '@supabase/supabase-js';
-import { createAdminClient } from '@/lib/supabase/admin';
+import { createClient } from '@/lib/supabase/server';
 import { logger } from '@/lib/logger';
 
-const globalAdmin = createAdminClient();
-
-export type ModulScheduleEntry = {
+export interface ModulScheduleEntry {
   modul: number;
   tanggal_mulai: string | null;
-};
+}
 
 const TOTAL_MODUL = 16;
 
@@ -17,7 +14,7 @@ export async function getModulScheduleByTerm(
   term: string,
   supabaseClient?: SupabaseClient
 ): Promise<ModulScheduleEntry[]> {
-  const supabase = supabaseClient || globalAdmin;
+  const supabase = supabaseClient ?? await createClient();
 
   try {
     const { data, error } = await supabase
@@ -56,7 +53,7 @@ export async function upsertModulScheduleForTerm(
   entries: ModulScheduleEntry[],
   supabaseClient?: SupabaseClient
 ): Promise<void> {
-  const supabase = supabaseClient || globalAdmin;
+  const supabase = supabaseClient ?? await createClient();
 
   const payload = entries.map((e) => ({
     tahun_ajaran: term,

@@ -2,14 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Jadwal, MataKuliah } from '@/types/database';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+
 import JadwalPenggantiTable from '@/components/jadwal/JadwalPenggantiTable';
 import {
   Select,
@@ -19,8 +12,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,7 +22,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Plus, Trash2, Edit, FilterX } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import * as jadwalFetcher from '@/lib/fetchers/jadwalFetcher';
 import { JadwalPenggantiModal } from '@/components/jadwal/JadwalPenggantiModal';
@@ -57,19 +48,7 @@ export default function JadwalPenggantiClientPage({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  const formatTime = (time: string | undefined | null) => {
-    if (!time) return '-';
-    // Handle ranges like "07:30 - 10:00" by taking the first part
-    const startTime = time.split('-')[0].trim();
-    // Handle HH:mm:ss or HH:mm
-    const parts = startTime.split(':');
-    if (parts.length >= 2) {
-      const hh = parts[0].trim().padStart(2, '0');
-      const mm = parts[1].trim().padStart(2, '0');
-      return `${hh}:${mm}`;
-    }
-    return startTime;
-  };
+
 
   const fetchPengganti = React.useCallback(async () => {
     if (!selectedTerm) return;

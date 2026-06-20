@@ -8,9 +8,15 @@ import {
   bulkDeleteJadwalJaga
 } from '@/services/jagaService';
 import { createClient } from '@/lib/supabase/server';
+import { requireRoleApi } from '@/lib/auth';
+import { apiErrorResponse } from '@/lib/api-error';
 
 export async function GET(request: Request) {
   try {
+    // Read access: any authenticated user (RLS scopes rows to authenticated).
+    const guard = await requireRoleApi(['ADMIN', 'ASLAB', 'ASPRAK_KOOR']);
+    if (!guard.ok) return guard.response;
+
     const { searchParams } = new URL(request.url);
     const term = searchParams.get('term');
     const modul = searchParams.get('modul');
@@ -22,20 +28,18 @@ export async function GET(request: Request) {
 
     const data = await getJadwalJaga(term, modul ? parseInt(modul) : undefined, hari || undefined);
     return NextResponse.json({ data });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (err) {
+    return apiErrorResponse(err, 'GET /api/jaga');
   }
 }
 
 export async function POST(request: Request) {
   try {
+    const guard = await requireRoleApi(['ADMIN', 'ASLAB']);
+    if (!guard.ok) return guard.response;
+
     const body = await request.json();
     const supabase = await createClient();
-
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
 
     const { action, id_asprak, tahun_ajaran, moduls, hari, shift } = body;
 
@@ -46,13 +50,16 @@ export async function POST(request: Request) {
 
     await upsertJadwalJaga(body);
     return NextResponse.json({ success: true, message: 'Jadwal jaga berhasil ditambahkan' });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (err) {
+    return apiErrorResponse(err, 'POST /api/jaga');
   }
 }
 
 export async function PUT(request: Request) {
   try {
+    const guard = await requireRoleApi(['ADMIN', 'ASLAB']);
+    if (!guard.ok) return guard.response;
+
     const body = await request.json();
     const { id, ...input } = body;
 
@@ -61,30 +68,24 @@ export async function PUT(request: Request) {
     }
 
     const supabase = await createClient();
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
 
     await updateJadwalJaga(id, input);
     return NextResponse.json({ success: true, message: 'Jadwal jaga berhasil diperbarui' });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (err) {
+    return apiErrorResponse(err, 'PUT /api/jaga');
   }
 }
 
 export async function DELETE(request: Request) {
   try {
+    const guard = await requireRoleApi(['ADMIN', 'ASLAB']);
+    if (!guard.ok) return guard.response;
+
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
     const action = searchParams.get('action');
 
     const supabase = await createClient();
-    const { data: { session } } = await supabase.auth.getSession();
-
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
 
     if (action === 'bulk-delete') {
       const id_asprak = searchParams.get('id_asprak');
@@ -108,7 +109,7 @@ export async function DELETE(request: Request) {
 
     await deleteJadwalJaga(id);
     return NextResponse.json({ success: true });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (err) {
+    return apiErrorResponse(err, 'DELETE /api/jaga');
   }
 }

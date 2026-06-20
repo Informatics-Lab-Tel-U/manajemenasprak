@@ -1,16 +1,17 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { logger } from '@/lib/logger';
-import { requireRole } from '@/lib/auth';
+import { getStats } from '@/services/databaseService';
+import { requireRoleApi } from '@/lib/auth';
+import { apiErrorResponse } from '@/lib/api-error';
 
 export async function GET(req: Request) {
   try {
-    await requireRole(['ADMIN', 'ASLAB']);
+    const guard = await requireRoleApi(['ADMIN', 'ASLAB']);
+    if (!guard.ok) return guard.response;
+
     const supabase = await createClient();
     const { searchParams } = new URL(req.url);
     const term = searchParams.get('term');
-
-    logger.info(`Export Request received for term: ${term}`);
 
     if (!term) {
       return NextResponse.json({ error: 'Term parameter is required' }, { status: 400 });
@@ -23,8 +24,6 @@ export async function GET(req: Request) {
       .eq('tahun_ajaran', term);
 
     if (pError) throw pError;
-
-    logger.info(`Found ${praktikum?.length || 0} praktikum records for ${term}`);
 
     if (!praktikum || praktikum.length === 0) {
       return NextResponse.json({
@@ -50,7 +49,6 @@ export async function GET(req: Request) {
 
     if (mkError) throw mkError;
     const mkIds = mk.map((m) => m.id);
-    logger.info(`Found ${mk?.length || 0} mata_kuliah records`);
 
     // 3. Fetch Asprak (those linked to this term's praktikum)
     const { data: pivot, error: pivotError } = await supabase
@@ -59,7 +57,6 @@ export async function GET(req: Request) {
       .in('id_praktikum', pIds);
 
     if (pivotError) throw pivotError;
-    logger.info(`Found ${pivot?.length || 0} pivot records`);
 
     // Extract unique asprak
     const asprakMap = new Map();
@@ -69,7 +66,6 @@ export async function GET(req: Request) {
       }
     });
     const asprak = Array.from(asprakMap.values());
-    logger.info(`Extracted ${asprak.length} unique asprak`);
 
     // 4. Fetch Jadwal
     const { data: jadwal, error: jError } = await supabase
@@ -78,7 +74,6 @@ export async function GET(req: Request) {
       .in('id_mk', mkIds);
 
     if (jError) throw jError;
-    logger.info(`Found ${jadwal?.length || 0} jadwal records`);
 
     // Formatting for Excel
     const formattedPraktikum = praktikum.map((p) => ({
@@ -126,8 +121,7 @@ export async function GET(req: Request) {
         asprak_praktikum: formattedPivot,
       },
     });
-  } catch (e: any) {
-    logger.error('Export failed:', e);
-    return NextResponse.json({ error: e.message }, { status: 500 });
+  } catch (err) {
+    return apiErrorResponse(err, 'GET /api/export');
   }
 }

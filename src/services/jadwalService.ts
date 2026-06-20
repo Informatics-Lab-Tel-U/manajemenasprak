@@ -1,24 +1,18 @@
 import 'server-only';
 import { cache } from 'react';
 import { SupabaseClient } from '@supabase/supabase-js';
-import { createAdminClient } from '@/lib/supabase/admin';
+import { createClient } from '@/lib/supabase/server';
 import { getCachedAvailableTerms as getCachedTerms } from './termService';
-
-const globalAdmin = createAdminClient();
 import { Jadwal, JadwalPengganti } from '@/types/database';
 import { logger } from '@/lib/logger';
 
-/**
- * Re-export getCachedAvailableTerms from termService (shared business logic)
- * This prevents code duplication across services
- */
 export const getCachedAvailableTerms = getCachedTerms;
 
 export async function getJadwalByTerm(
   term: string,
   supabaseClient?: SupabaseClient
 ): Promise<Jadwal[]> {
-  const supabase = supabaseClient || globalAdmin;
+  const supabase = supabaseClient ?? await createClient();
   const { data, error } = await supabase
     .from('jadwal')
     .select(
@@ -46,10 +40,6 @@ export async function getJadwalByTerm(
   return data as Jadwal[];
 }
 
-/**
- * Cached version of getJadwalByTerm
- * Deduplicates requests within a single render/request cycle
- */
 export const getCachedJadwalByTerm = cache(
   async (term: string, supabaseClient?: SupabaseClient): Promise<Jadwal[]> => {
     return getJadwalByTerm(term, supabaseClient);
@@ -57,7 +47,7 @@ export const getCachedJadwalByTerm = cache(
 );
 
 export async function getScheduleForValidation(term: string, supabaseClient?: SupabaseClient) {
-  const supabase = supabaseClient || globalAdmin;
+  const supabase = supabaseClient ?? await createClient();
   const { data, error } = await supabase
     .from('jadwal')
     .select(
@@ -84,24 +74,20 @@ export async function getTodaySchedule(
   term?: string,
   supabaseClient?: SupabaseClient
 ): Promise<Jadwal[]> {
-  const supabase = supabaseClient || globalAdmin;
-  
-  // Force calculations to use WIB (UTC+7) timezone regardless of server locale (e.g. Vercel UTC)
+  const supabase = supabaseClient ?? await createClient();
+
   const nowUtc = new Date();
   const nowWib = new Date(nowUtc.getTime() + 7 * 60 * 60 * 1000);
 
-  // 1. Get current day name (SENIN, etc.) in WIB
   const dayIndex = nowWib.getUTCDay();
   const weekdays = ['SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU'];
   const todayName = dayIndex === 0 ? 'MINGGU' : weekdays[dayIndex - 1];
 
-  // 2. Get today's local date string (YYYY-MM-DD) in WIB
   const year = nowWib.getUTCFullYear();
   const month = String(nowWib.getUTCMonth() + 1).padStart(2, '0');
   const day = String(nowWib.getUTCDate()).padStart(2, '0');
   const todayDateStr = `${year}-${month}-${day}`;
 
-  // 3. Fetch regular schedules for today
   let normalQuery = supabase
     .from('jadwal')
     .select(
@@ -124,10 +110,8 @@ export async function getTodaySchedule(
     normalQuery = normalQuery.eq('mata_kuliah.praktikum.tahun_ajaran', term);
   }
 
-  // Apply limit to normal query
   normalQuery = normalQuery.limit(limit);
 
-  // 4. Fetch replacement schedules for today
   let penggantiQuery = supabase
     .from('jadwal_pengganti')
     .select(
@@ -153,14 +137,12 @@ export async function getTodaySchedule(
     penggantiQuery = penggantiQuery.eq('jadwal.mata_kuliah.praktikum.tahun_ajaran', term);
   }
 
-  // Apply limit to replacement query
   penggantiQuery = penggantiQuery.limit(limit);
 
   const [normalResult, penggantiResult] = await Promise.all([normalQuery, penggantiQuery]);
 
   const results: any[] = [];
 
-  // Add replacement schedules first
   if (penggantiResult.data) {
     penggantiResult.data.forEach((p: any) => {
       results.push({
@@ -177,7 +159,6 @@ export async function getTodaySchedule(
     });
   }
 
-  // Add normal schedules
   if (normalResult.data) {
     normalResult.data.forEach((n: any) => {
       results.push(n);
@@ -202,7 +183,7 @@ export async function createJadwal(
   input: CreateJadwalInput,
   supabaseClient?: SupabaseClient
 ): Promise<Jadwal> {
-  const supabase = supabaseClient || globalAdmin;
+  const supabase = supabaseClient ?? await createClient();
   const { id_mk, kelas, hari, sesi, jam, ruangan, total_asprak, dosen } = input;
   const cleanInput = { id_mk, kelas, hari, sesi, jam, ruangan, total_asprak, dosen };
   const { data, error } = await supabase.from('jadwal').insert(cleanInput).select().single();
@@ -218,7 +199,7 @@ export async function bulkCreateJadwal(
   inputs: CreateJadwalInput[],
   supabaseClient?: SupabaseClient
 ): Promise<{ inserted: number; errors: string[] }> {
-  const supabase = supabaseClient || globalAdmin;
+  const supabase = supabaseClient ?? await createClient();
   if (inputs.length === 0) return { inserted: 0, errors: [] };
 
   const { data, error } = await supabase.from('jadwal').insert(inputs).select();
@@ -247,7 +228,7 @@ export async function updateJadwal(
   input: UpdateJadwalInput,
   supabaseClient?: SupabaseClient
 ): Promise<Jadwal> {
-  const supabase = supabaseClient || globalAdmin;
+  const supabase = supabaseClient ?? await createClient();
   const { id, id_mk, kelas, hari, sesi, jam, ruangan, total_asprak, dosen } = input;
 
   const updates: Record<string, any> = {};
@@ -275,7 +256,7 @@ export async function updateJadwal(
 }
 
 export async function deleteJadwal(id: string, supabaseClient?: SupabaseClient): Promise<void> {
-  const supabase = supabaseClient || globalAdmin;
+  const supabase = supabaseClient ?? await createClient();
   const { error } = await supabase.from('jadwal').delete().eq('id', id);
   if (error) {
     logger.error('Error deleting jadwal:', error);
@@ -287,7 +268,7 @@ export async function deleteJadwalByIds(
   ids: string[],
   supabaseClient?: SupabaseClient
 ): Promise<void> {
-  const supabase = supabaseClient || globalAdmin;
+  const supabase = supabaseClient ?? await createClient();
   if (ids.length === 0) return;
   const { error } = await supabase.from('jadwal').delete().in('id', ids);
   if (error) {
@@ -300,7 +281,7 @@ export async function deleteJadwalByTerm(
   term: string,
   supabaseClient?: SupabaseClient
 ): Promise<void> {
-  const supabase = supabaseClient || globalAdmin;
+  const supabase = supabaseClient ?? await createClient();
 
   const { data: mkData, error: mkError } = await supabase
     .from('mata_kuliah')
@@ -337,7 +318,7 @@ export interface CreateJadwalPenggantiInput {
 }
 
 export async function getAllJadwal(supabaseClient?: SupabaseClient): Promise<Jadwal[]> {
-  const supabase = supabaseClient || globalAdmin;
+  const supabase = supabaseClient ?? await createClient();
   const { data, error } = await supabase
     .from('jadwal')
     .select(
@@ -368,7 +349,7 @@ export async function getJadwalPengganti(
   modul: number,
   supabaseClient?: SupabaseClient
 ): Promise<JadwalPengganti[]> {
-  const supabase = supabaseClient || globalAdmin;
+  const supabase = supabaseClient ?? await createClient();
   if (modul <= 0) return [];
 
   const { data, error } = await supabase.from('jadwal_pengganti').select('*').eq('modul', modul);
@@ -384,7 +365,7 @@ export async function upsertJadwalPengganti(
   input: CreateJadwalPenggantiInput,
   supabaseClient?: SupabaseClient
 ): Promise<JadwalPengganti> {
-  const supabase = supabaseClient || globalAdmin;
+  const supabase = supabaseClient ?? await createClient();
   const { id_jadwal, modul, tanggal, hari, sesi, jam, ruangan } = input;
 
   if (!tanggal) {
@@ -419,7 +400,7 @@ export async function getJadwalPenggantiByTerm(
   term: string,
   supabaseClient?: SupabaseClient
 ): Promise<any[]> {
-  const supabase = supabaseClient || globalAdmin;
+  const supabase = supabaseClient ?? await createClient();
   const { data, error } = await supabase
     .from('jadwal_pengganti')
     .select(
@@ -450,7 +431,7 @@ export async function deleteJadwalPengganti(
   id: string,
   supabaseClient?: SupabaseClient
 ): Promise<void> {
-  const supabase = supabaseClient || globalAdmin;
+  const supabase = supabaseClient ?? await createClient();
   const { error } = await supabase.from('jadwal_pengganti').delete().eq('id', id);
   if (error) {
     logger.error('Error deleting jadwal pengganti:', error);

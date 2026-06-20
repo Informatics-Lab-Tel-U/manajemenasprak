@@ -1,11 +1,8 @@
 import 'server-only';
 import { SupabaseClient } from '@supabase/supabase-js';
-import { createAdminClient } from '@/lib/supabase/admin';
+import { createClient } from '@/lib/supabase/server';
 import { MataKuliah } from '@/types/database';
 import { logger } from '@/lib/logger';
-
-// Admin Supabase client (bypasses RLS). This service is only used from API routes/server.
-const globalAdmin = createAdminClient();
 
 export interface MataKuliahWithPraktikum extends MataKuliah {
   praktikum: {
@@ -16,7 +13,7 @@ export interface MataKuliahWithPraktikum extends MataKuliah {
 }
 
 export type MataKuliahGrouped = {
-  mk_singkat: string; // From Praktikum.nama
+  mk_singkat: string;
   praktikum_id: string;
   items: MataKuliahWithPraktikum[];
 };
@@ -25,7 +22,7 @@ export async function getMataKuliahByTerm(
   term: string | null,
   supabaseClient?: SupabaseClient
 ): Promise<MataKuliahGrouped[]> {
-  const supabase = supabaseClient || globalAdmin;
+  const supabase = supabaseClient ?? await createClient();
   let query = supabase.from('mata_kuliah').select(`
       *,
       praktikum:praktikum!inner (
@@ -48,7 +45,6 @@ export async function getMataKuliahByTerm(
 
   const rawData = data as unknown as MataKuliahWithPraktikum[];
 
-  // Group by Praktikum Name (mk_singkat)
   const groupedMap: Record<string, MataKuliahGrouped> = {};
 
   rawData.forEach((mk) => {
@@ -63,7 +59,6 @@ export async function getMataKuliahByTerm(
     groupedMap[mkSingkat].items.push(mk);
   });
 
-  // Convert to array and sort by mk_singkat
   return Object.values(groupedMap).sort((a, b) => a.mk_singkat.localeCompare(b.mk_singkat));
 }
 
@@ -79,7 +74,7 @@ export async function createMataKuliah(
   payload: CreateMataKuliahPayload,
   supabaseClient?: SupabaseClient
 ): Promise<MataKuliah | null> {
-  const supabase = supabaseClient || globalAdmin;
+  const supabase = supabaseClient ?? await createClient();
   const { data, error } = await supabase.from('mata_kuliah').insert(payload).select().single();
 
   if (error) {
@@ -99,12 +94,11 @@ export async function bulkCreateMataKuliah(
   payloads: CreateMataKuliahPayload[],
   supabaseClient?: SupabaseClient
 ): Promise<BulkImportMataKuliahResult> {
-  const supabase = supabaseClient || globalAdmin;
+  const supabase = supabaseClient ?? await createClient();
   const result: BulkImportMataKuliahResult = { inserted: 0, errors: [] };
 
   if (payloads.length === 0) return result;
 
-  // Deduplicate payload internally as a safety measure
   const uniquePayloads = [];
   const seen = new Set();
   for (const p of payloads) {
@@ -115,7 +109,6 @@ export async function bulkCreateMataKuliah(
     }
   }
 
-  // Perform a single bulk insert
   const { data, error } = await supabase.from('mata_kuliah').insert(uniquePayloads).select();
 
   if (error) {
@@ -132,7 +125,7 @@ export async function checkMataKuliahExists(
   programStudi: string,
   supabaseClient?: SupabaseClient
 ): Promise<boolean> {
-  const supabase = supabaseClient || globalAdmin;
+  const supabase = supabaseClient ?? await createClient();
   const { count, error } = await supabase
     .from('mata_kuliah')
     .select('*', { count: 'exact', head: true })
@@ -152,9 +145,8 @@ export async function updateMataKuliahColorByPraktikumName(
   warna: string,
   supabaseClient?: SupabaseClient
 ): Promise<number> {
-  const supabase = supabaseClient || globalAdmin;
+  const supabase = supabaseClient ?? await createClient();
 
-  // 1. Get all praktikum IDs with this name
   const { data: praktikums, error: pError } = await supabase
     .from('praktikum')
     .select('id')
@@ -166,7 +158,6 @@ export async function updateMataKuliahColorByPraktikumName(
 
   const pIds = praktikums.map((p) => p.id);
 
-  // 2. Update all mata_kuliah with these praktikum IDs
   const { data, error: mkError } = await supabase
     .from('mata_kuliah')
     .update({ warna })

@@ -10,7 +10,6 @@ import {
   SortingState,
 } from '@tanstack/react-table';
 import { ArrowUpDown, Edit, Trash2, FilterX } from 'lucide-react';
-import { JadwalPengganti } from '@/types/database';
 import {
   Table,
   TableBody,

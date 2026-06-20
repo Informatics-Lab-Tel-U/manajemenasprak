@@ -1,11 +1,9 @@
 import 'server-only';
 import { SupabaseClient } from '@supabase/supabase-js';
-import { createAdminClient } from '@/lib/supabase/admin';
+import { createClient } from '@/lib/supabase/server';
 import type { Pelanggaran, Praktikum, Jadwal } from '@/types/database';
 import type { CreatePelanggaranInput } from '@/types/api';
 import { logger } from '@/lib/logger';
-
-const globalAdmin = createAdminClient();
 
 const PELANGGARAN_SELECT = `
   *,
@@ -41,7 +39,7 @@ export type PelanggaranCountEntry = {
 export type PelanggaranCountMap = Record<string, PelanggaranCountEntry>;
 
 export async function getAllPelanggaran(supabaseClient?: SupabaseClient): Promise<Pelanggaran[]> {
-  const supabase = supabaseClient || globalAdmin;
+  const supabase = supabaseClient ?? await createClient();
   const { data, error } = await supabase
     .from('pelanggaran')
     .select(PELANGGARAN_SELECT)
@@ -88,7 +86,7 @@ export async function getPelanggaranByFilter(
   tahunAjaran?: string,
   supabaseClient?: SupabaseClient
 ): Promise<Pelanggaran[]> {
-  const supabase = supabaseClient || globalAdmin;
+  const supabase = supabaseClient ?? await createClient();
   let query = supabase
     .from('pelanggaran')
     .select(PELANGGARAN_SELECT)
@@ -117,7 +115,7 @@ export async function getPelanggaranByFilter(
 export async function getPelanggaranByKoor(
   supabaseClient?: SupabaseClient
 ): Promise<Pelanggaran[]> {
-  const supabase = supabaseClient || globalAdmin;
+  const supabase = supabaseClient ?? await createClient();
   const { data, error } = await supabase
     .from('pelanggaran')
     .select(PELANGGARAN_SELECT)
@@ -134,10 +132,7 @@ export async function getPelanggaranCountsByPraktikum(
   isKoor: boolean,
   supabaseClient: SupabaseClient
 ): Promise<PelanggaranCountMap> {
-  const client = isKoor ? supabaseClient : globalAdmin;
-
-  // 1. Get total violations per praktikum
-  const { data: violations, error: vError } = await client
+  const { data: violations, error: vError } = await supabaseClient
     .from('pelanggaran')
     .select('jadwal:jadwal(mata_kuliah:mata_kuliah(id_praktikum))');
 
@@ -146,8 +141,7 @@ export async function getPelanggaranCountsByPraktikum(
     return {};
   }
 
-  // 2. Get finalized modules per praktikum
-  const { data: status, error: sError } = await client
+  const { data: status, error: sError } = await supabaseClient
     .from('pelanggaran_status')
     .select('id_praktikum, is_finalized')
     .eq('is_finalized', true);
@@ -159,7 +153,6 @@ export async function getPelanggaranCountsByPraktikum(
 
   const countMap = new Map<string, PelanggaranCountEntry>();
 
-  // Count violations
   for (const row of violations ?? []) {
     const id = (row as any).jadwal?.mata_kuliah?.id_praktikum;
     if (!id) continue;
@@ -169,8 +162,6 @@ export async function getPelanggaranCountsByPraktikum(
     countMap.get(id)!.total += 1;
   }
 
-  // Mark practicals as finalized if ANY module is finalized (or according to your definition)
-  // Here we keep it simple: shown as 'finalized' if there's at least one finalized status entry for it
   for (const s of status ?? []) {
     if (countMap.has(s.id_praktikum)) {
       countMap.get(s.id_praktikum)!.finalized = true;
@@ -184,7 +175,7 @@ export async function createPelanggaran(
   input: CreatePelanggaranInput,
   supabaseClient?: SupabaseClient
 ): Promise<Pelanggaran> {
-  const supabase = supabaseClient || globalAdmin;
+  const supabase = supabaseClient ?? await createClient();
   const { data, error } = await supabase
     .from('pelanggaran')
     .insert(input)
@@ -202,7 +193,7 @@ export async function bulkCreatePelanggaran(
   inputs: CreatePelanggaranInput[],
   supabaseClient?: SupabaseClient
 ): Promise<Pelanggaran[]> {
-  const supabase = supabaseClient || globalAdmin;
+  const supabase = supabaseClient ?? await createClient();
   const { data, error } = await supabase
     .from('pelanggaran')
     .insert(inputs)
@@ -215,16 +206,12 @@ export async function bulkCreatePelanggaran(
   return data as Pelanggaran[];
 }
 
-/**
- * Finalize all modules for a specific praktikum.
- */
 export async function finalizePelanggaranByPraktikum(
   id_praktikum: string,
   finalizedBy: string
 ): Promise<void> {
-  const supabase = globalAdmin;
+  const supabase = await createClient();
 
-  // We finalize all 16 modules
   const inserts = Array.from({ length: 16 }, (_, i) => ({
     id_praktikum,
     modul: i + 1,
@@ -243,9 +230,6 @@ export async function finalizePelanggaranByPraktikum(
   }
 }
 
-/**
- * Finalize all pelanggaran for a specific mata kuliah (No longer supported with centralized status).
- */
 export async function finalizePelanggaranByMataKuliah(): Promise<void> {
   throw new Error('Finalisasi per mata kuliah tidak lagi didukung. Gunakan finalisasi per modul.');
 }
@@ -277,7 +261,7 @@ export async function deletePelanggaran(
   id: string,
   supabaseClient?: SupabaseClient
 ): Promise<void> {
-  const supabase = supabaseClient || globalAdmin;
+  const supabase = supabaseClient ?? await createClient();
   const { error } = await supabase.from('pelanggaran').delete().eq('id', id);
 
   if (error) {
@@ -289,7 +273,7 @@ export async function deletePelanggaran(
 export async function getJadwalForPelanggaran(
   supabaseClient?: SupabaseClient
 ): Promise<(Jadwal & { id_praktikum?: string | null })[]> {
-  const supabase = supabaseClient || globalAdmin;
+  const supabase = supabaseClient ?? await createClient();
 
   const { data, error } = await supabase
     .from('jadwal')
@@ -312,7 +296,7 @@ export async function getJadwalForPelanggaran(
 }
 
 export async function unfinalizePelanggaranByPraktikum(idPraktikum: string): Promise<void> {
-  const supabase = globalAdmin;
+  const supabase = await createClient();
 
   const { error } = await supabase
     .from('pelanggaran_status')
@@ -325,15 +309,12 @@ export async function unfinalizePelanggaranByPraktikum(idPraktikum: string): Pro
   }
 }
 
-/**
- * Finalize all pelanggaran for a specific praktikum and modul.
- */
 export async function finalizePelanggaranByModul(
   id_praktikum: string,
   modul: number,
   finalizedBy: string
 ): Promise<void> {
-  const supabase = globalAdmin;
+  const supabase = await createClient();
 
   const { error } = await supabase.from('pelanggaran_status').upsert(
     {
@@ -352,11 +333,8 @@ export async function finalizePelanggaranByModul(
   }
 }
 
-/**
- * Get list of finalized modules for a praktikum.
- */
 export async function getFinalizedModules(idPraktikum: string): Promise<number[]> {
-  const supabase = globalAdmin;
+  const supabase = await createClient();
 
   const { data, error } = await supabase
     .from('pelanggaran_status')
@@ -368,14 +346,11 @@ export async function getFinalizedModules(idPraktikum: string): Promise<number[]
   return data.map((d) => d.modul);
 }
 
-/**
- * Unfinalize (reset) all pelanggaran for a specific praktikum and modul.
- */
 export async function unfinalizePelanggaranByModul(
   id_praktikum: string,
   modul: number
 ): Promise<void> {
-  const supabase = globalAdmin;
+  const supabase = await createClient();
 
   const { error } = await supabase
     .from('pelanggaran_status')
@@ -389,9 +364,6 @@ export async function unfinalizePelanggaranByModul(
   }
 }
 
-/**
- * Summary entry for aggregated violation reports.
- */
 export type PelanggaranSummaryEntry = {
   id_asprak: string;
   nama_asprak: string;
@@ -401,21 +373,16 @@ export type PelanggaranSummaryEntry = {
   violations: Pelanggaran[];
 };
 
-/**
- * Get aggregated summary of violations across all asprak for a given year/module.
- */
 export async function getPelanggaranSummary(
   tahunAjaran: string,
   modul?: number,
   minCount: number = 1,
   supabaseClient?: SupabaseClient
 ): Promise<PelanggaranSummaryEntry[]> {
-  const supabase = supabaseClient || globalAdmin;
+  const supabase = supabaseClient ?? await createClient();
 
-  // Allow modul to be undefined or 0, pass 0 to RPC
   const targetModul = modul || 0;
 
-  // 1. Fetch filtered violation IDs from the database RPC
   const { data: idData, error: rpcError } = await supabase.rpc('get_filtered_pelanggaran_ids', {
     p_tahun_ajaran: tahunAjaran,
     p_target_modul: targetModul,
@@ -430,7 +397,6 @@ export async function getPelanggaranSummary(
   const ids = idData?.map((row: any) => row.id) || [];
   if (ids.length === 0) return [];
 
-  // 2. Fetch full related data for those IDs
   const { data, error } = await supabase
     .from('pelanggaran')
     .select(PELANGGARAN_SELECT)
@@ -445,7 +411,6 @@ export async function getPelanggaranSummary(
   const violations = data as Pelanggaran[];
   const summaryMap = new Map<string, PelanggaranSummaryEntry>();
 
-  // 3. Group by asprak (formatting for the frontend, not for logic)
   for (const v of violations) {
     const asprakId = v.id_asprak;
     if (!asprakId) continue;
@@ -464,7 +429,6 @@ export async function getPelanggaranSummary(
     entry.violations.push(v);
   }
 
-  // Filtering is already handled by the DB, just sort by total_pelanggaran descending
   return Array.from(summaryMap.values()).sort(
     (a, b) => b.total_pelanggaran - a.total_pelanggaran
   );
