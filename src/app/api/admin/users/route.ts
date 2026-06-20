@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { requireRole } from '@/lib/auth';
+import { requireRoleApi } from '@/lib/auth';
+import { ALL_ROLES } from '@/config/rbac';
+import { apiErrorResponse } from '@/lib/api-error';
 import type { CreatePenggunaInput } from '@/types/api';
 
 /**
@@ -11,7 +13,8 @@ import type { CreatePenggunaInput } from '@/types/api';
  */
 export async function GET() {
   try {
-    await requireRole(['ADMIN'], '/');
+    const guard = await requireRoleApi(['ADMIN']);
+    if (!guard.ok) return guard.response;
 
     const admin = createAdminClient();
 
@@ -31,8 +34,8 @@ export async function GET() {
     }));
 
     return NextResponse.json({ ok: true, data: users });
-  } catch (err: any) {
-    return NextResponse.json({ ok: false, error: err.message }, { status: 500 });
+  } catch (err) {
+    return apiErrorResponse(err, 'GET /api/admin/users');
   }
 }
 
@@ -46,7 +49,8 @@ export async function GET() {
  */
 export async function POST(request: NextRequest) {
   try {
-    await requireRole(['ADMIN'], '/');
+    const guard = await requireRoleApi(['ADMIN']);
+    if (!guard.ok) return guard.response;
 
     const body: CreatePenggunaInput = await request.json();
     const { email, password, nama_lengkap, role, praktikum_ids } = body;
@@ -55,6 +59,24 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: false, error: 'Semua field wajib diisi.' }, { status: 400 });
     }
 
+    // Whitelist role to prevent arbitrary role strings (e.g. a bogus 'SUPERADMIN').
+    if (!(ALL_ROLES as readonly string[]).includes(role)) {
+      return NextResponse.json({ ok: false, error: 'Role tidak valid.' }, { status: 400 });
+    }
+
+    // Enforce a minimum password length.
+    if (typeof password !== 'string' || password.length < 8) {
+      return NextResponse.json(
+        { ok: false, error: 'Password minimal 8 karakter.' },
+        { status: 400 }
+      );
+    }
+
+    if (typeof email !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return NextResponse.json({ ok: false, error: 'Format email tidak valid.' }, { status: 400 });
+    }
+
+    // Gunakan admin client (Service Role) dari awal sampai akhir untuk Bypass RLS
     const admin = createAdminClient();
 
     // 1. Create auth user
@@ -64,17 +86,25 @@ export async function POST(request: NextRequest) {
       user_metadata: { nama_lengkap },
       email_confirm: true,
     });
+
     if (createError) throw createError;
 
     const userId = newUser.user.id;
 
-    // 2. Update pengguna profile (trigger handle_new_user already created the row)
-    const supabase = await createClient();
-    const { error: updateError } = await supabase
+    // 2. INSERT pengguna profile (Bukan UPDATE, karena trigger sudah dimatikan)
+    const { error: insertError } = await admin
       .from('pengguna')
-      .update({ nama_lengkap, role })
-      .eq('id', userId);
-    if (updateError) throw updateError;
+      .insert({
+        id: userId,
+        nama_lengkap: nama_lengkap,
+        role: role
+      });
+
+    // IMPLEMENTASI ROLLBACK: Jika gagal insert profil, hapus auth user agar tidak yatim
+    if (insertError) {
+      await admin.auth.admin.deleteUser(userId);
+      throw new Error(`Gagal membuat profil: ${insertError.message}`);
+    }
 
     // 3. For ASPRAK_KOOR: insert asprak_koordinator records (one per praktikum)
     if (role === 'ASPRAK_KOOR' && praktikum_ids && praktikum_ids.length > 0) {
@@ -84,7 +114,8 @@ export async function POST(request: NextRequest) {
         is_active: true,
       }));
 
-      const { error: assignError } = await supabase
+      // Gunakan admin client juga di sini untuk memastikan kelancaran insert server-side
+      const { error: assignError } = await admin
         .from('asprak_koordinator')
         .insert(assignmentRows);
 
@@ -95,7 +126,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ ok: true, data: { id: userId } });
-  } catch (err: any) {
-    return NextResponse.json({ ok: false, error: err.message }, { status: 500 });
+  } catch (err) {
+    return apiErrorResponse(err, 'POST /api/admin/users');
   }
 }

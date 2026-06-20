@@ -1,8 +1,13 @@
 import { NextResponse } from 'next/server';
 import { getRekapJagaAggregated } from '@/services/jagaService';
+import { requireRoleApi } from '@/lib/auth';
+import { apiErrorResponse } from '@/lib/api-error';
 
 export async function GET(request: Request) {
   try {
+    const guard = await requireRoleApi(['ADMIN', 'ASLAB']);
+    if (!guard.ok) return guard.response;
+
     const { searchParams } = new URL(request.url);
     const term = searchParams.get('term');
 
@@ -12,7 +17,7 @@ export async function GET(request: Request) {
 
     const data = await getRekapJagaAggregated(term);
     return NextResponse.json({ data });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (err) {
+    return apiErrorResponse(err, 'GET /api/jaga/rekap');
   }
 }

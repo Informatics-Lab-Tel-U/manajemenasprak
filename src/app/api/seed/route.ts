@@ -1,27 +1,36 @@
 import { NextResponse } from 'next/server';
-import { exec } from 'child_process';
+import { execFile } from 'child_process';
 import { logger } from '@/lib/logger';
-import { requireRole } from '@/lib/auth';
+import { requireRoleApi } from '@/lib/auth';
+import { apiErrorResponse } from '@/lib/api-error';
 
 export async function POST(req: Request): Promise<NextResponse> {
   try {
-    await requireRole(['ADMIN']);
+    const guard = await requireRoleApi(['ADMIN']);
+    if (!guard.ok) return guard.response;
+
     const { term } = await req.json();
 
     logger.info(`Triggering seed for ${term}`);
 
     return new Promise<NextResponse>((resolve) => {
-      exec(`npx tsx scripts/seed.ts`, { cwd: process.cwd() }, (error, stdout, stderr) => {
-        if (error) {
-          logger.error(`Seed exec error: ${error.message}`);
-          resolve(NextResponse.json({ error: error.message, details: stderr }, { status: 500 }));
-          return;
+      // Use execFile instead of exec to avoid shell injection vector.
+      const child = execFile(
+        'npx',
+        ['tsx', 'scripts/seed.ts'],
+        { cwd: process.cwd() },
+        (error, stdout, stderr) => {
+          if (error) {
+            logger.error(`Seed exec error: ${error.message}`, { stderr });
+            resolve(NextResponse.json({ error: 'Gagal menjalankan proses seeding database' }, { status: 500 }));
+            return;
+          }
+          logger.info(`Seed output: ${stdout}`);
+          resolve(NextResponse.json({ message: 'Seed executed successfully', output: stdout }));
         }
-        logger.info(`Seed output: ${stdout}`);
-        resolve(NextResponse.json({ message: 'Seed executed successfully', output: stdout }));
-      });
+      );
     });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err) {
+    return apiErrorResponse(err, 'POST /api/seed');
   }
 }

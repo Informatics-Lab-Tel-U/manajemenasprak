@@ -2,12 +2,15 @@ import { NextResponse } from 'next/server';
 import * as XLSX from 'xlsx';
 import { createClient } from '@/lib/supabase/server';
 import { logger } from '@/lib/logger';
-import { requireRole } from '@/lib/auth';
+import { requireRoleApi } from '@/lib/auth';
+import { apiErrorResponse } from '@/lib/api-error';
 import { checkCodeConflict, generateConflictErrorMessage } from '@/utils/conflict';
 
 export async function POST(req: Request) {
   try {
-    await requireRole(['ADMIN']);
+    const guard = await requireRoleApi(['ADMIN']);
+    if (!guard.ok) return guard.response;
+
     const supabase = await createClient();
     const formData = await req.formData();
     const file = formData.get('file') as File;
@@ -239,9 +242,9 @@ export async function POST(req: Request) {
       if (insertedPraktikumIds.length > 0)
         await supabase.from('praktikum').delete().in('id', insertedPraktikumIds);
 
-      return NextResponse.json({ error: e.message }, { status: 500 });
+      return apiErrorResponse(e, 'POST /api/import (rollback)');
     }
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+  } catch (err) {
+    return apiErrorResponse(err, 'POST /api/import');
   }
 }

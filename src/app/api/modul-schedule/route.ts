@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { logger } from '@/lib/logger';
-import { requireRole } from '@/lib/auth';
+import { requireRoleApi } from '@/lib/auth';
+import { apiErrorResponse } from '@/lib/api-error';
 import {
   getModulScheduleByTerm,
   upsertModulScheduleForTerm,
@@ -10,7 +10,9 @@ import {
 
 export async function GET(req: Request) {
   try {
-    await requireRole(['ADMIN', 'ASLAB', 'ASPRAK_KOOR']);
+    const guard = await requireRoleApi(['ADMIN', 'ASLAB', 'ASPRAK_KOOR']);
+    if (!guard.ok) return guard.response;
+
     const supabase = await createClient();
     const { searchParams } = new URL(req.url);
     const term = searchParams.get('term');
@@ -21,18 +23,16 @@ export async function GET(req: Request) {
 
     const data = await getModulScheduleByTerm(term, supabase);
     return NextResponse.json({ ok: true, data });
-  } catch (error: any) {
-    logger.error('API Error in /api/modul-schedule (GET):', error);
-    return NextResponse.json(
-      { ok: false, error: error.message || 'Internal server error' },
-      { status: 500 }
-    );
+  } catch (err) {
+    return apiErrorResponse(err, 'GET /api/modul-schedule');
   }
 }
 
 export async function POST(req: Request) {
   try {
-    await requireRole(['ADMIN', 'ASLAB', 'ASPRAK_KOOR']);
+    const guard = await requireRoleApi(['ADMIN', 'ASLAB', 'ASPRAK_KOOR']);
+    if (!guard.ok) return guard.response;
+
     const supabase = await createClient();
     const body = await req.json();
 
@@ -51,11 +51,7 @@ export async function POST(req: Request) {
 
     await upsertModulScheduleForTerm(term, entries, supabase);
     return NextResponse.json({ ok: true, data: null });
-  } catch (error: any) {
-    logger.error('API Error in /api/modul-schedule (POST):', error);
-    return NextResponse.json(
-      { ok: false, error: error.message || 'Internal server error' },
-      { status: 500 }
-    );
+  } catch (err) {
+    return apiErrorResponse(err, 'POST /api/modul-schedule');
   }
 }

@@ -1,12 +1,14 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import * as praktikumService from '@/services/praktikumService';
-import { logger } from '@/lib/logger';
-import { requireRole } from '@/lib/auth';
+import { requireRoleApi } from '@/lib/auth';
+import { apiErrorResponse } from '@/lib/api-error';
 
 export async function GET(req: Request) {
   try {
-    await requireRole(['ADMIN', 'ASLAB', 'ASPRAK_KOOR']);
+    const guard = await requireRoleApi(['ADMIN', 'ASLAB', 'ASPRAK_KOOR']);
+    if (!guard.ok) return guard.response;
+
     const supabase = await createClient();
     const { searchParams } = new URL(req.url);
     const action = searchParams.get('action');
@@ -40,18 +42,16 @@ export async function GET(req: Request) {
     }
 
     return NextResponse.json({ ok: false, error: 'Invalid action' }, { status: 400 });
-  } catch (error: any) {
-    logger.error('API Error in /api/praktikum:', error);
-    return NextResponse.json(
-      { ok: false, error: error.message || 'Internal server error' },
-      { status: 500 }
-    );
+  } catch (err) {
+    return apiErrorResponse(err, 'GET /api/praktikum');
   }
 }
 
 export async function POST(req: Request) {
   try {
-    await requireRole(['ADMIN', 'ASLAB']);
+    const guard = await requireRoleApi(['ADMIN', 'ASLAB']);
+    if (!guard.ok) return guard.response;
+
     const supabase = await createClient();
     const body = await req.json();
     const { action, nama, tahunAjaran } = body;
@@ -71,11 +71,7 @@ export async function POST(req: Request) {
       { ok: false, error: 'Invalid action or missing parameters' },
       { status: 400 }
     );
-  } catch (error: any) {
-    logger.error('API Error in /api/praktikum POST:', error);
-    return NextResponse.json(
-      { ok: false, error: error.message || 'Internal server error' },
-      { status: 500 }
-    );
+  } catch (err) {
+    return apiErrorResponse(err, 'POST /api/praktikum');
   }
 }

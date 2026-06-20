@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { requireRole } from '@/lib/auth';
+import { requireRoleApi } from '@/lib/auth';
 import {
   createPraktikan,
   deletePraktikan,
@@ -47,7 +47,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    await requireRole(['ADMIN', 'ASLAB']);
+    const guard = await requireRoleApi(['ADMIN', 'ASLAB']);
+    if (!guard.ok) return guard.response;
+
     const body = await request.json();
     const input = body.rows ?? body.data ?? body;
 
@@ -60,7 +62,9 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    await requireRole(['ADMIN', 'ASLAB']);
+    const guard = await requireRoleApi(['ADMIN', 'ASLAB']);
+    if (!guard.ok) return guard.response;
+
     const body = await request.json();
     const id = body.id;
     const input = body.data ?? body;
@@ -74,7 +78,9 @@ export async function PUT(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    await requireRole(['ADMIN', 'ASLAB']);
+    const guard = await requireRoleApi(['ADMIN', 'ASLAB']);
+    if (!guard.ok) return guard.response;
+
     const searchParams = request.nextUrl.searchParams;
     const id = searchParams.get('id');
     const kelas = searchParams.get('kelas');

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { timingSafeEqual } from 'node:crypto';
 
-import { requireRole } from '@/lib/auth';
+import { requireRoleApi } from '@/lib/auth';
 import { logger } from '@/lib/logger';
 
 const API_KEY_HEADERS = ['x-praktikan-api-key', 'x-external-api-key'] as const;
@@ -31,7 +31,11 @@ export function errorResponse(error: unknown, context: string) {
   const message = error instanceof Error ? error.message : 'Internal server error';
   const status = message.includes('wajib diisi') || message.includes('Tidak ada data') ? 400 : 500;
 
-  return NextResponse.json({ ok: false, error: message }, { status });
+  // Only surface safe, pre-defined validation messages to the client.
+  // Internal PostgREST / database messages are replaced with a generic string.
+  const clientMessage = status === 400 ? message : 'Terjadi kesalahan pada server';
+
+  return NextResponse.json({ ok: false, error: clientMessage }, { status });
 }
 
 function secureEquals(left: string, right: string) {
@@ -136,7 +140,11 @@ export async function ensurePraktikanGetAccess(
   }
 
   if (access.kind === 'session') {
-    await requireRole(['ADMIN', 'ASLAB', 'ASPRAK_KOOR']);
+    const guard = await requireRoleApi(['ADMIN', 'ASLAB', 'ASPRAK_KOOR']);
+    if (!guard.ok) {
+      // Return the pre-built 401/403 response from requireRoleApi.
+      return { response: guard.response };
+    }
   }
 
   return { access };

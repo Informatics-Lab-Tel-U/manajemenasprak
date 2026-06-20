@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
 import { getAvailableTerms as getAvailableTahunAjaran } from '@/services/termService';
-import { requireRole } from '@/lib/auth';
-import { logger } from '@/lib/logger';
+import { requireRoleApi } from '@/lib/auth';
+import { apiErrorResponse } from '@/lib/api-error';
 
 export async function GET() {
   try {
-    // Only ADMIN and ASLAB can access this
-    await requireRole(['ADMIN', 'ASLAB']);
+    const guard = await requireRoleApi(['ADMIN', 'ASLAB']);
+    if (!guard.ok) return guard.response;
 
     const data = await getAvailableTahunAjaran();
 
@@ -14,11 +14,7 @@ export async function GET() {
       ok: true,
       data,
     });
-  } catch (e: any) {
-    logger.error('API /api/tahun-ajaran failed:', e);
-    return NextResponse.json(
-      { ok: false, error: e.message || 'Failed to fetch academic years' },
-      { status: e.status || 500 }
-    );
+  } catch (err: any) {
+    return apiErrorResponse(err, 'GET /api/tahun-ajaran', { status: err.status || 500 });
   }
 }

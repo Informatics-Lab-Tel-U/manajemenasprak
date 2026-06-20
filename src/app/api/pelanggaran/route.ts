@@ -2,13 +2,15 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import * as pelanggaranService from '@/services/pelanggaranService';
 import * as praktikumService from '@/services/praktikumService';
-import { logger } from '@/lib/logger';
+import { apiErrorResponse } from '@/lib/api-error';
 
-import { requireRole } from '@/lib/auth';
+import { requireRoleApi } from '@/lib/auth';
 
 export async function GET(req: Request) {
   try {
-    await requireRole(['ADMIN', 'ASLAB', 'ASPRAK_KOOR']);
+    const guard = await requireRoleApi(['ADMIN', 'ASLAB', 'ASPRAK_KOOR']);
+    if (!guard.ok) return guard.response;
+
     const supabase = await createClient();
     const { searchParams } = new URL(req.url);
     const action = searchParams.get('action');
@@ -59,7 +61,9 @@ export async function GET(req: Request) {
 
     // Check for 'summary' BEFORE the generic tahunAjaran filter
     if (action === 'summary') {
-      await requireRole(['ADMIN', 'ASLAB']);
+      const summaryGuard = await requireRoleApi(['ADMIN', 'ASLAB']);
+      if (!summaryGuard.ok) return summaryGuard.response;
+
       if (!tahunAjaran) {
         return NextResponse.json({ ok: false, error: 'Missing tahunAjaran' }, { status: 400 });
       }
@@ -90,18 +94,17 @@ export async function GET(req: Request) {
 
     const pelanggaran = await pelanggaranService.getAllPelanggaran(supabase);
     return NextResponse.json({ ok: true, data: pelanggaran });
-  } catch (error: any) {
-    logger.error('API Error in /api/pelanggaran:', error);
-    return NextResponse.json(
-      { ok: false, error: error.message || 'Internal server error' },
-      { status: 500 }
-    );
+  } catch (err) {
+    return apiErrorResponse(err, 'GET /api/pelanggaran');
   }
 }
 
 export async function POST(req: Request) {
   try {
-    const user = await requireRole(['ADMIN', 'ASLAB', 'ASPRAK_KOOR']);
+    const guard = await requireRoleApi(['ADMIN', 'ASLAB', 'ASPRAK_KOOR']);
+    if (!guard.ok) return guard.response;
+    const user = guard.user;
+
     const supabase = await createClient();
     const body = await req.json();
     const { action } = body;
@@ -198,18 +201,16 @@ export async function POST(req: Request) {
     const results = await pelanggaranService.bulkCreatePelanggaran(inputs, supabase);
 
     return NextResponse.json({ ok: true, data: results });
-  } catch (error: any) {
-    logger.error('API Error in /api/pelanggaran POST:', error);
-    return NextResponse.json(
-      { ok: false, error: error.message || 'Internal server error' },
-      { status: 500 }
-    );
+  } catch (err) {
+    return apiErrorResponse(err, 'POST /api/pelanggaran');
   }
 }
 
 export async function DELETE(req: Request) {
   try {
-    await requireRole(['ADMIN', 'ASLAB', 'ASPRAK_KOOR']);
+    const guard = await requireRoleApi(['ADMIN', 'ASLAB', 'ASPRAK_KOOR']);
+    if (!guard.ok) return guard.response;
+
     const supabase = await createClient();
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');
@@ -221,11 +222,7 @@ export async function DELETE(req: Request) {
     await pelanggaranService.deletePelanggaran(id, supabase);
 
     return NextResponse.json({ ok: true });
-  } catch (error: any) {
-    logger.error('API Error in /api/pelanggaran DELETE:', error);
-    return NextResponse.json(
-      { ok: false, error: error.message || 'Internal server error' },
-      { status: 500 }
-    );
+  } catch (err) {
+    return apiErrorResponse(err, 'DELETE /api/pelanggaran');
   }
 }

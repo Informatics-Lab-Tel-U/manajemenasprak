@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireRole } from '@/lib/auth';
+import { requireRoleApi } from '@/lib/auth';
 import * as systemService from '@/services/systemService';
-import { logger } from '@/lib/logger';
+import { apiErrorResponse } from '@/lib/api-error';
 
 /**
  * GET /api/system/maintenance
@@ -12,11 +12,7 @@ export async function GET() {
     const isMaintenance = await systemService.getMaintenanceStatus();
     return NextResponse.json({ ok: true, isMaintenance });
   } catch (error: any) {
-    logger.error('API Error in /api/system/maintenance GET:', error);
-    return NextResponse.json(
-      { ok: false, error: 'Gagal mengecek status maintenance' },
-      { status: 500 }
-    );
+    return apiErrorResponse(error, 'GET /api/system/maintenance');
   }
 }
 
@@ -26,8 +22,8 @@ export async function GET() {
  */
 export async function POST(request: NextRequest) {
   try {
-    // Only Admin can toggle maintenance
-    const user = await requireRole(['ADMIN']);
+    const guard = await requireRoleApi(['ADMIN']);
+    if (!guard.ok) return guard.response;
 
     const body = await request.json();
     const { active } = body;
@@ -39,17 +35,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    await systemService.setMaintenanceStatus(active, user.id);
+    // requireRoleApi guarantees user is AuthUser, extract id from guard.
+    const userId = guard.user.id;
+    await systemService.setMaintenanceStatus(active, userId);
 
     return NextResponse.json({ ok: true });
-  } catch (error: any) {
-    // Check if it's a redirect from requireRole
-    if (error.digest?.startsWith('NEXT_REDIRECT')) throw error;
-
-    logger.error('API Error in /api/system/maintenance POST:', error);
-    return NextResponse.json(
-      { ok: false, error: error.message || 'Gagal mengubah status maintenance' },
-      { status: 500 }
-    );
+  } catch (err) {
+    return apiErrorResponse(err, 'POST /api/system/maintenance');
   }
 }

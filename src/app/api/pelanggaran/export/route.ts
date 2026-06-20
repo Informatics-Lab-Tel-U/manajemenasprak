@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import * as pelanggaranService from '@/services/pelanggaranService';
 import * as XLSX from 'xlsx';
-import { logger } from '@/lib/logger';
+import { requireRoleApi } from '@/lib/auth';
+import { apiErrorResponse } from '@/lib/api-error';
 
 /**
  * GET /api/pelanggaran/export
@@ -15,6 +16,11 @@ import { logger } from '@/lib/logger';
  */
 export async function GET(request: NextRequest) {
   try {
+    // Export exposes all violation data — restrict to ADMIN/ASLAB (koor is
+    // scoped by RLS but we keep this conservative).
+    const guard = await requireRoleApi(['ADMIN', 'ASLAB']);
+    if (!guard.ok) return guard.response;
+
     const supabase = await createClient();
     const { searchParams } = new URL(request.url);
     const idPraktikum = searchParams.get('id_praktikum') ?? undefined;
@@ -55,11 +61,7 @@ export async function GET(request: NextRequest) {
         'Content-Disposition': `attachment; filename="${filename}"`,
       },
     });
-  } catch (error: any) {
-    logger.error('API Error in /api/pelanggaran/export:', error);
-    return NextResponse.json(
-      { ok: false, error: error.message || 'Internal server error' },
-      { status: 500 }
-    );
+  } catch (err) {
+    return apiErrorResponse(err, 'GET /api/pelanggaran/export');
   }
 }
