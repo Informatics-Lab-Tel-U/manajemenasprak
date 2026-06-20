@@ -1,3 +1,15 @@
+# [1.4.0](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/compare/v1.3.0...v1.4.0) (2026-06-20)
+
+
+### Bug Fixes
+
+* overview jadwal ([d8ff547](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/commit/d8ff5474711e7e93a6131c76daafb9e6f0c6d7cf))
+
+
+### Features
+
+* adding new api for kursi gen ([9fb7cb8](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/commit/9fb7cb88001a6c8619c0acd10e043ab3f2221224))
+
 # [1.3.0](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/compare/v1.2.2...v1.3.0) (2026-06-01)
 
 
