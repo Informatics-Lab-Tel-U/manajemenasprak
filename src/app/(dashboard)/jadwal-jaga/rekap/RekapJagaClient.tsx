@@ -44,9 +44,14 @@ export default function RekapJagaClient({ initialTerms }: { initialTerms: string
         <table className="w-full text-sm text-left">
           <thead className="bg-muted/50 border-b border-border text-[13px] uppercase text-muted-foreground/80">
             <tr>
-              <th className="px-4 py-4 font-bold text-center border-r border-border sticky left-0 bg-muted/50 w-[90px]">KODE</th>
-              {weeks.map(w => (
-                <th key={w} className="px-2 py-4 font-bold text-center border-r border-border min-w-[40px]">
+              <th className="px-4 py-4 font-bold text-center border-r border-border sticky left-0 bg-muted/50 w-[90px]">
+                KODE
+              </th>
+              {weeks.map((w) => (
+                <th
+                  key={w}
+                  className="px-2 py-4 font-bold text-center border-r border-border min-w-[40px]"
+                >
                   W{w}
                 </th>
               ))}
@@ -57,14 +62,19 @@ export default function RekapJagaClient({ initialTerms }: { initialTerms: string
             {data.map((row) => (
               <tr key={row.id} className="hover:bg-muted/30 transition-colors">
                 <td className="px-4 py-3 font-bold text-center border-r border-border sticky left-0 bg-card shadow-[1px_0_0_rgba(0,0,0,0.05)] dark:shadow-[1px_0_0_rgba(255,255,255,0.05)]">
-                  <span className={`px-2.5 py-1.5 rounded-md inline-block w-full text-xs font-bold ${row.role === 'ASLAB' ? 'bg-blue-100/50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'}`}>
+                  <span
+                    className={`px-2.5 py-1.5 rounded-md inline-block w-full text-xs font-bold ${row.role === 'ASLAB' ? 'bg-blue-100/50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'}`}
+                  >
                     {row.kode}
                   </span>
                 </td>
-                {weeks.map(w => {
+                {weeks.map((w) => {
                   const count = row.w[w] || 0;
                   return (
-                    <td key={w} className={`px-2 py-2 text-center border-r border-border ${count > 0 ? 'font-semibold text-foreground bg-primary/5' : 'text-muted-foreground/30'}`}>
+                    <td
+                      key={w}
+                      className={`px-2 py-2 text-center border-r border-border ${count > 0 ? 'font-semibold text-foreground bg-primary/5' : 'text-muted-foreground/30'}`}
+                    >
                       {count > 0 ? count : '-'}
                     </td>
                   );
@@ -89,7 +99,7 @@ export default function RekapJagaClient({ initialTerms }: { initialTerms: string
             Pantau total shift jaga tiap asisten per modul
           </p>
         </div>
-        
+
         <Select value={selectedTerm} onValueChange={setSelectedTerm}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Pilih Term" />
@@ -110,11 +120,14 @@ export default function RekapJagaClient({ initialTerms }: { initialTerms: string
           <CardDescription>Format tabel W1-W15 untuk menghitung akumulasi jaga</CardDescription>
         </CardHeader>
         <CardContent className="pt-6">
-          {renderTable([...rekapAslab, ...rekapAsprak].sort((a,b) => {
-            if (a.role === 'ASLAB' && b.role !== 'ASLAB') return -1;
-            if (a.role !== 'ASLAB' && b.role === 'ASLAB') return 1;
-            return a.kode.localeCompare(b.kode);
-          }), "Belum ada rekap jaga pada term ini.")}
+          {renderTable(
+            [...rekapAslab, ...rekapAsprak].sort((a, b) => {
+              if (a.role === 'ASLAB' && b.role !== 'ASLAB') return -1;
+              if (a.role !== 'ASLAB' && b.role === 'ASLAB') return 1;
+              return a.kode.localeCompare(b.kode);
+            }),
+            'Belum ada rekap jaga pada term ini.'
+          )}
         </CardContent>
       </Card>
     </div>

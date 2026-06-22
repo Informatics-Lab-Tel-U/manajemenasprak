@@ -14,7 +14,7 @@ export async function getModulScheduleByTerm(
   term: string,
   supabaseClient?: SupabaseClient
 ): Promise<ModulScheduleEntry[]> {
-  const supabase = supabaseClient ?? await createClient();
+  const supabase = supabaseClient ?? (await createClient());
 
   try {
     const { data, error } = await supabase
@@ -53,7 +53,7 @@ export async function upsertModulScheduleForTerm(
   entries: ModulScheduleEntry[],
   supabaseClient?: SupabaseClient
 ): Promise<void> {
-  const supabase = supabaseClient ?? await createClient();
+  const supabase = supabaseClient ?? (await createClient());
 
   const payload = entries.map((e) => ({
     tahun_ajaran: term,

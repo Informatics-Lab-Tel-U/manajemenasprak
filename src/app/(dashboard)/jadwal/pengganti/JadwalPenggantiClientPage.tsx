@@ -48,8 +48,6 @@ export default function JadwalPenggantiClientPage({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
-
-
   const fetchPengganti = React.useCallback(async () => {
     if (!selectedTerm) return;
     setLoading(true);
@@ -162,16 +160,13 @@ export default function JadwalPenggantiClientPage({
           <AlertDialogHeader>
             <AlertDialogTitle>Hapus Jadwal Pengganti?</AlertDialogTitle>
             <AlertDialogDescription>
-              Tindakan ini tidak dapat dibatalkan. Jadwal pengganti ini akan dihapus secara
-              permanen dari sistem.
+              Tindakan ini tidak dapat dibatalkan. Jadwal pengganti ini akan dihapus secara permanen
+              dari sistem.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Batal</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmDelete}
-              variant="destructive"
-            >
+            <AlertDialogAction onClick={confirmDelete} variant="destructive">
               Hapus
             </AlertDialogAction>
           </AlertDialogFooter>

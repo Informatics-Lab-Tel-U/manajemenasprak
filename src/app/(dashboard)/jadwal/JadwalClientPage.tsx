@@ -415,7 +415,7 @@ export default function JadwalClientPage({
           {/* Legend */}
           <div className="mt-4 flex items-center gap-4 text-xs text-muted-foreground border-t border-border/50 pt-3 px-2">
             <div className="flex items-center gap-1.5">
-              <div 
+              <div
                 className="w-4 h-4 bg-muted rounded-[2px]"
                 style={{
                   background: `linear-gradient(var(--muted), var(--muted)) padding-box, repeating-linear-gradient(45deg, #facc15, #facc15 5px, #ffffff 5px, #ffffff 10px) border-box`,
@@ -439,11 +439,8 @@ export default function JadwalClientPage({
         </div>
 
         {/* Panel Jadwal Jaga Aslab */}
-        <div className="hidden" style={{ height: "calc(100vh - 120px)" }}>
-          <JagaPanel 
-            term={selectedTerm}
-            selectedModul={selectedModul}
-          />
+        <div className="hidden" style={{ height: 'calc(100vh - 120px)' }}>
+          <JagaPanel term={selectedTerm} selectedModul={selectedModul} />
         </div>
       </div>
 
@@ -480,7 +477,9 @@ export default function JadwalClientPage({
               <h2 className="text-xl md:text-2xl font-bold leading-tight mb-1">
                 {selectedJadwal?.mata_kuliah?.nama_lengkap}
               </h2>
-              <p className="text-lg font-medium text-foreground/80">Kelas {selectedJadwal?.kelas}</p>
+              <p className="text-lg font-medium text-foreground/80">
+                Kelas {selectedJadwal?.kelas}
+              </p>
             </div>
 
             <div className="p-6 space-y-4">
@@ -538,7 +537,10 @@ export default function JadwalClientPage({
                 <Button
                   variant="destructive"
                   onClick={() => {
-                    if (selectedJadwal && confirm('Apakah Anda yakin ingin menghapus jadwal ini?')) {
+                    if (
+                      selectedJadwal &&
+                      confirm('Apakah Anda yakin ingin menghapus jadwal ini?')
+                    ) {
                       handleDeleteJadwal(selectedJadwal.id);
                     }
                   }}

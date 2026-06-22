@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { cache } from 'react';
 
 export async function getAvailableTerms(supabaseClient?: SupabaseClient): Promise<string[]> {
-  const supabase = supabaseClient ?? await createClient();
+  const supabase = supabaseClient ?? (await createClient());
   const { data } = await supabase
     .from('praktikum')
     .select('tahun_ajaran')

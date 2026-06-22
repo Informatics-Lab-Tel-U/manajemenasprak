@@ -16,7 +16,7 @@ export async function getStats(
   initialTerm?: string,
   supabaseClient?: SupabaseClient
 ): Promise<DashboardStats> {
-  const supabase = supabaseClient ?? await createClient();
+  const supabase = supabaseClient ?? (await createClient());
 
   if (!initialTerm) {
     const { data: termData } = await supabase

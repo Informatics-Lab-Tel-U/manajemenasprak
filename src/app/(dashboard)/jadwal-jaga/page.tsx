@@ -11,6 +11,6 @@ export const metadata = {
 export default async function JadwalJagaPage() {
   const user = await requireAuth();
   const terms = await getCachedAvailableTerms();
-  
+
   return <JadwalJagaClient initialTerms={terms} userRole={user.pengguna.role} />;
 }

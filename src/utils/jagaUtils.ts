@@ -21,12 +21,16 @@ export const getJagaShiftsByDay = (hari: string) => {
 
 export const getShiftTimeString = (hari: string, shift: number) => {
   const shifts = getJagaShiftsByDay(hari);
-  const found = shifts.find(s => s.shift === shift);
+  const found = shifts.find((s) => s.shift === shift);
   return found ? found.jam : 'Unknown';
 };
 
 // Check if user is allowed to input for target Modul based on konfigurasi_modul Start Date.
-export const canInputJagaForModul = (targetModul: number, konfigurasiModul: { modul: number, tanggal_mulai: string | null }[], role?: string) => {
+export const canInputJagaForModul = (
+  targetModul: number,
+  konfigurasiModul: { modul: number; tanggal_mulai: string | null }[],
+  role?: string
+) => {
   if (role === 'SUPER ADMIN' || role === 'ADMIN') return true;
 
   if (targetModul <= 1) return true; // Modul 1 is always unlocked
@@ -36,21 +40,21 @@ export const canInputJagaForModul = (targetModul: number, konfigurasiModul: { mo
   // The logic to "cek dari tanggal_mulai modul, di hari sabtu".
   // Meaning if we want to input for W5, we must be past the Saturday before W5's tanggal_mulai.
   // We can look at `tanggal_mulai` of the target modul.
-  const targetConfig = konfigurasiModul.find(m => m.modul === targetModul);
+  const targetConfig = konfigurasiModul.find((m) => m.modul === targetModul);
   if (!targetConfig || !targetConfig.tanggal_mulai) return false;
 
   const targetDate = new Date(targetConfig.tanggal_mulai);
-  
+
   // Saturday before the target date
   // targetDate is usually Monday. So Saturday is 2 days before.
   const saturdayBefore = new Date(targetDate);
-  const offset = saturdayBefore.getDay() === 1 ? -2 : (6 - saturdayBefore.getDay());
+  const offset = saturdayBefore.getDay() === 1 ? -2 : 6 - saturdayBefore.getDay();
   saturdayBefore.setDate(saturdayBefore.getDate() + offset);
-  
+
   const now = new Date();
-  
+
   // They can input IF now >= saturdayBefore (or if it's the exact same day)
-  saturdayBefore.setHours(0,0,0,0);
-  
+  saturdayBefore.setHours(0, 0, 0, 0);
+
   return now.getTime() >= saturdayBefore.getTime();
-}
+};

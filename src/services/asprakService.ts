@@ -13,7 +13,7 @@ export async function checkNimExists(
   nim: string,
   supabaseClient?: SupabaseClient
 ): Promise<boolean> {
-  const supabase = supabaseClient ?? await createClient();
+  const supabase = supabaseClient ?? (await createClient());
   const { data } = await supabase.from('asprak').select('id').eq('nim', nim).maybeSingle();
   return !!data;
 }
@@ -23,7 +23,7 @@ export async function generateUniqueCode(
   supabaseClient?: SupabaseClient,
   forceOverride: boolean = false
 ): Promise<{ code: string; rule: string }> {
-  const supabase = supabaseClient ?? await createClient();
+  const supabase = supabaseClient ?? (await createClient());
   const existingCodes = await getExistingCodes(supabase);
 
   const usedCodesSet = forceOverride ? new Set<string>() : new Set(existingCodes);
@@ -40,7 +40,7 @@ export async function getAllAsprak(
   term?: string,
   supabaseClient?: SupabaseClient
 ): Promise<Asprak[]> {
-  const supabase = supabaseClient ?? await createClient();
+  const supabase = supabaseClient ?? (await createClient());
 
   let query;
   if (term && term !== 'all') {
@@ -115,7 +115,7 @@ export async function getAspraksWithAssignments(
   term?: string,
   supabaseClient?: SupabaseClient
 ): Promise<AsprakWithMap[]> {
-  const supabase = supabaseClient ?? await createClient();
+  const supabase = supabaseClient ?? (await createClient());
   const query = supabase
     .from('asprak')
     .select(
@@ -178,7 +178,7 @@ export async function getAspraksWithAssignments(
 }
 
 export async function deleteAsprak(id: string, supabaseClient?: SupabaseClient): Promise<void> {
-  const supabase = supabaseClient ?? await createClient();
+  const supabase = supabaseClient ?? (await createClient());
   const { error } = await supabase.from('asprak').delete().eq('id', id);
   if (error) {
     logger.error(`Error deleting asprak ${id}:`, error);
@@ -187,7 +187,7 @@ export async function deleteAsprak(id: string, supabaseClient?: SupabaseClient):
 }
 
 export async function getExistingCodes(supabaseClient?: SupabaseClient): Promise<string[]> {
-  const supabase = supabaseClient ?? await createClient();
+  const supabase = supabaseClient ?? (await createClient());
   const { data } = await supabase.from('asprak').select('kode');
   if (!data) return [];
   return Array.from(new Set(data.map((d) => d.kode as string))).sort((a, b) => a.localeCompare(b));
@@ -211,7 +211,7 @@ export async function getAsprakAssignments(
   asprakId: number | string,
   supabaseClient?: SupabaseClient
 ) {
-  const supabase = supabaseClient ?? await createClient();
+  const supabase = supabaseClient ?? (await createClient());
   const { data, error } = await supabase
     .from('asprak_praktikum')
     .select(
@@ -370,7 +370,7 @@ export async function upsertAsprak(
   input: UpsertAsprakInput,
   supabaseClient?: SupabaseClient
 ): Promise<string> {
-  const supabase = supabaseClient ?? await createClient();
+  const supabase = supabaseClient ?? (await createClient());
   let angkatan = input.angkatan;
   if (angkatan < 100) angkatan += 2000;
 
@@ -440,7 +440,7 @@ export async function bulkUpsertAspraks(
   rows: BulkUpsertRow[],
   supabaseClient?: SupabaseClient
 ): Promise<BulkUpsertResult> {
-  const supabase = supabaseClient ?? await createClient();
+  const supabase = supabaseClient ?? (await createClient());
   const result: BulkUpsertResult = { inserted: 0, updated: 0, skipped: 0, errors: [] };
 
   if (rows.length === 0) return result;
@@ -547,7 +547,7 @@ export async function updateAsprakAssignments(
   nim?: string,
   forceOverride: boolean = false
 ): Promise<void> {
-  const supabase = supabaseClient ?? await createClient();
+  const supabase = supabaseClient ?? (await createClient());
 
   await updateAsprakCodeIfNeeded(asprakId, newKode, nim, forceOverride, supabase);
 

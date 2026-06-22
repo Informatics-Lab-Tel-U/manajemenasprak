@@ -344,9 +344,7 @@ export default function DataPraktikanViewPage() {
               disabled={!mataKuliahFilter}
             >
               <SelectTrigger className="h-11 bg-background xl:w-[190px]">
-                <SelectValue
-                  placeholder={mataKuliahFilter ? 'Semua kelas' : 'Pilih mata kuliah'}
-                />
+                <SelectValue placeholder={mataKuliahFilter ? 'Semua kelas' : 'Pilih mata kuliah'} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value={ALL_KELAS_VALUE}>Semua kelas</SelectItem>

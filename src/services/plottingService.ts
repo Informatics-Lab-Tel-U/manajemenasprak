@@ -30,7 +30,7 @@ export async function getPlottingList(
   praktikumId?: string,
   supabaseClient?: SupabaseClient
 ): Promise<PlottingListResult> {
-  const supabase = supabaseClient ?? await createClient();
+  const supabase = supabaseClient ?? (await createClient());
   const from = (page - 1) * limit;
   const to = from + limit - 1;
 
@@ -92,7 +92,7 @@ export async function validatePlottingImport(
   term: string,
   supabaseClient?: SupabaseClient
 ): Promise<ValidationResult> {
-  const supabase = supabaseClient ?? await createClient();
+  const supabase = supabaseClient ?? (await createClient());
 
   const { data: allAspraks } = await supabase
     .from('asprak')
@@ -209,7 +209,7 @@ export async function savePlotting(
   assignments: { asprak_id: string; praktikum_id: string }[],
   supabaseClient?: SupabaseClient
 ) {
-  const supabase = supabaseClient ?? await createClient();
+  const supabase = supabaseClient ?? (await createClient());
 
   if (!assignments || assignments.length === 0) return;
 
@@ -251,7 +251,7 @@ export async function savePlotting(
 }
 
 export async function deletePlotting(id: number, supabaseClient?: SupabaseClient) {
-  const supabase = supabaseClient ?? await createClient();
+  const supabase = supabaseClient ?? (await createClient());
   const { error } = await supabase.from('asprak_praktikum').delete().eq('id', id);
   if (error) throw new Error(error.message);
 }

@@ -450,15 +450,22 @@ export default function AsprakGenerationRules({ existingCodes = [] }: AsprakGene
             </div>
             <div className="flex items-center gap-2 p-2 rounded-md bg-blue-50 dark:bg-blue-950/20 border border-blue-300 dark:border-blue-700">
               <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-              <span className="text-blue-600 dark:text-blue-400">Dimasukkan ke Database (Terpilih/Available)</span>
+              <span className="text-blue-600 dark:text-blue-400">
+                Dimasukkan ke Database (Terpilih/Available)
+              </span>
             </div>
             <div className="flex items-center gap-2 p-2 rounded-md bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800">
               <div className="w-3 h-3 rounded-full bg-green-500"></div>
-              <span className="text-green-600 dark:text-green-500">Tersedia (Alternatif/Backup)</span>
+              <span className="text-green-600 dark:text-green-500">
+                Tersedia (Alternatif/Backup)
+              </span>
             </div>
           </div>
           <p className="text-xs text-muted-foreground mt-3 leading-relaxed">
-            Sistem secara otomatis akan memilih kode <span className="font-semibold text-blue-500">warna biru</span> untuk dimasukkan ke database karena merupakan baris kode pertama dari atas yang belum terpakai oleh orang lain.
+            Sistem secara otomatis akan memilih kode{' '}
+            <span className="font-semibold text-blue-500">warna biru</span> untuk dimasukkan ke
+            database karena merupakan baris kode pertama dari atas yang belum terpakai oleh orang
+            lain.
           </p>
         </div>
       </div>

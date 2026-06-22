@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
-import { 
-  getJadwalJaga, 
-  upsertJadwalJaga, 
-  deleteJadwalJaga, 
+import {
+  getJadwalJaga,
+  upsertJadwalJaga,
+  deleteJadwalJaga,
   updateJadwalJaga,
   bulkUpsertJadwalJaga,
-  bulkDeleteJadwalJaga
+  bulkDeleteJadwalJaga,
 } from '@/services/jagaService';
 import { createClient } from '@/lib/supabase/server';
 import { requireRoleApi } from '@/lib/auth';
@@ -98,7 +98,7 @@ export async function DELETE(request: Request) {
         return NextResponse.json({ error: 'Missing parameters for bulk delete' }, { status: 400 });
       }
 
-      const moduls = modulsStr.split(',').map(m => parseInt(m));
+      const moduls = modulsStr.split(',').map((m) => parseInt(m));
       await bulkDeleteJadwalJaga(id_asprak, tahun_ajaran, moduls, hari, parseInt(shift));
       return NextResponse.json({ success: true });
     }

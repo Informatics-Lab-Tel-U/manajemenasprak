@@ -11,6 +11,7 @@ import { createClient } from '@/lib/supabase/client';
 import { Loader2, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Checkbox } from '@/components/ui/checkbox';
+import { TurnstileWidget } from './TurnstileWidget';
 
 const URL_ERROR_MESSAGES: Record<string, string> = {
   'no-profile': 'Akun Anda belum terdaftar dalam sistem. Hubungi administrator.',
@@ -25,6 +26,7 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
   const [error, setError] = React.useState<string | null>(null);
   const [showPassword, setShowPassword] = React.useState(false);
   const [rememberMe, setRememberMe] = React.useState(true);
+  const [turnstileToken, setTurnstileToken] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     const urlError = searchParams.get('error');
@@ -36,6 +38,14 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
+
+    // Validate Turnstile token if site key is configured
+    const hasSiteKey = !!process.env.NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY;
+    if (hasSiteKey && !turnstileToken) {
+      setError('Harap selesaikan verifikasi keamanan.');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -43,10 +53,23 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
+        options: turnstileToken
+          ? {
+              captchaToken: turnstileToken,
+            }
+          : undefined,
       });
 
       if (signInError) {
-        setError('Email atau kata sandi salah. Silakan coba lagi.');
+        const isCaptchaError =
+          signInError.message.toLowerCase().includes('captcha') ||
+          signInError.message.toLowerCase().includes('verification');
+
+        setError(
+          isCaptchaError
+            ? 'Verifikasi keamanan gagal. Silakan coba lagi.'
+            : 'Email atau kata sandi salah. Silakan coba lagi.'
+        );
         setIsLoading(false);
         return;
       }
@@ -137,6 +160,11 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
                 Tetap masuk
               </Label>
             </div>
+
+            {/* Cloudflare Turnstile CAPTCHA Widget */}
+            {!!process.env.NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY && (
+              <TurnstileWidget onVerify={setTurnstileToken} />
+            )}
 
             <Button type="submit" disabled={isLoading} className="w-full mt-2">
               {isLoading ? (

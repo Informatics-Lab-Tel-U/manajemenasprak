@@ -18,7 +18,8 @@ export const ScheduleCell: React.FC<ScheduleCellProps> = ({
   showAsprakCount = false,
 }) => {
   const isPengganti = jadwal.is_pengganti;
-  const bgColor = jadwal.mata_kuliah?.warna || getCourseColor(jadwal.mata_kuliah?.nama_lengkap || '');
+  const bgColor =
+    jadwal.mata_kuliah?.warna || getCourseColor(jadwal.mata_kuliah?.nama_lengkap || '');
 
   return (
     <div

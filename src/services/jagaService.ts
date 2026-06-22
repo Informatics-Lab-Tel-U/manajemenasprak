@@ -11,14 +11,16 @@ export async function getJadwalJaga(
   hari?: string,
   supabaseClient?: SupabaseClient
 ): Promise<JadwalJaga[]> {
-  const supabase = supabaseClient ?? await createClient();
+  const supabase = supabaseClient ?? (await createClient());
 
   let query = supabase
     .from('jadwal_jaga')
-    .select(`
+    .select(
+      `
       *,
       asprak:asprak(nama_lengkap, nim, kode, role)
-    `)
+    `
+    )
     .eq('tahun_ajaran', term);
 
   if (typeof modul === 'number' && modul !== 0) {
@@ -51,9 +53,13 @@ export async function upsertJadwalJaga(
   input: UpsertJadwalJagaInput,
   supabaseClient?: SupabaseClient
 ): Promise<void> {
-  const supabase = supabaseClient ?? await createClient();
+  const supabase = supabaseClient ?? (await createClient());
 
-  const { data: created, error } = await supabase.from('jadwal_jaga').insert(input).select().single();
+  const { data: created, error } = await supabase
+    .from('jadwal_jaga')
+    .insert(input)
+    .select()
+    .single();
 
   if (error) {
     logger.error('Error inserting jadwal_jaga:', error);
@@ -78,7 +84,7 @@ export async function updateJadwalJaga(
   input: Partial<UpsertJadwalJagaInput>,
   supabaseClient?: SupabaseClient
 ): Promise<void> {
-  const supabase = supabaseClient ?? await createClient();
+  const supabase = supabaseClient ?? (await createClient());
 
   const { data: oldData } = await supabase.from('jadwal_jaga').select('*').eq('id', id).single();
 
@@ -105,11 +111,8 @@ export async function updateJadwalJaga(
   }
 }
 
-export async function deleteJadwalJaga(
-  id: string,
-  supabaseClient?: SupabaseClient
-): Promise<void> {
-  const supabase = supabaseClient ?? await createClient();
+export async function deleteJadwalJaga(id: string, supabaseClient?: SupabaseClient): Promise<void> {
+  const supabase = supabaseClient ?? (await createClient());
 
   const { data: oldData } = await supabase.from('jadwal_jaga').select('*').eq('id', id).single();
 
@@ -138,7 +141,7 @@ export async function bulkUpsertJadwalJaga(
   shift: number,
   supabaseClient?: SupabaseClient
 ): Promise<void> {
-  const supabase = supabaseClient ?? await createClient();
+  const supabase = supabaseClient ?? (await createClient());
 
   const payloads = moduls.map((modul) => ({
     id_asprak,
@@ -178,7 +181,7 @@ export async function bulkDeleteJadwalJaga(
   shift: number,
   supabaseClient?: SupabaseClient
 ): Promise<void> {
-  const supabase = supabaseClient ?? await createClient();
+  const supabase = supabaseClient ?? (await createClient());
 
   const { data: toDelete, error: fetchError } = await supabase
     .from('jadwal_jaga')
@@ -214,19 +217,18 @@ export async function bulkDeleteJadwalJaga(
   }
 }
 
-export async function getRekapJagaAggregated(
-  term: string,
-  supabaseClient?: SupabaseClient
-) {
-  const supabase = supabaseClient ?? await createClient();
+export async function getRekapJagaAggregated(term: string, supabaseClient?: SupabaseClient) {
+  const supabase = supabaseClient ?? (await createClient());
 
   const { data, error } = await supabase
     .from('jadwal_jaga')
-    .select(`
+    .select(
+      `
       modul,
       id_asprak,
       asprak:asprak(kode, nama_lengkap, role)
-    `)
+    `
+    )
     .eq('tahun_ajaran', term);
 
   if (error) {

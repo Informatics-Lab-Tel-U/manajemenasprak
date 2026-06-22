@@ -12,7 +12,7 @@ export const revalidate = 0;
 
 export default async function Home() {
   const user = await requireAuth();
-  
+
   // Fetch terms first so we can use the latest term for all other queries
   const initialTerms = await fetchAvailableTerms();
   const latestTerm = initialTerms[0] ?? '';
@@ -21,11 +21,12 @@ export default async function Home() {
   const nowUtc = new Date();
   const nowWib = new Date(nowUtc.getTime() + 7 * 60 * 60 * 1000);
   const todayStr = nowWib.toISOString().split('T')[0];
-  
+
   const initialModuls = await getModulScheduleByTerm(latestTerm);
-  const activeModul = initialModuls
-    .filter(m => m.tanggal_mulai && m.tanggal_mulai <= todayStr)
-    .sort((a, b) => b.modul - a.modul)[0]?.modul || 1;
+  const activeModul =
+    initialModuls
+      .filter((m) => m.tanggal_mulai && m.tanggal_mulai <= todayStr)
+      .sort((a, b) => b.modul - a.modul)[0]?.modul || 1;
 
   const [initialStats, initialJadwal, initialPengganti] = await Promise.all([
     getStats(latestTerm),

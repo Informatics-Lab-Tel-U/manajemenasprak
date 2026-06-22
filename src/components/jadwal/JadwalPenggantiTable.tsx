@@ -136,7 +136,9 @@ export default function JadwalPenggantiTable({
         ),
         cell: ({ row }) => (
           <div className="flex flex-col gap-0.5">
-            <span className="text-sm font-semibold text-primary">{formatTime(row.original.jam)}</span>
+            <span className="text-sm font-semibold text-primary">
+              {formatTime(row.original.jam)}
+            </span>
             <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground uppercase font-medium">
               <span>SESI {row.original.sesi}</span>
               <span className="text-primary/50">•</span>
