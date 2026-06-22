@@ -12,6 +12,7 @@ import { Loader2, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Checkbox } from '@/components/ui/checkbox';
 import { TurnstileWidget } from './TurnstileWidget';
+import type { TurnstileInstance } from '@marsidev/react-turnstile';
 
 const URL_ERROR_MESSAGES: Record<string, string> = {
   'no-profile': 'Akun Anda belum terdaftar dalam sistem. Hubungi administrator.',
@@ -27,6 +28,8 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
   const [showPassword, setShowPassword] = React.useState(false);
   const [rememberMe, setRememberMe] = React.useState(true);
   const [turnstileToken, setTurnstileToken] = React.useState<string | null>(null);
+  const [isTurnstileUnsupported, setIsTurnstileUnsupported] = React.useState(false);
+  const turnstileRef = React.useRef<TurnstileInstance>(null);
 
   React.useEffect(() => {
     const urlError = searchParams.get('error');
@@ -39,9 +42,8 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
     e.preventDefault();
     setError(null);
 
-    // Validate Turnstile token if site key is configured
     const hasSiteKey = !!process.env.NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY;
-    if (hasSiteKey && !turnstileToken) {
+    if (hasSiteKey && !turnstileToken && !isTurnstileUnsupported) {
       setError('Harap selesaikan verifikasi keamanan.');
       return;
     }
@@ -70,15 +72,21 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
             ? 'Verifikasi keamanan gagal. Silakan coba lagi.'
             : 'Email atau kata sandi salah. Silakan coba lagi.'
         );
+
+        setTurnstileToken(null);
+        turnstileRef.current?.reset();
+
         setIsLoading(false);
         return;
       }
 
       router.refresh();
       router.push('/');
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Login error:', err);
       setError('Terjadi kesalahan koneksi. Silakan coba lagi.');
+      setTurnstileToken(null);
+      turnstileRef.current?.reset();
       setIsLoading(false);
     }
   }
@@ -161,9 +169,12 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
               </Label>
             </div>
 
-            {/* Cloudflare Turnstile CAPTCHA Widget */}
             {!!process.env.NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY && (
-              <TurnstileWidget onVerify={setTurnstileToken} />
+              <TurnstileWidget
+                ref={turnstileRef}
+                onVerify={setTurnstileToken}
+                onUnsupported={() => setIsTurnstileUnsupported(true)}
+              />
             )}
 
             <Button type="submit" disabled={isLoading} className="w-full mt-2">
