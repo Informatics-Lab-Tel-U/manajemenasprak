@@ -286,12 +286,11 @@ export default function AsprakForm({ onSubmit, onCancel }: AsprakFormProps) {
         kode,
         role: 'ASPRAK',
         angkatan: parseInt(angkatan),
-        assignments: assignments
-          .map((a) => ({
-            term: a.term,
-            praktikumNames: a.selectedCourseNames,
-          }))
-          .filter((a) => a.term && a.praktikumNames.length > 0),
+        assignments: assignments.flatMap((a) =>
+          a.term && a.selectedCourseNames.length > 0
+            ? [{ term: a.term, praktikumNames: a.selectedCourseNames }]
+            : []
+        ),
         forceOverride,
       };
 
@@ -306,10 +305,9 @@ export default function AsprakForm({ onSubmit, onCancel }: AsprakFormProps) {
   // Helper to filter terms
   const getDisabledTerms = (currentBlockId: string) => {
     return new Set(
-      assignments
-        .filter((a) => a.id !== currentBlockId)
-        .map((a) => a.term)
-        .filter(Boolean)
+      assignments.flatMap((a) => 
+        (a.id !== currentBlockId && a.term) ? [a.term] : []
+      )
     );
   };
 

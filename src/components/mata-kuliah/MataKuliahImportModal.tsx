@@ -53,15 +53,11 @@ export default function MataKuliahImportModal({
   const [parsedRows, setParsedRows] = useState<MataKuliahCSVRow[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [localValidPraktikums, setLocalValidPraktikums] = useState(validPraktikums);
+  const [fetchedValidPraktikums, setFetchedValidPraktikums] = useState<{ id: string; nama: string }[] | null>(null);
+  const localValidPraktikums = fetchedValidPraktikums ?? validPraktikums;
   const [existingMataKuliah, setExistingMataKuliah] = useState<MataKuliahGrouped[]>([]);
 
   const [showConfirmClose, setShowConfirmClose] = useState(false);
-
-  // Sync initial validPraktikums if they change (though we override with fetch mostly)
-  useEffect(() => {
-    setLocalValidPraktikums(validPraktikums);
-  }, [validPraktikums]);
 
   // Derived
   const term = useMemo(() => buildTermString(termYear, termSem), [termYear, termSem]);
@@ -83,9 +79,9 @@ export default function MataKuliahImportModal({
         if (active && praktikumRes.ok) {
           const json = await praktikumRes.json();
           if (json.ok && Array.isArray(json.data)) {
-            setLocalValidPraktikums(json.data);
+            setFetchedValidPraktikums(json.data);
           } else {
-            setLocalValidPraktikums([]);
+            setFetchedValidPraktikums([]);
           }
         }
 

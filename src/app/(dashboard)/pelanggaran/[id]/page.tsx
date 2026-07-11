@@ -8,8 +8,7 @@ export default async function PelanggaranDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const { id } = await params;
-  const authUser = await requireAuth();
+  const [{ id }, authUser] = await Promise.all([params, requireAuth()]);
   const role = authUser.pengguna.role;
 
   return <PelanggaranDetailClient role={role} idPraktikum={id} />;

@@ -131,7 +131,7 @@ export default function PlottingCSVPreview({
 
                 return (
                   <tr
-                    key={idx}
+                    key={`${row.kode_asprak}-${row.mk_singkat}`}
                     className={`
                      border-b border-border/50 transition-colors
                      ${row.status === 'invalid' ? 'bg-red-500/5' : ''}

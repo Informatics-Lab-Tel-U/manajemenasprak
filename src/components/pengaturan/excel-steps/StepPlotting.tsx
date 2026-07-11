@@ -40,12 +40,14 @@ export default function StepPlotting({ data, term, onNext, onPrev, onSuccess }: 
       setIsValidating(true);
       setError(null);
 
-      const rawRows = data
-        .map((row: any) => ({
-          kode_asprak: (row.kode_asprak || row['Kode Asprak'] || row.kode || row.Kode || '').trim(),
-          mk_singkat: (row.mk_singkat || row['MK Singkat'] || row.mk || row.MK || '').trim(),
-        }))
-        .filter((r: any) => r.kode_asprak && r.mk_singkat);
+      const rawRows = data.reduce((acc: any[], row: any) => {
+        const kode_asprak = (row.kode_asprak || row['Kode Asprak'] || row.kode || row.Kode || '').trim();
+        const mk_singkat = (row.mk_singkat || row['MK Singkat'] || row.mk || row.MK || '').trim();
+        if (kode_asprak && mk_singkat) {
+          acc.push({ kode_asprak, mk_singkat });
+        }
+        return acc;
+      }, []);
 
       if (rawRows.length === 0) {
         if (active) {

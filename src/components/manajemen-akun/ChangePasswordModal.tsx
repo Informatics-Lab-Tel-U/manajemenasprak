@@ -36,14 +36,15 @@ export function ChangePasswordModal({
   const [showPassword, setShowPassword] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
 
-  // Reset form when modal opens
-  React.useEffect(() => {
+  const [prevOpen, setPrevOpen] = React.useState(open);
+  if (open !== prevOpen) {
+    setPrevOpen(open);
     if (open) {
       setPassword('');
       setConfirmPassword('');
       setShowPassword(false);
     }
-  }, [open]);
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

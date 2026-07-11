@@ -87,7 +87,7 @@ export default function AsprakDetailsModal({
                         <div className="flex flex-wrap gap-2">
                           {groupedAssignments[term].map((mk, idx) => (
                             <Badge
-                              key={idx}
+                              key={mk}
                               variant="secondary"
                               className="px-3 py-1.5 font-medium"
                             >

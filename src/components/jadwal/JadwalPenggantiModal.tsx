@@ -87,7 +87,7 @@ export function JadwalPenggantiModal({
   // Unique terms from mataKuliahList
   const availableTerms = useMemo(() => {
     return Array.from(
-      new Set(mataKuliahList.map((mk) => mk.praktikum?.tahun_ajaran).filter(Boolean))
+      new Set(mataKuliahList.flatMap((mk) => mk.praktikum?.tahun_ajaran ? [mk.praktikum.tahun_ajaran] : []))
     ) as string[];
   }, [mataKuliahList]);
 
@@ -96,10 +96,11 @@ export function JadwalPenggantiModal({
     if (!selectedTerm) return [];
     return Array.from(
       new Set(
-        mataKuliahList
-          .filter((mk) => mk.praktikum?.tahun_ajaran === selectedTerm)
-          .map((mk) => mk.praktikum?.nama)
-          .filter(Boolean)
+        mataKuliahList.flatMap((mk) => 
+          (mk.praktikum?.tahun_ajaran === selectedTerm && mk.praktikum?.nama) 
+            ? [mk.praktikum.nama] 
+            : []
+        )
       )
     ) as string[];
   }, [selectedTerm, mataKuliahList]);

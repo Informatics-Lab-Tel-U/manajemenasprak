@@ -12,7 +12,7 @@ const eslintConfig = defineConfig([
       'unused-imports': unusedImports, // tambah ini
     },
     rules: {
-      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-explicit-any': 'warn',
       'react-hooks/set-state-in-effect': 'off',
       'react-hooks/incompatible-library': 'off',
       'react-hooks/exhaustive-deps': 'warn',

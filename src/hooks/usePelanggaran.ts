@@ -183,7 +183,7 @@ export function usePelanggaranDetail(
       else setError(vResult.error || 'Gagal mengambil data pelanggaran');
 
       if (pResult.ok) setPraktikum(pResult.data || null);
-      else if (!error) setError(pResult.error || 'Gagal mengambil detail praktikum');
+      else setError((prev) => prev || pResult.error || 'Gagal mengambil detail praktikum');
 
       if (asprakRes.ok && asprakRes.data) {
         const formattedAsprak = asprakRes.data.map((a: any) => ({
@@ -201,7 +201,7 @@ export function usePelanggaranDetail(
     } finally {
       setLoading(false);
     }
-  }, [idPraktikum, error]);
+  }, [idPraktikum]);
 
   useEffect(() => {
     fetchDetail();

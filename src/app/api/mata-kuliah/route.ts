@@ -56,25 +56,27 @@ export async function POST(request: NextRequest) {
 
       return NextResponse.json({ ok: true, data: result });
     } else if (action === 'bulk') {
-      const finalPayloads = [];
-      const errors = [];
+      const finalPayloads: any[] = [];
+      const errors: string[] = [];
 
-      for (const row of data) {
-        try {
-          const praktikum = await getOrCreatePraktikum(row.mk_singkat, term, supabase);
+      await Promise.all(
+        data.map(async (row: any) => {
+          try {
+            const praktikum = await getOrCreatePraktikum(row.mk_singkat, term, supabase);
 
-          finalPayloads.push({
-            id_praktikum: praktikum.id,
-            nama_lengkap: row.nama_lengkap,
-            program_studi: row.program_studi,
-            dosen_koor: row.dosen_koor,
-            warna: row.warna,
-          });
-        } catch (err: unknown) {
-          logger.error(`Failed to prepare ${row.mk_singkat}:`, err);
-          errors.push(`Gagal mempersiapkan mata kuliah ${row.mk_singkat}`);
-        }
-      }
+            finalPayloads.push({
+              id_praktikum: praktikum.id,
+              nama_lengkap: row.nama_lengkap,
+              program_studi: row.program_studi,
+              dosen_koor: row.dosen_koor,
+              warna: row.warna,
+            });
+          } catch (err: unknown) {
+            logger.error(`Failed to prepare ${row.mk_singkat}:`, err);
+            errors.push(`Gagal mempersiapkan mata kuliah ${row.mk_singkat}`);
+          }
+        })
+      );
 
       const result = await bulkCreateMataKuliah(finalPayloads, supabase);
 
@@ -110,21 +112,23 @@ export async function PUT(request: NextRequest) {
       let updatedCount = 0;
       const errors: string[] = [];
 
-      for (const item of data) {
-        if (!item.id || !item.warna) continue;
+      await Promise.all(
+        data.map(async (item: any) => {
+          if (!item.id || !item.warna) return;
 
-        const { error } = await supabase
-          .from('mata_kuliah')
-          .update({ warna: item.warna })
-          .eq('id', item.id);
+          const { error } = await supabase
+            .from('mata_kuliah')
+            .update({ warna: item.warna })
+            .eq('id', item.id);
 
-        if (error) {
-          logger.error(`Failed to update ${item.id}:`, error);
-          errors.push(`Gagal memperbarui warna untuk ID ${item.id}`);
-        } else {
-          updatedCount++;
-        }
-      }
+          if (error) {
+            logger.error(`Failed to update ${item.id}:`, error);
+            errors.push(`Gagal memperbarui warna untuk ID ${item.id}`);
+          } else {
+            updatedCount++;
+          }
+        })
+      );
 
       return NextResponse.json({
         ok: true,
@@ -140,17 +144,19 @@ export async function PUT(request: NextRequest) {
       let totalUpdated = 0;
       const errors: string[] = [];
 
-      for (const item of data) {
-        if (!item.nama || !item.warna) continue;
+      await Promise.all(
+        data.map(async (item: any) => {
+          if (!item.nama || !item.warna) return;
 
-        try {
-          const count = await updateMataKuliahColorByPraktikumName(item.nama, item.warna, supabase);
-          totalUpdated += count;
-        } catch (err: unknown) {
-          logger.error(`Failed to update global color for ${item.nama}:`, err);
-          errors.push(`Gagal memperbarui warna global untuk ${item.nama}`);
-        }
-      }
+          try {
+            const count = await updateMataKuliahColorByPraktikumName(item.nama, item.warna, supabase);
+            totalUpdated += count;
+          } catch (err: unknown) {
+            logger.error(`Failed to update global color for ${item.nama}:`, err);
+            errors.push(`Gagal memperbarui warna global untuk ${item.nama}`);
+          }
+        })
+      );
 
       return NextResponse.json({
         ok: true,

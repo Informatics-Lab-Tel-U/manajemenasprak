@@ -71,6 +71,11 @@ export default function DashboardCharts({
 
   // Filter Logic
   const [programType, setProgramType] = React.useState<'REGULER' | 'PJJ'>('REGULER');
+  const [hydrated, setHydrated] = React.useState(false);
+  
+  React.useEffect(() => {
+    setHydrated(true);
+  }, []);
   // Calculate currentDayName if not already present (it should be 'SENIN'-'MINGGU')
   const currentDayNameRaw = format(todayDate, 'EEEE', { locale: id }).toUpperCase();
   const currentDayName =
@@ -112,7 +117,7 @@ export default function DashboardCharts({
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle>
-              Jadwal Hari Ini ({todayDate.toLocaleDateString('id-ID', { weekday: 'long' })})
+              Jadwal Hari Ini {hydrated ? `(${todayDate.toLocaleDateString('id-ID', { weekday: 'long' })})` : ''}
             </CardTitle>
             <CardDescription>
               Visualisasi jadwal praktikum yang berlangsung hari ini

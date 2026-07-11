@@ -2,6 +2,7 @@ import { cache } from 'react';
 import { redirect } from 'next/navigation';
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { logger } from '@/lib/logger';
 import type { Role } from '@/config/rbac';
 import type { Pengguna } from '@/types/database';
 
@@ -64,9 +65,7 @@ export async function requireAuth(redirectTo = '/login'): Promise<AuthUser> {
 export async function requireRole(allowedRoles: Role[], redirectTo = '/'): Promise<AuthUser> {
   const user = await requireAuth();
   if (!allowedRoles.includes(user.pengguna.role)) {
-    allowedRoles.forEach((role) => {
-      console.warn(`Required role: ${role}`);
-    });
+    logger.warn('Access denied', { userRole: user.pengguna.role, allowedRoles });
     redirect(redirectTo);
   }
   return user;

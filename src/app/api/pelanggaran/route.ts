@@ -208,7 +208,7 @@ export async function POST(req: Request) {
 
 export async function DELETE(req: Request) {
   try {
-    const guard = await requireRoleApi(['ADMIN', 'ASLAB', 'ASPRAK_KOOR']);
+    const guard = await requireRoleApi(['ADMIN', 'ASLAB']);
     if (!guard.ok) return guard.response;
 
     const supabase = await createClient();

@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { createClient } from '@/lib/supabase/client';
+import { login } from '@/app/actions/auth';
 import { Loader2, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -15,7 +15,7 @@ import { TurnstileWidget } from './TurnstileWidget';
 import type { TurnstileInstance } from '@marsidev/react-turnstile';
 
 const URL_ERROR_MESSAGES: Record<string, string> = {
-  'no-profile': 'Akun Anda belum terdaftar dalam sistem. Hubungi administrator.',
+  'no-profile': 'Akun Anda belum terdaftar dalam sistem. Hubungi pengelola sistem.',
 };
 
 export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) {
@@ -51,21 +51,12 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
     setIsLoading(true);
 
     try {
-      const supabase = createClient();
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-        options: turnstileToken
-          ? {
-              captchaToken: turnstileToken,
-            }
-          : undefined,
-      });
+      const res = await login(email, password, turnstileToken);
 
-      if (signInError) {
+      if (res.error) {
         const isCaptchaError =
-          signInError.message.toLowerCase().includes('captcha') ||
-          signInError.message.toLowerCase().includes('verification');
+          res.error.toLowerCase().includes('captcha') ||
+          res.error.toLowerCase().includes('verification');
 
         setError(
           isCaptchaError

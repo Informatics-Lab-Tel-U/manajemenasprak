@@ -631,8 +631,8 @@ export default function PelanggaranDetailClient({
               </TableHeader>
               <TableBody>
                 {recap.length ? (
-                  recap.map((r, i) => (
-                    <TableRow key={i}>
+                  recap.map((r) => (
+                    <TableRow key={r.kode}>
                       <TableCell className="font-mono text-xs">{r.kode}</TableCell>
                       <TableCell className="text-sm">{r.nama}</TableCell>
                       {activeJenis.map((j) => (

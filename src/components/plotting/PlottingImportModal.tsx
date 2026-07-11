@@ -58,12 +58,14 @@ export default function PlottingImportModal({
       header: true,
       skipEmptyLines: true,
       complete: async (results: any) => {
-        const rawRows = results.data
-          .map((row: any) => ({
-            kode_asprak: row.kode_asprak || '',
-            mk_singkat: row.mk_singkat || '',
-          }))
-          .filter((r: any) => r.kode_asprak && r.mk_singkat);
+        const rawRows = results.data.reduce((acc: any[], row: any) => {
+          const kode_asprak = row.kode_asprak || '';
+          const mk_singkat = row.mk_singkat || '';
+          if (kode_asprak && mk_singkat) {
+            acc.push({ kode_asprak, mk_singkat });
+          }
+          return acc;
+        }, []);
 
         if (rawRows.length === 0) {
           setError('CSV empty or missing columns (kode_asprak, mk_singkat)');

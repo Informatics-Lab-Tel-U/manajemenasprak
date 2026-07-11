@@ -66,6 +66,13 @@ export default function JagaInputModal({
   const [openAsprak, setOpenAsprak] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
+  const filteredAsprakList = React.useMemo(() => {
+    const q = searchQuery.toLowerCase();
+    return asprakList.filter((a) =>
+      `${a.kode} ${a.nama_lengkap}`.toLowerCase().includes(q)
+    );
+  }, [asprakList, searchQuery]);
+
   const [canInput, setCanInput] = useState(true);
 
   const loadDependencies = React.useCallback(async () => {
@@ -235,13 +242,7 @@ export default function JagaInputModal({
                   </div>
                   <ScrollArea className="h-64 overflow-y-auto">
                     <div className="p-1">
-                      {asprakList
-                        .filter((a) =>
-                          `${a.kode} ${a.nama_lengkap}`
-                            .toLowerCase()
-                            .includes(searchQuery.toLowerCase())
-                        )
-                        .map((a) => (
+                      {filteredAsprakList.map((a) => (
                           <div
                             key={a.id}
                             role="option"
@@ -275,11 +276,7 @@ export default function JagaInputModal({
                             </div>
                           </div>
                         ))}
-                      {asprakList.filter((a) =>
-                        `${a.kode} ${a.nama_lengkap}`
-                          .toLowerCase()
-                          .includes(searchQuery.toLowerCase())
-                      ).length === 0 && (
+                      {filteredAsprakList.length === 0 && (
                         <div className="py-6 text-center text-sm text-muted-foreground">
                           Asisten tidak ditemukan.
                         </div>

@@ -144,13 +144,13 @@ export default function DataPraktikanViewPage() {
   }, [query, rows]);
 
   const stats = useMemo(() => {
-    const uniqueAsprak = new Set(rows.map((row) => row.kode_asprak).filter(Boolean)).size;
-    const uniqueKelas = new Set(rows.map((row) => row.kelas).filter(Boolean)).size;
+    const uniqueAsprak = new Set(rows.flatMap((row) => row.kode_asprak ? [row.kode_asprak] : [])).size;
+    const uniqueKelas = new Set(rows.flatMap((row) => row.kelas ? [row.kelas] : [])).size;
     return { total: rows.length, uniqueAsprak, uniqueKelas };
   }, [rows]);
 
   const kelasDeleteOptions = useMemo(
-    () => Array.from(new Set(rows.map((row) => row.kelas).filter(Boolean))).sort(),
+    () => Array.from(new Set(rows.flatMap((row) => row.kelas ? [row.kelas] : []))).sort(),
     [rows]
   );
 

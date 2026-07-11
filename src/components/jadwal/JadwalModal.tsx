@@ -67,16 +67,17 @@ export function JadwalModal({
 
   // Extract unique terms
   const availableTerms = Array.from(
-    new Set(mataKuliahList.map((mk) => mk.praktikum?.tahun_ajaran).filter(Boolean))
+    new Set(mataKuliahList.flatMap((mk) => mk.praktikum?.tahun_ajaran ? [mk.praktikum.tahun_ajaran] : []))
   ) as string[];
 
   // Filter available praktikum names based on the selected term
   const availablePraktikum = Array.from(
     new Set(
-      mataKuliahList
-        .filter((mk) => mk.praktikum?.tahun_ajaran === selectedTerm)
-        .map((mk) => mk.praktikum?.nama)
-        .filter(Boolean)
+      mataKuliahList.flatMap((mk) => 
+        (mk.praktikum?.tahun_ajaran === selectedTerm && mk.praktikum?.nama) 
+          ? [mk.praktikum.nama] 
+          : []
+      )
     )
   ) as string[];
 
@@ -88,6 +89,7 @@ export function JadwalModal({
   // Reset form when modal opens or initialData changes
   useEffect(() => {
     if (isOpen) {
+      setIsDetailsEditable(!initialData);
       if (initialData) {
         setFormData({
           id_mk: initialData.id_mk.toString(),
@@ -129,12 +131,7 @@ export function JadwalModal({
     }
   }, [isOpen, initialData, mataKuliahList]);
 
-  // Handle editability state sync separately
-  useEffect(() => {
-    if (isOpen) {
-      setIsDetailsEditable(!initialData);
-    }
-  }, [isOpen, initialData]);
+
 
   const handleChange = (field: keyof CreateJadwalInput, value: any) => {
     setFormData((prev) => {

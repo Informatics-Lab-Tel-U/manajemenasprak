@@ -77,6 +77,11 @@ export default function PelanggaranForm({
 
   const [modul, setModul] = useState<string>(initialModul);
 
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => {
+    setHydrated(true);
+  }, []);
+
   // Sync state if initial props change (e.g. after data fetch in parent)
   useEffect(() => {
     if (initialTahunAjaran) setSelectedTahunAjaran(initialTahunAjaran);
@@ -333,11 +338,11 @@ export default function PelanggaranForm({
                         </span>
                         <span className="text-[10px] opacity-80">
                           (
-                          {new Date(substitute.tanggal).toLocaleDateString('id-ID', {
+                          {hydrated ? new Date(substitute.tanggal).toLocaleDateString('id-ID', {
                             day: 'numeric',
                             month: 'short',
                             year: 'numeric',
-                          })}
+                          }) : ''}
                           )
                         </span>
                       </div>

@@ -33,17 +33,15 @@ import { id } from 'date-fns/locale';
 
 export default function JadwalModulClientPage() {
   const { tahunAjaranList, loading: loadingTahunAjaran } = useTahunAjaran();
-  const [term, setTerm] = useState<string>('');
+  const [selectedTerm, setSelectedTerm] = useState<string>('');
+  const term = selectedTerm || (tahunAjaranList.length > 0 ? tahunAjaranList[0] : '');
+  const setTerm = setSelectedTerm;
   const [rows, setRows] = useState<ModulScheduleEntryDto[]>([]);
   const [loading, setLoading] = useState(false);
   const [isGenerateDialogOpen, setIsGenerateDialogOpen] = useState(false);
   const [startModul, setStartModul] = useState<string>('1');
 
-  useEffect(() => {
-    if (tahunAjaranList.length > 0 && !term) {
-      setTerm(tahunAjaranList[0]);
-    }
-  }, [tahunAjaranList, term]);
+
 
   const loadRows = useCallback(async (t: string) => {
     if (!t) return;

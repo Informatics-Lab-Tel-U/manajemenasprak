@@ -60,8 +60,11 @@ export default function DatabaseClientPage({
   const [progress, setProgress] = useState(0);
 
   const { tahunAjaranList, loading: loadingTahunAjaran } = useTahunAjaran();
-  const [exportTerm, setExportTerm] = useState('');
-  const [deleteTerm, setDeleteTerm] = useState('');
+  const [selectedExportTerm, setExportTerm] = useState('');
+  const exportTerm = selectedExportTerm || (tahunAjaranList.length > 0 ? tahunAjaranList[0] : '');
+
+  const [selectedDeleteTerm, setDeleteTerm] = useState('');
+  const deleteTerm = selectedDeleteTerm || (tahunAjaranList.length > 0 ? tahunAjaranList[0] : '');
 
   // Maintenance Mode States
   const [isMaintenance, setIsMaintenance] = useState(initialIsMaintenance);
@@ -79,12 +82,7 @@ export default function DatabaseClientPage({
   } | null>(null);
   const [activeTerm, setActiveTerm] = useState<string>('');
 
-  useEffect(() => {
-    if (tahunAjaranList.length > 0) {
-      if (!exportTerm) setExportTerm(tahunAjaranList[0]);
-      if (!deleteTerm) setDeleteTerm(tahunAjaranList[0]);
-    }
-  }, [tahunAjaranList, exportTerm, deleteTerm]);
+
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDeleteTermModalOpen, setIsDeleteTermModalOpen] = useState(false);

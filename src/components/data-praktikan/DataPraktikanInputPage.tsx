@@ -72,9 +72,11 @@ function rowsFromMatrix(
   defaultKelas: string,
   defaultMataKuliah: string
 ): PreviewRow[] {
-  const cleaned = matrix
-    .map((row) => row.map((value) => String(value ?? '').trim()))
-    .filter((row) => row.some(Boolean));
+  const cleaned = matrix.reduce((acc: string[][], row) => {
+    const trimmedRow = row.map((value) => String(value ?? '').trim());
+    if (trimmedRow.some(Boolean)) acc.push(trimmedRow);
+    return acc;
+  }, []);
 
   if (cleaned.length === 0) return [];
 
