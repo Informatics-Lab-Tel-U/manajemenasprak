@@ -16,6 +16,7 @@ import {
   Logs,
   Shield,
   UserRoundCheck,
+  PlusCircle,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -50,6 +51,8 @@ type NavItem = {
   icon: React.ElementType;
   /** If provided, the item expands into sub-items */
   items?: NavSubItem[];
+  /** If true, item renders with primary background */
+  isPrimary?: boolean;
 };
 
 /**
@@ -57,6 +60,7 @@ type NavItem = {
  * Add new items here — no need to touch the sidebar render logic.
  */
 const ALL_NAV_ITEMS: NavItem[] = [
+  { label: 'Tahun Ajaran Baru', href: '/tahun-ajaran-baru', icon: PlusCircle, isPrimary: true },
   { label: 'Overview', href: '/', icon: Home },
   { label: 'Data Praktikum', href: '/praktikum', icon: BookOpen },
   { label: 'Data Praktikan', href: '/data-praktikan', icon: UserRoundCheck },
@@ -231,6 +235,7 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
                       asChild
                       isActive={pathname === item.href || pathname.startsWith(item.href + '/')}
                       tooltip={item.label}
+                      className={item.isPrimary ? 'bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground font-semibold shadow-sm' : ''}
                     >
                       <Link href={item.href}>
                         <Icon />
