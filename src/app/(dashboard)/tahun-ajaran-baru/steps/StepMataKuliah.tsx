@@ -1,0 +1,605 @@
+'use client';
+
+import React, { useState, useCallback, useEffect } from 'react';
+import {
+  Stepper,
+  StepperItem,
+  StepperTrigger,
+  StepperIndicator,
+  StepperSeparator,
+  StepperTitle,
+  StepperDescription,
+  StepperNav,
+  StepperContent,
+  useStepper,
+} from '@/components/ui/stepper';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { BookOpen, CheckCircle2, FileSpreadsheet, Download, FileText, AlertCircle, Copy, Save, RefreshCw, Loader2 , ArrowLeft} from 'lucide-react';
+import { toast } from 'sonner';
+
+import { useDropzone } from 'react-dropzone';
+import Papa from 'papaparse';
+import PraktikumCSVPreview, { PraktikumPreviewRow } from '@/components/praktikum/PraktikumCSVPreview';
+import { validatePraktikumData } from '@/utils/validation/praktikumValidation';
+import MataKuliahCSVPreview, { MataKuliahCSVRow } from '@/components/mata-kuliah/MataKuliahCSVPreview';
+import { validateMataKuliahData } from '@/utils/validation/mataKuliahValidation';
+import { usePraktikum } from '@/hooks/usePraktikum';
+import { cn } from '@/lib/utils';
+import { 
+  useOnboardingStore, 
+  useAutosaveStatus
+} from '@/store/useOnboardingStore';
+import { Field, FieldLabel, FieldContent } from '@/components/ui/field';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import TermInput from '@/components/asprak/TermInput';
+import { buildTermString } from '@/utils/termHelpers';
+import { useTermStore } from '@/store/useTermStore';
+
+const steps = [
+  { id: 'praktikum', title: 'Data Praktikum', description: 'Buat tahun ajaran', icon: <BookOpen /> },
+  { id: 'matkul', title: 'Mata Kuliah', description: 'Tambahkan MK', icon: <BookOpen /> },
+  { id: 'jadwal', title: 'Preview & Simpan', description: 'Konfirmasi Data', icon: <Save /> },
+  { id: 'selesai', title: 'Selesai', description: 'Setup berhasil', icon: <CheckCircle2 /> },
+];
+
+
+export default function MatkulStep() {
+  const { stepper } = useStepper();
+  const { draft, setMataKuliahList, markStepCompleted, setCurrentStep } = useOnboardingStore();
+  const { activeTerm } = useTermStore();
+
+  const praktikumList = draft.praktikumList || [];
+  const validPraktikums = praktikumList.map(p => ({ id: p.tempId, nama: p.nama }));
+  const term = praktikumList[0]?.tahun_ajaran || activeTerm || '';
+
+  const [loading, setLoading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  const [previewRows, setPreviewRows] = useState<MataKuliahCSVRow[]>(() => {
+    return draft.mataKuliahData?.map(m => {
+      const p = praktikumList.find(p => p.tempId === m.id_praktikum);
+      return {
+        mk_singkat: p?.nama || '',
+        originalMkSingkat: p?.nama || '',
+        nama_lengkap: m.nama_lengkap,
+        program_studi: m.program_studi,
+        dosen_koor: m.dosen_koor || '',
+        status: 'ok',
+        selected: true,
+        mappedPraktikumId: m.id_praktikum
+      };
+    }) || [];
+  });
+
+  const [isManualModalOpen, setIsManualModalOpen] = useState(false);
+  const [formData, setFormData] = useState({ 
+    id_praktikum: praktikumList.length > 0 ? praktikumList[0].tempId : '', 
+    namaLengkap: '', 
+    programStudi: 'IF', 
+    dosenKoor: '' 
+  });
+
+  const [isCopyModalOpen, setIsCopyModalOpen] = useState(false);
+  const [copySourceTerm, setCopySourceTerm] = useState('');
+  const [availableTerms, setAvailableTerms] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (isCopyModalOpen && availableTerms.length === 0) {
+      fetch('/api/tahun-ajaran')
+        .then(res => res.json())
+        .then(res => {
+          if (res.ok && res.data) {
+            setAvailableTerms(res.data);
+            if (res.data.length > 0 && !copySourceTerm) {
+              setCopySourceTerm(res.data[0]);
+            }
+          }
+        })
+        .catch(err => console.error(err));
+    }
+  }, [isCopyModalOpen, availableTerms.length, copySourceTerm]);
+
+  const processCSV = useCallback((file: File) => {
+    setUploadError(null);
+    Papa.parse<any>(file, {
+      header: true,
+      skipEmptyLines: true,
+      transformHeader: (header: string) => header.trim().toLowerCase().replace(/\s+/g, '_'),
+      complete: (results) => {
+        const { data, errors } = results;
+        if (errors.length > 0) {
+          setUploadError(`CSV parsing error: ${errors[0].message}`);
+          return;
+        }
+        if (data.length === 0) {
+          setUploadError('CSV kosong — tidak ada data yang ditemukan.');
+          return;
+        }
+        
+        const preview = validateMataKuliahData(data, validPraktikums, []);
+        const strictPreview = preview.map(r => {
+          if (!r.statusMessage?.includes('Praktikum baru akan dibuat otomatis')) return r;
+          return {
+            ...r,
+            status: 'error' as const,
+            statusMessage: 'Praktikum tidak ditemukan di Langkah 1',
+            selected: false
+          };
+        });
+
+        setPreviewRows(prev => [...prev, ...strictPreview]);
+      },
+      error: (err: Error) => setUploadError(`Failed to parse CSV: ${err.message}`),
+    });
+  }, [validPraktikums]);
+  
+  const onDrop = useCallback(async (acceptedFiles: File[]) => {
+    const file = acceptedFiles[0];
+    if (!file) return;
+
+    if (file.name.endsWith('.xlsx')) {
+      try {
+        const XLSX = await import('xlsx');
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const data = e.target?.result;
+            const workbook = XLSX.read(data, { type: 'binary' });
+            const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+            const jsonData = XLSX.utils.sheet_to_json<any>(worksheet);
+            
+            if (jsonData.length === 0) {
+              setUploadError('File Excel kosong — tidak ada data yang ditemukan.');
+              return;
+            }
+
+            const preview = validateMataKuliahData(jsonData, validPraktikums, []);
+            const strictPreview = preview.map(r => {
+              if (!r.statusMessage?.includes('Praktikum baru akan dibuat otomatis')) return r;
+              return {
+                ...r,
+                status: 'error' as const,
+                statusMessage: 'Praktikum tidak ditemukan di Langkah 1',
+                selected: false
+              };
+            });
+
+            setPreviewRows(prev => [...prev, ...strictPreview]);
+          } catch (err: any) {
+            setUploadError(`Gagal membaca file Excel: ${err.message}`);
+          }
+        };
+        reader.readAsBinaryString(file);
+      } catch (err: any) {
+        setUploadError(`Library xlsx belum siap. Coba gunakan CSV sementara.`);
+      }
+    } else {
+      processCSV(file);
+    }
+  }, [processCSV, validPraktikums]);
+  
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: { 'text/csv': ['.csv'], 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'] },
+    maxFiles: 1,
+  });
+
+  const handleDownloadTemplate = async (format: 'csv' | 'xlsx') => {
+    const data = [
+      { mk_singkat: 'ALPRO 1', nama_lengkap: 'ALGORITMA PEMROGRAMAN 1', program_studi: 'IF', dosen_koor: 'PEY' },
+      { mk_singkat: 'STD', nama_lengkap: 'STRUKTUR DATA', program_studi: 'SE-PJJ', dosen_koor: 'HUI' },
+    ];
+    if (format === 'csv') {
+      const csv = Papa.unparse(data);
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'template_matakuliah.csv');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } else {
+      const XLSX = await import('xlsx');
+      const ws = XLSX.utils.json_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Template');
+      XLSX.writeFile(wb, 'template_matakuliah.xlsx');
+    }
+  };
+
+  const handleAddManual = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.id_praktikum || !formData.namaLengkap || !formData.programStudi) {
+      toast.error('Isi kolom yang wajib');
+      return;
+    }
+    
+    const prak = praktikumList.find(p => p.tempId === formData.id_praktikum);
+    if (!prak) return;
+
+    setPreviewRows(prev => [...prev, {
+      mk_singkat: prak.nama,
+      originalMkSingkat: prak.nama,
+      nama_lengkap: formData.namaLengkap,
+      program_studi: formData.programStudi,
+      dosen_koor: formData.dosenKoor,
+      status: 'ok',
+      selected: true,
+      mappedPraktikumId: formData.id_praktikum
+    }]);
+
+    setFormData(prev => ({ ...prev, namaLengkap: '', dosenKoor: '' }));
+    setIsManualModalOpen(false);
+  };
+
+  const handleCopyData = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!copySourceTerm) return;
+    
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/mata-kuliah?term=${copySourceTerm}`);
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error);
+      
+      const existingMkGroups = result.data || [];
+      if (existingMkGroups.length === 0) {
+         toast.error('Tidak ada data mata kuliah di tahun ajaran tersebut');
+         return;
+      }
+
+      const flattened = existingMkGroups.flatMap((g: any) => g.items.map((item: any) => ({
+        mk_singkat: g.mk_singkat,
+        nama_lengkap: item.nama_lengkap,
+        program_studi: item.program_studi,
+        dosen_koor: item.dosen_koor || ''
+      })));
+
+      const preview = validateMataKuliahData(flattened, validPraktikums, []);
+      const strictPreview = preview.map(r => {
+        if (!r.statusMessage?.includes('Praktikum baru akan dibuat otomatis')) return r;
+        return {
+          ...r,
+          status: 'error' as const,
+          statusMessage: 'Praktikum tidak ditemukan di Langkah 1',
+          selected: false
+        };
+      });
+
+      setPreviewRows(prev => {
+         toast.success(`Berhasil menarik ${strictPreview.length} mata kuliah`);
+         return [...prev, ...strictPreview];
+      });
+      
+      setIsCopyModalOpen(false);
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdateRow = (index: number, updates: Partial<MataKuliahCSVRow>) => {
+    setPreviewRows((prev) => {
+      const newRows = [...prev];
+      newRows[index] = { ...newRows[index], ...updates };
+      return newRows;
+    });
+  };
+
+  const handleToggleSelect = (index: number) => {
+    setPreviewRows((prev) => {
+      const newRows = [...prev];
+      newRows[index].selected = !newRows[index].selected;
+      return newRows;
+    });
+  };
+
+  const handleToggleAll = (checked: boolean) => {
+    setPreviewRows((prev) => prev.map((r) => ({
+      ...r,
+      selected: r.status === 'error' ? false : checked,
+    })));
+  };
+
+  const handleConfirmImport = async () => {
+    const selectedRows = previewRows.filter((r) => r.selected);
+    
+    const draftData = selectedRows.map(r => {
+      let id_praktikum = r.mappedPraktikumId;
+      if (!id_praktikum) {
+        const prak = praktikumList.find(p => p.nama.toUpperCase() === r.mk_singkat.toUpperCase());
+        id_praktikum = prak?.tempId;
+      }
+
+      return {
+        id_praktikum,
+        nama_lengkap: r.nama_lengkap,
+        program_studi: r.program_studi,
+        dosen_koor: r.dosen_koor
+      };
+    });
+
+    const validDraftData = draftData.filter(d => d.id_praktikum) as any;
+
+    if (validDraftData.length === 0 && selectedRows.length > 0) {
+      toast.error('Gagal memetakan Mata Kuliah ke Praktikum.');
+      return;
+    }
+
+    setMataKuliahList(validDraftData);
+    toast.success('Data Mata Kuliah berhasil disimpan ke draft sementara.');
+    markStepCompleted('matkul');
+    setCurrentStep('jadwal');
+  };
+
+  const handleSkip = () => {
+    setMataKuliahList([]);
+    markStepCompleted('matkul');
+    setCurrentStep('jadwal');
+  };
+
+  return (
+    <Card className="border shadow-sm w-full">
+      <CardHeader>
+        <CardTitle className="text-xl">Langkah 2: Mata Kuliah</CardTitle>
+        <CardDescription>
+          Tambahkan Mata Kuliah untuk Praktikum yang telah Anda daftarkan di Langkah 1. (Opsional, Anda bisa menambahkan nanti).
+        </CardDescription>
+      </CardHeader>
+      
+      <CardContent className="space-y-6 pt-2">
+        <div className="pt-2 space-y-4">
+          <div className="flex justify-between items-center mt-4">
+            <h3 className="font-semibold text-lg">Daftar Mata Kuliah</h3>
+            <div className="flex gap-2">
+              <Dialog open={isManualModalOpen} onOpenChange={setIsManualModalOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-2"><BookOpen className="w-4 h-4"/> Tambah Manual</Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Tambah Mata Kuliah Manual</DialogTitle>
+                    <DialogDescription>Masukkan detail mata kuliah untuk ditambahkan ke daftar.</DialogDescription>
+                  </DialogHeader>
+                  <form onSubmit={handleAddManual} className="space-y-4 py-4">
+                    <Field>
+                      <FieldLabel>Pilih Praktikum Induk <span className="text-destructive">*</span></FieldLabel>
+                      <FieldContent>
+                        <Select value={formData.id_praktikum} onValueChange={(val) => setFormData(prev => ({ ...prev, id_praktikum: val }))}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Pilih Praktikum" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {praktikumList.map(p => (
+                              <SelectItem key={p.tempId} value={p.tempId}>{p.nama} ({p.tahun_ajaran})</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </FieldContent>
+                    </Field>
+
+                    <Field>
+                      <FieldLabel>Nama Mata Kuliah <span className="text-destructive">*</span></FieldLabel>
+                      <FieldContent>
+                        <Input 
+                          placeholder="Contoh: Pemrograman Web Lanjut" 
+                          value={formData.namaLengkap}
+                          onChange={(e) => setFormData(prev => ({ ...prev, namaLengkap: e.target.value }))}
+                          required
+                        />
+                      </FieldContent>
+                    </Field>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      <Field>
+                        <FieldLabel>Program Studi <span className="text-destructive">*</span></FieldLabel>
+                        <FieldContent>
+                          <Input 
+                            placeholder="Contoh: IF"
+                            value={formData.programStudi}
+                            onChange={(e) => setFormData(prev => ({ ...prev, programStudi: e.target.value }))}
+                            required
+                          />
+                        </FieldContent>
+                      </Field>
+                      <Field>
+                        <FieldLabel>Dosen Koor</FieldLabel>
+                        <FieldContent>
+                          <Input 
+                            placeholder="Opsional (3 Huruf)" 
+                            value={formData.dosenKoor}
+                            onChange={(e) => setFormData(prev => ({ ...prev, dosenKoor: e.target.value }))}
+                            maxLength={3}
+                          />
+                        </FieldContent>
+                      </Field>
+                    </div>
+                    <DialogFooter>
+                      <Button type="button" variant="outline" onClick={() => setIsManualModalOpen(false)}>Batal</Button>
+                      <Button type="submit">Tambah ke Daftar</Button>
+                    </DialogFooter>
+                  </form>
+                </DialogContent>
+              </Dialog>
+
+              <Dialog open={isCopyModalOpen} onOpenChange={setIsCopyModalOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-2"><Copy className="w-4 h-4"/> Copy dari Tahun Lalu</Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Tarik Data Mata Kuliah</DialogTitle>
+                    <DialogDescription>Masukkan tahun ajaran sebelumnya untuk mengambil daftar mata kuliahnya.</DialogDescription>
+                  </DialogHeader>
+                  <form onSubmit={handleCopyData} className="space-y-4 py-4">
+                    <Field>
+                      <FieldLabel>Tahun Ajaran Sumber</FieldLabel>
+                      <FieldContent>
+                        <Select value={copySourceTerm} onValueChange={setCopySourceTerm} required>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Pilih Tahun Ajaran" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {availableTerms.length === 0 ? (
+                              <SelectItem value="none" disabled>Memuat data...</SelectItem>
+                            ) : (
+                              availableTerms.map(t => (
+                                <SelectItem key={t} value={t}>{t}</SelectItem>
+                              ))
+                            )}
+                          </SelectContent>
+                        </Select>
+                      </FieldContent>
+                    </Field>
+                    <DialogFooter>
+                      <Button type="button" variant="outline" onClick={() => setIsCopyModalOpen(false)}>Batal</Button>
+                      <Button type="submit" disabled={loading}>
+                        {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Tarik Data
+                      </Button>
+                    </DialogFooter>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            </div>
+          </div>
+
+          {uploadError && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Upload Gagal</AlertTitle>
+              <AlertDescription>{uploadError}</AlertDescription>
+            </Alert>
+          )}
+
+          {previewRows.length === 0 ? (
+            <div className="space-y-6">
+              <div
+                {...getRootProps()}
+                className={cn(
+                  'border-2 border-dashed rounded-lg p-10 text-center transition-all cursor-pointer',
+                  isDragActive
+                    ? 'border-primary bg-primary/5'
+                    : 'border-border bg-transparent hover:border-primary/50'
+                )}
+              >
+                <input {...getInputProps()} />
+                <FileSpreadsheet size={40} className="mb-3 mx-auto text-muted-foreground" />
+                <div className="space-y-1">
+                  <p className="font-medium">Drag & drop file CSV atau Excel di sini</p>
+                  <p className="text-xs text-muted-foreground">atau klik untuk pilih file (.csv, .xlsx)</p>
+                </div>
+              </div>
+              
+              <div className="bg-muted/30 p-4 rounded-lg border border-border/50">
+                <p className="text-xs text-muted-foreground mb-2 font-medium">
+                  Format Kolom CSV/Excel yang Didukung:
+                </p>
+                <div className="flex flex-wrap gap-2 mb-1">
+                  {['mk_singkat', 'nama_lengkap', 'program_studi', 'dosen_koor'].map((col) => (
+                    <span
+                      key={col}
+                      className="text-[10px] bg-background border px-1.5 py-0.5 rounded font-mono text-muted-foreground"
+                    >
+                      {col}
+                    </span>
+                  ))}
+                </div>
+                <div className="flex items-center gap-3 pt-2 border-t border-border/50 mt-2">
+                  <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+                    <Download size={12} />
+                    Download Template:
+                  </span>
+                  <div className="flex gap-2">
+                    <Button type="button" variant="outline" size="sm" className="h-7 text-xs px-2 gap-1.5" onClick={() => handleDownloadTemplate('csv')}>
+                      <FileText size={12} className="text-sky-500" /> CSV
+                    </Button>
+                    <Button type="button" variant="outline" size="sm" className="h-7 text-xs px-2 gap-1.5" onClick={() => handleDownloadTemplate('xlsx')}>
+                      <FileSpreadsheet size={12} className="text-emerald-500" /> XLSX
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="border rounded-md flex flex-col h-[600px] overflow-hidden">
+              <div className="p-4 bg-muted/20 border-b flex justify-between items-center shrink-0">
+                <h3 className="font-medium text-sm">Preview Data Mata Kuliah ({previewRows.length})</h3>
+                <Button {...getRootProps()} type="button" variant="outline" size="sm" className="h-7 text-xs gap-1.5 cursor-pointer text-muted-foreground hover:text-foreground font-medium">
+                  <input {...getInputProps()} />
+                  <FileSpreadsheet className="w-3.5 h-3.5" /> Tambah via CSV/Excel
+                </Button>
+              </div>
+              <div className="flex-1 min-h-0 relative">
+                <MataKuliahCSVPreview
+                  rows={previewRows}
+                  validPraktikums={validPraktikums}
+                  term={term}
+                  onUpdateRow={handleUpdateRow}
+                  onToggleSelect={handleToggleSelect}
+                  onToggleAll={handleToggleAll}
+                />
+              </div>
+              <div className="flex justify-between items-center px-6 py-4 border-t bg-background shrink-0 gap-4 mt-auto shadow-[0_-5px_15px_-5px_rgba(0,0,0,0.05)] z-30">
+                <Button variant="outline" onClick={() => setPreviewRows([])} disabled={loading} className="shrink-0 min-w-[140px]">
+                  <ArrowLeft className="mr-2 h-4 w-4" /> Kembali ke Upload
+                </Button>
+                <div className="flex items-center gap-2 overflow-hidden justify-end flex-1">
+                  {previewRows.filter((r) => r.status === 'error').length > 0 && (
+                    <span className="text-xs text-destructive font-medium mr-3 text-right hidden lg:inline-block">
+                      {previewRows.filter((r) => r.status === 'error').length} data bermasalah & akan dilewati
+                    </span>
+                  )}
+                  <Button type="button" variant="secondary" onClick={handleSkip} disabled={loading} className="shrink-0 min-w-[140px]">
+                    Lewati Langkah Ini
+                  </Button>
+                  <Button onClick={handleConfirmImport} disabled={loading || previewRows.filter(r => r.selected).length === 0} className="shrink-0 min-w-[160px] bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm">
+                    <Save className="mr-2 h-4 w-4" />
+                    {loading ? 'Menyimpan...' : `Simpan ${previewRows.filter(r => r.selected).length} Data`}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </CardContent>
+      {previewRows.length === 0 && (
+        <CardFooter className="justify-between pt-4 pb-6 bg-muted/10 border-t">
+          <Button type="button" variant="ghost" onClick={() => setCurrentStep('praktikum')}>Kembali</Button>
+          <Button onClick={handleSkip} variant="secondary">Lewati Langkah Ini</Button>
+        </CardFooter>
+      )}
+    </Card>
+  );
+}
