@@ -1,7 +1,9 @@
 'use client';
 
 import { Users, BookOpen, AlertTriangle, Calendar } from 'lucide-react';
-import DashboardCharts from '@/components/DashboardCharts';
+import dynamic from 'next/dynamic';
+
+const DashboardCharts = dynamic(() => import('@/components/DashboardCharts'), { ssr: false });
 import { StatCard } from '@/components/ui/StatCard';
 import {
   Select,

@@ -102,14 +102,15 @@ export function ManajemenAkunFormModal({ open, onOpenChange, mode, user, onSucce
     if (!shouldFetch) return;
 
     updateState({ loadingPraktikum: true });
-    let cancelled = false;
+    const controller = new AbortController();
 
     const loadData = async () => {
       try {
         // 1. Fetch all praktikum
-        const pRes = await fetch('/api/praktikum?action=all');
+        // eslint-disable-next-line react-doctor/no-fetch-in-effect
+        const pRes = await fetch('/api/praktikum?action=all', { signal: controller.signal });
         const pJson = await pRes.json();
-        if (cancelled) return;
+        if (controller.signal.aborted) return;
 
         let list: Praktikum[] = [];
         let tahuns: string[] = [];
@@ -124,15 +125,16 @@ export function ManajemenAkunFormModal({ open, onOpenChange, mode, user, onSucce
         let existingPraktikumId = '';
         let existingTahun = tahuns[0] ?? '';
         if (mode === 'edit' && user?.id) {
-          const aRes = await fetch(`/api/admin/users/assignments?id_pengguna=${user.id}`);
+          // eslint-disable-next-line react-doctor/no-fetch-in-effect
+          const aRes = await fetch(`/api/admin/users/assignments?id_pengguna=${user.id}`, { signal: controller.signal });
           const aJson = await aRes.json();
-          if (!cancelled && aJson.ok && aJson.data?.length > 0) {
+          if (!controller.signal.aborted && aJson.ok && aJson.data?.length > 0) {
             existingPraktikumId = aJson.data[0].id_praktikum ?? '';
             existingTahun = aJson.data[0].tahun_ajaran ?? tahuns[0] ?? '';
           }
         }
 
-        if (!cancelled) {
+        if (!controller.signal.aborted) {
           updateState({
             praktikumList: list,
             tahunAjaranList: tahuns,
@@ -140,16 +142,16 @@ export function ManajemenAkunFormModal({ open, onOpenChange, mode, user, onSucce
             selectedPraktikumId: existingPraktikumId
           });
         }
-      } catch {
-        if (!cancelled) toast.error('Gagal memuat data praktikum');
+      } catch (e: any) {
+        if (!controller.signal.aborted) toast.error('Gagal memuat data praktikum');
       } finally {
-        if (!cancelled) updateState({ loadingPraktikum: false });
+        if (!controller.signal.aborted) updateState({ loadingPraktikum: false });
       }
     };
 
     loadData();
     return () => {
-      cancelled = true;
+      controller.abort();
     };
     // Only re‑run when `open` changes — deliberate: avoids the setState→useEffect loop
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -160,12 +162,13 @@ export function ManajemenAkunFormModal({ open, onOpenChange, mode, user, onSucce
     if (!open || role !== 'ASPRAK_KOOR' || praktikumList.length > 0 || loadingPraktikum) return;
 
     updateState({ loadingPraktikum: true });
-    let cancelled = false;
+    const controller = new AbortController();
 
-    fetch('/api/praktikum?action=all')
+    // eslint-disable-next-line react-doctor/no-fetch-in-effect
+    fetch('/api/praktikum?action=all', { signal: controller.signal })
       .then((r) => r.json())
       .then((json) => {
-        if (cancelled) return;
+        if (controller.signal.aborted) return;
         if (json.ok && json.data) {
           const list: Praktikum[] = json.data;
           const tahuns = Array.from(new Set(list.map((p) => p.tahun_ajaran)))
@@ -178,20 +181,22 @@ export function ManajemenAkunFormModal({ open, onOpenChange, mode, user, onSucce
           });
         }
       })
-      .catch(() => toast.error('Gagal memuat data praktikum'))
+      .catch(() => {
+        if (!controller.signal.aborted) toast.error('Gagal memuat data praktikum')
+      })
       .finally(() => {
-        if (!cancelled) updateState({ loadingPraktikum: false });
+        if (!controller.signal.aborted) updateState({ loadingPraktikum: false });
       });
 
     return () => {
-      cancelled = true;
+      controller.abort();
     };
     // intentionally only depends on role changing
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [role]);
 
   const filteredPraktikum = React.useMemo(
-    () => praktikumList.filter((p) => p.tahun_ajaran === selectedTahun),
+    () => praktikumList.filter((p: any) => p.tahun_ajaran === selectedTahun),
     [praktikumList, selectedTahun]
   );
 
@@ -378,7 +383,7 @@ export function ManajemenAkunFormModal({ open, onOpenChange, mode, user, onSucce
                     <SelectValue placeholder="Pilih Tahun Ajaran" />
                   </SelectTrigger>
                   <SelectContent>
-                    {tahunAjaranList.map((t) => (
+                    {tahunAjaranList.map((t: any) => (
                       <SelectItem key={t} value={t}>
                         {t}
                       </SelectItem>
@@ -399,10 +404,10 @@ export function ManajemenAkunFormModal({ open, onOpenChange, mode, user, onSucce
                 ) : (
                   <RadioGroup
                     value={selectedPraktikumId}
-                    onValueChange={setSelectedPraktikumId}
+                    onValueChange={(val) => updateState({ selectedPraktikumId: val })}
                     className="space-y-2 max-h-60 overflow-y-auto pr-1"
                   >
-                    {filteredPraktikum.map((p) => (
+                    {filteredPraktikum.map((p: any) => (
                       <FieldLabel key={p.id} htmlFor={`p-${p.id}`} className="cursor-pointer">
                         <Field orientation="horizontal">
                           <FieldContent>

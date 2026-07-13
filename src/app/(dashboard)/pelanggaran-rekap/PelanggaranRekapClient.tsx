@@ -103,8 +103,8 @@ export default function PelanggaranRekapClient({ initialTahunAjaranList }: Props
           </AccordionTrigger>
           <AccordionContent className="pt-2 pb-6 space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-muted-foreground">Tahun Ajaran</label>
+              <label className="space-y-1.5 block">
+                <span className="text-xs font-medium text-muted-foreground">Tahun Ajaran</span>
                 <Select value={tahunAjaran} onValueChange={setTahunAjaran}>
                   <SelectTrigger className="h-9 w-full">
                     <SelectValue placeholder="Pilih Tahun" />
@@ -117,10 +117,10 @@ export default function PelanggaranRekapClient({ initialTahunAjaranList }: Props
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
+              </label>
 
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-muted-foreground">Target Modul</label>
+              <label className="space-y-1.5 block">
+                <span className="text-xs font-medium text-muted-foreground">Target Modul</span>
                 <Select value={modul} onValueChange={setModul}>
                   <SelectTrigger className="h-9 w-full">
                     <SelectValue placeholder="Pilih Modul" />
@@ -134,12 +134,12 @@ export default function PelanggaranRekapClient({ initialTahunAjaranList }: Props
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
+              </label>
 
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-muted-foreground">
+              <label className="space-y-1.5 block">
+                <span className="text-xs font-medium text-muted-foreground">
                   Min. Pelanggaran
-                </label>
+                </span>
                 <Input
                   type="number"
                   min={1}
@@ -147,7 +147,7 @@ export default function PelanggaranRekapClient({ initialTahunAjaranList }: Props
                   onChange={(e) => setMinCount(Number(e.target.value))}
                   className="h-9 w-full"
                 />
-              </div>
+              </label>
 
               <Button onClick={loadData} disabled={loading} className="h-9">
                 {loading ? (

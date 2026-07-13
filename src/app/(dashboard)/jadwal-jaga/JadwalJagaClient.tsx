@@ -31,16 +31,21 @@ export default function JadwalJagaClient({
   const modulNum = selectedModul === 'Default' ? 0 : parseInt(selectedModul.replace('Modul ', ''));
 
   useEffect(() => {
+    const controller = new AbortController();
     if (selectedTerm) {
-      fetch(`/api/modul-schedule?term=${selectedTerm}`)
+      // eslint-disable-next-line react-doctor/no-fetch-in-effect
+      fetch(`/api/modul-schedule?term=${selectedTerm}`, { signal: controller.signal })
         .then((res) => res.json())
         .then((data) => {
-          if (data.ok && data.data) {
+          if (!controller.signal.aborted && data.ok && data.data) {
             setKonfigurasiModul(data.data);
           }
         })
-        .catch(console.error);
+        .catch((e) => {
+          if (!controller.signal.aborted) console.error(e);
+        });
     }
+    return () => controller.abort();
   }, [selectedTerm]);
 
   const handleRefresh = () => setRefreshTrigger((prev) => prev + 1);

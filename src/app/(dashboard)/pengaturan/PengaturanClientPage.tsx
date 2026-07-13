@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Trash2, Upload, FileSpreadsheet, Download, ShieldAlert, Activity } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import * as importFetcher from '@/lib/fetchers/importFetcher';
@@ -190,7 +190,12 @@ export default function DatabaseClientPage({
     try {
       const result = await jadwalFetcher.deleteJadwalByTerm(deleteTerm);
       if (result.ok) {
-      setStatus({ type: 'error', message: e.message || 'Gagal menghapus jadwal' });
+        updateUiState({ status: { type: 'success', message: `Berhasil menghapus jadwal angkatan ${deleteTerm}!` } });
+      } else {
+        throw new Error(result.error);
+      }
+    } catch (e: any) {
+      updateUiState({ status: { type: 'error', message: e.message || 'Gagal menghapus jadwal' } });
     } finally {
       updateUiState({ loading: false });
     }
@@ -198,12 +203,11 @@ export default function DatabaseClientPage({
 
   const handleExport = async () => {
     if (!exportTerm) {
-      setStatus({ type: 'error', message: 'Silakan pilih tahun ajaran yang akan diexport' });
+      updateUiState({ status: { type: 'error', message: 'Silakan pilih tahun ajaran yang akan diexport' } });
       return;
     }
 
-    setLoading(true);
-    setStatus({ type: 'info', message: `Mengekspor data untuk angkatan: ${exportTerm}...` });
+    updateUiState({ loading: true, status: { type: 'info', message: `Mengekspor data untuk angkatan: ${exportTerm}...` } });
 
     try {
       const result = await importFetcher.exportExcelDataset(exportTerm);
@@ -227,12 +231,12 @@ export default function DatabaseClientPage({
         XLSX.utils.book_append_sheet(wb, wsPivot, 'asprak_praktikum');
 
         XLSX.writeFile(wb, `EXPORT_${exportTerm}.xlsx`);
-        setStatus({ type: 'success', message: `Berhasil mengekspor data untuk ${exportTerm}!` });
+        updateUiState({ status: { type: 'success', message: `Berhasil mengekspor data untuk ${exportTerm}!` } });
       } else {
-        setStatus({ type: 'error', message: result.error || 'Ekspor gagal' });
+        updateUiState({ status: { type: 'error', message: result.error || 'Ekspor gagal' } });
       }
     } catch (e: any) {
-      setStatus({ type: 'error', message: e.message || 'Ekspor gagal' });
+      updateUiState({ status: { type: 'error', message: e.message || 'Ekspor gagal' } });
     } finally {
       updateUiState({ loading: false });
     }
@@ -569,7 +573,7 @@ export default function DatabaseClientPage({
               onNext={() => {
                 setWizardStep(0);
                 setExcelData(null);
-                setStatus({ type: 'success', message: 'Import Excel selesai dengan sukses!' });
+                updateUiState({ status: { type: 'success', message: 'Import Excel selesai dengan sukses!' } });
               }}
               onImport={async (rows) => {
                 const res = await jadwalFetcher.bulkImportJadwal(rows);

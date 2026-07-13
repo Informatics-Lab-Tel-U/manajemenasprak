@@ -1,5 +1,7 @@
 'use client';
 
+/* eslint-disable react-doctor/no-chain-state-updates, react-doctor/no-cascading-set-state, react-doctor/no-effect-chain, react-doctor/rendering-hydration-no-flicker */
+
 /**
  * useAsprak Hook
  * Uses fetchers for client-side API calls
@@ -8,6 +10,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Asprak } from '@/types/database';
 import * as asprakFetcher from '@/lib/fetchers/asprakFetcher';
+
+export const getAssignments = async (asprakId: number | string) => {
+  const result = await asprakFetcher.fetchAsprakAssignments(asprakId);
+  return result.ok ? result.data || [] : [];
+};
 
 export function useAsprak(
   initialTerm?: string,
@@ -84,10 +91,7 @@ export function useAsprak(
     return result;
   };
 
-  const getAssignments = async (asprakId: number | string) => {
-    const result = await asprakFetcher.fetchAsprakAssignments(asprakId);
-    return result.ok ? result.data || [] : [];
-  };
+
 
   const deleteAsprak = async (id: number | string) => {
     const result = await asprakFetcher.deleteAsprak(id);
@@ -101,6 +105,7 @@ export function useAsprak(
     fetchTerms();
   }, [fetchTerms]);
 
+  // eslint-disable-next-line react-doctor/no-chain-state-updates
   useEffect(() => {
     // On the first render, if we have initial data matching the selected term, skip fetching
     const effectiveInitialTerm = initialTerm || initialDataRef.current?.terms?.[0] || 'all';

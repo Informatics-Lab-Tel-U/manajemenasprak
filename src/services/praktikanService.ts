@@ -190,16 +190,17 @@ export async function getPraktikanKelasByMataKuliah(
   supabaseClient?: SupabaseClient
 ): Promise<string[]> {
   const supabase = await getClient(supabaseClient);
-  const normalizedMataKuliah = normalizeRequired(mataKuliah, 'mata_kuliah');
 
-  const { data, error } = await supabase
-    .from('praktikan')
-    .select('kelas')
-    .or(buildMataKuliahLikeFilter(normalizedMataKuliah))
-    .order('kelas', { ascending: true });
+  let query = supabase.from('praktikan').select('kelas').order('kelas', { ascending: true });
+
+  if (mataKuliah && mataKuliah.trim()) {
+    query = query.or(buildMataKuliahLikeFilter(mataKuliah.trim()));
+  }
+
+  const { data, error } = await query;
 
   if (error) {
-    logger.error(`Error fetching praktikan kelas for ${normalizedMataKuliah}:`, error);
+    logger.error(`Error fetching praktikan kelas for ${mataKuliah}:`, error);
     throw new Error(`Gagal mengambil kelas praktikan: ${error.message}`);
   }
 

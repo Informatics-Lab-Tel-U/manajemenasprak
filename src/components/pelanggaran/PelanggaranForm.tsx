@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -82,10 +82,7 @@ export default function PelanggaranForm({
   );
   const { selectedTahunAjaran, selectedPraktikumId, modul } = contextState;
 
-  const [hydrated, setHydrated] = useState(false);
-  useEffect(() => {
-    setHydrated(true);
-  }, []);
+
 
   // Sync state if initial props change (e.g. after data fetch in parent)
   useEffect(() => {
@@ -253,13 +250,23 @@ export default function PelanggaranForm({
           {filteredAsprak.length === 0 ? (
             <p className="py-10 text-center text-sm text-muted-foreground">Tidak ada asprak</p>
           ) : (
-            filteredAsprak.map((a) => {
-              const checked = selectedAsprakIds.includes(a.id);
+            (() => {
+              const selectedSet = new Set(selectedAsprakIds);
+              return filteredAsprak.map((a) => {
+                const checked = selectedSet.has(a.id);
               return (
                 <div
                   key={a.id}
                   className={`flex items-center gap-2.5 px-3 py-2.5 cursor-pointer border-b border-border/40 last:border-0
                     ${checked ? 'bg-primary/5' : 'hover:bg-accent'}`}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      toggleAsprak(a.id);
+                    }
+                  }}
                   onMouseDown={(e) => {
                     e.preventDefault();
                     toggleAsprak(a.id);
@@ -278,7 +285,8 @@ export default function PelanggaranForm({
                   </div>
                 </div>
               );
-            })
+            });
+          })()
           )}
         </div>
       </div>
@@ -319,6 +327,15 @@ export default function PelanggaranForm({
                   key={j.id}
                   className={`px-3 py-2.5 cursor-pointer border-b border-border/40 last:border-0
                     ${selected ? 'bg-primary/5 border-l-2 border-l-primary' : 'hover:bg-accent'}`}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setIdJadwal(j.id);
+                      closePanel();
+                    }
+                  }}
                   onMouseDown={(e) => {
                     e.preventDefault();
                     setIdJadwal(j.id);
@@ -345,11 +362,12 @@ export default function PelanggaranForm({
                         </span>
                         <span className="text-[10px] opacity-80">
                           (
-                          {hydrated ? new Date(substitute.tanggal).toLocaleDateString('id-ID', {
+                          {new Date(substitute.tanggal).toLocaleDateString('id-ID', {
                             day: 'numeric',
                             month: 'short',
                             year: 'numeric',
-                          }) : ''}
+                            timeZone: 'Asia/Jakarta'
+                          })}
                           )
                         </span>
                       </div>
@@ -459,6 +477,7 @@ export default function PelanggaranForm({
                             {a.kode}
                             <button
                               type="button"
+                              aria-label="Hapus asprak dari daftar"
                               onMouseDown={(e) => {
                                 e.preventDefault();
                                 toggleAsprak(id);
@@ -501,7 +520,7 @@ export default function PelanggaranForm({
 
                 <Field>
                   <Label>Modul *</Label>
-                  <Select value={modul} onValueChange={setModul}>
+                  <Select value={modul} onValueChange={(v) => updateContextState({ modul: v })}>
                     <SelectTrigger className="w-full h-9">
                       <SelectValue placeholder="Pilih Modul" />
                     </SelectTrigger>

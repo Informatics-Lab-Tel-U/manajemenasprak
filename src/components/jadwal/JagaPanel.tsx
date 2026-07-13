@@ -171,6 +171,8 @@ export default function JagaPanel({
                       {/* Hover Actions */}
                       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-1 border-l pl-1 border-current/20">
                         <button
+                          type="button"
+                          aria-label="Edit"
                           onClick={() => {
                             if (onEdit) {
                               onEdit({
@@ -187,6 +189,9 @@ export default function JagaPanel({
                           <Edit2 className="w-3 h-3" />
                         </button>
                         <button
+                          type="button"
+                          aria-label="Delete"
+                          title="Delete"
                           onClick={() => {
                             setDeletingItem({
                               id: j.id,
@@ -198,7 +203,6 @@ export default function JagaPanel({
                             setIsDeleteDialogOpen(true);
                           }}
                           className="hover:text-destructive transition-colors p-0.5"
-                          title="Hapus"
                         >
                           <X className="w-3 h-3" />
                         </button>
@@ -235,6 +239,7 @@ export default function JagaPanel({
                 {['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'].map((d) => (
                   <button
                     key={d}
+                    type="button"
                     onClick={() => setLocalDay(d)}
                     className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors border
                        ${
@@ -272,39 +277,31 @@ export default function JagaPanel({
               onValueChange={(val: any) => setDeleteScope(val)}
               className="grid gap-4"
             >
-              <div
+              <label
+                htmlFor="single"
                 className="flex items-start space-x-3 space-y-0 rounded-md border p-3 hover:bg-muted/50 transition-colors cursor-pointer"
-                onClick={() => setDeleteScope('single')}
               >
                 <RadioGroupItem value="single" id="single" className="mt-1" />
-                <Label
-                  htmlFor="single"
-                  className="cursor-pointer font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                >
+                <div className="font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                   <span className="block mb-1">Hanya Modul Ini Saja</span>
                   <span className="block text-[11px] font-normal text-muted-foreground">
                     Menghapus jadwal asisten hanya pada modul yang sedang dipilih sekarang.
                   </span>
-                </Label>
-              </div>
-              <div
+                </div>
+              </label>
+              <label
+                htmlFor="bulk"
                 className="flex items-start space-x-3 space-y-0 rounded-md border p-3 hover:bg-muted/50 transition-colors cursor-pointer"
-                onClick={() => setDeleteScope('bulk')}
               >
                 <RadioGroupItem value="bulk" id="bulk" className="mt-1" />
-                <Label
-                  htmlFor="bulk"
-                  className="cursor-pointer font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                >
-                  <span className="block mb-1 text-amber-600 dark:text-amber-500 font-bold">
-                    Seluruh Modul (Bulk)
-                  </span>
+                <div className="font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  <span className="block mb-1">Semua Modul</span>
                   <span className="block text-[11px] font-normal text-muted-foreground">
-                    Menghapus jadwal asisten pada hari dan shift yang sama di SELURUH MODUL
-                    (W1-W16).
+                    Menghapus jadwal asisten dari seluruh modul untuk hari, shift,
+                    dan ruang yang sama.
                   </span>
-                </Label>
-              </div>
+                </div>
+              </label>
             </RadioGroup>
           </div>
 

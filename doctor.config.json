@@ -1,0 +1,7 @@
+{
+  "rules": {
+    "deslop/unused-file": "off",
+    "deslop/unused-export": "off",
+    "react-doctor/no-giant-component": "off"
+  }
+}

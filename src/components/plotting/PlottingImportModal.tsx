@@ -36,6 +36,32 @@ interface PlottingImportModalProps {
   terms: string[];
 }
 
+const handleDownloadTemplate = async (format: 'csv' | 'xlsx') => {
+  const data = [
+    { kode_asprak: 'ARS', mk_singkat: 'PBO' },
+    { kode_asprak: 'ZZA', mk_singkat: 'STRUKDAT' },
+  ];
+
+  if (format === 'csv') {
+    const csv = Papa.unparse(data);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'template_plotting.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  } else {
+    // Load xlsx lazily — only when user requests XLSX template
+    const XLSX = await import('xlsx');
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Template');
+    XLSX.writeFile(wb, 'template_plotting.xlsx');
+  }
+};
+
 export default function PlottingImportModal({
   open,
   onOpenChange,
@@ -100,31 +126,7 @@ export default function PlottingImportModal({
     onDrop: (files) => files[0] && processCSV(files[0]),
   });
 
-  const handleDownloadTemplate = async (format: 'csv' | 'xlsx') => {
-    const data = [
-      { kode_asprak: 'ARS', mk_singkat: 'PBO' },
-      { kode_asprak: 'ZZA', mk_singkat: 'STRUKDAT' },
-    ];
 
-    if (format === 'csv') {
-      const csv = Papa.unparse(data);
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', 'template_plotting.csv');
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } else {
-      // Load xlsx lazily — only when user requests XLSX template
-      const XLSX = await import('xlsx');
-      const ws = XLSX.utils.json_to_sheet(data);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, 'Template');
-      XLSX.writeFile(wb, 'template_plotting.xlsx');
-    }
-  };
 
   const handleResolve = (index: number, candidateId: string) => {
     setPreviewRows((prev) => handlePlottingResolve(index, candidateId, prev));

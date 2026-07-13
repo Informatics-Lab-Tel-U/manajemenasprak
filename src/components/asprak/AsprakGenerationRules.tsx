@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -43,11 +43,15 @@ const generateCodes = (name: string, generator: (words: string[]) => string[]) =
   }
 };
 
-export default function AsprakGenerationRules({ existingCodes = [] }: AsprakGenerationRulesProps) {
+const EMPTY_ITEMS: string[] = [];
+
+export default function AsprakGenerationRules({ existingCodes = EMPTY_ITEMS }: AsprakGenerationRulesProps) {
+  const existingSet = useMemo(() => new Set(existingCodes), [existingCodes]);
+
   const getCodeStatus = (code: string | null, index: number, allCodes: (string | null)[]) => {
     if (!code) return 'none';
-    if (existingCodes.includes(code)) return 'taken';
-    const firstAvailableIdx = allCodes.findIndex((c) => c && !existingCodes.includes(c));
+    if (existingSet.has(code)) return 'taken';
+    const firstAvailableIdx = allCodes.findIndex((c) => c && !existingSet.has(c));
     if (firstAvailableIdx === index) return 'chosen';
     return 'available';
   };

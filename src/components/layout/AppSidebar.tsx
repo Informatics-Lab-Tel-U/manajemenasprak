@@ -59,15 +59,7 @@ type NavItem = {
 const ALL_NAV_ITEMS: NavItem[] = [
   { label: 'Overview', href: '/', icon: Home },
   { label: 'Data Praktikum', href: '/praktikum', icon: BookOpen },
-  {
-    label: 'Data Praktikan',
-    href: '#',
-    icon: UserRoundCheck,
-    items: [
-      { label: 'Input Data', href: '/data-praktikan/input' },
-      { label: 'Lihat Data', href: '/data-praktikan/view' },
-    ],
-  },
+  { label: 'Data Praktikan', href: '/data-praktikan', icon: UserRoundCheck },
   { label: 'Mata Kuliah', href: '/mata-kuliah', icon: BookOpen },
   {
     label: 'Data Asisten Praktikum',
@@ -141,7 +133,7 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
               <Link href="/">
                 <div className="flex aspect-square bg-white p-0.5 size-10 items-center justify-center rounded-lg text-sidebar-primary-foreground">
                   <div className="relative w-full h-full overflow-hidden rounded-md">
-                    <Image src="/iflab.png" alt="Logo" fill className="object-contain" />
+                    <Image src="/iflab.png" alt="Logo" fill sizes="40px" className="object-contain" />
                   </div>
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">

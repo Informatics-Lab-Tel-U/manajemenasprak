@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Jadwal, MataKuliah } from '@/types/database';
 import type { CreateJadwalInput, UpdateJadwalInput } from '@/services/jadwalService';
 import { DAYS, ROOMS, STATIC_SESSIONS } from '@/constants';
@@ -317,7 +317,7 @@ export function JadwalModal({
                       checked={isPJJ}
                       onCheckedChange={(checked) => {
                         const isChecked = !!checked;
-                        setIsPJJ(isChecked);
+                        updateUiState({ isPJJ: isChecked });
                         if (isChecked) {
                           if (!formData.kelas?.endsWith('PJJ')) {
                             setFormData((prev) => ({ ...prev, kelas: (prev.kelas || '') + 'PJJ' }));

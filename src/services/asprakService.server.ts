@@ -357,29 +357,53 @@ async function linkAssignments(
   assignments: UpsertAsprakInput['assignments'],
   supabase: SupabaseClient
 ): Promise<void> {
-  await Promise.all(
-    assignments.map(async (assignment) => {
-      await Promise.all(
-        assignment.praktikumNames.map(async (mkName) => {
-          const praktikumId = await getOrCreatePraktikum(mkName, assignment.term, supabase);
+  // First, extract all unique terms and praktikumNames
+  const neededPraktikums: { name: string; term: string }[] = [];
+  for (const assign of assignments) {
+    for (const name of assign.praktikumNames) {
+      neededPraktikums.push({ name, term: assign.term });
+    }
+  }
 
-          const { data: linkExist } = await supabase
-            .from('asprak_praktikum')
-            .select('id')
-            .eq('id_asprak', asprakId)
-            .eq('id_praktikum', praktikumId)
-            .maybeSingle();
+  if (neededPraktikums.length === 0) return;
 
-          if (!linkExist) {
-            await supabase.from('asprak_praktikum').insert({
-              id_asprak: asprakId,
-              id_praktikum: praktikumId,
-            });
-          }
-        })
-      );
-    })
+  const uniqueNeeded = Array.from(new Set(neededPraktikums.map((p) => `${p.name}::${p.term}`))).map((key) => {
+    const parts = key.split('::');
+    return { name: parts[0], term: parts[1] };
+  });
+
+  // Resolve all praktikum IDs
+  const praktikumIds = await Promise.all(
+    uniqueNeeded.map((p) => getOrCreatePraktikum(p.name, p.term, supabase))
   );
+
+  // Remove duplicates
+  const uniquePraktikumIds = Array.from(new Set(praktikumIds));
+
+  if (uniquePraktikumIds.length === 0) return;
+
+  // Now, fetch existing links
+  const { data: existingLinks } = await supabase
+    .from('asprak_praktikum')
+    .select('id_praktikum')
+    .eq('id_asprak', asprakId)
+    .in('id_praktikum', uniquePraktikumIds);
+
+  const existingSet = new Set(existingLinks?.map((l) => l.id_praktikum) || []);
+
+  const newLinks = uniquePraktikumIds.reduce<{ id_asprak: string; id_praktikum: string }[]>(
+    (acc, pid) => {
+      if (!existingSet.has(pid)) {
+        acc.push({ id_asprak: asprakId, id_praktikum: pid });
+      }
+      return acc;
+    },
+    []
+  );
+
+  if (newLinks.length > 0) {
+    await supabase.from('asprak_praktikum').insert(newLinks);
+  }
 }
 
 export async function upsertAsprak(

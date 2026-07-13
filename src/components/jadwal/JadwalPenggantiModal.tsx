@@ -266,7 +266,7 @@ export function JadwalPenggantiModal({
     updateUiState({ hari: val });
     if (isPJJ) {
       // Recalculate sessions from current jam if PJJ
-      updateUiState({ sesi: calculateSesiFromJamPJJ(jam, val }));
+      updateUiState({ sesi: calculateSesiFromJamPJJ(jam, val) });
     } else {
       const sessionObj = STATIC_SESSIONS[val]?.find((s) => s.sesi === sesi);
       if (sessionObj) updateUiState({ jam: sessionObj.jam });
@@ -397,7 +397,7 @@ export function JadwalPenggantiModal({
                 <Label>Kelas</Label>
                 <Select
                   value={selectedJadwalId}
-                  onValueChange={setSelectedJadwalId}
+                  onValueChange={(v) => updateUiState({ selectedJadwalId: v })}
                   disabled={!selectedPraktikum || !!initialData}
                 >
                   <SelectTrigger className="w-full">
@@ -444,7 +444,7 @@ export function JadwalPenggantiModal({
                   <Label>Modul</Label>
                   <Select
                     value={modul.toString()}
-                    onValueChange={(v) => updateUiState({ modul: parseInt(v }))}
+                    onValueChange={(v) => updateUiState({ modul: parseInt(v) })}
                     disabled={disableModul}
                   >
                     <SelectTrigger className="w-full">
@@ -528,7 +528,7 @@ export function JadwalPenggantiModal({
 
               <div className="space-y-2">
                 <Label>Ruangan Pengganti</Label>
-                <Select value={ruangan} onValueChange={setRuangan}>
+                <Select value={ruangan} onValueChange={(v) => updateUiState({ ruangan: v })}>
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Pilih Ruangan" />
                   </SelectTrigger>

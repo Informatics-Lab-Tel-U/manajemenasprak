@@ -248,7 +248,7 @@ export default function JadwalImportCSVModal({
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <label className="text-sm font-medium leading-none">Upload CSV</label>
+                        <label htmlFor="jadwal-csv-upload" className="text-sm font-medium leading-none">Upload CSV</label>
                         {term && (
                           <span className="text-xs font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded">
                             Term: {term}
@@ -272,7 +272,7 @@ export default function JadwalImportCSVModal({
                           : 'border-border bg-transparent hover:border-primary/50'
                       )}
                     >
-                      <input {...getInputProps()} />
+                      <input {...getInputProps()} id="jadwal-csv-upload" />
                       <FileSpreadsheet size={40} className="mx-auto mb-3 text-muted-foreground" />
                       {isDragActive ? (
                         <p className="text-primary font-semibold">Drop CSV file di sini...</p>

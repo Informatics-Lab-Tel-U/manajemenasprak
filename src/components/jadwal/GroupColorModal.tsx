@@ -172,6 +172,7 @@ export function GroupColorModal({ isOpen, onClose, mataKuliahList }: GroupColorM
                         <div className="flex items-center gap-1.5 sm:gap-2 bg-background border px-2 py-1 rounded-md">
                           <input
                             type="color"
+                            aria-label="Pilih warna custom"
                             value={currentColor}
                             onChange={(e) => handleColorChange(groupName, e.target.value)}
                             className="w-4 h-4 p-0 border-0 cursor-pointer bg-transparent"
@@ -190,6 +191,7 @@ export function GroupColorModal({ isOpen, onClose, mataKuliahList }: GroupColorM
                           <button
                             key={color}
                             type="button"
+                            aria-label={`Pilih warna ${color}`}
                             onClick={() => handleColorChange(groupName, color)}
                             className={cn(
                               'relative aspect-square rounded-sm border transition-all hover:scale-105',

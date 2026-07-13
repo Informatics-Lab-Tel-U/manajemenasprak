@@ -1,5 +1,10 @@
-import { redirect } from 'next/navigation';
+import PraktikanClientPage from '@/components/praktikan/PraktikanClientPage';
 
-export default async function DataPraktikanPage() {
-  redirect('/data-praktikan/input');
+export const metadata = {
+  title: 'Data Praktikan | Manajemen Asprak',
+  description: 'Kelola data praktikan',
+};
+
+export default function DataPraktikanPage() {
+  return <PraktikanClientPage />;
 }

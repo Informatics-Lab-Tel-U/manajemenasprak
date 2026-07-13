@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: true, data: result });
     } else if (action === 'bulk') {
       const finalPayloads: Array<{
-        id_praktikum: number;
+        id_praktikum: string;
         nama_lengkap: string;
         program_studi: string;
         dosen_koor: string;

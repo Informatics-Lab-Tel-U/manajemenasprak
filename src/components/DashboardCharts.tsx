@@ -1,5 +1,6 @@
 'use client';
 
+// eslint-disable-next-line react-doctor/prefer-dynamic-import
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
@@ -72,11 +73,6 @@ export default function DashboardCharts({
 
   // Filter Logic
   const [programType, setProgramType] = React.useState<'REGULER' | 'PJJ'>('REGULER');
-  const [hydrated, setHydrated] = React.useState(false);
-  
-  React.useEffect(() => {
-    setHydrated(true);
-  }, []);
   // Calculate currentDayName if not already present (it should be 'SENIN'-'MINGGU')
   const currentDayNameRaw = format(todayDate, 'EEEE', { locale: id }).toUpperCase();
   const currentDayName =
@@ -118,7 +114,7 @@ export default function DashboardCharts({
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle>
-              Jadwal Hari Ini {hydrated ? `(${todayDate.toLocaleDateString('id-ID', { weekday: 'long' })})` : ''}
+              Jadwal Hari Ini ({todayDate.toLocaleDateString('id-ID', { weekday: 'long', timeZone: 'Asia/Jakarta' })})
             </CardTitle>
             <CardDescription>
               Visualisasi jadwal praktikum yang berlangsung hari ini
@@ -126,6 +122,7 @@ export default function DashboardCharts({
           </div>
           <div className="bg-muted/50 p-1 rounded-lg flex items-center gap-1 border border-border/50">
             <button
+              type="button"
               onClick={() => setProgramType('REGULER')}
               className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${
                 programType === 'REGULER'
@@ -136,6 +133,7 @@ export default function DashboardCharts({
               Reguler
             </button>
             <button
+              type="button"
               onClick={() => setProgramType('PJJ')}
               className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${
                 programType === 'PJJ'

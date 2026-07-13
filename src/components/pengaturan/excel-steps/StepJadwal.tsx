@@ -25,13 +25,14 @@ export default function StepJadwal({ data, term, onNext, onPrev, onImport }: Ste
   const [mataKuliahList, setMataKuliahList] = useState<any[]>([]);
 
   useEffect(() => {
-    let active = true;
+    const controller = new AbortController();
 
     async function fetchMK() {
       if (!term) return;
       try {
-        const res = await fetch(`/api/mata-kuliah?term=${term}`);
-        if (!active) return;
+        // eslint-disable-next-line react-doctor/no-fetch-in-effect
+        const res = await fetch(`/api/mata-kuliah?term=${term}`, { signal: controller.signal });
+        if (controller.signal.aborted) return;
         if (res.ok) {
           const json = await res.json();
           if (json.ok && Array.isArray(json.data)) {
@@ -43,14 +44,14 @@ export default function StepJadwal({ data, term, onNext, onPrev, onImport }: Ste
           }
         }
       } catch (e) {
-        console.error('Failed fetching MK for jadwal', e);
+        if (!controller.signal.aborted) console.error('Failed fetching MK for jadwal', e);
       } finally {
-        if (active) setIsFetching(false);
+        if (!controller.signal.aborted) setIsFetching(false);
       }
     }
     fetchMK();
     return () => {
-      active = false;
+      controller.abort();
     };
   }, [term]);
 

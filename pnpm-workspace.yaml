@@ -1,0 +1,4 @@
+packages:
+  - "."
+trustPolicy: no-downgrade
+minimumReleaseAge: 10080

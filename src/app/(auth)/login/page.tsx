@@ -21,6 +21,7 @@ export default function Page() {
                 src="/iflab.png"
                 alt="Informatics Laboratory"
                 fill
+                sizes="(max-width: 768px) 112px, (max-width: 1200px) 144px, 208px"
                 priority
                 className="object-contain drop-shadow-lg"
               />
