@@ -5,7 +5,7 @@ import {
   getCachedAspraksWithAssignments,
   getExistingCodes,
   getCachedAllAsprak,
-} from '@/services/asprakService';
+} from '@/services/asprakService.server';
 import AsprakClientPage from './AsprakClientPage';
 import AsprakLoading from './loading';
 

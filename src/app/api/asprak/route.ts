@@ -5,7 +5,7 @@
 
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import * as asprakService from '@/services/asprakService';
+import * as asprakService from '@/services/asprakService.server';
 import { getAvailableTerms } from '@/services/termService';
 import { requireRoleApi } from '@/lib/auth';
 import { apiErrorResponse } from '@/lib/api-error';

@@ -21,10 +21,48 @@ import {
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { cn } from '@/lib/utils'; // Ensure utility exists or use standard class string
 
-import TermInput, { buildTermString } from '@/components/asprak/TermInput';
+import TermInput from '@/components/asprak/TermInput';
+import { buildTermString } from '@/utils/termHelpers';
 import MataKuliahCSVPreview, { MataKuliahCSVRow } from './MataKuliahCSVPreview';
 import { validateMataKuliahData } from '@/utils/validation/mataKuliahValidation';
 import type { MataKuliahGrouped } from '@/services/mataKuliahService';
+
+
+const downloadTemplate = async (format: 'csv' | 'xlsx') => {
+  const data = [
+    {
+      mk_singkat: 'ALPRO 1',
+      nama_lengkap: 'ALGORITMA PEMROGRAMAN 1',
+      program_studi: 'IF',
+      dosen_koor: 'PEY',
+    },
+    {
+      mk_singkat: 'STD',
+      nama_lengkap: 'STRUKTUR DATA',
+      program_studi: 'SE-PJJ',
+      dosen_koor: 'HUI',
+    },
+  ];
+
+  if (format === 'csv') {
+    const csv = Papa.unparse(data);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'template_matakuliah.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  } else {
+    // Load xlsx lazily
+    const XLSX = await import('xlsx');
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Template');
+    XLSX.writeFile(wb, 'template_matakuliah.xlsx');
+  }
+};
 
 interface MataKuliahImportModalProps {
   open: boolean;
@@ -53,15 +91,11 @@ export default function MataKuliahImportModal({
   const [parsedRows, setParsedRows] = useState<MataKuliahCSVRow[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [localValidPraktikums, setLocalValidPraktikums] = useState(validPraktikums);
+  const [fetchedValidPraktikums, setFetchedValidPraktikums] = useState<{ id: string; nama: string }[] | null>(null);
+  const localValidPraktikums = fetchedValidPraktikums ?? validPraktikums;
   const [existingMataKuliah, setExistingMataKuliah] = useState<MataKuliahGrouped[]>([]);
 
   const [showConfirmClose, setShowConfirmClose] = useState(false);
-
-  // Sync initial validPraktikums if they change (though we override with fetch mostly)
-  useEffect(() => {
-    setLocalValidPraktikums(validPraktikums);
-  }, [validPraktikums]);
 
   // Derived
   const term = useMemo(() => buildTermString(termYear, termSem), [termYear, termSem]);
@@ -69,27 +103,28 @@ export default function MataKuliahImportModal({
 
   // Fetch valid praktikums AND key existing data whenever the term changes inside the modal
   useEffect(() => {
-    let active = true;
+    const controller = new AbortController();
 
     async function fetchData() {
       if (!isTermValid) return;
 
       try {
+        // eslint-disable-next-line react-doctor/no-fetch-in-effect
         const [praktikumRes, mkRes] = await Promise.all([
-          fetch(`/api/praktikum?action=by-term&term=${term}`),
-          fetch(`/api/mata-kuliah?term=${term}`),
+          fetch(`/api/praktikum?action=by-term&term=${term}`, { signal: controller.signal }),
+          fetch(`/api/mata-kuliah?term=${term}`, { signal: controller.signal }),
         ]);
 
-        if (active && praktikumRes.ok) {
+        if (!controller.signal.aborted && praktikumRes.ok) {
           const json = await praktikumRes.json();
           if (json.ok && Array.isArray(json.data)) {
-            setLocalValidPraktikums(json.data);
+            setFetchedValidPraktikums(json.data);
           } else {
-            setLocalValidPraktikums([]);
+            setFetchedValidPraktikums([]);
           }
         }
 
-        if (active && mkRes.ok) {
+        if (!controller.signal.aborted && mkRes.ok) {
           const mkJson = await mkRes.json();
           if (mkJson.ok && Array.isArray(mkJson.data)) {
             setExistingMataKuliah(mkJson.data);
@@ -98,13 +133,13 @@ export default function MataKuliahImportModal({
           }
         }
       } catch (e: any) {
-        console.error(e);
+        if (!controller.signal.aborted) console.error(e);
       }
     }
 
     fetchData();
     return () => {
-      active = false;
+      controller.abort();
     };
   }, [term, isTermValid]);
 
@@ -148,6 +183,7 @@ export default function MataKuliahImportModal({
         },
       });
     },
+    // eslint-disable-next-line react-doctor/exhaustive-deps
     [localValidPraktikums, existingMataKuliah]
   );
 
@@ -213,41 +249,7 @@ export default function MataKuliahImportModal({
     }
   };
 
-  const downloadTemplate = async (format: 'csv' | 'xlsx') => {
-    const data = [
-      {
-        mk_singkat: 'ALPRO 1',
-        nama_lengkap: 'ALGORITMA PEMROGRAMAN 1',
-        program_studi: 'IF',
-        dosen_koor: 'PEY',
-      },
-      {
-        mk_singkat: 'STD',
-        nama_lengkap: 'STRUKTUR DATA',
-        program_studi: 'SE-PJJ',
-        dosen_koor: 'HUI',
-      },
-    ];
 
-    if (format === 'csv') {
-      const csv = Papa.unparse(data);
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = 'template_mata_kuliah.csv';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } else {
-      // Load xlsx lazily — only when user requests XLSX template
-      const XLSX = await import('xlsx');
-      const ws = XLSX.utils.json_to_sheet(data);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, 'Template');
-      XLSX.writeFile(wb, 'template_mata_kuliah.xlsx');
-    }
-  };
 
   const handleClose = () => {
     setStep('upload');

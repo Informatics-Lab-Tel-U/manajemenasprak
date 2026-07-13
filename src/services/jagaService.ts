@@ -3,7 +3,6 @@ import { SupabaseClient } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/server';
 import { logger } from '@/lib/logger';
 import { JadwalJaga } from '@/types/database';
-import { createAuditLog } from './auditLogService';
 
 export async function getJadwalJaga(
   term: string,
@@ -69,14 +68,7 @@ export async function upsertJadwalJaga(
     throw new Error(`Gagal menambah jadwal jaga: ${error.message}`);
   }
 
-  if (created) {
-    await createAuditLog({
-      table_name: 'jadwal_jaga',
-      record_id: created.id,
-      operation: 'INSERT',
-      new_values: created,
-    });
-  }
+
 }
 
 export async function updateJadwalJaga(
@@ -86,7 +78,7 @@ export async function updateJadwalJaga(
 ): Promise<void> {
   const supabase = supabaseClient ?? (await createClient());
 
-  const { data: oldData } = await supabase.from('jadwal_jaga').select('*').eq('id', id).single();
+
 
   const { data: updated, error } = await supabase
     .from('jadwal_jaga')
@@ -100,21 +92,13 @@ export async function updateJadwalJaga(
     throw new Error(`Gagal mengubah jadwal jaga: ${error.message}`);
   }
 
-  if (updated && oldData) {
-    await createAuditLog({
-      table_name: 'jadwal_jaga',
-      record_id: id,
-      operation: 'UPDATE',
-      old_values: oldData,
-      new_values: updated,
-    });
-  }
+
 }
 
 export async function deleteJadwalJaga(id: string, supabaseClient?: SupabaseClient): Promise<void> {
   const supabase = supabaseClient ?? (await createClient());
 
-  const { data: oldData } = await supabase.from('jadwal_jaga').select('*').eq('id', id).single();
+
 
   const { error } = await supabase.from('jadwal_jaga').delete().eq('id', id);
 
@@ -123,14 +107,7 @@ export async function deleteJadwalJaga(id: string, supabaseClient?: SupabaseClie
     throw new Error(`Gagal menghapus jadwal jaga: ${error.message}`);
   }
 
-  if (oldData) {
-    await createAuditLog({
-      table_name: 'jadwal_jaga',
-      record_id: id,
-      operation: 'DELETE',
-      old_values: oldData,
-    });
-  }
+
 }
 
 export async function bulkUpsertJadwalJaga(
@@ -161,16 +138,7 @@ export async function bulkUpsertJadwalJaga(
     throw new Error(`Gagal bulk input jaga: ${error.message}`);
   }
 
-  if (created && created.length > 0) {
-    for (const item of created) {
-      await createAuditLog({
-        table_name: 'jadwal_jaga',
-        record_id: item.id,
-        operation: 'INSERT',
-        new_values: item,
-      });
-    }
-  }
+
 }
 
 export async function bulkDeleteJadwalJaga(
@@ -207,14 +175,7 @@ export async function bulkDeleteJadwalJaga(
     throw new Error(`Gagal bulk delete: ${error.message}`);
   }
 
-  for (const item of toDelete) {
-    await createAuditLog({
-      table_name: 'jadwal_jaga',
-      record_id: item.id,
-      operation: 'DELETE',
-      old_values: item,
-    });
-  }
+
 }
 
 export async function getRekapJagaAggregated(term: string, supabaseClient?: SupabaseClient) {

@@ -44,7 +44,7 @@ export function GroupColorModal({ isOpen, onClose, mataKuliahList }: GroupColorM
   const uniqueGroups = useMemo(
     () =>
       Array.from(
-        new Set(mataKuliahList.map((mk) => mk.praktikum?.nama).filter(Boolean) as string[])
+        new Set(mataKuliahList.flatMap((mk) => mk.praktikum?.nama ? [mk.praktikum.nama] : []) as string[])
       ).sort(),
     [mataKuliahList]
   );
@@ -79,9 +79,11 @@ export function GroupColorModal({ isOpen, onClose, mataKuliahList }: GroupColorM
     setLoading(true);
     try {
       // Build global updates
-      const updates = uniqueGroups
-        .filter((name) => colors[name] !== initialColors[name])
-        .map((name) => ({ nama: name, warna: colors[name] }));
+      const updates = uniqueGroups.flatMap((name) =>
+        colors[name] !== initialColors[name]
+          ? [{ nama: name, warna: colors[name] }]
+          : []
+      );
 
       const res = await fetch('/api/mata-kuliah', {
         method: 'PUT',
@@ -170,6 +172,7 @@ export function GroupColorModal({ isOpen, onClose, mataKuliahList }: GroupColorM
                         <div className="flex items-center gap-1.5 sm:gap-2 bg-background border px-2 py-1 rounded-md">
                           <input
                             type="color"
+                            aria-label="Pilih warna custom"
                             value={currentColor}
                             onChange={(e) => handleColorChange(groupName, e.target.value)}
                             className="w-4 h-4 p-0 border-0 cursor-pointer bg-transparent"
@@ -188,6 +191,7 @@ export function GroupColorModal({ isOpen, onClose, mataKuliahList }: GroupColorM
                           <button
                             key={color}
                             type="button"
+                            aria-label={`Pilih warna ${color}`}
                             onClick={() => handleColorChange(groupName, color)}
                             className={cn(
                               'relative aspect-square rounded-sm border transition-all hover:scale-105',

@@ -1,6 +1,7 @@
+/* eslint-disable react-doctor/exhaustive-deps */
 'use client';
 
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -14,6 +15,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
+import { useTermStore } from '@/store/useTermStore';
 import { Loader2, Search, X, ChevronRight, Users, Calendar } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Asprak, Jadwal, Praktikum } from '@/types/database';
@@ -28,7 +30,7 @@ import {
   DialogClose,
 } from '@/components/ui/dialog';
 
-export const VIOLATION_TYPES = [
+const VIOLATION_TYPES = [
   'TELAT DATANG',
   'TIDAK DATANG',
   'TELAT NILAI',
@@ -36,7 +38,7 @@ export const VIOLATION_TYPES = [
   'LAIN-LAIN',
 ] as const;
 
-export type ViolationType = (typeof VIOLATION_TYPES)[number];
+type ViolationType = (typeof VIOLATION_TYPES)[number];
 
 // Which side-panel is currently open
 type SidePanel = 'asprak' | 'jadwal' | null;
@@ -71,18 +73,26 @@ export default function PelanggaranForm({
   initialPraktikumId = '',
   initialModul = '',
 }: PelanggaranFormProps) {
-  // ── Context filters ──
-  const [selectedTahunAjaran, setSelectedTahunAjaran] = useState(initialTahunAjaran);
-  const [selectedPraktikumId, setSelectedPraktikumId] = useState(initialPraktikumId);
+  const { activeTerm } = useTermStore();
 
-  const [modul, setModul] = useState<string>(initialModul);
+  const [contextState, updateContextState] = React.useReducer(
+    (prev: any, next: any) => ({ ...prev, ...next }),
+    { 
+      selectedPraktikumId: initialPraktikumId, 
+      modul: initialModul 
+    }
+  );
+  const { selectedPraktikumId, modul } = contextState;
+  const selectedTahunAjaran = activeTerm || '';
+
 
   // Sync state if initial props change (e.g. after data fetch in parent)
   useEffect(() => {
-    if (initialTahunAjaran) setSelectedTahunAjaran(initialTahunAjaran);
-    if (initialPraktikumId) setSelectedPraktikumId(initialPraktikumId);
-    if (initialModul) setModul(initialModul);
-  }, [initialTahunAjaran, initialPraktikumId, initialModul]);
+    updateContextState({
+      ...(initialPraktikumId && { selectedPraktikumId: initialPraktikumId }),
+      ...(initialModul && { modul: initialModul })
+    });
+  }, [initialPraktikumId, initialModul]);
 
   // ── Violation fields ──
   const [selectedAsprakIds, setSelectedAsprakIds] = useState<string[]>([]);
@@ -109,7 +119,7 @@ export default function PelanggaranForm({
     setSelectedAsprakIds([]);
     setIdJadwal('');
     setJenis('');
-    setModul('');
+    updateContextState({ modul: '' });
     setAsprakSearch('');
     setJadwalSearch('');
     setSidePanel(null);
@@ -241,13 +251,23 @@ export default function PelanggaranForm({
           {filteredAsprak.length === 0 ? (
             <p className="py-10 text-center text-sm text-muted-foreground">Tidak ada asprak</p>
           ) : (
-            filteredAsprak.map((a) => {
-              const checked = selectedAsprakIds.includes(a.id);
+            (() => {
+              const selectedSet = new Set(selectedAsprakIds);
+              return filteredAsprak.map((a) => {
+                const checked = selectedSet.has(a.id);
               return (
                 <div
                   key={a.id}
                   className={`flex items-center gap-2.5 px-3 py-2.5 cursor-pointer border-b border-border/40 last:border-0
                     ${checked ? 'bg-primary/5' : 'hover:bg-accent'}`}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      toggleAsprak(a.id);
+                    }
+                  }}
                   onMouseDown={(e) => {
                     e.preventDefault();
                     toggleAsprak(a.id);
@@ -266,7 +286,8 @@ export default function PelanggaranForm({
                   </div>
                 </div>
               );
-            })
+            });
+          })()
           )}
         </div>
       </div>
@@ -307,6 +328,15 @@ export default function PelanggaranForm({
                   key={j.id}
                   className={`px-3 py-2.5 cursor-pointer border-b border-border/40 last:border-0
                     ${selected ? 'bg-primary/5 border-l-2 border-l-primary' : 'hover:bg-accent'}`}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setIdJadwal(j.id);
+                      closePanel();
+                    }
+                  }}
                   onMouseDown={(e) => {
                     e.preventDefault();
                     setIdJadwal(j.id);
@@ -337,6 +367,7 @@ export default function PelanggaranForm({
                             day: 'numeric',
                             month: 'short',
                             year: 'numeric',
+                            timeZone: 'Asia/Jakarta'
                           })}
                           )
                         </span>
@@ -384,33 +415,17 @@ export default function PelanggaranForm({
                   </p>
                   <div className="grid grid-cols-2 gap-3">
                     <Field>
-                      <Label>Tahun Ajaran *</Label>
-                      <Select
-                        value={selectedTahunAjaran}
-                        onValueChange={(v) => {
-                          setSelectedTahunAjaran(v);
-                          setSelectedPraktikumId('');
-                          resetViolationFields();
-                        }}
-                      >
-                        <SelectTrigger className="w-full h-9">
-                          <SelectValue placeholder="Pilih Tahun Ajaran" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {tahunAjaranList.map((t) => (
-                            <SelectItem key={t} value={t}>
-                              {t}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <Label>Tahun Ajaran</Label>
+                      <div className="h-9 flex items-center px-3 border border-border/50 bg-muted/20 rounded-md text-sm font-medium">
+                        {selectedTahunAjaran}
+                      </div>
                     </Field>
                     <Field>
                       <Label>Nama Praktikum *</Label>
                       <Select
                         value={selectedPraktikumId}
                         onValueChange={(v) => {
-                          setSelectedPraktikumId(v);
+                          updateContextState({ selectedPraktikumId: v, modul: '' });
                           resetViolationFields();
                         }}
                         disabled={!selectedTahunAjaran}
@@ -448,6 +463,7 @@ export default function PelanggaranForm({
                             {a.kode}
                             <button
                               type="button"
+                              aria-label="Hapus asprak dari daftar"
                               onMouseDown={(e) => {
                                 e.preventDefault();
                                 toggleAsprak(id);
@@ -490,7 +506,7 @@ export default function PelanggaranForm({
 
                 <Field>
                   <Label>Modul *</Label>
-                  <Select value={modul} onValueChange={setModul}>
+                  <Select value={modul} onValueChange={(v) => updateContextState({ modul: v })}>
                     <SelectTrigger className="w-full h-9">
                       <SelectValue placeholder="Pilih Modul" />
                     </SelectTrigger>

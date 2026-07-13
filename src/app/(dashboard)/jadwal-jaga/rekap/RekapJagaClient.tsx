@@ -1,20 +1,15 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useRekapJaga } from '@/hooks/useJaga';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Shield } from 'lucide-react';
+import { useTermStore } from '@/store/useTermStore';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 
 export default function RekapJagaClient({ initialTerms }: { initialTerms: string[] }) {
-  const [selectedTerm, setSelectedTerm] = useState(initialTerms[0] || '');
+  const { activeTerm } = useTermStore();
+  const selectedTerm = activeTerm || '';
   const { rekapAslab, rekapAsprak, loading } = useRekapJaga(selectedTerm);
 
   const renderTable = (data: any[], emptyMsg: string) => {
@@ -100,18 +95,7 @@ export default function RekapJagaClient({ initialTerms }: { initialTerms: string
           </p>
         </div>
 
-        <Select value={selectedTerm} onValueChange={setSelectedTerm}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Pilih Term" />
-          </SelectTrigger>
-          <SelectContent>
-            {initialTerms.map((term) => (
-              <SelectItem key={term} value={term}>
-                {term}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+
       </div>
 
       <Card className="border-border/50 shadow-sm">

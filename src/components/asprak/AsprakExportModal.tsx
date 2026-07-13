@@ -11,8 +11,10 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 
-import TermInput, { buildTermString } from './TermInput';
+import TermInput from './TermInput';
+import { buildTermString } from '@/utils/termHelpers';
 import { fetchPlottingData } from '@/lib/fetchers/asprakFetcher';
+import { useTermStore } from '@/store/useTermStore';
 
 interface AsprakExportModalProps {
   onClose: () => void;
@@ -20,9 +22,13 @@ interface AsprakExportModalProps {
 }
 
 export default function AsprakExportModal({ onClose, open }: AsprakExportModalProps) {
+  const { activeTerm } = useTermStore();
+  const initialYear = activeTerm ? activeTerm.substring(0, 2) : '25';
+  const initialSem = activeTerm && activeTerm.endsWith('2') ? '2' : '1';
+
   const [isAllTerms, setIsAllTerms] = useState(true);
-  const [termYear, setTermYear] = useState('25');
-  const [termSem, setTermSem] = useState<'1' | '2'>('2');
+  const [termYear, setTermYear] = useState(initialYear);
+  const [termSem, setTermSem] = useState<'1' | '2'>(initialSem as '1' | '2');
   const [exporting, setExporting] = useState<false | 'csv' | 'xlsx'>(false);
 
   const term = useMemo(() => buildTermString(termYear, termSem), [termYear, termSem]);

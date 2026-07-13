@@ -10,13 +10,8 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+
+
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
@@ -36,14 +31,43 @@ interface PlottingImportModalProps {
   terms: string[];
 }
 
+const handleDownloadTemplate = async (format: 'csv' | 'xlsx') => {
+  const data = [
+    { kode_asprak: 'ARS', mk_singkat: 'PBO' },
+    { kode_asprak: 'ZZA', mk_singkat: 'STRUKDAT' },
+  ];
+
+  if (format === 'csv') {
+    const csv = Papa.unparse(data);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'template_plotting.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  } else {
+    // Load xlsx lazily — only when user requests XLSX template
+    const XLSX = await import('xlsx');
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Template');
+    XLSX.writeFile(wb, 'template_plotting.xlsx');
+  }
+};
+
+import { useTermStore } from '@/store/useTermStore';
+
 export default function PlottingImportModal({
   open,
   onOpenChange,
   onSuccess,
   terms,
 }: PlottingImportModalProps) {
+  const { activeTerm } = useTermStore();
   const [step, setStep] = useState<'upload' | 'preview'>('upload');
-  const [selectedTerm, setSelectedTerm] = useState<string>('');
+  const selectedTerm = activeTerm || '';
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -58,12 +82,14 @@ export default function PlottingImportModal({
       header: true,
       skipEmptyLines: true,
       complete: async (results: any) => {
-        const rawRows = results.data
-          .map((row: any) => ({
-            kode_asprak: row.kode_asprak || '',
-            mk_singkat: row.mk_singkat || '',
-          }))
-          .filter((r: any) => r.kode_asprak && r.mk_singkat);
+        const rawRows = results.data.reduce((acc: any[], row: any) => {
+          const kode_asprak = row.kode_asprak || '';
+          const mk_singkat = row.mk_singkat || '';
+          if (kode_asprak && mk_singkat) {
+            acc.push({ kode_asprak, mk_singkat });
+          }
+          return acc;
+        }, []);
 
         if (rawRows.length === 0) {
           setError('CSV empty or missing columns (kode_asprak, mk_singkat)');
@@ -98,31 +124,7 @@ export default function PlottingImportModal({
     onDrop: (files) => files[0] && processCSV(files[0]),
   });
 
-  const handleDownloadTemplate = async (format: 'csv' | 'xlsx') => {
-    const data = [
-      { kode_asprak: 'ARS', mk_singkat: 'PBO' },
-      { kode_asprak: 'ZZA', mk_singkat: 'STRUKDAT' },
-    ];
 
-    if (format === 'csv') {
-      const csv = Papa.unparse(data);
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', 'template_plotting.csv');
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } else {
-      // Load xlsx lazily — only when user requests XLSX template
-      const XLSX = await import('xlsx');
-      const ws = XLSX.utils.json_to_sheet(data);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, 'Template');
-      XLSX.writeFile(wb, 'template_plotting.xlsx');
-    }
-  };
 
   const handleResolve = (index: number, candidateId: string) => {
     setPreviewRows((prev) => handlePlottingResolve(index, candidateId, prev));
@@ -201,20 +203,8 @@ export default function PlottingImportModal({
               <div className="space-y-6">
                 <div className="space-y-2">
                   <Label>Tahun Ajaran Penugasan</Label>
-                  <Select value={selectedTerm} onValueChange={setSelectedTerm}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Pilih Term" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {terms.map((t) => (
-                        <SelectItem key={t} value={t}>
-                          {t}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground">
-                    Isi term terlebih dahulu sebelum upload CSV.
+                  <p className="text-sm font-medium border border-border/50 bg-muted/20 px-3 py-2 rounded-md">
+                    Term: <span className="font-bold">{selectedTerm}</span>
                   </p>
                 </div>
 

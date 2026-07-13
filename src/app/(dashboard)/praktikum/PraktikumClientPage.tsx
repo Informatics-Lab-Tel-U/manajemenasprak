@@ -1,3 +1,4 @@
+/* eslint-disable react-doctor/exhaustive-deps */
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
@@ -5,7 +6,7 @@ import { Plus, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { usePraktikum } from '@/hooks/usePraktikum';
-import { useAsprak } from '@/hooks/useAsprak';
+import { useTermStore } from '@/store/useTermStore';
 import { Button } from '@/components/ui/button';
 import AsprakFilters from '@/components/asprak/AsprakFilters';
 import PraktikumList from '@/components/praktikum/PraktikumList';
@@ -23,14 +24,8 @@ export default function PraktikumClientPage({
   initialPraktikumList,
   initialTerms,
 }: PraktikumClientPageProps) {
-  const {
-    terms,
-    selectedTerm,
-    setSelectedTerm,
-    loading: asprakLoading,
-  } = useAsprak(initialTerms[0], true, {
-    terms: initialTerms,
-  });
+  const { activeTerm } = useTermStore();
+  const selectedTerm = activeTerm || '';
 
   const { getPraktikumByTerm, bulkImport, getOrCreate } = usePraktikum();
 
@@ -112,7 +107,7 @@ export default function PraktikumClientPage({
     return data.some((p) => p.nama === nama);
   };
 
-  const isLoading = loadingList || asprakLoading;
+  const isLoading = loadingList;
 
   return (
     <div className="container relative space-y-8">
@@ -148,11 +143,7 @@ export default function PraktikumClientPage({
         <AsprakFilters
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
-          terms={terms}
-          selectedTerm={selectedTerm}
-          onTermChange={setSelectedTerm}
           hideSearch={true}
-          hideAllOption={true}
         />
 
         <div className="mt-6">

@@ -100,30 +100,23 @@ export async function clearAllData(supabaseClient?: SupabaseClient) {
   const supabase = supabaseClient ?? createAdminClient();
   logger.info('Clearing all database data...');
 
-  const tables = [
-    'audit_log',
-    'pelanggaran',
-    'jadwal_pengganti',
-    'asprak_praktikum',
-    'asprak_koordinator',
-    'jadwal_pengganti',
-    'jadwal',
-    'mata_kuliah',
-    'asprak',
-    'praktikum',
-  ];
-
-  for (const table of tables) {
+  const clearTable = async (table: string) => {
     const { error } = await supabase
       .from(table)
       .delete()
       .neq('id', '00000000-0000-0000-0000-000000000000');
+    if (error) throw new Error(`Failed to clear ${table}: ${error.message}`);
+  };
 
-    if (error) {
-      logger.error(`Failed to clear ${table}:`, error);
-      throw new Error(`Failed to clear ${table}: ${error.message}`);
-    }
-  }
+  await clearTable('audit_log');
+  await clearTable('pelanggaran');
+  await clearTable('jadwal_pengganti');
+  await clearTable('asprak_praktikum');
+  await clearTable('asprak_koordinator');
+  await clearTable('jadwal');
+  await clearTable('mata_kuliah');
+  await clearTable('asprak');
+  await clearTable('praktikum');
 
   logger.info('Database cleared successfully');
 }

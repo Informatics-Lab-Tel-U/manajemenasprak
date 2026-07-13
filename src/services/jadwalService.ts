@@ -199,8 +199,8 @@ export async function bulkCreateJadwal(
   inputs: CreateJadwalInput[],
   supabaseClient?: SupabaseClient
 ): Promise<{ inserted: number; errors: string[] }> {
-  const supabase = supabaseClient ?? (await createClient());
   if (inputs.length === 0) return { inserted: 0, errors: [] };
+  const supabase = supabaseClient ?? (await createClient());
 
   const { data, error } = await supabase.from('jadwal').insert(inputs).select();
 
@@ -268,8 +268,8 @@ export async function deleteJadwalByIds(
   ids: string[],
   supabaseClient?: SupabaseClient
 ): Promise<void> {
-  const supabase = supabaseClient ?? (await createClient());
   if (ids.length === 0) return;
+  const supabase = supabaseClient ?? (await createClient());
   const { error } = await supabase.from('jadwal').delete().in('id', ids);
   if (error) {
     logger.error('Error deleting jadwal:', error);
@@ -349,8 +349,8 @@ export async function getJadwalPengganti(
   modul: number,
   supabaseClient?: SupabaseClient
 ): Promise<JadwalPengganti[]> {
-  const supabase = supabaseClient ?? (await createClient());
   if (modul <= 0) return [];
+  const supabase = supabaseClient ?? (await createClient());
 
   const { data, error } = await supabase.from('jadwal_pengganti').select('*').eq('modul', modul);
 

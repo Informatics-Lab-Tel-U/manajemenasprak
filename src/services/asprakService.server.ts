@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/server';
 import { Asprak } from '@/types/database';
 import type { Role } from '@/config/rbac';
 import { logger } from '@/lib/logger';
-import { checkCodeConflict, generateConflictErrorMessage } from '@/utils/conflict';
+import { checkCodeConflict, generateConflictErrorMessage, generateExpiredCode } from '@/utils/conflict';
 import { generateAsprakCode } from '@/utils/asprakCodeGenerator';
 import { getCachedAvailableTerms as getCachedTerms } from './termService';
 
@@ -190,7 +190,7 @@ export async function getExistingCodes(supabaseClient?: SupabaseClient): Promise
   const supabase = supabaseClient ?? (await createClient());
   const { data } = await supabase.from('asprak').select('kode');
   if (!data) return [];
-  return Array.from(new Set(data.map((d) => d.kode as string))).sort((a, b) => a.localeCompare(b));
+  return Array.from(new Set<string>(data.map((d) => d.kode as string))).sort((a, b) => a.localeCompare(b));
 }
 
 export const getCachedAvailableTerms = getCachedTerms;
@@ -280,23 +280,35 @@ async function handleCodeConflictAndExpire(
 
   if (!codeOwners || codeOwners.length === 0) return;
 
-  for (const owner of codeOwners) {
-    const conflictCheck = checkCodeConflict(owner, nim);
-    if (!conflictCheck.hasConflict) continue;
+  await Promise.all(
+    codeOwners.map(async (owner: any) => {
+      const conflictCheck = checkCodeConflict(owner, nim);
+      if (!conflictCheck.hasConflict) return;
 
-    const currentYear = new Date().getFullYear();
-    const gap = currentYear - (owner.angkatan || 0);
+      const currentYear = new Date().getFullYear();
+      const gap = currentYear - (owner.angkatan || 0);
 
-    if (gap < 1) {
-      throw new Error(
-        `KODE KERAS: Kode '${newCode}' sedang aktif digunakan oleh ${owner.nama_lengkap}.`
-      );
-    }
+      if (gap < 1) {
+        throw new Error(
+          `KODE KERAS: Kode '${newCode}' sedang aktif digunakan oleh ${owner.nama_lengkap}.`
+        );
+      }
 
-    if (!forceOverride) {
-      throw new Error(generateConflictErrorMessage(newCode, owner));
-    }
-  }
+      if (!forceOverride) {
+        throw new Error(generateConflictErrorMessage(newCode, owner));
+      }
+
+      const expiredCode = generateExpiredCode(newCode, owner.id);
+      const { error: updateError } = await supabase
+        .from('asprak')
+        .update({ kode: expiredCode })
+        .eq('id', owner.id);
+
+      if (updateError) {
+        throw new Error(`Gagal update kode untuk ${owner.nama_lengkap}: ${updateError.message}`);
+      }
+    })
+  );
 }
 
 async function upsertOrInsertAsprak(
@@ -345,24 +357,52 @@ async function linkAssignments(
   assignments: UpsertAsprakInput['assignments'],
   supabase: SupabaseClient
 ): Promise<void> {
-  for (const assignment of assignments) {
-    for (const mkName of assignment.praktikumNames) {
-      const praktikumId = await getOrCreatePraktikum(mkName, assignment.term, supabase);
-
-      const { data: linkExist } = await supabase
-        .from('asprak_praktikum')
-        .select('id')
-        .eq('id_asprak', asprakId)
-        .eq('id_praktikum', praktikumId)
-        .maybeSingle();
-
-      if (!linkExist) {
-        await supabase.from('asprak_praktikum').insert({
-          id_asprak: asprakId,
-          id_praktikum: praktikumId,
-        });
-      }
+  // First, extract all unique terms and praktikumNames
+  const neededPraktikums: { name: string; term: string }[] = [];
+  for (const assign of assignments) {
+    for (const name of assign.praktikumNames) {
+      neededPraktikums.push({ name, term: assign.term });
     }
+  }
+
+  if (neededPraktikums.length === 0) return;
+
+  const uniqueNeeded = Array.from(new Set(neededPraktikums.map((p) => `${p.name}::${p.term}`))).map((key) => {
+    const parts = key.split('::');
+    return { name: parts[0], term: parts[1] };
+  });
+
+  // Resolve all praktikum IDs
+  const praktikumIds = await Promise.all(
+    uniqueNeeded.map((p) => getOrCreatePraktikum(p.name, p.term, supabase))
+  );
+
+  // Remove duplicates
+  const uniquePraktikumIds = Array.from(new Set(praktikumIds));
+
+  if (uniquePraktikumIds.length === 0) return;
+
+  // Now, fetch existing links
+  const { data: existingLinks } = await supabase
+    .from('asprak_praktikum')
+    .select('id_praktikum')
+    .eq('id_asprak', asprakId)
+    .in('id_praktikum', uniquePraktikumIds);
+
+  const existingSet = new Set(existingLinks?.map((l) => l.id_praktikum) || []);
+
+  const newLinks = uniquePraktikumIds.reduce<{ id_asprak: string; id_praktikum: string }[]>(
+    (acc, pid) => {
+      if (!existingSet.has(pid)) {
+        acc.push({ id_asprak: asprakId, id_praktikum: pid });
+      }
+      return acc;
+    },
+    []
+  );
+
+  if (newLinks.length > 0) {
+    await supabase.from('asprak_praktikum').insert(newLinks);
   }
 }
 
@@ -530,7 +570,7 @@ async function calculateAssignmentChanges(
   }
 
   const newSet = new Set(newPraktikumIds);
-  const toDelete = existingInScope.filter((a) => !newSet.has(a.id_praktikum)).map((a) => a.id);
+  const toDelete = existingInScope.flatMap((a) => !newSet.has(a.id_praktikum) ? [a.id] : []);
 
   const existingAllPids = new Set((existingAll || []).map((a) => a.id_praktikum));
   const toInsert = newPraktikumIds.filter((pid) => !existingAllPids.has(pid));

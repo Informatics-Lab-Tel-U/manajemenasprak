@@ -1,7 +1,8 @@
 'use client';
 
 import * as React from 'react';
-import * as RechartsPrimitive from 'recharts';
+// eslint-disable-next-line react-doctor/prefer-dynamic-import
+import { ResponsiveContainer, Tooltip, Legend } from 'recharts';
 
 import { cn } from '@/lib/utils';
 
@@ -42,13 +43,15 @@ function ChartContainer({
   ...props
 }: React.ComponentProps<'div'> & {
   config: ChartConfig;
-  children: React.ComponentProps<typeof RechartsPrimitive.ResponsiveContainer>['children'];
+  children: React.ReactNode;
 }) {
   const uniqueId = React.useId();
   const chartId = `chart-${id || uniqueId.replace(/:/g, '')}`;
 
+  const contextValue = React.useMemo(() => ({ config }), [config]);
+
   return (
-    <ChartContext.Provider value={{ config }}>
+    <ChartContext.Provider value={contextValue}>
       <div
         data-slot="chart"
         data-chart={chartId}
@@ -59,7 +62,7 @@ function ChartContainer({
         {...props}
       >
         <ChartStyle id={chartId} config={config} />
-        <RechartsPrimitive.ResponsiveContainer>{children}</RechartsPrimitive.ResponsiveContainer>
+        <ResponsiveContainer>{children as any}</ResponsiveContainer>
       </div>
     </ChartContext.Provider>
   );
@@ -94,7 +97,7 @@ ${colorConfig
   );
 };
 
-const ChartTooltip = RechartsPrimitive.Tooltip;
+const ChartTooltip = Tooltip;
 
 function ChartTooltipContent({
   active,
@@ -110,8 +113,7 @@ function ChartTooltipContent({
   color,
   nameKey,
   labelKey,
-}: React.ComponentProps<typeof RechartsPrimitive.Tooltip> &
-  React.ComponentProps<'div'> & {
+}: any & {
     hideLabel?: boolean;
     hideIndicator?: boolean;
     indicator?: 'line' | 'dot' | 'dashed';
@@ -120,8 +122,12 @@ function ChartTooltipContent({
   }) {
   const { config } = useChart();
 
-  const tooltipLabel = React.useMemo(() => {
-    if (hideLabel || !payload?.length) {
+  if (!active || !payload?.length) {
+    return null;
+  }
+
+  const tooltipLabel = (() => {
+    if (hideLabel) {
       return null;
     }
 
@@ -144,11 +150,8 @@ function ChartTooltipContent({
     }
 
     return <div className={cn('font-medium', labelClassName)}>{value}</div>;
-  }, [label, labelFormatter, payload, hideLabel, labelClassName, config, labelKey]);
+  })();
 
-  if (!active || !payload?.length) {
-    return null;
-  }
 
   const nestLabel = payload.length === 1 && indicator !== 'dot';
 
@@ -161,14 +164,13 @@ function ChartTooltipContent({
     >
       {!nestLabel ? tooltipLabel : null}
       <div className="grid gap-1.5">
-        {payload
-          .filter((item) => item.type !== 'none')
-          .map((item, index) => {
+        {payload.flatMap((item: any, index: number) => {
+            if (item.type === 'none') return [];
             const key = `${nameKey || item.name || item.dataKey || 'value'}`;
             const itemConfig = getPayloadConfigFromPayload(config, item, key);
             const indicatorColor = color || item.payload.fill || item.color;
 
-            return (
+            return [
               <div
                 key={item.dataKey}
                 className={cn(
@@ -225,14 +227,14 @@ function ChartTooltipContent({
                   </>
                 )}
               </div>
-            );
+            ];
           })}
       </div>
     </div>
   );
 }
 
-const ChartLegend = RechartsPrimitive.Legend;
+const ChartLegend = Legend;
 
 function ChartLegendContent({
   className,
@@ -240,8 +242,9 @@ function ChartLegendContent({
   payload,
   verticalAlign = 'bottom',
   nameKey,
-}: React.ComponentProps<'div'> &
-  Pick<RechartsPrimitive.LegendProps, 'payload' | 'verticalAlign'> & {
+}: React.ComponentProps<'div'> & {
+    payload?: any[];
+    verticalAlign?: any;
     hideIcon?: boolean;
     nameKey?: string;
   }) {
@@ -259,13 +262,12 @@ function ChartLegendContent({
         className
       )}
     >
-      {payload
-        .filter((item) => item.type !== 'none')
-        .map((item) => {
+      {payload.flatMap((item) => {
+          if (item.type === 'none') return [];
           const key = `${nameKey || item.dataKey || 'value'}`;
           const itemConfig = getPayloadConfigFromPayload(config, item, key);
 
-          return (
+          return [
             <div
               key={item.value}
               className={cn(
@@ -284,7 +286,7 @@ function ChartLegendContent({
               )}
               {itemConfig?.label}
             </div>
-          );
+          ];
         })}
     </div>
   );

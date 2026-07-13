@@ -1,5 +1,6 @@
 'use client';
 
+// eslint-disable-next-line react-doctor/prefer-dynamic-import
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
@@ -19,6 +20,20 @@ import React, { useMemo } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useJaga } from '@/hooks/useJaga';
 import { getJagaShiftsByDay } from '@/utils/jagaUtils';
+
+const chartConfigAsprak = {
+  count: {
+    label: 'Jumlah Asprak',
+    color: 'var(--primary)',
+  },
+} satisfies ChartConfig;
+
+const chartConfigJadwal = {
+  count: {
+    label: 'Total Kelas',
+    color: 'var(--primary)',
+  },
+} satisfies ChartConfig;
 
 export default function DashboardCharts({
   asprakByAngkatan,
@@ -46,19 +61,6 @@ export default function DashboardCharts({
     (a, b) => dayOrder.indexOf(a.name) - dayOrder.indexOf(b.name)
   );
 
-  const chartConfigAsprak = {
-    count: {
-      label: 'Jumlah Asprak',
-      color: 'var(--primary)',
-    },
-  } satisfies ChartConfig;
-
-  const chartConfigJadwal = {
-    count: {
-      label: 'Total Kelas',
-      color: 'var(--primary)',
-    },
-  } satisfies ChartConfig;
 
   // Schedule Matrix Logic
   const todayDate = new Date();
@@ -112,7 +114,7 @@ export default function DashboardCharts({
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle>
-              Jadwal Hari Ini ({todayDate.toLocaleDateString('id-ID', { weekday: 'long' })})
+              Jadwal Hari Ini ({todayDate.toLocaleDateString('id-ID', { weekday: 'long', timeZone: 'Asia/Jakarta' })})
             </CardTitle>
             <CardDescription>
               Visualisasi jadwal praktikum yang berlangsung hari ini
@@ -120,6 +122,7 @@ export default function DashboardCharts({
           </div>
           <div className="bg-muted/50 p-1 rounded-lg flex items-center gap-1 border border-border/50">
             <button
+              type="button"
               onClick={() => setProgramType('REGULER')}
               className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${
                 programType === 'REGULER'
@@ -130,6 +133,7 @@ export default function DashboardCharts({
               Reguler
             </button>
             <button
+              type="button"
               onClick={() => setProgramType('PJJ')}
               className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${
                 programType === 'PJJ'

@@ -107,7 +107,7 @@ export default function PraktikumCSVPreview({
                 const isDisabled = row.status === 'error' || row.status === 'skipped';
                 return (
                   <tr
-                    key={idx}
+                    key={`${row.nama}-${row.tahun_ajaran}`}
                     className={`
                     border-b border-border/50 transition-colors
                     ${row.status === 'error' ? 'bg-red-500/5' : ''}

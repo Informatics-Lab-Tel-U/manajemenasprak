@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Jadwal, MataKuliah } from '@/types/database';
 import type { CreateJadwalInput, UpdateJadwalInput } from '@/services/jadwalService';
 import { DAYS, ROOMS, STATIC_SESSIONS } from '@/constants';
@@ -26,6 +26,7 @@ import { Label } from '@/components/ui/label';
 import { Loader2 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
+import { useTermStore } from '@/store/useTermStore';
 
 interface JadwalModalProps {
   isOpen: boolean;
@@ -60,23 +61,24 @@ export function JadwalModal({
     dosen: '',
   });
 
-  const [selectedTerm, setSelectedTerm] = useState<string>('');
-  const [selectedPraktikum, setSelectedPraktikum] = useState<string>('');
-  const [isPJJ, setIsPJJ] = useState<boolean>(false);
-  const [isCustomJam, setIsCustomJam] = useState<boolean>(false);
+  const { activeTerm } = useTermStore();
 
-  // Extract unique terms
-  const availableTerms = Array.from(
-    new Set(mataKuliahList.map((mk) => mk.praktikum?.tahun_ajaran).filter(Boolean))
-  ) as string[];
+  const [uiState, updateUiState] = React.useReducer(
+    (prev: any, next: any) => ({ ...prev, ...next }),
+    { selectedPraktikum: '', isPJJ: false, isCustomJam: false }
+  );
+  const { selectedPraktikum, isPJJ, isCustomJam } = uiState;
+  const selectedTerm = activeTerm || '';
+
 
   // Filter available praktikum names based on the selected term
   const availablePraktikum = Array.from(
     new Set(
-      mataKuliahList
-        .filter((mk) => mk.praktikum?.tahun_ajaran === selectedTerm)
-        .map((mk) => mk.praktikum?.nama)
-        .filter(Boolean)
+      mataKuliahList.flatMap((mk) => 
+        (mk.praktikum?.tahun_ajaran === selectedTerm && mk.praktikum?.nama) 
+          ? [mk.praktikum.nama] 
+          : []
+      )
     )
   ) as string[];
 
@@ -88,6 +90,7 @@ export function JadwalModal({
   // Reset form when modal opens or initialData changes
   useEffect(() => {
     if (isOpen) {
+      setIsDetailsEditable(!initialData);
       if (initialData) {
         setFormData({
           id_mk: initialData.id_mk.toString(),
@@ -102,12 +105,12 @@ export function JadwalModal({
 
         const currentMK = mataKuliahList.find((mk) => mk.id === initialData.id_mk);
         if (currentMK?.praktikum) {
-          setSelectedTerm(currentMK.praktikum.tahun_ajaran || '');
-          setSelectedPraktikum(currentMK.praktikum.nama || '');
+          updateUiState({
+            selectedPraktikum: currentMK?.praktikum?.nama || '',
+            isPJJ: initialData.kelas.toUpperCase().includes('PJJ'),
+            isCustomJam: !initialData.sesi || initialData.sesi === 0
+          });
         }
-
-        setIsPJJ(initialData.kelas.toUpperCase().includes('PJJ'));
-        setIsCustomJam(!initialData.sesi || initialData.sesi === 0);
       } else {
         const defaultDay = 'SENIN';
         const defaultSession = STATIC_SESSIONS[defaultDay][0];
@@ -121,24 +124,24 @@ export function JadwalModal({
           total_asprak: 1,
           dosen: '',
         });
-        setSelectedTerm('');
-        setSelectedPraktikum('');
-        setIsPJJ(false);
-        setIsCustomJam(false);
+        updateUiState({
+          selectedPraktikum: '',
+          isPJJ: false,
+          isCustomJam: false
+        });
       }
     }
   }, [isOpen, initialData, mataKuliahList]);
 
-  // Handle editability state sync separately
-  useEffect(() => {
-    if (isOpen) {
-      setIsDetailsEditable(!initialData);
-    }
-  }, [isOpen, initialData]);
+
 
   const handleChange = (field: keyof CreateJadwalInput, value: any) => {
     setFormData((prev) => {
       const newData = { ...prev, [field]: value };
+      
+      if (field === 'kelas') {
+        updateUiState({ isPJJ: value.toUpperCase().includes('PJJ') });
+      }
 
       if ((field === 'hari' || field === 'sesi') && !isCustomJam) {
         const currentDay = field === 'hari' ? value : newData.hari;
@@ -222,29 +225,9 @@ export function JadwalModal({
 
           <div className="grid grid-cols-1 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="term">Tahun Ajaran</Label>
-              <Select
-                value={selectedTerm}
-                onValueChange={(val) => {
-                  setSelectedTerm(val);
-                  setSelectedPraktikum('');
-                  handleChange('id_mk', '');
-                }}
-                disabled={!isDetailsEditable}
-              >
-                <SelectTrigger className="w-full disabled:opacity-70 disabled:cursor-not-allowed">
-                  <SelectValue placeholder="Pilih Tahun Ajaran" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    {availableTerms.map((term) => (
-                      <SelectItem key={term} value={term}>
-                        {term}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
+              <p className="text-sm font-medium border border-border/50 bg-muted/20 px-3 py-2 rounded-md">
+                Tahun Ajaran: <span className="font-bold">{selectedTerm}</span>
+              </p>
             </div>
 
             <div className="space-y-2">
@@ -252,8 +235,8 @@ export function JadwalModal({
               <Select
                 value={selectedPraktikum}
                 onValueChange={(val) => {
-                  setSelectedPraktikum(val);
-                  handleChange('id_mk', '');
+                  updateUiState({ selectedPraktikum: val });
+                  setFormData((prev) => ({ ...prev, id_mk: '' }));
                 }}
                 disabled={!selectedTerm || !isDetailsEditable}
               >
@@ -313,7 +296,7 @@ export function JadwalModal({
                       checked={isPJJ}
                       onCheckedChange={(checked) => {
                         const isChecked = !!checked;
-                        setIsPJJ(isChecked);
+                        updateUiState({ isPJJ: isChecked });
                         if (isChecked) {
                           if (!formData.kelas?.endsWith('PJJ')) {
                             setFormData((prev) => ({ ...prev, kelas: (prev.kelas || '') + 'PJJ' }));
@@ -393,7 +376,7 @@ export function JadwalModal({
                       id="custom-jam"
                       checked={isCustomJam}
                       onCheckedChange={(checked) => {
-                        setIsCustomJam(checked);
+                        updateUiState({ isCustomJam: checked });
                         if (checked) {
                           setFormData((prev) => ({ ...prev, sesi: 0 }));
                         } else {

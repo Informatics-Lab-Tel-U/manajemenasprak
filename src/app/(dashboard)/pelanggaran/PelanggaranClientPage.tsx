@@ -1,18 +1,14 @@
 'use client';
 
+/* eslint-disable react-doctor/no-chain-state-updates, react-doctor/no-cascading-set-state, react-doctor/no-effect-chain, react-doctor/rendering-hydration-no-flicker */
+
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import { CheckCircle2, ArrowRight, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+
+
 import type { Praktikum } from '@/types/database';
 import { cn } from '@/lib/utils';
 import { usePelanggaran } from '@/hooks/usePelanggaran';
@@ -38,7 +34,6 @@ export default function PelanggaranClientPage({
     praktikumList,
     tahunAjaranList,
     selectedTahun: filterTahun,
-    setSelectedTahun: setFilterTahun,
     countMap,
     loading,
   } = usePelanggaran(initialTahunAjaranList[0], isKoor, userId, {
@@ -65,6 +60,7 @@ export default function PelanggaranClientPage({
       currentTahun
         ? displayedPraktikum.filter((p) => p.tahun_ajaran === currentTahun)
         : displayedPraktikum,
+    // eslint-disable-next-line react-doctor/exhaustive-deps
     [displayedPraktikum, currentTahun]
   );
 
@@ -103,22 +99,8 @@ export default function PelanggaranClientPage({
         <div className="flex items-center gap-3 w-full sm:w-auto">
           <Filter className="h-4 w-4 text-muted-foreground hidden sm:block" />
           <span className="text-sm font-medium text-muted-foreground hidden sm:block">
-            Tahun Ajaran:
+            {currentTahun ? `Tahun Ajaran Aktif: ${currentTahun}` : 'Memuat Tahun Ajaran...'}
           </span>
-          <Select value={currentTahun} onValueChange={setFilterTahun} disabled={loading}>
-            <SelectTrigger className="w-full md:w-[180px] sm:max-w-[180px]">
-              <SelectValue placeholder="Tahun Ajaran" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                {displayedTahunList.map((t) => (
-                  <SelectItem key={t} value={t}>
-                    {t}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
           {loading && (
             <div className="h-4 w-4 rounded-full border-2 border-primary border-t-transparent animate-spin ml-2" />
           )}

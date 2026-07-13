@@ -117,7 +117,7 @@ export default function JadwalCSVPreview({
                 const isDisabled = row.status === 'error';
                 return (
                   <tr
-                    key={idx}
+                    key={`${row.mkName}-${row.kelas}-${row.hari}-${row.jam}`}
                     className={cn(
                       'border-b border-border/50 transition-colors hover:bg-muted/60',
                       row.status === 'error' ? 'bg-red-500/5' : '',

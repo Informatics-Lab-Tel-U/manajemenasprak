@@ -1,7 +1,8 @@
+/* eslint-disable react-doctor/exhaustive-deps */
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useAsprak } from '@/hooks/useAsprak';
+import { useTermStore } from '@/store/useTermStore';
 import { useMataKuliah } from '@/hooks/useMataKuliah';
 import { usePraktikum } from '@/hooks/usePraktikum';
 import { Button } from '@/components/ui/button';
@@ -25,14 +26,8 @@ export default function MataKuliahClientPage({
   initialTerms,
   initialPraktikumNames,
 }: MataKuliahClientPageProps) {
-  const {
-    terms,
-    selectedTerm,
-    setSelectedTerm,
-    loading: asprakLoading,
-  } = useAsprak(initialTerms[0], true, {
-    terms: initialTerms,
-  });
+  const { activeTerm } = useTermStore();
+  const selectedTerm = activeTerm || '';
 
   const { getMataKuliahByTerm, createMataKuliah, bulkImportMataKuliah, loading } = useMataKuliah();
   const { getPraktikumByTerm } = usePraktikum({
@@ -72,7 +67,7 @@ export default function MataKuliahClientPage({
     fetchData();
   }, [selectedTerm, initialTerms, getMataKuliahByTerm, getPraktikumByTerm]);
 
-  const isLoading = loading || loadingData || asprakLoading;
+  const isLoading = loading || loadingData;
 
   const handleManualAdd = async (data: any, term: string) => {
     try {
@@ -146,9 +141,6 @@ export default function MataKuliahClientPage({
         <AsprakFilters
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
-          terms={terms}
-          selectedTerm={selectedTerm}
-          onTermChange={setSelectedTerm}
           hideSearch={false}
         />
       </div>

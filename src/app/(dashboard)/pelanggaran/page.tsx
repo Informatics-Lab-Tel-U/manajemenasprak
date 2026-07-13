@@ -7,8 +7,7 @@ import * as praktikumService from '@/services/praktikumService';
 export const dynamic = 'force-dynamic';
 
 export default async function PelanggaranPage() {
-  const supabase = await createClient();
-  const authUser = await requireAuth();
+  const [supabase, authUser] = await Promise.all([createClient(), requireAuth()]);
 
   const role = authUser.pengguna.role;
   const isKoor = role === 'ASPRAK_KOOR';

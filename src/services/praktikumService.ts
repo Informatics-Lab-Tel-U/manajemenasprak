@@ -194,8 +194,8 @@ export async function deletePraktikumByIds(
   ids: string[],
   supabaseClient?: SupabaseClient
 ): Promise<void> {
-  const supabase = supabaseClient ?? (await createClient());
   if (ids.length === 0) return;
+  const supabase = supabaseClient ?? (await createClient());
   await supabase.from('praktikum').delete().in('id', ids);
 }
 
@@ -203,8 +203,8 @@ export async function deleteMataKuliahByIds(
   ids: string[],
   supabaseClient?: SupabaseClient
 ): Promise<void> {
-  const supabase = supabaseClient ?? (await createClient());
   if (ids.length === 0) return;
+  const supabase = supabaseClient ?? (await createClient());
   await supabase.from('mata_kuliah').delete().in('id', ids);
 }
 
@@ -212,8 +212,8 @@ export async function deleteAsprakPraktikumByIds(
   ids: number[],
   supabaseClient?: SupabaseClient
 ): Promise<void> {
-  const supabase = supabaseClient ?? (await createClient());
   if (ids.length === 0) return;
+  const supabase = supabaseClient ?? (await createClient());
   await supabase.from('asprak_praktikum').delete().in('id', ids);
 }
 

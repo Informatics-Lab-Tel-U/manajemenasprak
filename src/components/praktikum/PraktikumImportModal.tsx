@@ -33,6 +33,32 @@ interface PraktikumImportModalProps {
 
 type Step = 'upload' | 'preview';
 
+const handleDownloadTemplate = async (format: 'csv' | 'xlsx') => {
+  const data = [
+    { nama_singkat: 'PBO', tahun_ajaran: '2425-2' },
+    { nama_singkat: 'JARKOM', tahun_ajaran: '2425-2' },
+  ];
+
+  if (format === 'csv') {
+    const csv = Papa.unparse(data);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'template_praktikum.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  } else {
+    // Load xlsx lazily — only when user requests XLSX template
+    const XLSX = await import('xlsx');
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Template');
+    XLSX.writeFile(wb, 'template_praktikum.xlsx');
+  }
+};
+
 export default function PraktikumImportModal({
   onImport,
   onClose,
@@ -84,31 +110,7 @@ export default function PraktikumImportModal({
     [existingPraktikums]
   );
 
-  const handleDownloadTemplate = async (format: 'csv' | 'xlsx') => {
-    const data = [
-      { nama_singkat: 'PBO', tahun_ajaran: '2425-2' },
-      { nama_singkat: 'JARKOM', tahun_ajaran: '2425-2' },
-    ];
 
-    if (format === 'csv') {
-      const csv = Papa.unparse(data);
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', 'template_praktikum.csv');
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } else {
-      // Load xlsx lazily — only when user requests XLSX template
-      const XLSX = await import('xlsx');
-      const ws = XLSX.utils.json_to_sheet(data);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, 'Template');
-      XLSX.writeFile(wb, 'template_praktikum.xlsx');
-    }
-  };
 
   const onDrop = useCallback(
     (acceptedFiles: File[]) => {

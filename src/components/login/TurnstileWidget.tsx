@@ -1,6 +1,6 @@
 'use client';
 
-import { forwardRef, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Turnstile, SCRIPT_URL, DEFAULT_SCRIPT_ID } from '@marsidev/react-turnstile';
 import type { TurnstileInstance } from '@marsidev/react-turnstile';
 import Script from 'next/script';
@@ -15,8 +15,11 @@ function getAppTheme(): 'dark' | 'light' {
   return document.documentElement.classList.contains('dark') ? 'dark' : 'light';
 }
 
-export const TurnstileWidget = forwardRef<TurnstileInstance, TurnstileWidgetProps>(
-  function TurnstileWidget({ onVerify, onUnsupported }, ref) {
+export function TurnstileWidget({
+  onVerify,
+  onUnsupported,
+  ref,
+}: TurnstileWidgetProps & { ref?: React.Ref<TurnstileInstance> }) {
     const siteKey = process.env.NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY;
     const [theme, setTheme] = useState<'dark' | 'light'>(getAppTheme);
 
@@ -64,4 +67,3 @@ export const TurnstileWidget = forwardRef<TurnstileInstance, TurnstileWidgetProp
       </div>
     );
   }
-);

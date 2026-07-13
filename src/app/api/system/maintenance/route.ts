@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireRoleApi } from '@/lib/auth';
-import * as systemService from '@/services/systemService';
+import * as systemService from '@/services/systemService.server';
 import { apiErrorResponse } from '@/lib/api-error';
 
 /**

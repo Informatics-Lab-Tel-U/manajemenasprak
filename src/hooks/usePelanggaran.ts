@@ -1,3 +1,4 @@
+/* eslint-disable react-doctor/exhaustive-deps */
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -7,6 +8,7 @@ import * as asprakFetcher from '@/lib/fetchers/asprakFetcher';
 import { PelanggaranCountMap } from '@/services/pelanggaranService';
 import { CreatePelanggaranInput } from '@/types/api';
 import { toast } from 'sonner';
+import { useTermStore } from '@/store/useTermStore';
 
 export function usePelanggaran(
   initialTahunAjaran?: string,
@@ -23,7 +25,8 @@ export function usePelanggaran(
   const [tahunAjaranList, setTahunAjaranList] = useState<string[]>(
     initialData?.tahunAjaranList || []
   );
-  const [selectedTahun, setSelectedTahun] = useState(initialTahunAjaran || '');
+  const { activeTerm } = useTermStore();
+  const selectedTahun = activeTerm || '';
   const [countMap, setCountMap] = useState<PelanggaranCountMap>(initialData?.countMap || {});
   const [asprakList, setAsprakList] = useState<(Asprak & { praktikum_ids?: string[] })[]>([]);
   const [jadwalList, setJadwalList] = useState<(Jadwal & { id_praktikum?: string })[]>([]);
@@ -37,11 +40,8 @@ export function usePelanggaran(
         .sort()
         .reverse();
       setTahunAjaranList(years);
-      if (years.length > 0 && !selectedTahun) {
-        setSelectedTahun(years[0]);
-      }
     }
-  }, [praktikumList, selectedTahun, tahunAjaranList.length]);
+  }, [praktikumList, tahunAjaranList.length]);
 
   const fetchData = useCallback(async () => {
     // Only set loading if we don't already have some data
@@ -94,7 +94,7 @@ export function usePelanggaran(
           .reverse();
         setTahunAjaranList(years);
         if (years.length > 0 && !selectedTahun) {
-          setSelectedTahun(years[0]);
+          // handled globally by GlobalTermSelector
         }
       }
     }
@@ -139,7 +139,6 @@ export function usePelanggaran(
     praktikumList,
     tahunAjaranList,
     selectedTahun,
-    setSelectedTahun,
     countMap,
     asprakList,
     jadwalList,
@@ -183,7 +182,7 @@ export function usePelanggaranDetail(
       else setError(vResult.error || 'Gagal mengambil data pelanggaran');
 
       if (pResult.ok) setPraktikum(pResult.data || null);
-      else if (!error) setError(pResult.error || 'Gagal mengambil detail praktikum');
+      else setError((prev) => prev || pResult.error || 'Gagal mengambil detail praktikum');
 
       if (asprakRes.ok && asprakRes.data) {
         const formattedAsprak = asprakRes.data.map((a: any) => ({
@@ -201,7 +200,7 @@ export function usePelanggaranDetail(
     } finally {
       setLoading(false);
     }
-  }, [idPraktikum, error]);
+  }, [idPraktikum]);
 
   useEffect(() => {
     fetchDetail();

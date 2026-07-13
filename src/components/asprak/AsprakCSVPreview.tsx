@@ -231,7 +231,7 @@ export default function AsprakCSVPreview({
 
                 return (
                   <tr
-                    key={idx}
+                    key={row.nim || row.nama_lengkap}
                     className={`
                     border-b border-border/50 transition-colors
                     ${isDuplicateDB ? 'bg-red-500/10' : ''}
@@ -315,6 +315,7 @@ export default function AsprakCSVPreview({
                     >
                       {onRoleEdit ? (
                         <select
+                          aria-label="Pilih Role"
                           className="bg-background border border-border text-xs rounded px-1 py-1 w-min min-w-[75px]"
                           value={row.role}
                           onChange={(e) => onRoleEdit(idx, e.target.value as 'ASPRAK' | 'ASLAB')}

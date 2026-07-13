@@ -38,6 +38,13 @@ interface MataKuliahCSVPreviewProps {
   onSkip?: () => void;
 }
 
+const PRODI_OPTIONS = ['IF', 'IF-PJJ', 'IT', 'IT-PJJ', 'SE', 'SE-PJJ', 'DS', 'DS-PJJ'];
+
+const isValidProdi = (prodi: string) => {
+  const base = prodi.replace('-PJJ', '');
+  return ['IF', 'IT', 'SE', 'DS'].includes(base);
+};
+
 export default function MataKuliahCSVPreview({
   rows,
   loading,
@@ -57,12 +64,6 @@ export default function MataKuliahCSVPreview({
   const allSelected = selectableRows.length > 0 && selectedCount === selectableRows.length;
   const isIndeterminate = selectedCount > 0 && selectedCount < selectableRows.length;
 
-  const isValidProdi = (prodi: string) => {
-    const base = prodi.replace('-PJJ', '');
-    return ['IF', 'IT', 'SE', 'DS'].includes(base);
-  };
-
-  const PRODI_OPTIONS = ['IF', 'IF-PJJ', 'IT', 'IT-PJJ', 'SE', 'SE-PJJ', 'DS', 'DS-PJJ'];
 
   return (
     <div className="flex flex-col h-full w-full bg-background relative">
@@ -135,7 +136,7 @@ export default function MataKuliahCSVPreview({
 
               return (
                 <tr
-                  key={idx}
+                  key={`${row.mk_singkat}-${row.nama_lengkap}`}
                   className={cn(
                     'border-b transition-colors data-[state=selected]:bg-muted',
                     row.status === 'error'

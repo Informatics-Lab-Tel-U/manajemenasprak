@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronsUpDown, LogOut } from 'lucide-react';
-import { createClient } from '@/lib/supabase/client';
+import { logout } from '@/app/actions/auth';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -35,10 +35,14 @@ export function AccountSwitcher({
 
   async function handleLogout() {
     setIsLoading(true);
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    router.push('/login');
-    router.refresh();
+    try {
+      await logout();
+      router.push('/login');
+      router.refresh();
+    } catch (err) {
+      console.error('Logout error:', err);
+      setIsLoading(false);
+    }
   }
 
   const initials = nama

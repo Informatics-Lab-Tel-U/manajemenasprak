@@ -94,9 +94,27 @@ export async function validatePlottingImport(
 ): Promise<ValidationResult> {
   const supabase = supabaseClient ?? (await createClient());
 
-  const { data: allAspraks } = await supabase
-    .from('asprak')
-    .select('id, kode, nama_lengkap, nim, angkatan');
+  const uniqueCodes = Array.from(new Set(rows.map((r) => r.kode_asprak.trim())));
+  const allAspraks: any[] = [];
+
+  const chunks = [];
+  const chunkSize = 500;
+  for (let i = 0; i < uniqueCodes.length; i += chunkSize) {
+    chunks.push(uniqueCodes.slice(i, i + chunkSize));
+  }
+
+  await Promise.all(
+    chunks.map(async (chunk) => {
+      const { data } = await supabase
+        .from('asprak')
+        .select('id, kode, nama_lengkap, nim, angkatan')
+        .in('kode', chunk);
+      
+      if (data) {
+        allAspraks.push(...data);
+      }
+    })
+  );
 
   const asprakMap = new Map<string, typeof allAspraks>();
   allAspraks?.forEach((a) => {
@@ -209,9 +227,8 @@ export async function savePlotting(
   assignments: { asprak_id: string; praktikum_id: string }[],
   supabaseClient?: SupabaseClient
 ) {
-  const supabase = supabaseClient ?? (await createClient());
-
   if (!assignments || assignments.length === 0) return;
+  const supabase = supabaseClient ?? (await createClient());
 
   const uniqueAssignments = new Map<string, { id_asprak: string; id_praktikum: string }>();
   assignments.forEach((a) => {

@@ -82,17 +82,17 @@ export default function PraktikumDetailsModal({
             ) : (
               <ScrollArea className="h-[250px] pr-4">
                 <div className="space-y-3">
-                  {details.classes.map((cls, idx) => (
-                    <div key={idx} className="border rounded-md p-3 bg-card shadow-sm">
+                  {details.classes.map((cls) => (
+                    <div key={cls.kelas} className="border rounded-md p-3 bg-card shadow-sm">
                       <div className="flex justify-between items-center mb-2">
                         <Badge variant="secondary" className="font-semibold">
                           {cls.kelas}
                         </Badge>
                       </div>
                       <div className="space-y-1.5">
-                        {cls.jadwal.map((j, jIdx) => (
+                        {cls.jadwal.map((j) => (
                           <div
-                            key={jIdx}
+                            key={`${j.hari}-${j.jam}`}
                             className="flex items-center text-sm text-muted-foreground"
                           >
                             <div className="flex items-center w-24 shrink-0">

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -59,54 +59,73 @@ export default function JagaInputModal({
 
   const [selectedAsprakId, setSelectedAsprakId] = useState(editData?.id_asprak || '');
   const [selectedHari, setSelectedHari] = useState(editData?.hari || defaultDay);
-  const [selectedShift, setSelectedShift] = useState(editData?.shift.toString() || '');
+  const [selectedShift, setSelectedShift] = useState(() => editData?.shift?.toString() || '');
 
   const [applyToAllModuls, setApplyToAllModuls] = useState(false);
 
   const [openAsprak, setOpenAsprak] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
+  const filteredAsprakList = React.useMemo(() => {
+    const q = searchQuery.toLowerCase();
+    return asprakList.filter((a) =>
+      `${a.kode} ${a.nama_lengkap}`.toLowerCase().includes(q)
+    );
+  }, [asprakList, searchQuery]);
+
   const [canInput, setCanInput] = useState(true);
-
-  const loadDependencies = React.useCallback(async () => {
-    setLoading(true);
-
-    const allowed = canInputJagaForModul(selectedModul, konfigurasiModul, userRole);
-    setCanInput(allowed);
-
-    const { data } = await fetchAllAsprak(term);
-    if (data) {
-      const sorted = [...data].sort((a, b) => {
-        if (a.role === 'ASLAB' && b.role !== 'ASLAB') return -1;
-        if (a.role !== 'ASLAB' && b.role === 'ASLAB') return 1;
-        return a.kode.localeCompare(b.kode);
-      });
-      setAsprakList(sorted);
-    }
-
-    setLoading(false);
-  }, [selectedModul, konfigurasiModul, userRole, term]);
+  
+  const hasLoadedRef = useRef(false);
 
   useEffect(() => {
-    if (isOpen) {
-      loadDependencies();
+    if (!isOpen) {
+      hasLoadedRef.current = false;
+      return;
     }
-  }, [isOpen, loadDependencies]);
 
-  useEffect(() => {
-    if (isOpen) {
-      if (editData) {
-        setSelectedAsprakId(editData.id_asprak || '');
-        setSelectedHari(editData.hari || defaultDay);
-        setSelectedShift(editData.shift?.toString() || '');
-      } else {
-        setSelectedAsprakId('');
-        setSelectedHari(defaultDay);
-        setSelectedShift('');
+    if (hasLoadedRef.current) return;
+    
+    let active = true;
+
+    const init = async () => {
+      if (active) {
+        if (editData) {
+          setSelectedAsprakId(editData.id_asprak || '');
+          setSelectedHari(editData.hari || defaultDay);
+          setSelectedShift(editData.shift?.toString() || '');
+        } else {
+          setSelectedAsprakId('');
+          setSelectedHari(defaultDay);
+          setSelectedShift('');
+          setApplyToAllModuls(false);
+        }
+        
+        setLoading(true);
+        const allowed = canInputJagaForModul(selectedModul, konfigurasiModul, userRole);
+        setCanInput(allowed);
       }
-      loadDependencies();
-    }
-  }, [isOpen, editData, defaultDay, loadDependencies]);
+
+      const { data } = await fetchAllAsprak(term);
+      if (active) {
+        if (data) {
+          const sorted = [...data].sort((a, b) => {
+            if (a.role === 'ASLAB' && b.role !== 'ASLAB') return -1;
+            if (a.role !== 'ASLAB' && b.role === 'ASLAB') return 1;
+            return a.kode.localeCompare(b.kode);
+          });
+          setAsprakList(sorted);
+        }
+        setLoading(false);
+      }
+    };
+
+    init();
+    hasLoadedRef.current = true;
+
+    return () => {
+      active = false;
+    };
+  }, [isOpen, editData, defaultDay, selectedModul, konfigurasiModul, userRole, term]);
 
   const handleSubmit = async () => {
     if (!selectedAsprakId || !selectedHari || !selectedShift) {
@@ -235,16 +254,19 @@ export default function JagaInputModal({
                   </div>
                   <ScrollArea className="h-64 overflow-y-auto">
                     <div className="p-1">
-                      {asprakList
-                        .filter((a) =>
-                          `${a.kode} ${a.nama_lengkap}`
-                            .toLowerCase()
-                            .includes(searchQuery.toLowerCase())
-                        )
-                        .map((a) => (
+                      {filteredAsprakList.map((a) => (
                           <div
                             key={a.id}
                             role="option"
+                            tabIndex={0}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                setSelectedAsprakId(a.id);
+                                setOpenAsprak(false);
+                                setSearchQuery('');
+                              }
+                            }}
                             aria-selected={selectedAsprakId === a.id}
                             className={`relative flex w-full cursor-pointer select-none items-center rounded-sm py-2 pl-8 pr-2 text-sm outline-none transition-colors
                               ${selectedAsprakId === a.id ? 'bg-primary/10 text-primary' : 'hover:bg-accent hover:text-accent-foreground'}
@@ -275,11 +297,7 @@ export default function JagaInputModal({
                             </div>
                           </div>
                         ))}
-                      {asprakList.filter((a) =>
-                        `${a.kode} ${a.nama_lengkap}`
-                          .toLowerCase()
-                          .includes(searchQuery.toLowerCase())
-                      ).length === 0 && (
+                      {filteredAsprakList.length === 0 && (
                         <div className="py-6 text-center text-sm text-muted-foreground">
                           Asisten tidak ditemukan.
                         </div>

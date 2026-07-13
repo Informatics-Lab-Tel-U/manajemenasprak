@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -25,11 +25,33 @@ interface AsprakGenerationRulesProps {
   existingCodes?: string[];
 }
 
-export default function AsprakGenerationRules({ existingCodes = [] }: AsprakGenerationRulesProps) {
+// Helper to safely generate codes
+const generateCodes = (name: string, generator: (words: string[]) => string[]) => {
+  const words = getWords(name);
+  if (!words.length) return [];
+  try {
+    // Check word count requirements for specific generators to avoid errors
+    if (generator === rulesFor1Word && words.length < 1) return [];
+    if (generator === rulesFor2Words && words.length < 2) return [];
+    if (generator === rulesFor3Words && words.length < 3) return [];
+
+    const rawCodes = generator(words);
+    // Validate length - strictly 3 chars
+    return rawCodes.map((code) => (code.length === 3 ? code : null));
+  } catch {
+    return [];
+  }
+};
+
+const EMPTY_ITEMS: string[] = [];
+
+export default function AsprakGenerationRules({ existingCodes = EMPTY_ITEMS }: AsprakGenerationRulesProps) {
+  const existingSet = useMemo(() => new Set(existingCodes), [existingCodes]);
+
   const getCodeStatus = (code: string | null, index: number, allCodes: (string | null)[]) => {
     if (!code) return 'none';
-    if (existingCodes.includes(code)) return 'taken';
-    const firstAvailableIdx = allCodes.findIndex((c) => c && !existingCodes.includes(c));
+    if (existingSet.has(code)) return 'taken';
+    const firstAvailableIdx = allCodes.findIndex((c) => c && !existingSet.has(c));
     if (firstAvailableIdx === index) return 'chosen';
     return 'available';
   };
@@ -53,23 +75,6 @@ export default function AsprakGenerationRules({ existingCodes = [] }: AsprakGene
   const [name3, setName3] = useState('MUHAMMAD ABIYU ALGHIFARI');
   const [fallbackName, setFallbackName] = useState('SITI NUR AZIZAH PUTRI');
 
-  // Helper to safely generate codes
-  const generateCodes = (name: string, generator: (words: string[]) => string[]) => {
-    const words = getWords(name);
-    if (!words.length) return [];
-    try {
-      // Check word count requirements for specific generators to avoid errors
-      if (generator === rulesFor1Word && words.length < 1) return [];
-      if (generator === rulesFor2Words && words.length < 2) return [];
-      if (generator === rulesFor3Words && words.length < 3) return [];
-
-      const rawCodes = generator(words);
-      // Validate length - strictly 3 chars
-      return rawCodes.map((code) => (code.length === 3 ? code : null));
-    } catch {
-      return [];
-    }
-  };
 
   const codes1 = generateCodes(name1, rulesFor1Word);
   const codes2 = generateCodes(name2, rulesFor2Words);

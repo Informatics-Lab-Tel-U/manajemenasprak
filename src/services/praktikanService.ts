@@ -175,17 +175,14 @@ export async function getActivePraktikumMataKuliahOptions(
   }
 
   const seen = new Set<string>();
-  return (data ?? [])
-    .map((row: { nama?: string | null }) =>
-      String(row.nama ?? '')
-        .trim()
-        .toUpperCase()
-    )
-    .filter((nama) => {
-      if (!nama || seen.has(nama)) return false;
+  return (data ?? []).reduce((acc: string[], row: { nama?: string | null }) => {
+    const nama = String(row.nama ?? '').trim().toUpperCase();
+    if (nama && !seen.has(nama)) {
       seen.add(nama);
-      return true;
-    });
+      acc.push(nama);
+    }
+    return acc;
+  }, []);
 }
 
 export async function getPraktikanKelasByMataKuliah(
@@ -193,31 +190,29 @@ export async function getPraktikanKelasByMataKuliah(
   supabaseClient?: SupabaseClient
 ): Promise<string[]> {
   const supabase = await getClient(supabaseClient);
-  const normalizedMataKuliah = normalizeRequired(mataKuliah, 'mata_kuliah');
 
-  const { data, error } = await supabase
-    .from('praktikan')
-    .select('kelas')
-    .or(buildMataKuliahLikeFilter(normalizedMataKuliah))
-    .order('kelas', { ascending: true });
+  let query = supabase.from('praktikan').select('kelas').order('kelas', { ascending: true });
+
+  if (mataKuliah && mataKuliah.trim()) {
+    query = query.or(buildMataKuliahLikeFilter(mataKuliah.trim()));
+  }
+
+  const { data, error } = await query;
 
   if (error) {
-    logger.error(`Error fetching praktikan kelas for ${normalizedMataKuliah}:`, error);
+    logger.error(`Error fetching praktikan kelas for ${mataKuliah}:`, error);
     throw new Error(`Gagal mengambil kelas praktikan: ${error.message}`);
   }
 
   const seen = new Set<string>();
-  return (data ?? [])
-    .map((row: { kelas?: string | null }) =>
-      String(row.kelas ?? '')
-        .trim()
-        .toUpperCase()
-    )
-    .filter((kelas) => {
-      if (!kelas || seen.has(kelas)) return false;
+  return (data ?? []).reduce((acc: string[], row: { kelas?: string | null }) => {
+    const kelas = String(row.kelas ?? '').trim().toUpperCase();
+    if (kelas && !seen.has(kelas)) {
       seen.add(kelas);
-      return true;
-    });
+      acc.push(kelas);
+    }
+    return acc;
+  }, []);
 }
 
 export async function getPraktikanOptions(

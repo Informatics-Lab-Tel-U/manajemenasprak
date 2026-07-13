@@ -11,6 +11,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   Filter,
   X,
@@ -85,6 +86,16 @@ function JadwalTableSkeleton() {
   );
 }
 
+const handleImportCSV = async (rows: CreateJadwalInput[]) => {
+  const result = await jadwalFetcher.bulkImportJadwal(rows);
+  if (result.ok) {
+    toast.success(`Berhasil import ${result.data?.inserted} jadwal`);
+    window.location.reload();
+  } else {
+    toast.error(`Gagal import: ${result.error}`);
+  }
+};
+
 export default function JadwalClientPage({
   initialJadwal,
   initialTerms,
@@ -95,9 +106,7 @@ export default function JadwalClientPage({
   const {
     data: rawJadwalList,
     jadwalPengganti,
-    terms: availableTerms,
     selectedTerm,
-    setSelectedTerm,
     moduls,
     selectedModul,
     setSelectedModul,
@@ -190,15 +199,7 @@ export default function JadwalClientPage({
     }
   };
 
-  const handleImportCSV = async (rows: CreateJadwalInput[]) => {
-    const result = await jadwalFetcher.bulkImportJadwal(rows);
-    if (result.ok) {
-      toast.success(`Berhasil import ${result.data?.inserted} jadwal`);
-      window.location.reload();
-    } else {
-      toast.error(`Gagal import: ${result.error}`);
-    }
-  };
+
 
   const handleDeleteJadwal = async (id: string) => {
     try {
@@ -297,21 +298,6 @@ export default function JadwalClientPage({
               </SelectGroup>
             </SelectContent>
           </Select>
-
-          <Select value={selectedTerm} onValueChange={setSelectedTerm}>
-            <SelectTrigger className="w-full md:w-[180px] sm:max-w-[180px]">
-              <SelectValue placeholder="Select term" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                {availableTerms.map((t) => (
-                  <SelectItem key={t} value={t}>
-                    {t}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
         </div>
       </div>
 
@@ -333,6 +319,14 @@ export default function JadwalClientPage({
                   <th
                     className="p-2 border-r border-border text-center font-bold min-w-[60px] text-xs uppercase text-muted-foreground cursor-pointer hover:bg-muted/80 transition-colors select-none group"
                     onClick={() => setShowSessionId(!showSessionId)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setShowSessionId(!showSessionId);
+                      }
+                    }}
                     title="Click to toggle between Time/Session"
                   >
                     <div className="flex items-center justify-center gap-1">
@@ -378,6 +372,14 @@ export default function JadwalClientPage({
                         <td
                           className="p-2 border-r border-border text-center font-medium text-muted-foreground text-xs cursor-pointer hover:bg-muted/50"
                           onClick={() => setShowSessionId(!showSessionId)}
+                          role="button"
+                          tabIndex={0}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              setShowSessionId(!showSessionId);
+                            }
+                          }}
                           title={showSessionId ? session.jam : `Sesi ${session.sesi ?? '-'}`}
                         >
                           {showSessionId ? (session.sesi ?? sessionIndex + 1) : session.jam}
@@ -445,19 +447,17 @@ export default function JadwalClientPage({
       </div>
 
       {/* Detail Modal */}
-      {selectedJadwal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-[2px] p-4 animate-in fade-in duration-200"
-          onClick={() => setSelectedJadwal(null)}
-        >
-          <div
-            className="bg-card w-full max-w-lg rounded-xl shadow-2xl border border-border/50 overflow-hidden animate-in zoom-in-95 duration-200"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header */}
-            <div className="relative p-6 pb-4 border-b border-border/50">
-              <Button
-                variant="ghost"
+      <Dialog open={!!selectedJadwal} onOpenChange={(v) => !v && setSelectedJadwal(null)}>
+        <DialogContent showCloseButton={false} className="p-0 gap-0 overflow-hidden sm:max-w-lg">
+          <DialogHeader className="sr-only">
+            <DialogTitle>Detail Jadwal</DialogTitle>
+          </DialogHeader>
+          {selectedJadwal && (
+            <>
+              {/* Header */}
+              <div className="relative p-6 pb-4 border-b border-border/50">
+                <Button
+                  variant="ghost"
                 size="icon"
                 onClick={() => setSelectedJadwal(null)}
                 className="absolute top-4 right-4 rounded-full hover:bg-muted text-muted-foreground"
@@ -560,9 +560,10 @@ export default function JadwalClientPage({
                 <Button onClick={() => setSelectedJadwal(null)}>Tutup</Button>
               </div>
             </div>
-          </div>
-        </div>
-      )}
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
 
       <JadwalModal
         isOpen={isModalOpen}

@@ -1,5 +1,3 @@
-import { Toaster } from '@/components/ui/sonner';
-
 export default function AuthLayout({
   children,
 }: Readonly<{
@@ -8,7 +6,6 @@ export default function AuthLayout({
   return (
     <>
       {children}
-      <Toaster />
     </>
   );
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Trash2, Upload, FileSpreadsheet, Download, ShieldAlert, Activity } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import * as importFetcher from '@/lib/fetchers/importFetcher';
@@ -39,6 +39,7 @@ import {
 } from '@/components/ui/dialog';
 
 import { useTahunAjaran } from '@/hooks/useTahunAjaran';
+import { useTermStore } from '@/store/useTermStore';
 
 interface DatabaseClientPageProps {
   initialIsMaintenance: boolean;
@@ -52,16 +53,19 @@ export default function DatabaseClientPage({
   const [termYear, setTermYear] = useState('24');
   const [termSem, setTermSem] = useState<'1' | '2'>('2');
 
-  const [loading, setLoading] = useState(false);
-  const [status, setStatus] = useState<{
-    type: 'success' | 'error' | 'info';
-    message: string;
-  } | null>(null);
-  const [progress, setProgress] = useState(0);
+  const [uiState, updateUiState] = React.useReducer(
+    (prev: any, next: any) => ({ ...prev, ...next }),
+    { loading: false, status: null as any, progress: 0 }
+  );
+  const { loading, status, progress } = uiState;
 
+  const { activeTerm: globalActiveTerm } = useTermStore();
   const { tahunAjaranList, loading: loadingTahunAjaran } = useTahunAjaran();
-  const [exportTerm, setExportTerm] = useState('');
-  const [deleteTerm, setDeleteTerm] = useState('');
+  const [selectedExportTerm, setExportTerm] = useState('');
+  const exportTerm = selectedExportTerm || globalActiveTerm || (tahunAjaranList.length > 0 ? tahunAjaranList[0] : '');
+
+  const [selectedDeleteTerm, setDeleteTerm] = useState('');
+  const deleteTerm = selectedDeleteTerm || globalActiveTerm || (tahunAjaranList.length > 0 ? tahunAjaranList[0] : '');
 
   // Maintenance Mode States
   const [isMaintenance, setIsMaintenance] = useState(initialIsMaintenance);
@@ -79,12 +83,7 @@ export default function DatabaseClientPage({
   } | null>(null);
   const [activeTerm, setActiveTerm] = useState<string>('');
 
-  useEffect(() => {
-    if (tahunAjaranList.length > 0) {
-      if (!exportTerm) setExportTerm(tahunAjaranList[0]);
-      if (!deleteTerm) setDeleteTerm(tahunAjaranList[0]);
-    }
-  }, [tahunAjaranList, exportTerm, deleteTerm]);
+
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDeleteTermModalOpen, setIsDeleteTermModalOpen] = useState(false);
@@ -101,15 +100,14 @@ export default function DatabaseClientPage({
       const startY = parseInt(termYear);
       const term = `${startY}${startY + 1}-${termSem}`;
 
-      setLoading(true);
-      setProgress(0);
-      setStatus({ type: 'info', message: `Memproses ${file.name}...` });
+      updateUiState({ loading: true, status: null, progress: 0 });
+      updateUiState({ status: { type: 'info', message: `Memproses ${file.name}...` } });
 
       const interval = setInterval(() => {
-        setProgress((prev) => {
+        updateUiState({ progress: (prev: number) => {
           if (prev >= 90) return prev;
           return prev + Math.floor(Math.random() * 10) + 5;
-        });
+        }});
       }, 500);
 
       try {
@@ -135,16 +133,16 @@ export default function DatabaseClientPage({
         setActiveTerm(term);
 
         clearInterval(interval);
-        setProgress(100);
-        setStatus(null);
+        updateUiState({ progress: 100 });
+        updateUiState({ status: null });
         setWizardStep(1);
       } catch (e: any) {
         clearInterval(interval);
-        setProgress(100);
-        setStatus({ type: 'error', message: e.message || 'Gagal membaca file Excel' });
+        updateUiState({ progress: 100 });
+        updateUiState({ status: { type: 'error', message: e.message || 'Gagal memproses file' } });
       } finally {
-        setLoading(false);
-        setTimeout(() => setProgress(0), 1000);
+        updateUiState({ loading: false });
+        setTimeout(() => updateUiState({ progress: 0 }), 1000);
       }
     },
     [termYear, termSem]
@@ -165,18 +163,17 @@ export default function DatabaseClientPage({
     if (confirmInput !== CONFIRMATION_PHRASE) return;
 
     setIsDeleteModalOpen(false);
-    setLoading(true);
-    setStatus({ type: 'info', message: 'Membersihkan database...' });
+    updateUiState({ loading: true, status: { type: 'info', message: 'Membersihkan database...' } });
 
     try {
       const res = await fetch('/api/clear', { method: 'POST' });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-      setStatus({ type: 'success', message: 'Database berhasil dibersihkan!' });
+      updateUiState({ status: { type: 'success', message: 'Database berhasil dibersihkan!' } });
     } catch (e: any) {
-      setStatus({ type: 'error', message: e.message });
+      updateUiState({ status: { type: 'error', message: e.message } });
     } finally {
-      setLoading(false);
+      updateUiState({ loading: false });
     }
   };
 
@@ -190,34 +187,29 @@ export default function DatabaseClientPage({
     if (confirmTermInput !== CONFIRMATION_TERM_PHRASE) return;
 
     setIsDeleteTermModalOpen(false);
-    setLoading(true);
-    setStatus({ type: 'info', message: `Menghapus jadwal angkatan ${deleteTerm}...` });
+    updateUiState({ loading: true, status: { type: 'info', message: `Menghapus jadwal angkatan ${deleteTerm}...` } });
 
     try {
       const result = await jadwalFetcher.deleteJadwalByTerm(deleteTerm);
       if (result.ok) {
-        setStatus({
-          type: 'success',
-          message: `Berhasil menghapus jadwal angkatan ${deleteTerm}!`,
-        });
+        updateUiState({ status: { type: 'success', message: `Berhasil menghapus jadwal angkatan ${deleteTerm}!` } });
       } else {
-        setStatus({ type: 'error', message: result.error || 'Gagal menghapus jadwal' });
+        throw new Error(result.error);
       }
     } catch (e: any) {
-      setStatus({ type: 'error', message: e.message || 'Gagal menghapus jadwal' });
+      updateUiState({ status: { type: 'error', message: e.message || 'Gagal menghapus jadwal' } });
     } finally {
-      setLoading(false);
+      updateUiState({ loading: false });
     }
   };
 
   const handleExport = async () => {
     if (!exportTerm) {
-      setStatus({ type: 'error', message: 'Silakan pilih tahun ajaran yang akan diexport' });
+      updateUiState({ status: { type: 'error', message: 'Silakan pilih tahun ajaran yang akan diexport' } });
       return;
     }
 
-    setLoading(true);
-    setStatus({ type: 'info', message: `Mengekspor data untuk angkatan: ${exportTerm}...` });
+    updateUiState({ loading: true, status: { type: 'info', message: `Mengekspor data untuk angkatan: ${exportTerm}...` } });
 
     try {
       const result = await importFetcher.exportExcelDataset(exportTerm);
@@ -241,14 +233,14 @@ export default function DatabaseClientPage({
         XLSX.utils.book_append_sheet(wb, wsPivot, 'asprak_praktikum');
 
         XLSX.writeFile(wb, `EXPORT_${exportTerm}.xlsx`);
-        setStatus({ type: 'success', message: `Berhasil mengekspor data untuk ${exportTerm}!` });
+        updateUiState({ status: { type: 'success', message: `Berhasil mengekspor data untuk ${exportTerm}!` } });
       } else {
-        setStatus({ type: 'error', message: result.error || 'Ekspor gagal' });
+        updateUiState({ status: { type: 'error', message: result.error || 'Ekspor gagal' } });
       }
     } catch (e: any) {
-      setStatus({ type: 'error', message: e.message || 'Ekspor gagal' });
+      updateUiState({ status: { type: 'error', message: e.message || 'Ekspor gagal' } });
     } finally {
-      setLoading(false);
+      updateUiState({ loading: false });
     }
   };
 
@@ -583,7 +575,7 @@ export default function DatabaseClientPage({
               onNext={() => {
                 setWizardStep(0);
                 setExcelData(null);
-                setStatus({ type: 'success', message: 'Import Excel selesai dengan sukses!' });
+                updateUiState({ status: { type: 'success', message: 'Import Excel selesai dengan sukses!' } });
               }}
               onImport={async (rows) => {
                 const res = await jadwalFetcher.bulkImportJadwal(rows);

@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { createClient } from '@/lib/supabase/client';
+import { login } from '@/app/actions/auth';
 import { Loader2, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -15,7 +15,7 @@ import { TurnstileWidget } from './TurnstileWidget';
 import type { TurnstileInstance } from '@marsidev/react-turnstile';
 
 const URL_ERROR_MESSAGES: Record<string, string> = {
-  'no-profile': 'Akun Anda belum terdaftar dalam sistem. Hubungi administrator.',
+  'no-profile': 'Akun Anda belum terdaftar dalam sistem. Hubungi pengelola sistem.',
 };
 
 export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) {
@@ -27,8 +27,8 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
   const [error, setError] = React.useState<string | null>(null);
   const [showPassword, setShowPassword] = React.useState(false);
   const [rememberMe, setRememberMe] = React.useState(true);
-  const [turnstileToken, setTurnstileToken] = React.useState<string | null>(null);
-  const [isTurnstileUnsupported, setIsTurnstileUnsupported] = React.useState(false);
+  const turnstileToken = React.useRef<string | null>(null);
+  const isTurnstileUnsupported = React.useRef(false);
   const turnstileRef = React.useRef<TurnstileInstance>(null);
 
   React.useEffect(() => {
@@ -43,7 +43,7 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
     setError(null);
 
     const hasSiteKey = !!process.env.NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY;
-    if (hasSiteKey && !turnstileToken && !isTurnstileUnsupported) {
+    if (hasSiteKey && !turnstileToken.current && !isTurnstileUnsupported.current) {
       setError('Harap selesaikan verifikasi keamanan.');
       return;
     }
@@ -51,21 +51,12 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
     setIsLoading(true);
 
     try {
-      const supabase = createClient();
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-        options: turnstileToken
-          ? {
-              captchaToken: turnstileToken,
-            }
-          : undefined,
-      });
+      const res = await login(email, password, turnstileToken.current);
 
-      if (signInError) {
+      if (res.error) {
         const isCaptchaError =
-          signInError.message.toLowerCase().includes('captcha') ||
-          signInError.message.toLowerCase().includes('verification');
+          res.error.toLowerCase().includes('captcha') ||
+          res.error.toLowerCase().includes('verification');
 
         setError(
           isCaptchaError
@@ -73,7 +64,7 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
             : 'Email atau kata sandi salah. Silakan coba lagi.'
         );
 
-        setTurnstileToken(null);
+        turnstileToken.current = null;
         turnstileRef.current?.reset();
 
         setIsLoading(false);
@@ -85,7 +76,7 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
     } catch (err: unknown) {
       console.error('Login error:', err);
       setError('Terjadi kesalahan koneksi. Silakan coba lagi.');
-      setTurnstileToken(null);
+      turnstileToken.current = null;
       turnstileRef.current?.reset();
       setIsLoading(false);
     }
@@ -172,8 +163,12 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
             {!!process.env.NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY && (
               <TurnstileWidget
                 ref={turnstileRef}
-                onVerify={setTurnstileToken}
-                onUnsupported={() => setIsTurnstileUnsupported(true)}
+                onVerify={(val) => {
+                  turnstileToken.current = val;
+                }}
+                onUnsupported={() => {
+                  isTurnstileUnsupported.current = true;
+                }}
               />
             )}
 

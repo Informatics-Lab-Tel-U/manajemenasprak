@@ -39,6 +39,29 @@ interface Props {
   pageSize: number;
 }
 
+const getOperationBadge = (operation: string) => {
+  switch (operation.toUpperCase()) {
+    case 'INSERT':
+      return (
+        <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-green-200">
+          INSERT
+        </Badge>
+      );
+    case 'UPDATE':
+      return (
+        <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 border-blue-200">
+          UPDATE
+        </Badge>
+      );
+    case 'DELETE':
+      return (
+        <Badge className="bg-red-100 text-red-700 hover:bg-red-100 border-red-200">DELETE</Badge>
+      );
+    default:
+      return <Badge variant="outline">{operation}</Badge>;
+  }
+};
+
 export default function AuditLogsClientPage({
   logs: initialLogs,
   totalCount,
@@ -76,28 +99,7 @@ export default function AuditLogsClientPage({
     router.push(`?${params.toString()}`);
   };
 
-  const getOperationBadge = (operation: string) => {
-    switch (operation.toUpperCase()) {
-      case 'INSERT':
-        return (
-          <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-green-200">
-            INSERT
-          </Badge>
-        );
-      case 'UPDATE':
-        return (
-          <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 border-blue-200">
-            UPDATE
-          </Badge>
-        );
-      case 'DELETE':
-        return (
-          <Badge className="bg-red-100 text-red-700 hover:bg-red-100 border-red-200">DELETE</Badge>
-        );
-      default:
-        return <Badge variant="outline">{operation}</Badge>;
-    }
-  };
+
 
   const columns = React.useMemo<ColumnDef<AuditLogWithUser>[]>(
     () => [

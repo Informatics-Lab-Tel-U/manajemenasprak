@@ -25,6 +25,12 @@
       "source": "supercent-io/skills-template",
       "sourceType": "github",
       "computedHash": "24b18a2653cdf62a8438f191117b91b7b683b9189f6acd88791ca96d6076dbf7"
+    },
+    "ui-ux-pro-max": {
+      "source": "nextlevelbuilder/ui-ux-pro-max-skill",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/ui-ux-pro-max/SKILL.md",
+      "computedHash": "648a7334f3dd6cc826e35d12c48318534caf75a2176d78ef1abd8e4a3cd15334"
     }
   }
 }

@@ -1,7 +1,16 @@
 'use client';
 
 import * as React from 'react';
-import { Filter, Search, Loader2, ArrowUpDown } from 'lucide-react';
+import { Filter, Search, Loader2, ArrowUpDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import {
+  useReactTable,
+  getCoreRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  flexRender,
+  ColumnDef,
+  SortingState,
+} from '@tanstack/react-table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -31,6 +40,7 @@ import type { PelanggaranSummaryEntry } from '@/services/pelanggaranService';
 import type { Role } from '@/config/rbac';
 import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useTermStore } from '@/store/useTermStore';
 
 interface Props {
   initialTahunAjaranList: string[];
@@ -38,16 +48,14 @@ interface Props {
 }
 
 export default function PelanggaranRekapClient({ initialTahunAjaranList }: Props) {
-  const [tahunAjaran, setTahunAjaran] = React.useState(initialTahunAjaranList[0] || '');
+  const { activeTerm } = useTermStore();
+  const tahunAjaran = activeTerm || '';
   const [modul, setModul] = React.useState<string>('all');
   const [minCount, setMinCount] = React.useState<number>(1);
   const [loading, setLoading] = React.useState(false);
   const [data, setData] = React.useState<PelanggaranSummaryEntry[]>([]);
   const [mounted, setMounted] = React.useState(false);
-  const [sortConfig, setSortConfig] = React.useState<{
-    key: 'mk' | 'asprak';
-    direction: 'asc' | 'desc';
-  } | null>(null);
+  const [sorting, setSorting] = React.useState<SortingState>([]);
 
   React.useEffect(() => {
     setMounted(true);
@@ -72,6 +80,110 @@ export default function PelanggaranRekapClient({ initialTahunAjaranList }: Props
   }
 
   const loadData = () => handleFetch(tahunAjaran, modul, minCount);
+
+  const flatViolations = React.useMemo(() => {
+    return data.flatMap((entry) =>
+      (entry.violations || []).map((v) => ({
+        ...v,
+        _kode_asprak: entry.kode_asprak,
+        _nama_asprak: entry.nama_asprak,
+      }))
+    );
+  }, [data]);
+
+  const columns = React.useMemo<ColumnDef<any>[]>(
+    () => [
+      {
+        accessorFn: (row) => row.jadwal?.mata_kuliah?.praktikum?.nama ?? '—',
+        id: 'mk',
+        header: ({ column }) => (
+          <button
+            type="button"
+            className="flex items-center gap-2 cursor-pointer select-none hover:text-foreground transition-colors font-medium"
+            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+          >
+            MK
+            <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
+          </button>
+        ),
+        cell: ({ row }) => (
+          <div className="font-medium truncate max-w-[200px]">
+            {row.getValue('mk')}
+          </div>
+        ),
+      },
+      {
+        accessorFn: (row) => row._kode_asprak,
+        id: 'asprak',
+        header: ({ column }) => (
+          <button
+            type="button"
+            className="flex items-center gap-2 cursor-pointer select-none hover:text-foreground transition-colors font-medium"
+            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+          >
+            Kode Asprak
+            <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
+          </button>
+        ),
+        cell: ({ row }) => (
+          <div>
+            <span className="font-mono text-xs font-semibold">
+              {row.getValue('asprak')}
+            </span>
+            <div className="text-xs text-muted-foreground truncate max-w-[180px]">
+              {row.original._nama_asprak}
+            </div>
+          </div>
+        ),
+      },
+      {
+        accessorFn: (row) => row.jadwal?.kelas ?? '—',
+        id: 'kelas',
+        header: () => <div className="text-center">Kelas</div>,
+        cell: ({ row }) => <div className="text-center text-sm">{row.getValue('kelas')}</div>,
+      },
+      {
+        accessorKey: 'jenis',
+        header: 'Jenis',
+        cell: ({ row }) => (
+          <Badge variant="outline" className="text-xs font-normal whitespace-nowrap">
+            {row.original.jenis}
+          </Badge>
+        ),
+      },
+      {
+        accessorKey: 'modul',
+        header: () => <div className="text-center">Modul</div>,
+        cell: ({ row }) => <div className="text-center text-sm">{row.getValue('modul') ?? '—'}</div>,
+      },
+      {
+        accessorFn: (row) => row.jadwal?.jam ?? '—',
+        id: 'jam',
+        header: () => <div className="text-center">Jam</div>,
+        cell: ({ row }) => (
+          <div className="text-center text-sm text-muted-foreground">{row.getValue('jam')}</div>
+        ),
+      },
+    ],
+    []
+  );
+
+  const table = useReactTable({
+    data: flatViolations,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    onSortingChange: setSorting,
+    state: {
+      sorting,
+    },
+    initialState: {
+      pagination: {
+        pageSize: 10,
+      },
+    },
+  });
 
   if (!mounted) return null;
 
@@ -103,24 +215,10 @@ export default function PelanggaranRekapClient({ initialTahunAjaranList }: Props
           </AccordionTrigger>
           <AccordionContent className="pt-2 pb-6 space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-muted-foreground">Tahun Ajaran</label>
-                <Select value={tahunAjaran} onValueChange={setTahunAjaran}>
-                  <SelectTrigger className="h-9 w-full">
-                    <SelectValue placeholder="Pilih Tahun" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {initialTahunAjaranList.map((y) => (
-                      <SelectItem key={y} value={y}>
-                        {y}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
 
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-muted-foreground">Target Modul</label>
+
+              <label className="space-y-1.5 block">
+                <span className="text-xs font-medium text-muted-foreground">Target Modul</span>
                 <Select value={modul} onValueChange={setModul}>
                   <SelectTrigger className="h-9 w-full">
                     <SelectValue placeholder="Pilih Modul" />
@@ -134,12 +232,12 @@ export default function PelanggaranRekapClient({ initialTahunAjaranList }: Props
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
+              </label>
 
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-muted-foreground">
+              <label className="space-y-1.5 block">
+                <span className="text-xs font-medium text-muted-foreground">
                   Min. Pelanggaran
-                </label>
+                </span>
                 <Input
                   type="number"
                   min={1}
@@ -147,7 +245,7 @@ export default function PelanggaranRekapClient({ initialTahunAjaranList }: Props
                   onChange={(e) => setMinCount(Number(e.target.value))}
                   className="h-9 w-full"
                 />
-              </div>
+              </label>
 
               <Button onClick={loadData} disabled={loading} className="h-9">
                 {loading ? (
@@ -163,158 +261,119 @@ export default function PelanggaranRekapClient({ initialTahunAjaranList }: Props
       </Accordion>
 
       {/* Results Table */}
-      {(() => {
-        // Flatten all violations from matched asprak entries
-        const flatViolations = data.flatMap((entry) =>
-          (entry.violations || []).map((v) => ({
-            ...v,
-            _kode_asprak: entry.kode_asprak,
-            _nama_asprak: entry.nama_asprak,
-          }))
-        );
-
-        const sortedViolations = [...flatViolations];
-        if (sortConfig !== null) {
-          sortedViolations.sort((a, b) => {
-            let aValue = '';
-            let bValue = '';
-            if (sortConfig.key === 'mk') {
-              aValue = a.jadwal?.mata_kuliah?.praktikum?.nama ?? '';
-              bValue = b.jadwal?.mata_kuliah?.praktikum?.nama ?? '';
-            } else if (sortConfig.key === 'asprak') {
-              aValue = a._kode_asprak ?? '';
-              bValue = b._kode_asprak ?? '';
-            }
-            if (aValue < bValue) {
-              return sortConfig.direction === 'asc' ? -1 : 1;
-            }
-            if (aValue > bValue) {
-              return sortConfig.direction === 'asc' ? 1 : -1;
-            }
-            return 0;
-          });
-        }
-
-        const handleSort = (key: 'mk' | 'asprak') => {
-          let direction: 'asc' | 'desc' = 'asc';
-          if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
-            direction = 'desc';
-          }
-          setSortConfig({ key, direction });
-        };
-
-        return (
-          <div className="card glass border border-border/50 overflow-hidden">
+      <div className="card glass border border-border/50 overflow-hidden space-y-4">
             <div className="px-6 py-4 flex items-center justify-between border-b border-border/50 bg-muted/20">
               <h3 className="font-semibold text-sm">Daftar Pelanggaran</h3>
               <Badge variant="secondary">{flatViolations.length} records</Badge>
             </div>
-            <div className="p-6">
+            <div className="px-6 pb-6 space-y-4">
               <div className="rounded-md border overflow-hidden">
                 <Table className="table-fixed w-full">
                   <TableHeader>
-                    <TableRow>
-                      <TableHead
-                        className="w-[20%] cursor-pointer select-none hover:bg-muted/50 transition-colors"
-                        onClick={() => handleSort('mk')}
-                      >
-                        <div className="flex items-center gap-2">
-                          MK
-                          <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
-                        </div>
-                      </TableHead>
-                      <TableHead
-                        className="w-[18%] cursor-pointer select-none hover:bg-muted/50 transition-colors"
-                        onClick={() => handleSort('asprak')}
-                      >
-                        <div className="flex items-center gap-2">
-                          Kode Asprak
-                          <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
-                        </div>
-                      </TableHead>
-                      <TableHead className="w-[14%] text-center">Kelas</TableHead>
-                      <TableHead className="w-[20%]">Jenis</TableHead>
-                      <TableHead className="w-[14%] text-center">Modul</TableHead>
-                      <TableHead className="w-[14%] text-center">Jam</TableHead>
-                    </TableRow>
+                    {table.getHeaderGroups().map((headerGroup) => (
+                      <TableRow key={headerGroup.id}>
+                        {headerGroup.headers.map((header) => (
+                          <TableHead key={header.id} className="whitespace-nowrap">
+                            {header.isPlaceholder
+                              ? null
+                              : flexRender(header.column.columnDef.header, header.getContext())}
+                          </TableHead>
+                        ))}
+                      </TableRow>
+                    ))}
                   </TableHeader>
                   <TableBody>
                     {loading ? (
-                      Array.from({ length: 10 }).map((_, i) => (
+                      Array.from({ length: 5 }).map((_, i) => (
                         <TableRow key={i}>
-                          <TableCell>
-                            <Skeleton className="h-4 w-24" />
-                          </TableCell>
-                          <TableCell>
-                            <Skeleton className="h-4 w-16" />
-                            <Skeleton className="h-3 w-20 mt-1 opacity-50" />
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <Skeleton className="h-4 w-12 mx-auto" />
-                          </TableCell>
-                          <TableCell>
-                            <Skeleton className="h-5 w-24 rounded-full" />
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <Skeleton className="h-4 w-8 mx-auto" />
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <Skeleton className="h-4 w-16 mx-auto" />
-                          </TableCell>
+                          <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-16" /><Skeleton className="h-3 w-20 mt-1 opacity-50" /></TableCell>
+                          <TableCell className="text-center"><Skeleton className="h-4 w-12 mx-auto" /></TableCell>
+                          <TableCell><Skeleton className="h-5 w-24 rounded-full" /></TableCell>
+                          <TableCell className="text-center"><Skeleton className="h-4 w-8 mx-auto" /></TableCell>
+                          <TableCell className="text-center"><Skeleton className="h-4 w-16 mx-auto" /></TableCell>
                         </TableRow>
                       ))
-                    ) : flatViolations.length === 0 ? (
+                    ) : table.getRowModel().rows?.length ? (
+                      table.getRowModel().rows.map((row) => (
+                        <TableRow key={row.id} className="hover:bg-muted/50 transition-colors">
+                          {row.getVisibleCells().map((cell) => (
+                            <TableCell key={cell.id} className="text-sm">
+                              {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                            </TableCell>
+                          ))}
+                        </TableRow>
+                      ))
+                    ) : (
                       <TableRow>
-                        <TableCell colSpan={6} className="h-48 text-center text-muted-foreground">
+                        <TableCell colSpan={columns.length} className="h-48 text-center text-muted-foreground">
                           <div className="flex flex-col items-center gap-1">
                             <p className="text-sm">Tidak ada data pelanggaran yang ditemukan.</p>
-                            <p className="text-xs opacity-60">
-                              Coba sesuaikan filter pencarian Anda
-                            </p>
+                            <p className="text-xs opacity-60">Coba sesuaikan filter pencarian Anda</p>
                           </div>
                         </TableCell>
                       </TableRow>
-                    ) : (
-                      sortedViolations.map((v) => (
-                        <TableRow key={v.id} className="hover:bg-muted/50 transition-colors">
-                          <TableCell className="text-sm truncate">
-                            <div className="font-medium truncate">
-                              {v.jadwal?.mata_kuliah?.praktikum?.nama ?? '—'}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <span className="font-mono text-xs font-semibold">
-                              {v._kode_asprak}
-                            </span>
-                            <div className="text-xs text-muted-foreground truncate">
-                              {v._nama_asprak}
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-center text-sm">
-                            {v.jadwal?.kelas ?? '—'}
-                          </TableCell>
-                          <TableCell>
-                            <Badge
-                              variant="outline"
-                              className="text-xs font-normal whitespace-nowrap"
-                            >
-                              {v.jenis}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-center text-sm">{v.modul ?? '—'}</TableCell>
-                          <TableCell className="text-center text-sm text-muted-foreground">
-                            {v.jadwal?.jam ?? '—'}
-                          </TableCell>
-                        </TableRow>
-                      ))
                     )}
                   </TableBody>
                 </Table>
               </div>
+
+              {/* Pagination Controls */}
+              {!loading && flatViolations.length > 0 && (
+                <div className="flex flex-col gap-4 md:gap-0 md:flex-row md:items-center md:justify-between px-1">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                    <p className="text-sm font-medium whitespace-nowrap">Baris per halaman</p>
+                    <Select
+                      value={`${table.getState().pagination.pageSize}`}
+                      onValueChange={(value) => {
+                        table.setPageSize(Number(value));
+                      }}
+                    >
+                      <SelectTrigger className="h-8 w-full sm:w-[90px]">
+                        <SelectValue placeholder={table.getState().pagination.pageSize} />
+                      </SelectTrigger>
+                      <SelectContent side="top">
+                        {[10, 20, 30, 50, 100].map((pageSize) => (
+                          <SelectItem key={pageSize} value={`${pageSize}`}>
+                            {pageSize}
+                          </SelectItem>
+                        ))}
+                        <SelectItem value="10000">Semua</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="flex flex-col gap-3 sm:gap-0 sm:flex-row sm:items-center sm:justify-end">
+                    <div className="flex w-full sm:w-auto sm:min-w-[120px] items-center justify-center text-sm font-medium order-3 sm:order-none">
+                      Halaman {table.getState().pagination.pageIndex + 1} dari {table.getPageCount() || 1}
+                    </div>
+                    <div className="flex gap-2 justify-between sm:justify-end sm:gap-2 order-2 sm:order-none sm:ml-4">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => table.previousPage()}
+                        disabled={!table.getCanPreviousPage()}
+                        className="flex-1 sm:flex-none"
+                      >
+                        <ChevronLeft className="h-4 w-4 flex-shrink-0" />
+                        <span className="hidden sm:inline ml-1">Sebelumnya</span>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => table.nextPage()}
+                        disabled={!table.getCanNextPage()}
+                        className="flex-1 sm:flex-none"
+                      >
+                        <span className="hidden sm:inline">Berikutnya</span>
+                        <ChevronRight className="h-4 w-4 flex-shrink-0 sm:ml-1" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
-          </div>
-        );
-      })()}
+      </div>
     </div>
   );
 }

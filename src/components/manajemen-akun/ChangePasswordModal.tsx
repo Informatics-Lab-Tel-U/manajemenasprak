@@ -36,14 +36,15 @@ export function ChangePasswordModal({
   const [showPassword, setShowPassword] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
 
-  // Reset form when modal opens
-  React.useEffect(() => {
+  const [prevOpen, setPrevOpen] = React.useState(open);
+  if (open !== prevOpen) {
+    setPrevOpen(open);
     if (open) {
       setPassword('');
       setConfirmPassword('');
       setShowPassword(false);
     }
-  }, [open]);
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -116,6 +117,7 @@ export function ChangePasswordModal({
               />
               <button
                 type="button"
+                aria-label={showPassword ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'}
                 onClick={() => setShowPassword((v) => !v)}
                 className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground"
                 tabIndex={-1}

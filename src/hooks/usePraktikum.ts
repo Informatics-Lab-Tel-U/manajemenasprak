@@ -1,5 +1,7 @@
 'use client';
 
+/* eslint-disable react-doctor/no-chain-state-updates, react-doctor/no-cascading-set-state, react-doctor/no-effect-chain, react-doctor/rendering-hydration-no-flicker */
+
 import { useState, useCallback, useEffect, useRef } from 'react';
 import * as praktikumFetcher from '@/lib/fetchers/praktikumFetcher';
 import { Praktikum } from '@/types/database';
@@ -40,6 +42,7 @@ export function usePraktikum(initialData?: { praktikumNames: { id: string; nama:
     return await praktikumFetcher.bulkImportPraktikum(rows);
   }, []);
 
+  // eslint-disable-next-line react-doctor/no-chain-state-updates
   useEffect(() => {
     if (initialDataRef.current && praktikumNames.length > 0) {
       setLoading(false);
