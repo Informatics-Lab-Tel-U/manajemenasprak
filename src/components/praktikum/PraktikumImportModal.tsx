@@ -266,17 +266,21 @@ export default function PraktikumImportModal({
               )}
 
               {step === 'preview' && (
-                <PraktikumCSVPreview
-                  rows={previewRows}
-                  onConfirm={handleConfirm}
-                  onBack={() => {
-                    setStep('upload');
-                    setPreviewRows([]);
-                  }}
-                  onToggleSelect={handleToggleSelect}
-                  onToggleAll={handleToggleAll}
-                  loading={saving}
-                />
+                <div className="space-y-4">
+                  <PraktikumCSVPreview
+                    rows={previewRows}
+                    onToggleSelect={handleToggleSelect}
+                    onToggleAll={handleToggleAll}
+                  />
+                  <div className="flex justify-between items-center pt-2">
+                    <Button type="button" variant="outline" onClick={() => { setStep('upload'); setPreviewRows([]); }} disabled={saving}>
+                      Kembali
+                    </Button>
+                    <Button onClick={handleConfirm} disabled={saving || previewRows.filter(r => r.selected).length === 0} variant="default">
+                      {saving ? 'Menyimpan...' : `Simpan ${previewRows.filter(r => r.selected).length} Data Terpilih`}
+                    </Button>
+                  </div>
+                </div>
               )}
             </div>
           </ScrollArea>

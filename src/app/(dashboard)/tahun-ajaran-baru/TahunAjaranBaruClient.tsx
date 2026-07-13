@@ -591,15 +591,22 @@ function PraktikumStep() {
                   <FileSpreadsheet className="w-3.5 h-3.5" /> Tambah via CSV/Excel
                 </Button>
               </div>
-              <div className="p-4">
+              <div className="p-4 space-y-4">
                 <PraktikumCSVPreview
                   rows={previewRows}
-                  onConfirm={handleConfirmImport}
-                  onBack={() => setPreviewRows([])}
                   onToggleSelect={handleToggleSelect}
                   onToggleAll={handleToggleAll}
-                  loading={loading}
                 />
+                <div className="flex justify-between items-center pt-2">
+                  <Button type="button" variant="outline" onClick={() => setPreviewRows([])} disabled={loading}>
+                    Kembali
+                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button onClick={handleConfirmImport} disabled={loading || previewRows.filter(r => r.selected).length === 0} variant="default">
+                      {loading ? 'Menyimpan...' : `Simpan ${previewRows.filter(r => r.selected).length} Data Terpilih`}
+                    </Button>
+                  </div>
+                </div>
               </div>
             </div>
           )}
@@ -1102,16 +1109,31 @@ function MatkulStep() {
               <div className="flex-1 min-h-0 relative">
                 <MataKuliahCSVPreview
                   rows={previewRows}
-                  loading={loading}
                   validPraktikums={validPraktikums}
                   term={term}
-                  onConfirm={handleConfirmImport}
-                  onBack={() => setPreviewRows([])}
                   onUpdateRow={handleUpdateRow}
                   onToggleSelect={handleToggleSelect}
                   onToggleAll={handleToggleAll}
-                  onSkip={handleSkip}
                 />
+              </div>
+              <div className="flex justify-between items-center px-6 py-4 border-t bg-background shrink-0 gap-4 mt-auto shadow-[0_-5px_15px_-5px_rgba(0,0,0,0.05)] z-30">
+                <Button variant="outline" onClick={() => setPreviewRows([])} disabled={loading} className="shrink-0 min-w-[140px]">
+                  <ArrowLeft className="mr-2 h-4 w-4" /> Kembali ke Upload
+                </Button>
+                <div className="flex items-center gap-2 overflow-hidden justify-end flex-1">
+                  {previewRows.filter((r) => r.status === 'error').length > 0 && (
+                    <span className="text-xs text-destructive font-medium mr-3 text-right hidden lg:inline-block">
+                      {previewRows.filter((r) => r.status === 'error').length} data bermasalah & akan dilewati
+                    </span>
+                  )}
+                  <Button type="button" variant="secondary" onClick={handleSkip} disabled={loading} className="shrink-0 min-w-[140px]">
+                    Lewati Langkah Ini
+                  </Button>
+                  <Button onClick={handleConfirmImport} disabled={loading || previewRows.filter(r => r.selected).length === 0} className="shrink-0 min-w-[160px] bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm">
+                    <Save className="mr-2 h-4 w-4" />
+                    {loading ? 'Menyimpan...' : `Simpan ${previewRows.filter(r => r.selected).length} Data`}
+                  </Button>
+                </div>
               </div>
             </div>
           )}

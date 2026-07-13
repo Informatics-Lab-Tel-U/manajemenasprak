@@ -16,22 +16,14 @@ export interface PraktikumPreviewRow {
 
 interface PraktikumCSVPreviewProps {
   rows: PraktikumPreviewRow[];
-  onConfirm: () => void;
-  onBack: () => void;
   onToggleSelect: (rowIndex: number) => void;
   onToggleAll: (checked: boolean) => void;
-  loading: boolean;
-  onSkip?: () => void; // Added for Excel import wizard
 }
 
 export default function PraktikumCSVPreview({
   rows,
-  onConfirm,
-  onBack,
   onToggleSelect,
   onToggleAll,
-  loading,
-  onSkip,
 }: PraktikumCSVPreviewProps) {
   const totalOk = rows.filter((r) => r.status === 'ok').length;
   const totalSkipped = rows.filter((r) => r.status === 'skipped').length;
@@ -152,24 +144,6 @@ export default function PraktikumCSVPreview({
         </ScrollArea>
       </div>
 
-      <div className="flex justify-between items-center pt-2">
-        <Button type="button" variant="outline" onClick={onBack} disabled={loading}>
-          <ArrowLeft size={16} className="mr-1" />
-          Kembali
-        </Button>
-
-        <div className="flex items-center gap-2">
-          {onSkip && (
-            <Button type="button" variant="secondary" onClick={onSkip} disabled={loading}>
-              Lewati Langkah Ini
-            </Button>
-          )}
-          <Button onClick={onConfirm} disabled={loading || selectedCount === 0} variant="default">
-            <Save size={16} className="mr-1" />
-            {loading ? 'Menyimpan...' : `Simpan ${selectedCount} Data Terpilih`}
-          </Button>
-        </div>
-      </div>
     </div>
   );
 }

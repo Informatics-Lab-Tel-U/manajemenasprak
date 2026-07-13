@@ -27,15 +27,11 @@ export interface MataKuliahCSVRow {
 
 interface MataKuliahCSVPreviewProps {
   rows: MataKuliahCSVRow[];
-  loading: boolean;
   validPraktikums: { id: string; nama: string }[];
   term: string;
-  onConfirm: () => void;
-  onBack: () => void;
   onUpdateRow: (index: number, updates: Partial<MataKuliahCSVRow>) => void;
   onToggleSelect: (index: number) => void;
   onToggleAll: (checked: boolean) => void;
-  onSkip?: () => void;
 }
 
 const PRODI_OPTIONS = ['IF', 'IF-PJJ', 'IT', 'IT-PJJ', 'SE', 'SE-PJJ', 'DS', 'DS-PJJ'];
@@ -47,15 +43,11 @@ const isValidProdi = (prodi: string) => {
 
 export default function MataKuliahCSVPreview({
   rows,
-  loading,
   validPraktikums,
   term,
-  onConfirm,
-  onBack,
   onUpdateRow,
   onToggleSelect,
   onToggleAll,
-  onSkip,
 }: MataKuliahCSVPreviewProps) {
   const totalError = rows.filter((r) => r.status === 'error').length;
 
@@ -359,44 +351,6 @@ export default function MataKuliahCSVPreview({
             })}
           </tbody>
         </table>
-      </div>
-
-      {/* 3. Footer Actions - Fixed at bottom */}
-      <div className="flex justify-between items-center px-6 py-4 border-t bg-background shrink-0 gap-4 mt-auto shadow-[0_-5px_15px_-5px_rgba(0,0,0,0.05)] z-30">
-        <Button
-          variant="outline"
-          onClick={onBack}
-          disabled={loading}
-          className="shrink-0 min-w-[140px]"
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" /> Kembali ke Upload
-        </Button>
-        <div className="flex items-center gap-2 overflow-hidden justify-end flex-1">
-          {totalError > 0 && (
-            <span className="text-xs text-destructive font-medium mr-3 text-right hidden lg:inline-block">
-              {totalError} data bermasalah & akan dilewati
-            </span>
-          )}
-          {onSkip && (
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={onSkip}
-              disabled={loading}
-              className="shrink-0 min-w-[140px]"
-            >
-              Lewati Langkah Ini
-            </Button>
-          )}
-          <Button
-            onClick={onConfirm}
-            disabled={loading || selectedCount === 0}
-            className="shrink-0 min-w-[160px] bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
-          >
-            <Save className="mr-2 h-4 w-4" />
-            {loading ? 'Menyimpan...' : `Simpan ${selectedCount} Data`}
-          </Button>
-        </div>
       </div>
     </div>
   );
