@@ -21,7 +21,8 @@ import {
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { cn } from '@/lib/utils'; // Ensure utility exists or use standard class string
 
-import TermInput, { buildTermString } from '@/components/asprak/TermInput';
+import TermInput from '@/components/asprak/TermInput';
+import { buildTermString } from '@/utils/termHelpers';
 import MataKuliahCSVPreview, { MataKuliahCSVRow } from './MataKuliahCSVPreview';
 import { validateMataKuliahData } from '@/utils/validation/mataKuliahValidation';
 import type { MataKuliahGrouped } from '@/services/mataKuliahService';

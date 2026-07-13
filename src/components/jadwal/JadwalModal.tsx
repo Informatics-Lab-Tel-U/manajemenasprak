@@ -60,10 +60,11 @@ export function JadwalModal({
     dosen: '',
   });
 
-  const [selectedTerm, setSelectedTerm] = useState<string>('');
-  const [selectedPraktikum, setSelectedPraktikum] = useState<string>('');
-  const [isPJJ, setIsPJJ] = useState<boolean>(false);
-  const [isCustomJam, setIsCustomJam] = useState<boolean>(false);
+  const [uiState, updateUiState] = React.useReducer(
+    (prev: any, next: any) => ({ ...prev, ...next }),
+    { selectedTerm: '', selectedPraktikum: '', isPJJ: false, isCustomJam: false }
+  );
+  const { selectedTerm, selectedPraktikum, isPJJ, isCustomJam } = uiState;
 
   // Extract unique terms
   const availableTerms = Array.from(
@@ -104,12 +105,13 @@ export function JadwalModal({
 
         const currentMK = mataKuliahList.find((mk) => mk.id === initialData.id_mk);
         if (currentMK?.praktikum) {
-          setSelectedTerm(currentMK.praktikum.tahun_ajaran || '');
-          setSelectedPraktikum(currentMK.praktikum.nama || '');
+          updateUiState({
+            selectedTerm: currentMK?.praktikum?.tahun_ajaran || '',
+            selectedPraktikum: currentMK?.praktikum?.nama || '',
+            isPJJ: initialData.kelas.toUpperCase().includes('PJJ'),
+            isCustomJam: !initialData.sesi || initialData.sesi === 0
+          });
         }
-
-        setIsPJJ(initialData.kelas.toUpperCase().includes('PJJ'));
-        setIsCustomJam(!initialData.sesi || initialData.sesi === 0);
       } else {
         const defaultDay = 'SENIN';
         const defaultSession = STATIC_SESSIONS[defaultDay][0];
@@ -123,10 +125,12 @@ export function JadwalModal({
           total_asprak: 1,
           dosen: '',
         });
-        setSelectedTerm('');
-        setSelectedPraktikum('');
-        setIsPJJ(false);
-        setIsCustomJam(false);
+        updateUiState({
+          selectedTerm: '',
+          selectedPraktikum: '',
+          isPJJ: false,
+          isCustomJam: false
+        });
       }
     }
   }, [isOpen, initialData, mataKuliahList]);
@@ -136,6 +140,10 @@ export function JadwalModal({
   const handleChange = (field: keyof CreateJadwalInput, value: any) => {
     setFormData((prev) => {
       const newData = { ...prev, [field]: value };
+      
+      if (field === 'kelas') {
+        updateUiState({ isPJJ: value.toUpperCase().includes('PJJ') });
+      }
 
       if ((field === 'hari' || field === 'sesi') && !isCustomJam) {
         const currentDay = field === 'hari' ? value : newData.hari;
@@ -223,9 +231,8 @@ export function JadwalModal({
               <Select
                 value={selectedTerm}
                 onValueChange={(val) => {
-                  setSelectedTerm(val);
-                  setSelectedPraktikum('');
-                  handleChange('id_mk', '');
+                  updateUiState({ selectedTerm: val, selectedPraktikum: '' });
+                  setFormData((prev) => ({ ...prev, id_mk: '' }));
                 }}
                 disabled={!isDetailsEditable}
               >
@@ -249,8 +256,8 @@ export function JadwalModal({
               <Select
                 value={selectedPraktikum}
                 onValueChange={(val) => {
-                  setSelectedPraktikum(val);
-                  handleChange('id_mk', '');
+                  updateUiState({ selectedPraktikum: val });
+                  setFormData((prev) => ({ ...prev, id_mk: '' }));
                 }}
                 disabled={!selectedTerm || !isDetailsEditable}
               >
@@ -390,7 +397,7 @@ export function JadwalModal({
                       id="custom-jam"
                       checked={isCustomJam}
                       onCheckedChange={(checked) => {
-                        setIsCustomJam(checked);
+                        updateUiState({ isCustomJam: checked });
                         if (checked) {
                           setFormData((prev) => ({ ...prev, sesi: 0 }));
                         } else {

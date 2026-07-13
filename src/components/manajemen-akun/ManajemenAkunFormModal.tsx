@@ -57,40 +57,51 @@ const ROLE_OPTIONS: { value: Role; label: string }[] = [
 ];
 
 export function ManajemenAkunFormModal({ open, onOpenChange, mode, user, onSuccess }: Props) {
-  const [nama, setNama] = React.useState('');
-  const [email, setEmail] = React.useState('');
-  const [password, setPassword] = React.useState('');
-  const [showPassword, setShowPassword] = React.useState(false);
-  const [role, setRole] = React.useState<Role>('ASPRAK_KOOR');
-  const [isLoading, setIsLoading] = React.useState(false);
+  const [state, updateState] = React.useReducer(
+    (prev: any, next: any) => typeof next === 'function' ? { ...prev, ...next(prev) } : { ...prev, ...next },
+    {
+      nama: '', email: '', password: '', showPassword: false, role: 'ASPRAK_KOOR', isLoading: false,
+      praktikumList: [], tahunAjaranList: [], selectedTahun: '', selectedPraktikumId: '', loadingPraktikum: false
+    }
+  );
+  const { nama, email, password, showPassword, role, isLoading, praktikumList, tahunAjaranList, selectedTahun, selectedPraktikumId, loadingPraktikum } = state;
+
+  
+  
+  
+  
+  
+  
 
   // ASPRAK_KOOR — a koordinator handles exactly 1 praktikum
-  const [praktikumList, setPraktikumList] = React.useState<Praktikum[]>([]);
-  const [tahunAjaranList, setTahunAjaranList] = React.useState<string[]>([]);
-  const [selectedTahun, setSelectedTahun] = React.useState('');
-  const [selectedPraktikumId, setSelectedPraktikumId] = React.useState(''); // single
-  const [loadingPraktikum, setLoadingPraktikum] = React.useState(false);
+  
+  
+  
+   // single
+  
 
   /* ── Load praktikum list once per dialog open ── */
   React.useEffect(() => {
     if (!open) return;
 
     // Reset form fields
-    setNama(user?.nama_lengkap ?? '');
-    setEmail(user?.email ?? '');
-    setPassword('');
-    setShowPassword(false);
-    setRole(user?.role ?? 'ASPRAK_KOOR');
-    setPraktikumList([]);
-    setTahunAjaranList([]);
-    setSelectedTahun('');
-    setSelectedPraktikumId('');
+    updateState({
+      nama: user?.nama_lengkap ?? '',
+      email: user?.email ?? '',
+      password: '',
+      showPassword: false,
+      role: user?.role ?? 'ASPRAK_KOOR',
+      praktikumList: [],
+      tahunAjaranList: [],
+      selectedTahun: '',
+      selectedPraktikumId: ''
+    });
 
     // Fetch praktikum + existing assignment if ASPRAK_KOOR
     const shouldFetch = (user?.role ?? 'ASPRAK_KOOR') === 'ASPRAK_KOOR';
     if (!shouldFetch) return;
 
-    setLoadingPraktikum(true);
+    updateState({ loadingPraktikum: true });
     let cancelled = false;
 
     const loadData = async () => {
@@ -122,15 +133,17 @@ export function ManajemenAkunFormModal({ open, onOpenChange, mode, user, onSucce
         }
 
         if (!cancelled) {
-          setPraktikumList(list);
-          setTahunAjaranList(tahuns);
-          setSelectedTahun(existingTahun);
-          setSelectedPraktikumId(existingPraktikumId);
+          updateState({
+            praktikumList: list,
+            tahunAjaranList: tahuns,
+            selectedTahun: existingTahun,
+            selectedPraktikumId: existingPraktikumId
+          });
         }
       } catch {
         if (!cancelled) toast.error('Gagal memuat data praktikum');
       } finally {
-        if (!cancelled) setLoadingPraktikum(false);
+        if (!cancelled) updateState({ loadingPraktikum: false });
       }
     };
 
@@ -146,7 +159,7 @@ export function ManajemenAkunFormModal({ open, onOpenChange, mode, user, onSucce
   React.useEffect(() => {
     if (!open || role !== 'ASPRAK_KOOR' || praktikumList.length > 0 || loadingPraktikum) return;
 
-    setLoadingPraktikum(true);
+    updateState({ loadingPraktikum: true });
     let cancelled = false;
 
     fetch('/api/praktikum?action=all')
@@ -158,14 +171,16 @@ export function ManajemenAkunFormModal({ open, onOpenChange, mode, user, onSucce
           const tahuns = Array.from(new Set(list.map((p) => p.tahun_ajaran)))
             .sort()
             .reverse() as string[];
-          setPraktikumList(list);
-          setTahunAjaranList(tahuns);
-          if (tahuns.length > 0) setSelectedTahun(tahuns[0]);
+          updateState({
+            praktikumList: list,
+            tahunAjaranList: tahuns,
+            ...(tahuns.length > 0 ? { selectedTahun: tahuns[0] } : {})
+          });
         }
       })
       .catch(() => toast.error('Gagal memuat data praktikum'))
       .finally(() => {
-        if (!cancelled) setLoadingPraktikum(false);
+        if (!cancelled) updateState({ loadingPraktikum: false });
       });
 
     return () => {
@@ -182,13 +197,13 @@ export function ManajemenAkunFormModal({ open, onOpenChange, mode, user, onSucce
 
   async function handleSubmit(_e: React.FormEvent) {
     _e.preventDefault();
-    setIsLoading(true);
+    updateState({ isLoading: true });
 
     try {
       if (mode === 'create') {
         if (role === 'ASPRAK_KOOR' && !selectedPraktikumId) {
           toast.error('Pilih 1 praktikum untuk Koordinator Asprak');
-          setIsLoading(false);
+          updateState({ isLoading: false });
           return;
         }
 
@@ -210,7 +225,7 @@ export function ManajemenAkunFormModal({ open, onOpenChange, mode, user, onSucce
       } else {
         if (role === 'ASPRAK_KOOR' && !selectedPraktikumId) {
           toast.error('Pilih 1 praktikum untuk Koordinator Asprak');
-          setIsLoading(false);
+          updateState({ isLoading: false });
           return;
         }
 
@@ -235,7 +250,7 @@ export function ManajemenAkunFormModal({ open, onOpenChange, mode, user, onSucce
     } catch (err: any) {
       toast.error(err.message);
     } finally {
-      setIsLoading(false);
+      updateState({ isLoading: false });
     }
   }
 
@@ -258,7 +273,7 @@ export function ManajemenAkunFormModal({ open, onOpenChange, mode, user, onSucce
             <Input
               id="akun-nama"
               value={nama}
-              onChange={(e) => setNama(e.target.value)}
+              onChange={(e) => updateState({ nama: e.target.value })}
               required
               disabled={isLoading}
               placeholder="Nama Lengkap"
@@ -274,7 +289,7 @@ export function ManajemenAkunFormModal({ open, onOpenChange, mode, user, onSucce
                   id="akun-email"
                   type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => updateState({ email: e.target.value })}
                   required
                   disabled={isLoading}
                   placeholder="email@contoh.com"
@@ -290,7 +305,7 @@ export function ManajemenAkunFormModal({ open, onOpenChange, mode, user, onSucce
                     id="akun-password"
                     type={showPassword ? 'text' : 'password'}
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => updateState({ password: e.target.value })}
                     required
                     disabled={isLoading}
                     placeholder="Minimal 6 karakter"
@@ -300,7 +315,7 @@ export function ManajemenAkunFormModal({ open, onOpenChange, mode, user, onSucce
                   />
                   <button
                     type="button"
-                    onClick={() => setShowPassword((v) => !v)}
+                    onClick={() => updateState((prev: any) => ({ showPassword: !prev.showPassword }))}
                     className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground"
                     tabIndex={-1}
                     aria-label={showPassword ? 'Sembunyikan' : 'Tampilkan'}
@@ -318,8 +333,8 @@ export function ManajemenAkunFormModal({ open, onOpenChange, mode, user, onSucce
             <Select
               value={role}
               onValueChange={(v) => {
-                setRole(v as Role);
-                setSelectedPraktikumId('');
+                updateState({ role: v as Role });
+                updateState({ selectedPraktikumId: '' });
               }}
               disabled={isLoading}
             >
@@ -354,8 +369,8 @@ export function ManajemenAkunFormModal({ open, onOpenChange, mode, user, onSucce
                 <Select
                   value={selectedTahun}
                   onValueChange={(v) => {
-                    setSelectedTahun(v);
-                    setSelectedPraktikumId(''); // clear selection when changing year
+                    updateState({ selectedTahun: v });
+                    updateState({ selectedPraktikumId: '' }); // clear selection when changing year
                   }}
                   disabled={isLoading || loadingPraktikum || tahunAjaranList.length === 0}
                 >

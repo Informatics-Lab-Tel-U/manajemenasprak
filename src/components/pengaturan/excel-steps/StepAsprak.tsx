@@ -131,42 +131,41 @@ export default function StepAsprak({ data, term, onNext, onPrev, onImport }: Ste
 
   const handleRoleEdit = useCallback(
     (rowIndex: number, newRole: 'ASPRAK' | 'ASLAB') => {
-      setPreviewRows((prev) => {
-        const updated = [...prev];
-        const row = { ...updated[rowIndex] };
-        row.role = newRole;
-        updated[rowIndex] = row;
-        try {
-          const remappedData = updated.map((r) => ({
-            nama_lengkap: r.nama_lengkap,
-            nim: r.nim,
-            kode:
-              r.codeRule === 'Manual edit' ? r.kode : r.codeSource === 'csv' ? r.originalKode : '',
-            role: r.role,
-            angkatan: r.angkatan,
-          }));
-          const revalidated = validateAsprakData(
-            remappedData,
-            existingCodes,
-            existingNims,
-            forceOverride
-          );
-          return revalidated.map((revalRow, i) => {
-            if (updated[i].codeRule === 'Manual edit') {
-              revalRow.kode = updated[i].kode;
-              revalRow.codeSource = 'csv';
-              revalRow.codeRule = 'Manual edit';
-            }
-            revalRow.selected = updated[i].selected;
-            return revalRow;
-          });
-        } catch (e: any) {
-          setError(`Error saat menyiapkan data: ${e.message}`);
-          return updated;
-        }
-      });
+      const updated = [...previewRows];
+      const row = { ...updated[rowIndex] };
+      row.role = newRole;
+      updated[rowIndex] = row;
+      try {
+        const remappedData = updated.map((r) => ({
+          nama_lengkap: r.nama_lengkap,
+          nim: r.nim,
+          kode:
+            r.codeRule === 'Manual edit' ? r.kode : r.codeSource === 'csv' ? r.originalKode : '',
+          role: r.role,
+          angkatan: r.angkatan,
+        }));
+        const revalidated = validateAsprakData(
+          remappedData,
+          existingCodes,
+          existingNims,
+          forceOverride
+        );
+        const finalRows = revalidated.map((revalRow, i) => {
+          if (updated[i].codeRule === 'Manual edit') {
+            revalRow.kode = updated[i].kode;
+            revalRow.codeSource = 'csv';
+            revalRow.codeRule = 'Manual edit';
+          }
+          revalRow.selected = updated[i].selected;
+          return revalRow;
+        });
+        setPreviewRows(finalRows);
+      } catch (e: any) {
+        setError(`Error saat menyiapkan data: ${e.message}`);
+        setPreviewRows(updated);
+      }
     },
-    [existingCodes, existingNims, forceOverride]
+    [previewRows, existingCodes, existingNims, forceOverride]
   );
 
   const handleForceOverrideToggle = useCallback((checked: boolean) => {

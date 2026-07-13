@@ -20,6 +20,20 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useJaga } from '@/hooks/useJaga';
 import { getJagaShiftsByDay } from '@/utils/jagaUtils';
 
+const chartConfigAsprak = {
+  count: {
+    label: 'Jumlah Asprak',
+    color: 'var(--primary)',
+  },
+} satisfies ChartConfig;
+
+const chartConfigJadwal = {
+  count: {
+    label: 'Total Kelas',
+    color: 'var(--primary)',
+  },
+} satisfies ChartConfig;
+
 export default function DashboardCharts({
   asprakByAngkatan,
   jadwalByDay,
@@ -46,19 +60,6 @@ export default function DashboardCharts({
     (a, b) => dayOrder.indexOf(a.name) - dayOrder.indexOf(b.name)
   );
 
-  const chartConfigAsprak = {
-    count: {
-      label: 'Jumlah Asprak',
-      color: 'var(--primary)',
-    },
-  } satisfies ChartConfig;
-
-  const chartConfigJadwal = {
-    count: {
-      label: 'Total Kelas',
-      color: 'var(--primary)',
-    },
-  } satisfies ChartConfig;
 
   // Schedule Matrix Logic
   const todayDate = new Date();

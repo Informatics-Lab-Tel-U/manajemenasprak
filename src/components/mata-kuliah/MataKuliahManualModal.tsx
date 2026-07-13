@@ -13,7 +13,8 @@ import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { DialogFooter } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { Plus } from 'lucide-react';
-import TermInput, { buildTermString } from '@/components/asprak/TermInput';
+import TermInput from '@/components/asprak/TermInput';
+import { buildTermString } from '@/utils/termHelpers';
 
 interface MataKuliahManualModalProps {
   open: boolean;

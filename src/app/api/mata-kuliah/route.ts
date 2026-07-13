@@ -56,7 +56,13 @@ export async function POST(request: NextRequest) {
 
       return NextResponse.json({ ok: true, data: result });
     } else if (action === 'bulk') {
-      const finalPayloads: any[] = [];
+      const finalPayloads: Array<{
+        id_praktikum: number;
+        nama_lengkap: string;
+        program_studi: string;
+        dosen_koor: string;
+        warna?: string;
+      }> = [];
       const errors: string[] = [];
 
       await Promise.all(

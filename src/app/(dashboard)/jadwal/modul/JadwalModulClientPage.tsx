@@ -31,6 +31,39 @@ import { toast } from 'sonner';
 import { format, addDays, getDay } from 'date-fns';
 import { id } from 'date-fns/locale';
 
+const addDaysSafe = (dateStr: string, days: number): string => {
+  try {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const date = new Date(y, m - 1, d);
+    const newDate = addDays(date, days);
+    return format(newDate, 'yyyy-MM-dd');
+  } catch {
+    return dateStr;
+  }
+};
+
+const getDayName = (dateStr: string | null): string => {
+  if (!dateStr) return '';
+  try {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const date = new Date(y, m - 1, d);
+    return format(date, 'EEEE', { locale: id });
+  } catch {
+    return '';
+  }
+};
+
+const isMonday = (dateStr: string | null): boolean => {
+  if (!dateStr) return true;
+  try {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const date = new Date(y, m - 1, d);
+    return getDay(date) === 1; // 1 is Monday
+  } catch {
+    return false;
+  }
+};
+
 export default function JadwalModulClientPage() {
   const { tahunAjaranList, loading: loadingTahunAjaran } = useTahunAjaran();
   const [selectedTerm, setSelectedTerm] = useState<string>('');
@@ -78,40 +111,7 @@ export default function JadwalModulClientPage() {
     );
   };
 
-  const addDaysSafe = (dateStr: string, days: number): string => {
-    try {
-      // parseISO on YYYY-MM-DD can sometimes be interpreted as UTC.
-      // Splitting manually ensures it's treated as local date.
-      const [y, m, d] = dateStr.split('-').map(Number);
-      const date = new Date(y, m - 1, d);
-      const newDate = addDays(date, days);
-      return format(newDate, 'yyyy-MM-dd');
-    } catch {
-      return dateStr;
-    }
-  };
 
-  const getDayName = (dateStr: string | null): string => {
-    if (!dateStr) return '';
-    try {
-      const [y, m, d] = dateStr.split('-').map(Number);
-      const date = new Date(y, m - 1, d);
-      return format(date, 'EEEE', { locale: id });
-    } catch {
-      return '';
-    }
-  };
-
-  const isMonday = (dateStr: string | null): boolean => {
-    if (!dateStr) return true;
-    try {
-      const [y, m, d] = dateStr.split('-').map(Number);
-      const date = new Date(y, m - 1, d);
-      return getDay(date) === 1; // 1 is Monday
-    } catch {
-      return false;
-    }
-  };
 
   const isSequentiallyValid = (
     modul: number,

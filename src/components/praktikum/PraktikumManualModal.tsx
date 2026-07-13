@@ -14,7 +14,8 @@ import {
 } from '@/components/ui/dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertTriangle, CheckCircle, X } from 'lucide-react';
-import TermInput, { buildTermString } from '@/components/asprak/TermInput';
+import TermInput from '@/components/asprak/TermInput';
+import { buildTermString } from '@/utils/termHelpers';
 import { Field, FieldGroup } from '@/components/ui/field';
 
 interface PraktikumManualModalProps {

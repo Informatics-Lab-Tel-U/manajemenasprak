@@ -6,6 +6,27 @@ import * as jadwalFetcher from '@/lib/fetchers/jadwalFetcher';
 import * as praktikumFetcher from '@/lib/fetchers/praktikumFetcher';
 import type { CreateJadwalInput, UpdateJadwalInput } from '@/services/jadwalService';
 
+const moduls = [
+  'Default',
+  'Modul 1',
+  'Modul 2',
+  'Modul 3',
+  'Modul 4',
+  'Modul 5',
+  'Modul 6',
+  'Modul 7',
+  'Modul 8',
+  'Modul 9',
+  'Modul 10',
+  'Modul 11',
+  'Modul 12',
+  'Modul 13',
+  'Modul 14',
+  'Modul 15',
+  'Modul 16',
+];
+
+
 export function useJadwal(
   initialTerm?: string,
   initialData?: {
@@ -25,25 +46,6 @@ export function useJadwal(
   const [mataKuliahList, setMataKuliahList] = useState<MataKuliah[]>(initialData?.mataKuliah || []);
   const [jadwalPengganti, setJadwalPengganti] = useState<any[]>([]);
 
-  const moduls = [
-    'Default',
-    'Modul 1',
-    'Modul 2',
-    'Modul 3',
-    'Modul 4',
-    'Modul 5',
-    'Modul 6',
-    'Modul 7',
-    'Modul 8',
-    'Modul 9',
-    'Modul 10',
-    'Modul 11',
-    'Modul 12',
-    'Modul 13',
-    'Modul 14',
-    'Modul 15',
-    'Modul 16',
-  ];
 
   const fetchTerms = useCallback(async () => {
     if (terms.length > 0) return;

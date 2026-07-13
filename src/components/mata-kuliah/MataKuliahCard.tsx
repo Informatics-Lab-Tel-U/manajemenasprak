@@ -7,15 +7,16 @@ interface MataKuliahCardProps {
   mk: MataKuliahWithPraktikum;
 }
 
+// Use primary color theme for all cards to ensure visual consistency
+const theme = {
+  gradient: 'from-primary/20 to-blue-500/20',
+  text: 'text-primary dark:text-primary-foreground/90',
+  border: 'border-primary/20 dark:border-primary/20',
+  icon: 'text-primary bg-primary/10 dark:text-primary-foreground/90 dark:bg-primary/20',
+  pill: 'bg-primary/5 text-primary border-primary/20 dark:bg-primary/10 dark:text-primary-foreground/90 dark:border-primary/30',
+};
+
 export default function MataKuliahCard({ mk }: MataKuliahCardProps) {
-  // Use primary color theme for all cards to ensure visual consistency
-  const theme = {
-    gradient: 'from-primary/20 to-blue-500/20',
-    text: 'text-primary dark:text-primary-foreground/90',
-    border: 'border-primary/20 dark:border-primary/20',
-    icon: 'text-primary bg-primary/10 dark:text-primary-foreground/90 dark:bg-primary/20',
-    pill: 'bg-primary/5 text-primary border-primary/20 dark:bg-primary/10 dark:text-primary-foreground/90 dark:border-primary/30',
-  };
 
   const isPJJ = mk.program_studi.includes('PJJ');
 

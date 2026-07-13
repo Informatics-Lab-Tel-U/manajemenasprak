@@ -190,7 +190,7 @@ export async function getExistingCodes(supabaseClient?: SupabaseClient): Promise
   const supabase = supabaseClient ?? (await createClient());
   const { data } = await supabase.from('asprak').select('kode');
   if (!data) return [];
-  return Array.from<string>(new Set(data.map((d) => d.kode as string))).sort((a, b) => a.localeCompare(b));
+  return Array.from(new Set<string>(data.map((d) => d.kode as string))).sort((a, b) => a.localeCompare(b));
 }
 
 export const getCachedAvailableTerms = getCachedTerms;

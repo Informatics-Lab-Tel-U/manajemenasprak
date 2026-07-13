@@ -28,7 +28,7 @@ import {
   DialogClose,
 } from '@/components/ui/dialog';
 
-export const VIOLATION_TYPES = [
+const VIOLATION_TYPES = [
   'TELAT DATANG',
   'TIDAK DATANG',
   'TELAT NILAI',
@@ -36,7 +36,7 @@ export const VIOLATION_TYPES = [
   'LAIN-LAIN',
 ] as const;
 
-export type ViolationType = (typeof VIOLATION_TYPES)[number];
+type ViolationType = (typeof VIOLATION_TYPES)[number];
 
 // Which side-panel is currently open
 type SidePanel = 'asprak' | 'jadwal' | null;
@@ -72,10 +72,15 @@ export default function PelanggaranForm({
   initialModul = '',
 }: PelanggaranFormProps) {
   // ── Context filters ──
-  const [selectedTahunAjaran, setSelectedTahunAjaran] = useState(initialTahunAjaran);
-  const [selectedPraktikumId, setSelectedPraktikumId] = useState(initialPraktikumId);
-
-  const [modul, setModul] = useState<string>(initialModul);
+  const [contextState, updateContextState] = React.useReducer(
+    (prev: any, next: any) => ({ ...prev, ...next }),
+    { 
+      selectedTahunAjaran: initialTahunAjaran, 
+      selectedPraktikumId: initialPraktikumId, 
+      modul: initialModul 
+    }
+  );
+  const { selectedTahunAjaran, selectedPraktikumId, modul } = contextState;
 
   const [hydrated, setHydrated] = useState(false);
   useEffect(() => {
@@ -84,9 +89,11 @@ export default function PelanggaranForm({
 
   // Sync state if initial props change (e.g. after data fetch in parent)
   useEffect(() => {
-    if (initialTahunAjaran) setSelectedTahunAjaran(initialTahunAjaran);
-    if (initialPraktikumId) setSelectedPraktikumId(initialPraktikumId);
-    if (initialModul) setModul(initialModul);
+    updateContextState({
+      ...(initialTahunAjaran && { selectedTahunAjaran: initialTahunAjaran }),
+      ...(initialPraktikumId && { selectedPraktikumId: initialPraktikumId }),
+      ...(initialModul && { modul: initialModul })
+    });
   }, [initialTahunAjaran, initialPraktikumId, initialModul]);
 
   // ── Violation fields ──
@@ -114,7 +121,7 @@ export default function PelanggaranForm({
     setSelectedAsprakIds([]);
     setIdJadwal('');
     setJenis('');
-    setModul('');
+    updateContextState({ modul: '' });
     setAsprakSearch('');
     setJadwalSearch('');
     setSidePanel(null);
@@ -393,8 +400,7 @@ export default function PelanggaranForm({
                       <Select
                         value={selectedTahunAjaran}
                         onValueChange={(v) => {
-                          setSelectedTahunAjaran(v);
-                          setSelectedPraktikumId('');
+                          updateContextState({ selectedTahunAjaran: v, selectedPraktikumId: '', modul: '' });
                           resetViolationFields();
                         }}
                       >
@@ -415,7 +421,7 @@ export default function PelanggaranForm({
                       <Select
                         value={selectedPraktikumId}
                         onValueChange={(v) => {
-                          setSelectedPraktikumId(v);
+                          updateContextState({ selectedPraktikumId: v, modul: '' });
                           resetViolationFields();
                         }}
                         disabled={!selectedTahunAjaran}

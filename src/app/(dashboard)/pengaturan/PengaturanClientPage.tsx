@@ -52,12 +52,11 @@ export default function DatabaseClientPage({
   const [termYear, setTermYear] = useState('24');
   const [termSem, setTermSem] = useState<'1' | '2'>('2');
 
-  const [loading, setLoading] = useState(false);
-  const [status, setStatus] = useState<{
-    type: 'success' | 'error' | 'info';
-    message: string;
-  } | null>(null);
-  const [progress, setProgress] = useState(0);
+  const [uiState, updateUiState] = React.useReducer(
+    (prev: any, next: any) => ({ ...prev, ...next }),
+    { loading: false, status: null as any, progress: 0 }
+  );
+  const { loading, status, progress } = uiState;
 
   const { tahunAjaranList, loading: loadingTahunAjaran } = useTahunAjaran();
   const [selectedExportTerm, setExportTerm] = useState('');
@@ -99,15 +98,14 @@ export default function DatabaseClientPage({
       const startY = parseInt(termYear);
       const term = `${startY}${startY + 1}-${termSem}`;
 
-      setLoading(true);
-      setProgress(0);
-      setStatus({ type: 'info', message: `Memproses ${file.name}...` });
+      updateUiState({ loading: true, status: null, progress: 0 });
+      updateUiState({ status: { type: 'info', message: `Memproses ${file.name}...` } });
 
       const interval = setInterval(() => {
-        setProgress((prev) => {
+        updateUiState({ progress: (prev: number) => {
           if (prev >= 90) return prev;
           return prev + Math.floor(Math.random() * 10) + 5;
-        });
+        }});
       }, 500);
 
       try {
@@ -133,16 +131,16 @@ export default function DatabaseClientPage({
         setActiveTerm(term);
 
         clearInterval(interval);
-        setProgress(100);
-        setStatus(null);
+        updateUiState({ progress: 100 });
+        updateUiState({ status: null });
         setWizardStep(1);
       } catch (e: any) {
         clearInterval(interval);
-        setProgress(100);
-        setStatus({ type: 'error', message: e.message || 'Gagal membaca file Excel' });
+        updateUiState({ progress: 100 });
+        updateUiState({ status: { type: 'error', message: e.message || 'Gagal memproses file' } });
       } finally {
-        setLoading(false);
-        setTimeout(() => setProgress(0), 1000);
+        updateUiState({ loading: false });
+        setTimeout(() => updateUiState({ progress: 0 }), 1000);
       }
     },
     [termYear, termSem]
@@ -163,18 +161,17 @@ export default function DatabaseClientPage({
     if (confirmInput !== CONFIRMATION_PHRASE) return;
 
     setIsDeleteModalOpen(false);
-    setLoading(true);
-    setStatus({ type: 'info', message: 'Membersihkan database...' });
+    updateUiState({ loading: true, status: { type: 'info', message: 'Membersihkan database...' } });
 
     try {
       const res = await fetch('/api/clear', { method: 'POST' });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-      setStatus({ type: 'success', message: 'Database berhasil dibersihkan!' });
+      updateUiState({ status: { type: 'success', message: 'Database berhasil dibersihkan!' } });
     } catch (e: any) {
-      setStatus({ type: 'error', message: e.message });
+      updateUiState({ status: { type: 'error', message: e.message } });
     } finally {
-      setLoading(false);
+      updateUiState({ loading: false });
     }
   };
 
@@ -188,23 +185,14 @@ export default function DatabaseClientPage({
     if (confirmTermInput !== CONFIRMATION_TERM_PHRASE) return;
 
     setIsDeleteTermModalOpen(false);
-    setLoading(true);
-    setStatus({ type: 'info', message: `Menghapus jadwal angkatan ${deleteTerm}...` });
+    updateUiState({ loading: true, status: { type: 'info', message: `Menghapus jadwal angkatan ${deleteTerm}...` } });
 
     try {
       const result = await jadwalFetcher.deleteJadwalByTerm(deleteTerm);
       if (result.ok) {
-        setStatus({
-          type: 'success',
-          message: `Berhasil menghapus jadwal angkatan ${deleteTerm}!`,
-        });
-      } else {
-        setStatus({ type: 'error', message: result.error || 'Gagal menghapus jadwal' });
-      }
-    } catch (e: any) {
       setStatus({ type: 'error', message: e.message || 'Gagal menghapus jadwal' });
     } finally {
-      setLoading(false);
+      updateUiState({ loading: false });
     }
   };
 
@@ -246,7 +234,7 @@ export default function DatabaseClientPage({
     } catch (e: any) {
       setStatus({ type: 'error', message: e.message || 'Ekspor gagal' });
     } finally {
-      setLoading(false);
+      updateUiState({ loading: false });
     }
   };
 

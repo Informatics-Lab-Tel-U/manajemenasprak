@@ -11,7 +11,8 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 
-import TermInput, { buildTermString } from './TermInput';
+import TermInput from './TermInput';
+import { buildTermString } from '@/utils/termHelpers';
 import { fetchPlottingData } from '@/lib/fetchers/asprakFetcher';
 
 interface AsprakExportModalProps {

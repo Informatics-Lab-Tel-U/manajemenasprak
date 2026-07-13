@@ -46,6 +46,49 @@ interface JadwalImportCSVModalProps {
 
 const REQUIRED_COLS = ['kelas', 'hari', 'sesi', 'jam', 'ruangan']; // removed mata_kuliah, checking nama_singkat dynamically
 
+const handleDownloadTemplate = async (format: 'csv' | 'xlsx') => {
+  const data = [
+    {
+      Kelas: 'IF-45-01',
+      'Nama Singkat': 'PBO',
+      Hari: 'SENIN',
+      Sesi: 1,
+      Jam: '06:30',
+      Ruangan: 'TULT 0612 & 0613',
+      'Total Asprak': 2,
+      Dosen: 'ABC',
+    },
+    {
+      Kelas: 'SE-45-02',
+      'Nama Singkat': 'ALPRO',
+      Hari: 'SELASA',
+      Sesi: 2,
+      Jam: '09:30',
+      Ruangan: 'TULT 0615',
+      'Total Asprak': 2,
+      Dosen: 'DEF',
+    },
+  ];
+
+  if (format === 'csv') {
+    const csv = Papa.unparse(data);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'template_jadwal.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  } else {
+    const XLSX = await import('xlsx');
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Template');
+    XLSX.writeFile(wb, 'template_jadwal.xlsx');
+  }
+};
+
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function JadwalImportCSVModal({
@@ -114,49 +157,6 @@ export default function JadwalImportCSVModal({
 
   // ─── Handlers ────────────────────────────────────────────────────────────
 
-  const handleDownloadTemplate = async (format: 'csv' | 'xlsx') => {
-    const data = [
-      {
-        Kelas: 'IF-45-01',
-        'Nama Singkat': 'PBO',
-        Hari: 'SENIN',
-        Sesi: 1,
-        Jam: '06:30',
-        Ruangan: 'TULT 0612 & 0613',
-        'Total Asprak': 2,
-        Dosen: 'ABC',
-      },
-      {
-        Kelas: 'SE-45-02',
-        'Nama Singkat': 'ALPRO',
-        Hari: 'SELASA',
-        Sesi: 2,
-        Jam: '09:30',
-        Ruangan: 'TULT 0615',
-        'Total Asprak': 2,
-        Dosen: 'DEF',
-      },
-    ];
-
-    if (format === 'csv') {
-      const csv = Papa.unparse(data);
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', 'template_jadwal.csv');
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } else {
-      // Load xlsx lazily — only when user requests XLSX template
-      const XLSX = await import('xlsx');
-      const ws = XLSX.utils.json_to_sheet(data);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, 'Template');
-      XLSX.writeFile(wb, 'template_jadwal.xlsx');
-    }
-  };
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop: (acceptedFiles) => acceptedFiles[0] && processAndValidate(acceptedFiles[0]),

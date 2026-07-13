@@ -85,6 +85,16 @@ function JadwalTableSkeleton() {
   );
 }
 
+const handleImportCSV = async (rows: CreateJadwalInput[]) => {
+  const result = await jadwalFetcher.bulkImportJadwal(rows);
+  if (result.ok) {
+    toast.success(`Berhasil import ${result.data?.inserted} jadwal`);
+    window.location.reload();
+  } else {
+    toast.error(`Gagal import: ${result.error}`);
+  }
+};
+
 export default function JadwalClientPage({
   initialJadwal,
   initialTerms,
@@ -190,15 +200,7 @@ export default function JadwalClientPage({
     }
   };
 
-  const handleImportCSV = async (rows: CreateJadwalInput[]) => {
-    const result = await jadwalFetcher.bulkImportJadwal(rows);
-    if (result.ok) {
-      toast.success(`Berhasil import ${result.data?.inserted} jadwal`);
-      window.location.reload();
-    } else {
-      toast.error(`Gagal import: ${result.error}`);
-    }
-  };
+
 
   const handleDeleteJadwal = async (id: string) => {
     try {

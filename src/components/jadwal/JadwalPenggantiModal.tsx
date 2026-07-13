@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Jadwal, MataKuliah } from '@/types/database';
 import { DAYS, STATIC_SESSIONS, ROOMS } from '@/constants';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -23,14 +23,42 @@ import { fetchModulSchedule } from '@/lib/fetchers/modulScheduleFetcher';
 interface JadwalPenggantiModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (input: any) => Promise<any>;
-  initialData?: any | null;
+  onSubmit: (data: any) => Promise<boolean>;
+  initialData?: any;
   mataKuliahList: MataKuliah[];
   allJadwal: Jadwal[];
   isLoading?: boolean;
   currentTerm?: string;
-  disableModul?: boolean;
+  disableModul?: boolean; // If true, Modul selector is disabled
 }
+
+const calculateSesiFromJamPJJ = (timeStr: string, day: string) => {
+  const session = STATIC_SESSIONS[day]?.find((s) => s.jam === timeStr);
+  return session ? session.sesi : 0;
+};
+
+const calculateDate = (m: number, h: string, schedules: any[]) => {
+  const schedule = schedules.find((s) => s.modul === m);
+  if (!schedule?.tanggal_mulai) return '';
+
+  const dayOrder = ['SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU', 'MINGGU'];
+  const targetDayIndex = dayOrder.indexOf(h.toUpperCase());
+
+  if (targetDayIndex === -1) return schedule.tanggal_mulai;
+
+  try {
+    const [y, month, day] = schedule.tanggal_mulai.split('-').map(Number);
+    const d = new Date(y, month - 1, day);
+    d.setDate(d.getDate() + targetDayIndex);
+
+    const resYear = d.getFullYear();
+    const resMonth = String(d.getMonth() + 1).padStart(2, '0');
+    const resDay = String(d.getDate()).padStart(2, '0');
+    return `${resYear}-${resMonth}-${resDay}`;
+  } catch {
+    return '';
+  }
+};
 
 export function JadwalPenggantiModal({
   isOpen,
@@ -43,17 +71,24 @@ export function JadwalPenggantiModal({
   currentTerm,
   disableModul = false,
 }: JadwalPenggantiModalProps) {
-  const [selectedTerm, setSelectedTerm] = useState('');
-  const [selectedPraktikum, setSelectedPraktikum] = useState('');
-  // selectedMKId is kept in state but resolved automatically from the selected jadwal — not exposed in UI
+  
+  const [uiState, updateUiState] = React.useReducer(
+    (prev: any, next: any) => ({ ...prev, ...next }),
+    {
+      selectedTerm: '',
+      selectedPraktikum: '',
+      selectedJadwalId: '',
+      modul: 1,
+      tanggal: '',
+      hari: 'SENIN',
+      sesi: 1,
+      jam: '06:30',
+      ruangan: ''
+    }
+  );
+  const { selectedTerm, selectedPraktikum, selectedJadwalId, modul, tanggal, hari, sesi, jam, ruangan } = uiState;
 
-  const [selectedJadwalId, setSelectedJadwalId] = useState('');
-  const [modul, setModul] = useState<number>(1);
-  const [tanggal, setTanggal] = useState('');
-  const [hari, setHari] = useState('SENIN');
-  const [sesi, setSesi] = useState<number>(1);
-  const [jam, setJam] = useState('06:30');
-  const [ruangan, setRuangan] = useState('');
+  
 
   // Detect PJJ from the selected jadwal's kelas suffix
   const isPJJ = useMemo(() => {
@@ -75,10 +110,6 @@ export function JadwalPenggantiModal({
     return times;
   }, []);
 
-  const calculateSesiFromJamPJJ = (timeStr: string, day: string) => {
-    const session = STATIC_SESSIONS[day]?.find((s) => s.jam === timeStr);
-    return session ? session.sesi : 0;
-  };
 
   const [modulSchedules, setModulSchedules] = useState<any[]>([]);
 
@@ -174,25 +205,27 @@ export function JadwalPenggantiModal({
         const term = j?.mata_kuliah?.praktikum?.tahun_ajaran || '';
         const praktikumNama = j?.mata_kuliah?.praktikum?.nama || '';
 
-        setSelectedTerm(term);
-        setSelectedPraktikum(praktikumNama);
-        setSelectedJadwalId(initialData.id_jadwal || '');
-        setModul(initialData.modul);
-        setTanggal(initialData.tanggal);
-        setHari(initialData.hari);
-        setSesi(initialData.sesi);
-        setJam(initialData.jam);
-        setRuangan(initialData.ruangan);
+        updateUiState({ selectedTerm: term });
+        updateUiState({ selectedPraktikum: praktikumNama });
+        updateUiState({ selectedJadwalId: initialData.id_jadwal || '' });
+        updateUiState({ modul: initialData.modul });
+        updateUiState({ tanggal: initialData.tanggal });
+        updateUiState({ hari: initialData.hari });
+        updateUiState({ sesi: initialData.sesi });
+        updateUiState({ jam: initialData.jam });
+        updateUiState({ ruangan: initialData.ruangan });
       } else {
-        setSelectedTerm(currentTerm || '');
-        setSelectedPraktikum('');
-        setSelectedJadwalId('');
-        setModul(1);
-        setTanggal('');
-        setHari('SENIN');
-        setSesi(1);
-        setJam('06:30');
-        setRuangan('');
+        updateUiState({
+          selectedTerm: currentTerm || '',
+          selectedPraktikum: '',
+          selectedJadwalId: '',
+          modul: 1,
+          tanggal: '',
+          hari: 'SENIN',
+          sesi: 1,
+          jam: '06:30',
+          ruangan: ''
+        });
       }
     }
   }, [isOpen, initialData, currentTerm]);
@@ -210,63 +243,41 @@ export function JadwalPenggantiModal({
     }
   }, [isOpen, selectedTerm]);
 
-  const calculateDate = (m: number, h: string, schedules: any[]) => {
-    const schedule = schedules.find((s) => s.modul === m);
-    if (!schedule?.tanggal_mulai) return '';
 
-    const dayOrder = ['SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU', 'MINGGU'];
-    const targetDayIndex = dayOrder.indexOf(h.toUpperCase());
-
-    if (targetDayIndex === -1) return schedule.tanggal_mulai;
-
-    try {
-      // Avoid UTC shift by parsing manually as local date
-      const [y, month, day] = schedule.tanggal_mulai.split('-').map(Number);
-      const d = new Date(y, month - 1, day);
-      d.setDate(d.getDate() + targetDayIndex);
-
-      const resYear = d.getFullYear();
-      const resMonth = String(d.getMonth() + 1).padStart(2, '0');
-      const resDay = String(d.getDate()).padStart(2, '0');
-      return `${resYear}-${resMonth}-${resDay}`;
-    } catch {
-      return '';
-    }
-  };
 
   // Sync date when Modul, Hari, or modulSchedules changes
   useEffect(() => {
     if (isOpen && modulSchedules.length > 0) {
       const newTanggal = calculateDate(modul, hari, modulSchedules);
       if (newTanggal) {
-        setTanggal(newTanggal);
+        updateUiState({ tanggal: newTanggal });
       }
     }
   }, [isOpen, modul, hari, modulSchedules]);
 
   const handleSesiChange = (val: string) => {
     const sInt = parseInt(val);
-    setSesi(sInt);
+    updateUiState({ sesi: sInt });
     const sessionObj = STATIC_SESSIONS[hari]?.find((s) => s.sesi === sInt);
-    if (sessionObj) setJam(sessionObj.jam);
+    if (sessionObj) updateUiState({ jam: sessionObj.jam });
   };
 
   const handleHariChange = (val: string) => {
-    setHari(val);
+    updateUiState({ hari: val });
     if (isPJJ) {
       // Recalculate sessions from current jam if PJJ
-      setSesi(calculateSesiFromJamPJJ(jam, val));
+      updateUiState({ sesi: calculateSesiFromJamPJJ(jam, val }));
     } else {
       const sessionObj = STATIC_SESSIONS[val]?.find((s) => s.sesi === sesi);
-      if (sessionObj) setJam(sessionObj.jam);
+      if (sessionObj) updateUiState({ jam: sessionObj.jam });
     }
   };
 
   const handleJamChange = (val: string) => {
-    setJam(val);
+    updateUiState({ jam: val });
     if (isPJJ) {
       const calculatedSesi = calculateSesiFromJamPJJ(val, hari);
-      setSesi(calculatedSesi);
+      updateUiState({ sesi: calculatedSesi });
     }
   };
 
@@ -319,9 +330,9 @@ export function JadwalPenggantiModal({
                 <Select
                   value={selectedTerm}
                   onValueChange={(v) => {
-                    setSelectedTerm(v);
-                    setSelectedPraktikum('');
-                    setSelectedJadwalId('');
+                    updateUiState({ selectedTerm: v });
+                    updateUiState({ selectedPraktikum: '' });
+                    updateUiState({ selectedJadwalId: '' });
                   }}
                   disabled={!!initialData}
                 >
@@ -344,8 +355,8 @@ export function JadwalPenggantiModal({
                 <Select
                   value={selectedPraktikum}
                   onValueChange={(v) => {
-                    setSelectedPraktikum(v);
-                    setSelectedJadwalId('');
+                    updateUiState({ selectedPraktikum: v });
+                    updateUiState({ selectedJadwalId: '' });
                   }}
                   disabled={!selectedTerm || !!initialData}
                 >
@@ -433,7 +444,7 @@ export function JadwalPenggantiModal({
                   <Label>Modul</Label>
                   <Select
                     value={modul.toString()}
-                    onValueChange={(v) => setModul(parseInt(v))}
+                    onValueChange={(v) => updateUiState({ modul: parseInt(v }))}
                     disabled={disableModul}
                   >
                     <SelectTrigger className="w-full">
@@ -453,7 +464,7 @@ export function JadwalPenggantiModal({
                   <Input
                     type="date"
                     value={tanggal}
-                    onChange={(e) => setTanggal(e.target.value)}
+                    onChange={(e) => updateUiState({ tanggal: e.target.value })}
                     required
                     readOnly
                     className="w-full bg-muted cursor-not-allowed"
