@@ -1,12 +1,12 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Plus, Upload, Trash2, Users } from 'lucide-react';
+import { Plus, Upload, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { PraktikanRecord, PraktikanOptions } from './types';
-import PraktikanFilters, { ALL_KELAS_VALUE, ALL_MATA_KULIAH_VALUE } from './PraktikanFilters';
+import PraktikanFilters from './PraktikanFilters';
 import PraktikanTable from './PraktikanTable';
 import PraktikanAddModal from './PraktikanAddModal';
 import PraktikanImportCSVModal from './PraktikanImportCSVModal';

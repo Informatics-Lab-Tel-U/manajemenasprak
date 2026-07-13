@@ -1,14 +1,15 @@
+/* eslint-disable react-doctor/exhaustive-deps */
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
 import { Jadwal, JadwalPengganti } from '@/types/database';
 import * as jadwalFetcher from '@/lib/fetchers/jadwalFetcher';
 import type { DashboardStats } from '@/services/databaseService';
+import { useTermStore } from '@/store/useTermStore';
 
 export interface UseDashboardResult {
   terms: string[];
   selectedTerm: string;
-  setSelectedTerm: (term: string) => void;
   stats: DashboardStats;
   rawJadwal: Jadwal[];
   jadwalPengganti: JadwalPengganti[];
@@ -27,8 +28,8 @@ export function useDashboard(
   const [terms] = useState<string[]>(initialTerms);
   const [rawJadwal, setRawJadwal] = useState<Jadwal[]>(initialJadwal);
   const [jadwalPengganti, setJadwalPengganti] = useState<JadwalPengganti[]>(initialPengganti);
-  // Use initialTerms[0] which is guaranteed to be the latest term
-  const [selectedTerm, setSelectedTerm] = useState(initialTerms[0] || '');
+  const { activeTerm } = useTermStore();
+  const selectedTerm = activeTerm || '';
   const [stats, setStats] = useState<DashboardStats>(initialStats);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
@@ -87,7 +88,6 @@ export function useDashboard(
   return {
     terms,
     selectedTerm,
-    setSelectedTerm,
     stats,
     rawJadwal,
     jadwalPengganti,

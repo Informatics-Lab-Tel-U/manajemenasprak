@@ -63,6 +63,7 @@ import type { Pelanggaran, Praktikum } from '@/types/database';
 import type { Role } from '@/config/rbac';
 
 import { usePelanggaranDetail } from '@/hooks/usePelanggaran';
+import { useTermStore } from '@/store/useTermStore';
 
 interface Props {
   praktikum?: Praktikum;
@@ -156,6 +157,29 @@ export default function PelanggaranDetailClient({
   React.useEffect(() => {
     setMounted(true);
   }, []);
+
+  // ── Term Sync & Redirect ──
+  const { activeTerm, setActiveTerm } = useTermStore();
+  const hasSyncedTermRef = React.useRef(false);
+
+  React.useEffect(() => {
+    if (!praktikum?.tahun_ajaran) return;
+
+    if (!hasSyncedTermRef.current) {
+      // First load: force global term to match this detail page
+      if (activeTerm !== praktikum.tahun_ajaran) {
+        setActiveTerm(praktikum.tahun_ajaran);
+      }
+      hasSyncedTermRef.current = true;
+    } else {
+      // User changed term manually via dropdown
+      if (activeTerm !== praktikum.tahun_ajaran) {
+        toast.info('Tahun ajaran diubah, mengalihkan ke daftar pelanggaran...');
+        // eslint-disable-next-line react-doctor/nextjs-no-client-side-redirect
+        router.push('/pelanggaran');
+      }
+    }
+  }, [activeTerm, praktikum?.tahun_ajaran, router, setActiveTerm]);
 
   // Filter violations by selected module
   const filteredViolations = React.useMemo(() => {

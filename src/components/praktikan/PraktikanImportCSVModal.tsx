@@ -1,9 +1,9 @@
 'use client';
 
-import { ChangeEvent, useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import Papa from 'papaparse';
 import { useDropzone } from 'react-dropzone';
-import { Check, ClipboardList, FileSpreadsheet, Upload, FileText } from 'lucide-react';
+import { Check, ClipboardList, FileSpreadsheet, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Badge } from '@/components/ui/badge';

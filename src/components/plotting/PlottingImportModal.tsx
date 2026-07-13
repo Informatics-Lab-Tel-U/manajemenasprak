@@ -10,13 +10,8 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+
+
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
@@ -62,14 +57,17 @@ const handleDownloadTemplate = async (format: 'csv' | 'xlsx') => {
   }
 };
 
+import { useTermStore } from '@/store/useTermStore';
+
 export default function PlottingImportModal({
   open,
   onOpenChange,
   onSuccess,
   terms,
 }: PlottingImportModalProps) {
+  const { activeTerm } = useTermStore();
   const [step, setStep] = useState<'upload' | 'preview'>('upload');
-  const [selectedTerm, setSelectedTerm] = useState<string>('');
+  const selectedTerm = activeTerm || '';
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -205,20 +203,8 @@ export default function PlottingImportModal({
               <div className="space-y-6">
                 <div className="space-y-2">
                   <Label>Tahun Ajaran Penugasan</Label>
-                  <Select value={selectedTerm} onValueChange={setSelectedTerm}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Pilih Term" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {terms.map((t) => (
-                        <SelectItem key={t} value={t}>
-                          {t}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground">
-                    Isi term terlebih dahulu sebelum upload CSV.
+                  <p className="text-sm font-medium border border-border/50 bg-muted/20 px-3 py-2 rounded-md">
+                    Term: <span className="font-bold">{selectedTerm}</span>
                   </p>
                 </div>
 

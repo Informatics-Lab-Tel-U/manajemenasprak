@@ -78,9 +78,6 @@ export default function AsprakClientPage({
     upsert,
     deleteAsprak,
     getAssignments,
-    terms,
-    selectedTerm,
-    setSelectedTerm,
   } = useAsprak(initialTerms[0], true, {
     asprakList: initialAsprakList,
     terms: initialTerms,
@@ -345,9 +342,6 @@ export default function AsprakClientPage({
             <AsprakFilters
               searchQuery={searchQuery}
               onSearchChange={setSearchQuery}
-              terms={terms}
-              selectedTerm={selectedTerm}
-              onTermChange={setSelectedTerm}
             />
 
             <AsprakTable data={filteredList} loading={loading} onViewDetails={handleView} />
@@ -381,7 +375,7 @@ export default function AsprakClientPage({
         open={showPlottingImportModal}
         onOpenChange={setShowPlottingImportModal}
         onSuccess={() => {}}
-        terms={terms}
+        terms={initialTerms}
       />
 
       {/* Export Modal */}
@@ -405,7 +399,6 @@ export default function AsprakClientPage({
       {showEditModal && editTarget && (
         <AsprakEditModal
           asprak={editTarget.asprak}
-          term={selectedTerm || terms[0]}
           assignments={editTarget.assignments}
           onSave={handleSaveEdit}
           onClose={() => setShowEditModal(false)}

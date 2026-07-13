@@ -1,6 +1,7 @@
+/* eslint-disable react-doctor/exhaustive-deps */
 'use client';
 
-import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -14,6 +15,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
+import { useTermStore } from '@/store/useTermStore';
 import { Loader2, Search, X, ChevronRight, Users, Calendar } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Asprak, Jadwal, Praktikum } from '@/types/database';
@@ -71,27 +73,26 @@ export default function PelanggaranForm({
   initialPraktikumId = '',
   initialModul = '',
 }: PelanggaranFormProps) {
-  // ── Context filters ──
+  const { activeTerm } = useTermStore();
+
   const [contextState, updateContextState] = React.useReducer(
     (prev: any, next: any) => ({ ...prev, ...next }),
     { 
-      selectedTahunAjaran: initialTahunAjaran, 
       selectedPraktikumId: initialPraktikumId, 
       modul: initialModul 
     }
   );
-  const { selectedTahunAjaran, selectedPraktikumId, modul } = contextState;
-
+  const { selectedPraktikumId, modul } = contextState;
+  const selectedTahunAjaran = activeTerm || '';
 
 
   // Sync state if initial props change (e.g. after data fetch in parent)
   useEffect(() => {
     updateContextState({
-      ...(initialTahunAjaran && { selectedTahunAjaran: initialTahunAjaran }),
       ...(initialPraktikumId && { selectedPraktikumId: initialPraktikumId }),
       ...(initialModul && { modul: initialModul })
     });
-  }, [initialTahunAjaran, initialPraktikumId, initialModul]);
+  }, [initialPraktikumId, initialModul]);
 
   // ── Violation fields ──
   const [selectedAsprakIds, setSelectedAsprakIds] = useState<string[]>([]);
@@ -414,25 +415,10 @@ export default function PelanggaranForm({
                   </p>
                   <div className="grid grid-cols-2 gap-3">
                     <Field>
-                      <Label>Tahun Ajaran *</Label>
-                      <Select
-                        value={selectedTahunAjaran}
-                        onValueChange={(v) => {
-                          updateContextState({ selectedTahunAjaran: v, selectedPraktikumId: '', modul: '' });
-                          resetViolationFields();
-                        }}
-                      >
-                        <SelectTrigger className="w-full h-9">
-                          <SelectValue placeholder="Pilih Tahun Ajaran" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {tahunAjaranList.map((t) => (
-                            <SelectItem key={t} value={t}>
-                              {t}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <Label>Tahun Ajaran</Label>
+                      <div className="h-9 flex items-center px-3 border border-border/50 bg-muted/20 rounded-md text-sm font-medium">
+                        {selectedTahunAjaran}
+                      </div>
                     </Field>
                     <Field>
                       <Label>Nama Praktikum *</Label>

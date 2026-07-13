@@ -18,6 +18,8 @@ import TermInput from '@/components/asprak/TermInput';
 import { buildTermString } from '@/utils/termHelpers';
 import { Field, FieldGroup } from '@/components/ui/field';
 
+import { useTermStore } from '@/store/useTermStore';
+
 interface PraktikumManualModalProps {
   onConfirm: (nama: string, tahunAjaran: string) => Promise<void>;
   onClose: () => void;
@@ -31,9 +33,13 @@ export default function PraktikumManualModal({
   open,
   onCheckExists,
 }: PraktikumManualModalProps) {
+  const { activeTerm } = useTermStore();
+  const initialYear = activeTerm ? activeTerm.substring(0, 2) : '24';
+  const initialSem = activeTerm && activeTerm.endsWith('2') ? '2' : '1';
+
   const [nama, setNama] = useState('');
-  const [termYear, setTermYear] = useState('24');
-  const [termSem, setTermSem] = useState<'1' | '2'>('2');
+  const [termYear, setTermYear] = useState(initialYear);
+  const [termSem, setTermSem] = useState<'1' | '2'>(initialSem as '1' | '2');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<'idle' | 'checking' | 'exists' | 'available'>('idle');

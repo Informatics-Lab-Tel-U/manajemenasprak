@@ -1,16 +1,12 @@
+/* eslint-disable react-doctor/exhaustive-deps */
 'use client';
 
 import React, { useState, useEffect } from 'react';
 import { Jadwal, MataKuliah } from '@/types/database';
 
 import JadwalPenggantiTable from '@/components/jadwal/JadwalPenggantiTable';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+
+
 import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
@@ -26,6 +22,7 @@ import { Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import * as jadwalFetcher from '@/lib/fetchers/jadwalFetcher';
 import { JadwalPenggantiModal } from '@/components/jadwal/JadwalPenggantiModal';
+import { useTermStore } from '@/store/useTermStore';
 
 interface JadwalPenggantiClientPageProps {
   initialTerms: string[];
@@ -38,8 +35,8 @@ export default function JadwalPenggantiClientPage({
   initialMataKuliah,
   initialAllJadwal,
 }: JadwalPenggantiClientPageProps) {
-  const [terms] = useState<string[]>(initialTerms);
-  const [selectedTerm, setSelectedTerm] = useState(initialTerms[0] || '');
+  const { activeTerm } = useTermStore();
+  const selectedTerm = activeTerm || '';
   const [penggantiList, setPenggantiList] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -117,18 +114,7 @@ export default function JadwalPenggantiClientPage({
         </div>
 
         <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
-          <Select value={selectedTerm} onValueChange={setSelectedTerm}>
-            <SelectTrigger className="w-full md:w-[180px] bg-card/50 backdrop-blur-sm">
-              <SelectValue placeholder="Pilih Term" />
-            </SelectTrigger>
-            <SelectContent>
-              {terms.map((t) => (
-                <SelectItem key={t} value={t}>
-                  {t}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+
 
           <Button onClick={handleAdd} className="flex-1 sm:flex-none min-w-0 md:whitespace-nowrap">
             <Plus size={18} className="flex-shrink-0" />

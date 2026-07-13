@@ -41,6 +41,7 @@ import {
   validateAsprakCodeEdit,
   ExistingNimInfo,
 } from '@/utils/validation/asprakValidation';
+import { useTermStore } from '@/store/useTermStore';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -122,9 +123,13 @@ export default function AsprakImportCSVModal({
   onClose,
   open,
 }: AsprakImportCSVModalProps) {
+  const { activeTerm } = useTermStore();
+  const initialYear = activeTerm ? activeTerm.substring(0, 2) : '25';
+  const initialSem = activeTerm && activeTerm.endsWith('2') ? '2' : '1';
+
   // Term state
-  const [termYear, setTermYear] = useState('25');
-  const [termSem, setTermSem] = useState<'1' | '2'>('2');
+  const [termYear, setTermYear] = useState(initialYear);
+  const [termSem, setTermSem] = useState<'1' | '2'>(initialSem as '1' | '2');
 
   // Step state
   const [step, setStep] = useState<Step>('upload');

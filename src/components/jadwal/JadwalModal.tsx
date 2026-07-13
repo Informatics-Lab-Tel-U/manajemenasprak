@@ -26,6 +26,7 @@ import { Label } from '@/components/ui/label';
 import { Loader2 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
+import { useTermStore } from '@/store/useTermStore';
 
 interface JadwalModalProps {
   isOpen: boolean;
@@ -60,16 +61,15 @@ export function JadwalModal({
     dosen: '',
   });
 
+  const { activeTerm } = useTermStore();
+
   const [uiState, updateUiState] = React.useReducer(
     (prev: any, next: any) => ({ ...prev, ...next }),
-    { selectedTerm: '', selectedPraktikum: '', isPJJ: false, isCustomJam: false }
+    { selectedPraktikum: '', isPJJ: false, isCustomJam: false }
   );
-  const { selectedTerm, selectedPraktikum, isPJJ, isCustomJam } = uiState;
+  const { selectedPraktikum, isPJJ, isCustomJam } = uiState;
+  const selectedTerm = activeTerm || '';
 
-  // Extract unique terms
-  const availableTerms = Array.from(
-    new Set(mataKuliahList.flatMap((mk) => mk.praktikum?.tahun_ajaran ? [mk.praktikum.tahun_ajaran] : []))
-  ) as string[];
 
   // Filter available praktikum names based on the selected term
   const availablePraktikum = Array.from(
@@ -106,7 +106,6 @@ export function JadwalModal({
         const currentMK = mataKuliahList.find((mk) => mk.id === initialData.id_mk);
         if (currentMK?.praktikum) {
           updateUiState({
-            selectedTerm: currentMK?.praktikum?.tahun_ajaran || '',
             selectedPraktikum: currentMK?.praktikum?.nama || '',
             isPJJ: initialData.kelas.toUpperCase().includes('PJJ'),
             isCustomJam: !initialData.sesi || initialData.sesi === 0
@@ -126,7 +125,6 @@ export function JadwalModal({
           dosen: '',
         });
         updateUiState({
-          selectedTerm: '',
           selectedPraktikum: '',
           isPJJ: false,
           isCustomJam: false
@@ -227,28 +225,9 @@ export function JadwalModal({
 
           <div className="grid grid-cols-1 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="term">Tahun Ajaran</Label>
-              <Select
-                value={selectedTerm}
-                onValueChange={(val) => {
-                  updateUiState({ selectedTerm: val, selectedPraktikum: '' });
-                  setFormData((prev) => ({ ...prev, id_mk: '' }));
-                }}
-                disabled={!isDetailsEditable}
-              >
-                <SelectTrigger className="w-full disabled:opacity-70 disabled:cursor-not-allowed">
-                  <SelectValue placeholder="Pilih Tahun Ajaran" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    {availableTerms.map((term) => (
-                      <SelectItem key={term} value={term}>
-                        {term}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
+              <p className="text-sm font-medium border border-border/50 bg-muted/20 px-3 py-2 rounded-md">
+                Tahun Ajaran: <span className="font-bold">{selectedTerm}</span>
+              </p>
             </div>
 
             <div className="space-y-2">

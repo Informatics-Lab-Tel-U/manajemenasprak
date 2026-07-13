@@ -1,9 +1,11 @@
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/layout/AppSidebar';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { GlobalTermSelector } from '@/components/GlobalTermSelector';
 
 import { Suspense } from 'react';
 import { requireAuth } from '@/lib/auth';
+import { getCachedAvailableTerms } from '@/services/termService';
 
 export default async function DashboardLayout({
   children,
@@ -11,6 +13,7 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }>) {
   const authUser = await requireAuth();
+  const availableTerms = await getCachedAvailableTerms();
 
   return (
     <SidebarProvider>
@@ -30,6 +33,7 @@ export default async function DashboardLayout({
           <h1 className="text-base sm:text-lg font-semibold truncate flex-1">
             Manajemen Asisten Praktikum
           </h1>
+          <GlobalTermSelector availableTerms={availableTerms} />
           <ThemeToggle />
         </header>
         <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-6">{children}</main>

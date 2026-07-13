@@ -1,3 +1,4 @@
+/* eslint-disable react-doctor/exhaustive-deps */
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -5,6 +6,7 @@ import { Jadwal, MataKuliah } from '@/types/database';
 import * as jadwalFetcher from '@/lib/fetchers/jadwalFetcher';
 import * as praktikumFetcher from '@/lib/fetchers/praktikumFetcher';
 import type { CreateJadwalInput, UpdateJadwalInput } from '@/services/jadwalService';
+import { useTermStore } from '@/store/useTermStore';
 
 const moduls = [
   'Default',
@@ -36,27 +38,13 @@ export function useJadwal(
   }
 ) {
   const [data, setData] = useState<Jadwal[]>(initialData?.jadwal || []);
-  const [terms, setTerms] = useState<string[]>(initialData?.terms || []);
-  const [selectedTerm, setSelectedTerm] = useState(
-    initialTerm || (initialData?.terms?.[0] ? initialData.terms[0] : '')
-  );
+  const { activeTerm } = useTermStore();
+  const selectedTerm = activeTerm || '';
   const [selectedModul, setSelectedModul] = useState('Default');
   const [loading, setLoading] = useState(!initialData?.jadwal);
   const [error, setError] = useState<Error | null>(null);
   const [mataKuliahList, setMataKuliahList] = useState<MataKuliah[]>(initialData?.mataKuliah || []);
   const [jadwalPengganti, setJadwalPengganti] = useState<any[]>([]);
-
-
-  const fetchTerms = useCallback(async () => {
-    if (terms.length > 0) return;
-    const result = await jadwalFetcher.fetchAvailableTerms();
-    if (result.ok && result.data) {
-      setTerms(result.data);
-      if (result.data.length > 0 && !selectedTerm) {
-        setSelectedTerm(result.data[0]);
-      }
-    }
-  }, [selectedTerm, terms.length]);
 
   const fetchMataKuliah = useCallback(async () => {
     if (mataKuliahList.length > 0) return;
@@ -140,9 +128,8 @@ export function useJadwal(
   };
 
   useEffect(() => {
-    fetchTerms();
     fetchMataKuliah();
-  }, [fetchTerms, fetchMataKuliah]);
+  }, [fetchMataKuliah]);
 
   useEffect(() => {
     if (selectedTerm) {
@@ -154,9 +141,7 @@ export function useJadwal(
   return {
     data,
     jadwalPengganti,
-    terms,
     selectedTerm,
-    setSelectedTerm,
     moduls,
     selectedModul,
     setSelectedModul,

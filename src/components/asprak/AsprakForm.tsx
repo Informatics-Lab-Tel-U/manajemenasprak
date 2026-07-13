@@ -496,7 +496,7 @@ export default function AsprakForm({ onSubmit, onCancel }: AsprakFormProps) {
                       onValueChange={(val) => handleTermChange(block.id, val)}
                     >
                       <SelectTrigger className="bg-background h-8 text-xs">
-                        <SelectValue placeholder="Pilih Angkatan" />
+                        <SelectValue placeholder="Pilih Term" />
                       </SelectTrigger>
                       <SelectContent>
                         {availableTerms.map((t) => (

@@ -5,15 +5,8 @@ import dynamic from 'next/dynamic';
 
 const DashboardCharts = dynamic(() => import('@/components/DashboardCharts'), { ssr: false });
 import { StatCard } from '@/components/ui/StatCard';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { SelectGroup } from '@radix-ui/react-select';
+
+
 import type { DashboardStats } from '@/services/databaseService';
 import { Jadwal, JadwalPengganti } from '@/types/database';
 import { useDashboard } from '@/hooks/useDashboard';
@@ -40,7 +33,7 @@ export default function DashboardClient({
   activeModul,
   userRole,
 }: DashboardClientProps) {
-  const { terms, selectedTerm, setSelectedTerm, stats, rawJadwal, jadwalPengganti, loading } =
+  const { terms, selectedTerm, stats, rawJadwal, jadwalPengganti, loading } =
     useDashboard(initialTerms, initialStats, initialJadwal, initialPengganti, activeModul);
 
   // Derive today's day name (WIB)
@@ -71,21 +64,7 @@ export default function DashboardClient({
           {loading && terms.length === 0 ? (
             <Skeleton className="h-10 w-[180px]" />
           ) : (
-            <Select value={selectedTerm} onValueChange={setSelectedTerm}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Pilih Angkatan" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectLabel>Angkatan</SelectLabel>
-                  {terms.map((term) => (
-                    <SelectItem key={term} value={term}>
-                      {term}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
+            <div className="h-10"></div>
           )}
         </div>
       </header>

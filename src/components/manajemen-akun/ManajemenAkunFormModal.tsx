@@ -1,3 +1,4 @@
+/* eslint-disable react-doctor/exhaustive-deps */
 'use client';
 
 import * as React from 'react';
@@ -31,6 +32,7 @@ import {
 } from '@/components/ui/field';
 import type { Pengguna, Praktikum } from '@/types/database';
 import type { Role } from '@/config/rbac';
+import { useTermStore } from '@/store/useTermStore';
 
 type UserWithEmail = Pengguna & { email: string };
 
@@ -61,10 +63,12 @@ export function ManajemenAkunFormModal({ open, onOpenChange, mode, user, onSucce
     (prev: any, next: any) => typeof next === 'function' ? { ...prev, ...next(prev) } : { ...prev, ...next },
     {
       nama: '', email: '', password: '', showPassword: false, role: 'ASPRAK_KOOR', isLoading: false,
-      praktikumList: [], tahunAjaranList: [], selectedTahun: '', selectedPraktikumId: '', loadingPraktikum: false
+      praktikumList: [], tahunAjaranList: [], selectedPraktikumId: '', loadingPraktikum: false
     }
   );
-  const { nama, email, password, showPassword, role, isLoading, praktikumList, tahunAjaranList, selectedTahun, selectedPraktikumId, loadingPraktikum } = state;
+  const { nama, email, password, showPassword, role, isLoading, praktikumList, tahunAjaranList, selectedPraktikumId, loadingPraktikum } = state;
+  const { activeTerm } = useTermStore();
+  const selectedTahun = activeTerm || '';
 
   
   
@@ -93,7 +97,6 @@ export function ManajemenAkunFormModal({ open, onOpenChange, mode, user, onSucce
       role: user?.role ?? 'ASPRAK_KOOR',
       praktikumList: [],
       tahunAjaranList: [],
-      selectedTahun: '',
       selectedPraktikumId: ''
     });
 
@@ -138,7 +141,6 @@ export function ManajemenAkunFormModal({ open, onOpenChange, mode, user, onSucce
           updateState({
             praktikumList: list,
             tahunAjaranList: tahuns,
-            selectedTahun: existingTahun,
             selectedPraktikumId: existingPraktikumId
           });
         }
@@ -176,8 +178,7 @@ export function ManajemenAkunFormModal({ open, onOpenChange, mode, user, onSucce
             .reverse() as string[];
           updateState({
             praktikumList: list,
-            tahunAjaranList: tahuns,
-            ...(tahuns.length > 0 ? { selectedTahun: tahuns[0] } : {})
+            tahunAjaranList: tahuns
           });
         }
       })
@@ -368,28 +369,10 @@ export function ManajemenAkunFormModal({ open, onOpenChange, mode, user, onSucce
                 )}
               </div>
 
-              {/* Tahun Ajaran */}
               <div className="flex flex-col gap-1.5">
-                <Label>Tahun Ajaran</Label>
-                <Select
-                  value={selectedTahun}
-                  onValueChange={(v) => {
-                    updateState({ selectedTahun: v });
-                    updateState({ selectedPraktikumId: '' }); // clear selection when changing year
-                  }}
-                  disabled={isLoading || loadingPraktikum || tahunAjaranList.length === 0}
-                >
-                  <SelectTrigger className="h-8 w-full">
-                    <SelectValue placeholder="Pilih Tahun Ajaran" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {tahunAjaranList.map((t: any) => (
-                      <SelectItem key={t} value={t}>
-                        {t}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <p className="text-sm font-medium border border-border/50 bg-muted/20 px-3 py-2 rounded-md">
+                  Tahun Ajaran: <span className="font-bold">{selectedTahun}</span>
+                </p>
               </div>
 
               {/* Praktikum — single select via radio-style list */}

@@ -1,13 +1,14 @@
+/* eslint-disable react-doctor/exhaustive-deps */
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Calendar, Wand2 } from 'lucide-react';
+import { Wand2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Select,
   SelectContent,
-  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -21,7 +22,8 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { useTahunAjaran } from '@/hooks/useTahunAjaran';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { useTermStore } from '@/store/useTermStore';
 import {
   fetchModulSchedule,
   saveModulSchedule,
@@ -30,6 +32,8 @@ import {
 import { toast } from 'sonner';
 import { format, addDays, getDay } from 'date-fns';
 import { id } from 'date-fns/locale';
+import { ModulCalendarView } from '@/components/jadwal/ModulCalendarView';
+import { COURSE_COLORS } from '@/utils/colorUtils';
 
 const addDaysSafe = (dateStr: string, days: number): string => {
   try {
@@ -65,12 +69,11 @@ const isMonday = (dateStr: string | null): boolean => {
 };
 
 export default function JadwalModulClientPage() {
-  const { tahunAjaranList, loading: loadingTahunAjaran } = useTahunAjaran();
-  const [selectedTerm, setSelectedTerm] = useState<string>('');
-  const term = selectedTerm || (tahunAjaranList.length > 0 ? tahunAjaranList[0] : '');
-  const setTerm = setSelectedTerm;
+  const { activeTerm } = useTermStore();
+  const term = activeTerm || '';
   const [rows, setRows] = useState<ModulScheduleEntryDto[]>([]);
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [isGenerateDialogOpen, setIsGenerateDialogOpen] = useState(false);
   const [startModul, setStartModul] = useState<string>('1');
 
@@ -79,6 +82,7 @@ export default function JadwalModulClientPage() {
   const loadRows = useCallback(async (t: string) => {
     if (!t) return;
     setLoading(true);
+    setInitialLoading(true);
     try {
       const res = await fetchModulSchedule(t);
       if (res.ok && res.data) {
@@ -96,6 +100,7 @@ export default function JadwalModulClientPage() {
       toast.error(err.message || 'Gagal memuat tanggal modul');
     } finally {
       setLoading(false);
+      setInitialLoading(false);
     }
   }, []);
 
@@ -198,45 +203,74 @@ export default function JadwalModulClientPage() {
   };
 
   return (
-    <div className="container space-y-8">
-      <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div className="flex items-start gap-3">
-          <div className="mt-0.5">
-            <Calendar className="h-5 w-5 text-muted-foreground" />
-          </div>
+    <div className="container relative space-y-8">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full md:w-auto">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Tanggal Mulai Praktikum per Modul</h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              Atur tanggal mulai praktikum untuk setiap modul (1-16) per tahun ajaran.
-            </p>
+            <h1 className="text-2xl font-bold tracking-tight">Jadwal Tanggal Modul</h1>
+            <p className="text-sm text-muted-foreground mt-1">Atur tanggal mulai praktikum untuk setiap modul (1-16).</p>
           </div>
         </div>
+      </div>
 
-        <div className="flex items-center gap-2">
-          <Select
-            value={term}
-            onValueChange={setTerm}
-            disabled={loading || loadingTahunAjaran || tahunAjaranList.length === 0}
-          >
-            <SelectTrigger className="w-56 h-9">
-              <SelectValue placeholder={loadingTahunAjaran ? 'Memuat...' : 'Pilih Tahun Ajaran'} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                {tahunAjaranList.map((t) => (
-                  <SelectItem key={t} value={t}>
-                    {t}
-                  </SelectItem>
+      {initialLoading ? (
+        <div className="grid grid-cols-1 lg:grid-cols-[400px_1fr] xl:grid-cols-[460px_1fr] gap-6 items-start">
+          {/* Left Panel Skeleton */}
+          <Card className="flex flex-col shadow-sm lg:h-[600px] max-h-[80vh]">
+            <CardHeader className="pb-4 shrink-0">
+              <Skeleton className="h-6 w-32 mb-2" />
+              <Skeleton className="h-4 w-48" />
+            </CardHeader>
+            <CardContent className="p-0 flex-1 overflow-hidden flex flex-col">
+              <div className="divide-y divide-border/50 flex-1 overflow-y-auto border-t border-border/50">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <div key={i} className="flex flex-row items-center justify-between px-4 sm:px-5 py-3 sm:py-2 gap-2 sm:gap-4">
+                    <Skeleton className="h-5 w-20 shrink-0" />
+                    <div className="flex items-center justify-end gap-2 sm:gap-3 shrink-0">
+                      <Skeleton className="h-8 w-[140px] rounded-md" />
+                      <Skeleton className="h-6 w-12 rounded-sm" />
+                      <Skeleton className="h-4 w-4 rounded-sm" />
+                    </div>
+                  </div>
                 ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-        </div>
-      </header>
+              </div>
+            </CardContent>
+            <CardFooter className="p-4 pt-4 flex items-center justify-between gap-3 border-t border-border/50 bg-muted/10 shrink-0">
+              <Skeleton className="h-9 w-24 rounded-md" />
+              <Skeleton className="h-9 w-32 rounded-md" />
+            </CardFooter>
+          </Card>
 
-      <section className="space-y-4">
-        <div className="rounded-lg border border-border/60 overflow-hidden bg-background">
-          <div className="divide-y divide-border/50 max-h-[500px] overflow-auto">
+          {/* Right Panel Skeleton */}
+          <div className="rounded-lg border border-border bg-card/50 shadow-sm p-6 space-y-10 min-h-[500px]">
+            {Array.from({ length: 2 }).map((_, i) => (
+              <div key={i} className="space-y-4">
+                <div className="flex items-center gap-4">
+                  <Skeleton className="h-7 w-40" />
+                  <div className="flex-1 h-px bg-border/50"></div>
+                </div>
+                <div className="grid grid-cols-7 gap-1 sm:gap-2">
+                  {Array.from({ length: 7 }).map((_, j) => (
+                    <Skeleton key={j} className="h-4 w-full mb-2" />
+                  ))}
+                  {Array.from({ length: 30 }).map((_, j) => (
+                    <Skeleton key={j} className="aspect-square w-full rounded-md" />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-[400px_1fr] xl:grid-cols-[460px_1fr] gap-6 items-start">
+        {/* Left Panel: Controls */}
+        <Card className="flex flex-col shadow-sm lg:sticky lg:top-[88px] lg:h-[600px] max-h-[80vh]">
+          <CardHeader className="pb-4 shrink-0">
+            <CardTitle className="text-lg">Daftar Modul</CardTitle>
+            <CardDescription>Pilih hari Senin untuk awal setiap modul</CardDescription>
+          </CardHeader>
+          <CardContent className="p-0 flex-1 overflow-hidden flex flex-col">
+            <div className="divide-y divide-border/50 flex-1 overflow-y-auto border-t border-border/50">
             {rows.map((row) => {
               const dayName = getDayName(row.tanggal_mulai);
               const { valid, error } = isSequentiallyValid(row.modul, row.tanggal_mulai);
@@ -244,13 +278,13 @@ export default function JadwalModulClientPage() {
               return (
                 <div
                   key={row.modul}
-                  className="grid grid-cols-[120px,1fr] items-center px-6 py-3 text-sm hover:bg-muted/30 transition-colors"
+                  className="flex flex-row items-center justify-between px-4 sm:px-5 py-3 sm:py-2 text-sm hover:bg-muted/30 transition-colors group gap-2 sm:gap-4"
                 >
-                  <div className="font-semibold text-foreground">Modul {row.modul}</div>
-                  <div className="flex items-center gap-4">
+                  <div className="font-semibold text-foreground shrink-0">Modul {row.modul}</div>
+                  <div className="flex items-center justify-end gap-2 sm:gap-3 shrink-0">
                     <Input
                       type="date"
-                      className={`h-9 max-w-[200px] ${
+                      className={`h-8 text-xs max-w-[140px] ${
                         !valid
                           ? 'border-destructive text-destructive focus-visible:ring-destructive'
                           : ''
@@ -260,25 +294,32 @@ export default function JadwalModulClientPage() {
                       disabled={loading || !term}
                     />
                     {row.tanggal_mulai && (
-                      <span
-                        className={`text-xs font-medium px-2 py-1 rounded-sm ${
-                          valid
-                            ? 'bg-emerald-50 text-emerald-700'
-                            : 'bg-destructive/10 text-destructive'
-                        }`}
-                      >
-                        {dayName}
-                        {!valid && ` (${error})`}
-                      </span>
+                      <>
+                        <span
+                          className={`text-xs font-medium px-2 py-1 rounded-sm ${
+                            valid
+                              ? 'bg-emerald-50 text-emerald-700'
+                              : 'bg-destructive/10 text-destructive'
+                          }`}
+                        >
+                          {dayName}
+                          {!valid && ` (${error})`}
+                        </span>
+                        <div
+                          className="w-4 h-4 rounded-sm border border-border/50 shrink-0"
+                          style={{ backgroundColor: COURSE_COLORS[(row.modul - 1) % COURSE_COLORS.length] }}
+                          title={`Warna Modul ${row.modul}`}
+                        />
+                      </>
                     )}
                   </div>
                 </div>
               );
             })}
           </div>
-        </div>
+          </CardContent>
 
-        <div className="flex justify-end gap-3">
+        <CardFooter className="p-4 pt-4 flex items-center justify-between gap-3 border-t border-border/50 bg-muted/10 shrink-0">
           <Dialog open={isGenerateDialogOpen} onOpenChange={setIsGenerateDialogOpen}>
             <DialogTrigger asChild>
               <Button
@@ -287,8 +328,8 @@ export default function JadwalModulClientPage() {
                 className="gap-2"
                 disabled={loading || !term || rows.length === 0}
               >
-                <Wand2 className="h-4 w-4" />
-                Generate Otomatis
+                <Wand2 className="h-4 w-4 text-primary" />
+                Generate
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[360px] p-0 overflow-hidden border-none shadow-2xl">
@@ -342,8 +383,15 @@ export default function JadwalModulClientPage() {
           >
             Simpan Perubahan
           </Button>
-        </div>
-      </section>
+        </CardFooter>
+        </Card>
+
+        {/* Right Panel: Calendar Visualizer */}
+        <section className="h-full">
+          <ModulCalendarView rows={rows} />
+        </section>
+      </div>
+      )}
     </div>
   );
 }

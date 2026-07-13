@@ -18,7 +18,6 @@ import { usePraktikum } from '@/hooks/usePraktikum';
 
 interface AsprakEditModalProps {
   asprak: Asprak;
-  term: string; // The term being edited or 'all'
   assignments: string[]; // List of praktikum IDs currently assigned
   onSave: (praktikumIds: string[], newKode: string, forceOverride: boolean) => Promise<void>;
   onClose: () => void;

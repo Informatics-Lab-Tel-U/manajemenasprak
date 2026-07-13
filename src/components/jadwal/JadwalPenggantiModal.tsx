@@ -1,3 +1,4 @@
+/* eslint-disable react-doctor/exhaustive-deps */
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -19,6 +20,7 @@ import { Info } from 'lucide-react';
 import { toast } from 'sonner';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { fetchModulSchedule } from '@/lib/fetchers/modulScheduleFetcher';
+import { useTermStore } from '@/store/useTermStore';
 
 interface JadwalPenggantiModalProps {
   isOpen: boolean;
@@ -75,7 +77,6 @@ export function JadwalPenggantiModal({
   const [uiState, updateUiState] = React.useReducer(
     (prev: any, next: any) => ({ ...prev, ...next }),
     {
-      selectedTerm: '',
       selectedPraktikum: '',
       selectedJadwalId: '',
       modul: 1,
@@ -86,7 +87,9 @@ export function JadwalPenggantiModal({
       ruangan: ''
     }
   );
-  const { selectedTerm, selectedPraktikum, selectedJadwalId, modul, tanggal, hari, sesi, jam, ruangan } = uiState;
+  const { selectedPraktikum, selectedJadwalId, modul, tanggal, hari, sesi, jam, ruangan } = uiState;
+  const { activeTerm } = useTermStore();
+  const selectedTerm = activeTerm || '';
 
   
 
@@ -205,7 +208,6 @@ export function JadwalPenggantiModal({
         const term = j?.mata_kuliah?.praktikum?.tahun_ajaran || '';
         const praktikumNama = j?.mata_kuliah?.praktikum?.nama || '';
 
-        updateUiState({ selectedTerm: term });
         updateUiState({ selectedPraktikum: praktikumNama });
         updateUiState({ selectedJadwalId: initialData.id_jadwal || '' });
         updateUiState({ modul: initialData.modul });
@@ -216,7 +218,6 @@ export function JadwalPenggantiModal({
         updateUiState({ ruangan: initialData.ruangan });
       } else {
         updateUiState({
-          selectedTerm: currentTerm || '',
           selectedPraktikum: '',
           selectedJadwalId: '',
           modul: 1,
@@ -326,27 +327,9 @@ export function JadwalPenggantiModal({
             <div className="grid grid-cols-1 gap-4">
               {/* Tahun Ajaran */}
               <div className="space-y-2">
-                <Label>Tahun Ajaran</Label>
-                <Select
-                  value={selectedTerm}
-                  onValueChange={(v) => {
-                    updateUiState({ selectedTerm: v });
-                    updateUiState({ selectedPraktikum: '' });
-                    updateUiState({ selectedJadwalId: '' });
-                  }}
-                  disabled={!!initialData}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Pilih Tahun Ajaran" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableTerms.map((t) => (
-                      <SelectItem key={t} value={t}>
-                        {t}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <p className="text-sm font-medium border border-border/50 bg-muted/20 px-3 py-2 rounded-md">
+                  Tahun Ajaran: <span className="font-bold">{selectedTerm}</span>
+                </p>
               </div>
 
               {/* Praktikum (menggantikan Mata Kuliah di UI) */}

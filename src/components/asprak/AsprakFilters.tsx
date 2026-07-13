@@ -1,32 +1,16 @@
 import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 
 interface AsprakFiltersProps {
   searchQuery?: string;
   onSearchChange?: (query: string) => void;
-  terms: string[];
-  selectedTerm: string;
-  onTermChange: (term: string) => void;
   hideSearch?: boolean;
-  hideAllOption?: boolean;
 }
 
 export default function AsprakFilters({
   searchQuery,
   onSearchChange,
-  terms,
-  selectedTerm,
-  onTermChange,
   hideSearch = false,
-  hideAllOption = false,
 }: AsprakFiltersProps) {
   return (
     <div
@@ -47,24 +31,6 @@ export default function AsprakFilters({
           />
         </div>
       )}
-
-      <div className={`w-full sm:w-auto ${hideSearch ? 'ml-auto' : ''}`}>
-        <Select value={selectedTerm} onValueChange={onTermChange}>
-          <SelectTrigger className="w-full sm:w-[180px]">
-            <SelectValue placeholder="Pilih Angkatan" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectGroup>
-              {!hideAllOption && <SelectItem value="all">Semua Angkatan</SelectItem>}
-              {terms.map((term) => (
-                <SelectItem key={term} value={term}>
-                  {term}
-                </SelectItem>
-              ))}
-            </SelectGroup>
-          </SelectContent>
-        </Select>
-      </div>
     </div>
   );
 }

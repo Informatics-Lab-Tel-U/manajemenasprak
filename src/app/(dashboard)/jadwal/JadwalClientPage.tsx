@@ -106,9 +106,7 @@ export default function JadwalClientPage({
   const {
     data: rawJadwalList,
     jadwalPengganti,
-    terms: availableTerms,
     selectedTerm,
-    setSelectedTerm,
     moduls,
     selectedModul,
     setSelectedModul,
@@ -295,21 +293,6 @@ export default function JadwalClientPage({
                 {moduls.map((m) => (
                   <SelectItem key={m} value={m}>
                     {m}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-
-          <Select value={selectedTerm} onValueChange={setSelectedTerm}>
-            <SelectTrigger className="w-full md:w-[180px] sm:max-w-[180px]">
-              <SelectValue placeholder="Select term" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                {availableTerms.map((t) => (
-                  <SelectItem key={t} value={t}>
-                    {t}
                   </SelectItem>
                 ))}
               </SelectGroup>

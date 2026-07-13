@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Trash2, Upload, FileSpreadsheet, Download, ShieldAlert, Activity } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import * as importFetcher from '@/lib/fetchers/importFetcher';
@@ -39,6 +39,7 @@ import {
 } from '@/components/ui/dialog';
 
 import { useTahunAjaran } from '@/hooks/useTahunAjaran';
+import { useTermStore } from '@/store/useTermStore';
 
 interface DatabaseClientPageProps {
   initialIsMaintenance: boolean;
@@ -58,12 +59,13 @@ export default function DatabaseClientPage({
   );
   const { loading, status, progress } = uiState;
 
+  const { activeTerm: globalActiveTerm } = useTermStore();
   const { tahunAjaranList, loading: loadingTahunAjaran } = useTahunAjaran();
   const [selectedExportTerm, setExportTerm] = useState('');
-  const exportTerm = selectedExportTerm || (tahunAjaranList.length > 0 ? tahunAjaranList[0] : '');
+  const exportTerm = selectedExportTerm || globalActiveTerm || (tahunAjaranList.length > 0 ? tahunAjaranList[0] : '');
 
   const [selectedDeleteTerm, setDeleteTerm] = useState('');
-  const deleteTerm = selectedDeleteTerm || (tahunAjaranList.length > 0 ? tahunAjaranList[0] : '');
+  const deleteTerm = selectedDeleteTerm || globalActiveTerm || (tahunAjaranList.length > 0 ? tahunAjaranList[0] : '');
 
   // Maintenance Mode States
   const [isMaintenance, setIsMaintenance] = useState(initialIsMaintenance);

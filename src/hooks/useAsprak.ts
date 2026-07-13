@@ -1,3 +1,4 @@
+/* eslint-disable react-doctor/exhaustive-deps */
 'use client';
 
 /* eslint-disable react-doctor/no-chain-state-updates, react-doctor/no-cascading-set-state, react-doctor/no-effect-chain, react-doctor/rendering-hydration-no-flicker */
@@ -10,6 +11,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Asprak } from '@/types/database';
 import * as asprakFetcher from '@/lib/fetchers/asprakFetcher';
+import { useTermStore } from '@/store/useTermStore';
 
 export const getAssignments = async (asprakId: number | string) => {
   const result = await asprakFetcher.fetchAsprakAssignments(asprakId);
@@ -31,47 +33,20 @@ export function useAsprak(
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [terms, setTerms] = useState<string[]>(initialData?.terms || []);
-  let _initialTermValue = initialTerm;
-  if (!_initialTermValue && initialData?.terms?.[0]) {
-    _initialTermValue = initialData.terms[0];
-  } else if (!_initialTermValue && defaultToLatest) {
-    _initialTermValue = '';
-  } else if (!_initialTermValue) {
-    _initialTermValue = 'all';
-  }
-  const [selectedTerm, setSelectedTerm] = useState(_initialTermValue);
-  const [hasInitializedLatest, setHasInitializedLatest] = useState(!!initialData?.terms);
-  // Use ref so fetchTerms doesn't re-create every time hasInitializedLatest changes
-  const hasInitializedLatestRef = useRef(hasInitializedLatest);
-  useEffect(() => {
-    hasInitializedLatestRef.current = hasInitializedLatest;
-  }, [hasInitializedLatest]);
-
-  const fetchTerms = useCallback(async () => {
-    if (terms.length > 0) return; // Skip if already have terms
-    const result = await asprakFetcher.fetchAvailableTerms();
-    if (result.ok && result.data) {
-      setTerms(result.data);
-      if (defaultToLatest && !hasInitializedLatestRef.current && result.data.length > 0) {
-        setSelectedTerm(result.data[0]);
-        setHasInitializedLatest(true);
-      }
-    }
-  }, [defaultToLatest, terms.length]);
+  const { activeTerm, setActiveTerm } = useTermStore();
+  const selectedTerm = activeTerm || '';
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
     setError(null);
 
-    // If "all" or empty (waiting for latest) is selected, pass undefined or handle appropriately.
-    // We shouldn't fetch asprak if we're still waiting for the latest term initialization
-    if (defaultToLatest && !hasInitializedLatest) {
+    // activeTerm handles the global state. Wait until activeTerm is initialized (not empty)
+    if (!selectedTerm) {
       setLoading(false);
       return;
     }
 
-    const termToFetch = selectedTerm === 'all' || selectedTerm === '' ? undefined : selectedTerm;
+    const termToFetch = selectedTerm === 'all' ? undefined : selectedTerm;
     const result = await asprakFetcher.fetchAllAsprak(termToFetch);
 
     if (result.ok) {
@@ -81,7 +56,7 @@ export function useAsprak(
     }
 
     setLoading(false);
-  }, [selectedTerm, defaultToLatest, hasInitializedLatest]);
+  }, [activeTerm]);
 
   const upsert = async (input: asprakFetcher.UpsertAsprakInput) => {
     const result = await asprakFetcher.upsertAsprak(input);
@@ -101,9 +76,6 @@ export function useAsprak(
     return result;
   };
 
-  useEffect(() => {
-    fetchTerms();
-  }, [fetchTerms]);
 
   // eslint-disable-next-line react-doctor/no-chain-state-updates
   useEffect(() => {
@@ -119,18 +91,15 @@ export function useAsprak(
     }
 
     fetchAll();
-  }, [fetchAll, selectedTerm, initialTerm]);
+  }, [fetchAll, activeTerm, initialTerm]);
 
   return {
     data,
     loading,
     error,
-    terms,
-    selectedTerm,
-    setSelectedTerm,
     refetch: fetchAll,
     upsert,
-    getAssignments,
     deleteAsprak,
+    getAssignments,
   };
 }

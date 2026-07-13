@@ -1,3 +1,4 @@
+/* eslint-disable react-doctor/exhaustive-deps */
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -12,6 +13,7 @@ import JagaPanel from '@/components/jadwal/JagaPanel';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import JagaInputModal from '@/components/jadwal/JagaInputModal';
+import { useTermStore } from '@/store/useTermStore';
 
 export default function JadwalJagaClient({
   initialTerms,
@@ -20,7 +22,8 @@ export default function JadwalJagaClient({
   initialTerms: string[];
   userRole?: string;
 }) {
-  const [selectedTerm, setSelectedTerm] = useState(initialTerms[0] || '');
+  const { activeTerm } = useTermStore();
+  const selectedTerm = activeTerm || '';
   const [selectedModul, setSelectedModul] = useState('Modul 1');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingData, setEditingData] = useState<any>(null);
@@ -85,18 +88,7 @@ export default function JadwalJagaClient({
             </SelectContent>
           </Select>
 
-          <Select value={selectedTerm} onValueChange={setSelectedTerm}>
-            <SelectTrigger className="w-full sm:w-[160px] bg-card/50 backdrop-blur-sm">
-              <SelectValue placeholder="Pilih Term" />
-            </SelectTrigger>
-            <SelectContent>
-              {initialTerms.map((term) => (
-                <SelectItem key={term} value={term}>
-                  {term}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+
 
           <Button
             onClick={handleAdd}
