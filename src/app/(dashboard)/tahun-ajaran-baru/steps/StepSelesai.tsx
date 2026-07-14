@@ -102,7 +102,7 @@ export default function SelesaiStep() {
             <div className="space-y-1">
               <h4 className="font-semibold text-sm">Langkah Selanjutnya</h4>
               <p className="text-sm text-muted-foreground leading-snug">
-                Konfigurasi jadwal per modul di menu <span className="font-medium text-foreground">Jadwal Praktikum &rarr; Tanggal Mulai Modul</span> agar asisten dapat mulai melakukan pengaturan jadwal.
+                Konfigurasi jadwal per modul di menu <span className="font-medium text-foreground">Jadwal Praktikum &gt; Tanggal Mulai Modul</span> agar asisten dapat mulai melakukan pengaturan jadwal.
               </p>
             </div>
           </div>
