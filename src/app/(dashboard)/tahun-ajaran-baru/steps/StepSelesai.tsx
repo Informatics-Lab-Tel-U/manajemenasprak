@@ -82,7 +82,7 @@ export default function SelesaiStep() {
 
   return (
     <Card className="border shadow-sm bg-card">
-      <CardContent className="flex flex-col items-center text-center pt-14 pb-14 px-6 space-y-8">
+      <CardContent className="flex flex-col items-center text-center pt-8 pb-8 px-6 space-y-6">
         <div className="flex justify-center">
           <CheckCircle2 className="w-16 h-16 text-primary" strokeWidth={1.5} />
         </div>
@@ -108,7 +108,7 @@ export default function SelesaiStep() {
           </div>
         </div>
 
-        <div className="pt-4">
+        <div>
           <Button size="lg" onClick={handleFinish}>
             Selesai & Kembali ke Dashboard
           </Button>
