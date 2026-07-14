@@ -81,12 +81,10 @@ export default function SelesaiStep() {
   };
 
   return (
-    <Card className="border shadow-sm overflow-hidden relative bg-card">
-      <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-primary/40 via-primary to-primary/40" />
+    <Card className="border shadow-sm bg-card">
       <CardContent className="flex flex-col items-center text-center pt-14 pb-14 px-6 space-y-8">
-        <div className="relative flex justify-center">
-          <div className="absolute inset-0 bg-primary/20 blur-[32px] rounded-full w-24 h-24 mx-auto" />
-          <div className="relative bg-primary/10 p-4 rounded-2xl ring-1 ring-primary/20 shadow-inner">
+        <div className="flex justify-center">
+          <div className="bg-primary/10 p-5 rounded-2xl ring-1 ring-primary/20 shadow-inner">
             <CheckCircle2 className="w-12 h-12 text-primary" strokeWidth={1.5} />
           </div>
         </div>
