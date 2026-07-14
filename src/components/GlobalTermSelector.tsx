@@ -12,9 +12,10 @@ import {
 
 interface GlobalTermSelectorProps {
   availableTerms: string[];
+  disabled?: boolean;
 }
 
-export function GlobalTermSelector({ availableTerms }: GlobalTermSelectorProps) {
+export function GlobalTermSelector({ availableTerms, disabled = false }: GlobalTermSelectorProps) {
   const { activeTerm, setActiveTerm } = useTermStore();
   const [mounted, setMounted] = React.useState(false);
 
@@ -43,7 +44,7 @@ export function GlobalTermSelector({ availableTerms }: GlobalTermSelectorProps) 
   if (!displayValue) return null;
 
   return (
-    <Select value={displayValue} onValueChange={setActiveTerm}>
+    <Select value={displayValue} onValueChange={setActiveTerm} disabled={disabled}>
       <SelectTrigger className="w-[140px] h-9 bg-background font-medium">
         <SelectValue placeholder="Tahun Ajaran" />
       </SelectTrigger>

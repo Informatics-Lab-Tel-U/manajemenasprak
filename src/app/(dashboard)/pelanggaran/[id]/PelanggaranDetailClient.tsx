@@ -467,7 +467,7 @@ export default function PelanggaranDetailClient({
             </SelectContent>
           </Select>
 
-          {!isFinalized && role !== 'ASPRAK_KOOR' && (
+          {!isFinalized && (
             <Button
               onClick={() => setIsAddOpen(true)}
               size="sm"

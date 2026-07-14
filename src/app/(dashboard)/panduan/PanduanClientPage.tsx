@@ -431,11 +431,11 @@ const PanduanClientPageComponent = function PanduanClientPage({ role }: PanduanC
                   </h4>
                   <div className="flex flex-wrap gap-2">
                     {[
+                      'TELAT NILAI',
                       'TELAT DATANG',
                       'TIDAK DATANG',
-                      'TELAT NILAI',
-                      'PAKAIAN TIDAK SESUAI',
-                      'LAIN-LAIN',
+                      'LALAI ATURAN PAKAIAN',
+                      'LAIN LAIN',
                     ].map((j) => (
                       <Badge key={j} variant="outline" className="text-xs">
                         {j}

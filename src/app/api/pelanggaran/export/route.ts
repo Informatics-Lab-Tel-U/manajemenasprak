@@ -16,9 +16,8 @@ import { apiErrorResponse } from '@/lib/api-error';
  */
 export async function GET(request: NextRequest) {
   try {
-    // Export exposes all violation data — restrict to ADMIN/ASLAB (koor is
-    // scoped by RLS but we keep this conservative).
-    const guard = await requireRoleApi(['ADMIN', 'ASLAB']);
+    // Export exposes all violation data — restrict to ADMIN/ASLAB/ASPRAK_KOOR
+    const guard = await requireRoleApi(['ADMIN', 'ASLAB', 'ASPRAK_KOOR']);
     if (!guard.ok) return guard.response;
 
     const supabase = await createClient();

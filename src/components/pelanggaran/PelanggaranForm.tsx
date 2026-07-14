@@ -32,11 +32,11 @@ import {
 } from '@/components/ui/dialog';
 
 const VIOLATION_TYPES = [
+  'TELAT NILAI',
   'TELAT DATANG',
   'TIDAK DATANG',
-  'TELAT NILAI',
-  'PAKAIAN TIDAK SESUAI',
-  'LAIN-LAIN',
+  'LALAI ATURAN PAKAIAN',
+  'LAIN LAIN',
 ] as const;
 
 type ViolationType = (typeof VIOLATION_TYPES)[number];

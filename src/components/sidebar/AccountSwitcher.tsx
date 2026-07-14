@@ -64,7 +64,7 @@ export function AccountSwitcher({
               <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg text-xs font-semibold">
                 {initials}
               </div>
-              <div className="flex flex-col gap-0.5 leading-none">
+              <div className="flex flex-col flex-1 gap-0.5 leading-none min-w-0">
                 <span className="font-medium truncate">{nama}</span>
                 <span className="text-xs text-muted-foreground truncate">{ROLE_LABEL[role]}</span>
               </div>
@@ -73,10 +73,10 @@ export function AccountSwitcher({
           </DropdownMenuTrigger>
 
           <DropdownMenuContent align="end" side="top" className="w-56">
-            <DropdownMenuLabel className="flex flex-col">
-              <span className="font-medium">{nama}</span>
-              <span className="text-xs text-muted-foreground font-normal">{email}</span>
-              <span className="text-xs text-muted-foreground font-normal mt-0.5">
+            <DropdownMenuLabel className="flex flex-col min-w-0">
+              <span className="font-medium truncate">{nama}</span>
+              <span className="text-xs text-muted-foreground font-normal truncate">{email}</span>
+              <span className="text-xs text-muted-foreground font-normal mt-0.5 truncate">
                 {ROLE_LABEL[role]}
               </span>
             </DropdownMenuLabel>
