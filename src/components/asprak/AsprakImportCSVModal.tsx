@@ -54,6 +54,7 @@ interface RawCSVRow {
 }
 
 export interface ExistingAsprakInfo {
+  nim: string;
   kode: string;
   angkatan: number;
 }

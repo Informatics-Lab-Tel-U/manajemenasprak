@@ -22,8 +22,9 @@ export default async function AsprakPage() {
   // Fetch initial asprak list for the latest term
   const initialAsprakList = await getCachedAspraksWithAssignments(terms[0] || 'all');
 
-  const initialExistingNims = allAsprak.map((a) => ({ nim: a.nim, role: a.role }));
+  const initialExistingNims = allAsprak.map((a) => ({ nim: a.nim, role: a.role, kode: a.kode }));
   const initialExistingAspraks = allAsprak.map((a) => ({
+    nim: a.nim,
     kode: a.kode,
     angkatan: a.angkatan ?? 0,
   }));

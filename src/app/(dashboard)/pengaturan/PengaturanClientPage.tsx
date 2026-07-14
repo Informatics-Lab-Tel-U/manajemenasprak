@@ -2,6 +2,7 @@
 
 /* eslint-disable react-doctor/no-impure-state-updater */
 import React, { useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { Trash2, Upload, FileSpreadsheet, Download, ShieldAlert, Activity } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import * as importFetcher from '@/lib/fetchers/importFetcher';
@@ -51,6 +52,7 @@ export default function DatabaseClientPage({
   initialIsMaintenance,
   initialUserRole,
 }: DatabaseClientPageProps) {
+  const router = useRouter();
   const [termYear, setTermYear] = useState('24');
   const [termSem, setTermSem] = useState<'1' | '2'>('2');
 
@@ -60,8 +62,8 @@ export default function DatabaseClientPage({
   );
   const { loading, status, progress } = uiState;
 
-  const { activeTerm: globalActiveTerm } = useTermStore();
-  const { tahunAjaranList, loading: loadingTahunAjaran } = useTahunAjaran();
+  const { activeTerm: globalActiveTerm, setActiveTerm: setGlobalActiveTerm } = useTermStore();
+  const { tahunAjaranList, loading: loadingTahunAjaran, refetch: refetchTahunAjaran } = useTahunAjaran();
   const [selectedExportTerm, setExportTerm] = useState('');
   const exportTerm = selectedExportTerm || globalActiveTerm || (tahunAjaranList.length > 0 ? tahunAjaranList[0] : '');
 
@@ -88,10 +90,16 @@ export default function DatabaseClientPage({
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDeleteTermModalOpen, setIsDeleteTermModalOpen] = useState(false);
+  const [isDeleteDataTermModalOpen, setIsDeleteDataTermModalOpen] = useState(false);
   const [confirmInput, setConfirmInput] = useState('');
   const [confirmTermInput, setConfirmTermInput] = useState('');
+  const [confirmDataTermInput, setConfirmDataTermInput] = useState('');
+  const [selectedDeleteDataTerm, setDeleteDataTerm] = useState<string>('');
+  const deleteDataTerm = selectedDeleteDataTerm || globalActiveTerm || (tahunAjaranList.length > 0 ? tahunAjaranList[0] : '');
+
   const CONFIRMATION_PHRASE = 'HAPUS SEMUA';
   const CONFIRMATION_TERM_PHRASE = 'HAPUS JADWAL';
+  const CONFIRMATION_DATA_TERM_PHRASE = 'HAPUS SEMUA DATA';
 
   const onDrop = useCallback(
     async (acceptedFiles: File[]) => {
@@ -171,6 +179,8 @@ export default function DatabaseClientPage({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       updateUiState({ status: { type: 'success', message: 'Database berhasil dibersihkan!' } });
+      refetchTahunAjaran();
+      router.refresh();
     } catch (e: any) {
       updateUiState({ status: { type: 'error', message: e.message } });
     } finally {
@@ -194,11 +204,60 @@ export default function DatabaseClientPage({
       const result = await jadwalFetcher.deleteJadwalByTerm(deleteTerm);
       if (result.ok) {
         updateUiState({ status: { type: 'success', message: `Berhasil menghapus jadwal angkatan ${deleteTerm}!` } });
+        router.refresh();
       } else {
         throw new Error(result.error);
       }
     } catch (e: any) {
       updateUiState({ status: { type: 'error', message: e.message || 'Gagal menghapus jadwal' } });
+    } finally {
+      updateUiState({ loading: false });
+    }
+  };
+
+  const handleDeleteDataTermTrigger = () => {
+    if (!deleteDataTerm) return;
+    setIsDeleteDataTermModalOpen(true);
+    setConfirmDataTermInput('');
+  };
+
+  const handleExecuteDeleteDataTerm = async () => {
+    if (confirmDataTermInput !== CONFIRMATION_DATA_TERM_PHRASE) return;
+
+    setIsDeleteDataTermModalOpen(false);
+    updateUiState({ loading: true, status: { type: 'info', message: `Menghapus semua data angkatan ${deleteDataTerm}...` } });
+
+    try {
+      const res = await fetch('/api/clear-term', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ term: deleteDataTerm })
+      });
+      const data = await res.json();
+      
+      if (res.ok && data.ok) {
+        updateUiState({ status: { type: 'success', message: `Berhasil menghapus semua data untuk angkatan ${deleteDataTerm}!` } });
+        
+        // Check if universal active term was deleted
+        if (deleteDataTerm === globalActiveTerm) {
+          const newTerms = tahunAjaranList.filter(t => t !== deleteDataTerm);
+          if (newTerms.length > 0) {
+            setGlobalActiveTerm(newTerms[0]);
+          } else {
+            setGlobalActiveTerm('');
+          }
+        }
+        
+        // Reset danger zone select state to force fallback to the new term
+        setDeleteDataTerm('');
+        
+        refetchTahunAjaran();
+        router.refresh();
+      } else {
+        throw new Error(data.error || 'Gagal menghapus data');
+      }
+    } catch (e: any) {
+      updateUiState({ status: { type: 'error', message: e.message || 'Gagal menghapus data' } });
     } finally {
       updateUiState({ loading: false });
     }
@@ -765,6 +824,11 @@ export default function DatabaseClientPage({
                               {term}
                             </SelectItem>
                           ))}
+                          {tahunAjaranList.length === 0 && !loadingTahunAjaran && (
+                            <SelectItem value="none" disabled>
+                              Tidak ada data
+                            </SelectItem>
+                          )}
                         </SelectGroup>
                       </SelectContent>
                     </Select>
@@ -778,6 +842,52 @@ export default function DatabaseClientPage({
                 >
                   <Trash2 className="mr-2 h-4 w-4" />
                   Hapus Jadwal {deleteTerm || ''}
+                </Button>
+              </div>
+
+              {/* Hapus Semua Data by Term */}
+              <div className="p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="space-y-0.5">
+                  <p className="text-sm font-medium">Hapus Semua Data per Tahun Ajaran</p>
+                  <p className="text-xs text-muted-foreground max-w-xs">
+                    Menghapus Praktikum, Mata Kuliah, Jadwal, Plotting Asprak, dan Pelanggaran untuk term terkait.
+                  </p>
+                  <div className="pt-2">
+                    <Select
+                      value={deleteDataTerm}
+                      onValueChange={setDeleteDataTerm}
+                      disabled={loading || loadingTahunAjaran}
+                    >
+                      <SelectTrigger className="h-8 w-48 text-xs">
+                        <SelectValue
+                          placeholder={loadingTahunAjaran ? 'Memuat...' : 'Pilih Tahun Ajaran'}
+                        />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          {tahunAjaranList.map((term) => (
+                            <SelectItem key={term} value={term}>
+                              {term}
+                            </SelectItem>
+                          ))}
+                          {tahunAjaranList.length === 0 && !loadingTahunAjaran && (
+                            <SelectItem value="none" disabled>
+                              Tidak ada data
+                            </SelectItem>
+                          )}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={handleDeleteDataTermTrigger}
+                  disabled={loading || !deleteDataTerm}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Hapus Semua Data {deleteDataTerm || ''}
                 </Button>
               </div>
 
@@ -866,6 +976,39 @@ export default function DatabaseClientPage({
               disabled={confirmTermInput !== CONFIRMATION_TERM_PHRASE}
             >
               Hapus Jadwal
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Modal (Delete All Data by Term) */}
+      <Dialog open={isDeleteDataTermModalOpen} onOpenChange={setIsDeleteDataTermModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Hapus Semua Data Angkatan {deleteDataTerm}?</DialogTitle>
+            <DialogDescription>
+              Tindakan ini akan menghapus semua Praktikum, Mata Kuliah, Jadwal, Plotting Asprak, dan Pelanggaran untuk angkatan {deleteDataTerm} selamanya. Master Data Asprak tidak akan dihapus.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4 space-y-2">
+            <Label>Ketik "{CONFIRMATION_DATA_TERM_PHRASE}" untuk mengonfirmasi:</Label>
+            <Input
+              value={confirmDataTermInput}
+              onChange={(e) => setConfirmDataTermInput(e.target.value)}
+              placeholder={CONFIRMATION_DATA_TERM_PHRASE}
+              className="border-destructive focus-visible:ring-destructive"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setIsDeleteDataTermModalOpen(false)}>
+              Batal
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleExecuteDeleteDataTerm}
+              disabled={confirmDataTermInput !== CONFIRMATION_DATA_TERM_PHRASE}
+            >
+              Hapus Semua Data
             </Button>
           </DialogFooter>
         </DialogContent>

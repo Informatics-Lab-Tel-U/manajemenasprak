@@ -1,40 +1,45 @@
-import React from 'react';
-import Link from 'next/link';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft, Construction } from 'lucide-react';
+import React, { Suspense } from 'react';
+import { requireAuth } from '@/lib/auth';
+import { redirect } from 'next/navigation';
+import {
+  getExistingCodes,
+  getCachedAllAsprak,
+} from '@/services/asprakService.server';
+import AsprakOnboardClient from './AsprakOnboardClient';
 
-export default function AsprakOnboardPlaceholder() {
+export default async function AsprakOnboardPage(props: {
+  searchParams: Promise<{ term?: string }>;
+}) {
+  await requireAuth();
+
+  const searchParams = await props.searchParams;
+  const term = searchParams.term;
+
+  if (!term) {
+    redirect('/onboard');
+  }
+
+  // Fetch initial data for validation
+  const [existingCodes, allAsprak] = await Promise.all([
+    getExistingCodes(),
+    getCachedAllAsprak(),
+  ]);
+
+  const initialExistingNims = allAsprak.map((a) => ({ nim: a.nim, role: a.role, kode: a.kode }));
+  const initialExistingAspraks = allAsprak.map((a) => ({
+    nim: a.nim,
+    kode: a.kode,
+    angkatan: a.angkatan ?? 0,
+  }));
+
   return (
-    <div className="container space-y-8">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" asChild>
-          <Link href="/onboard">
-            <ArrowLeft className="w-5 h-5" />
-          </Link>
-        </Button>
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Onboarding Data Asprak</h1>
-          <p className="text-muted-foreground mt-1">
-            Kelola data asisten praktikum dan generate kode akses.
-          </p>
-        </div>
-      </div>
-
-      <Card className="border shadow-sm text-center py-16">
-        <CardContent className="flex flex-col items-center space-y-4">
-          <div className="bg-muted p-4 rounded-full">
-            <Construction className="w-12 h-12 text-muted-foreground" />
-          </div>
-          <CardTitle className="text-xl">Halaman Sedang Dibangun</CardTitle>
-          <CardDescription className="max-w-md mx-auto">
-            Modul onboarding untuk Data Asprak sedang dalam tahap pengembangan. Silakan kembali lagi nanti.
-          </CardDescription>
-          <Button asChild variant="outline" className="mt-4">
-            <Link href="/onboard">Kembali ke Hub</Link>
-          </Button>
-        </CardContent>
-      </Card>
-    </div>
+    <Suspense fallback={<div className="p-8 text-center">Loading Asprak Data...</div>}>
+      <AsprakOnboardClient
+        term={term}
+        initialExistingCodes={existingCodes}
+        initialExistingNims={initialExistingNims}
+        initialExistingAspraks={initialExistingAspraks}
+      />
+    </Suspense>
   );
 }

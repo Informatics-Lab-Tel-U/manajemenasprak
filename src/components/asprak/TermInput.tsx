@@ -25,6 +25,7 @@ interface TermInputProps {
   onSemChange: (sem: '1' | '2') => void;
   label?: string;
   description?: string;
+  disabled?: boolean;
 }
 
 export default function TermInput({
@@ -34,6 +35,7 @@ export default function TermInput({
   onSemChange,
   label = 'Tahun Ajaran',
   description,
+  disabled = false,
 }: TermInputProps) {
   const parsedYear = parseInt(termYear);
   const endYear = !isNaN(parsedYear) ? parsedYear + 1 : 'YY';
@@ -41,7 +43,7 @@ export default function TermInput({
 
   return (
     <div className="space-y-2">
-      <Label>{label}</Label>
+      {label && <Label>{label}</Label>}
       <div className="flex items-center gap-2">
         <Input
           required
@@ -52,6 +54,7 @@ export default function TermInput({
           value={termYear}
           onChange={(e) => onYearChange(e.target.value)}
           className="w-20 text-center"
+          disabled={disabled}
         />
 
         <span className="text-muted-foreground">/</span>
@@ -62,7 +65,7 @@ export default function TermInput({
 
         <span className="text-muted-foreground">-</span>
 
-        <Select value={termSem} onValueChange={(val) => onSemChange(val as '1' | '2')}>
+        <Select value={termSem} onValueChange={(val) => onSemChange(val as '1' | '2')} disabled={disabled}>
           <SelectTrigger className="flex-1">
             <SelectValue />
           </SelectTrigger>

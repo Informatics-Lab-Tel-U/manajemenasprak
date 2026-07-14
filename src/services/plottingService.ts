@@ -90,12 +90,21 @@ export interface ValidationResult {
 export async function validatePlottingImport(
   rows: ValidatePlottingRow[],
   term: string,
+  pendingAspraks?: { kode: string; nama_lengkap: string; nim: string; angkatan: number }[],
   supabaseClient?: SupabaseClient
 ): Promise<ValidationResult> {
   const supabase = supabaseClient ?? (await createClient());
 
   const uniqueCodes = Array.from(new Set(rows.map((r) => r.kode_asprak.trim())));
   const allAspraks: any[] = [];
+
+  if (pendingAspraks && pendingAspraks.length > 0) {
+    const pendingWithTempId = pendingAspraks.map(p => ({
+      ...p,
+      id: `pending_${p.kode}_${p.nim}` // unique local ID placeholder
+    }));
+    allAspraks.push(...pendingWithTempId);
+  }
 
   const chunks = [];
   const chunkSize = 500;
@@ -111,7 +120,9 @@ export async function validatePlottingImport(
         .in('kode', chunk);
       
       if (data) {
-        allAspraks.push(...data);
+        // filter out from DB if it is already in pending
+        const dataFiltered = data.filter(d => !allAspraks.some(a => a.kode === d.kode));
+        allAspraks.push(...dataFiltered);
       }
     })
   );

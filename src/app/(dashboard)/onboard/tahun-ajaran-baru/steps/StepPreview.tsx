@@ -74,6 +74,7 @@ const steps = [
 
 export default function PreviewStep() {
   const { draft, setCurrentStep, markStepCompleted } = useOnboardingStore();
+  const { setActiveTerm } = useTermStore();
   const [loading, setLoading] = useState(false);
 
   const praktikumList = draft.praktikumList || [];
@@ -97,6 +98,10 @@ export default function PreviewStep() {
       if (!res.ok) throw new Error(result.error || 'Gagal menyimpan data ke database');
       
       toast.success('Semua data berhasil disimpan ke Database!');
+      if (praktikumList.length > 0) {
+        setActiveTerm(praktikumList[0].tahun_ajaran);
+      }
+      
       markStepCompleted('jadwal');
       setCurrentStep('selesai');
     } catch (err: any) {
@@ -122,15 +127,14 @@ export default function PreviewStep() {
               <div key={prak.tempId} className="border rounded-lg p-4 bg-muted/5">
                 <div className="flex justify-between items-center mb-3">
                   <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded bg-primary/20 flex items-center justify-center text-xs font-bold text-primary">{pIdx + 1}</div>
+                    <div className="w-6 h-6 rounded bg-muted flex items-center justify-center text-xs font-bold text-muted-foreground">{pIdx + 1}</div>
                     <h3 className="font-semibold text-lg">{prak.nama} <span className="text-sm font-normal text-muted-foreground">({prak.tahun_ajaran})</span></h3>
                   </div>
                 </div>
                 {mks.length > 0 ? (
                   <div className="pl-8 space-y-2">
                     {mks.map((mk, idx) => (
-                      <div key={mk.id || idx} className="flex items-center gap-2 text-sm border-l-2 pl-3 py-1">
-                        <BookOpen className="w-4 h-4 text-muted-foreground" />
+                      <div key={mk.id || idx} className="flex items-center text-sm border-l-2 pl-3 py-1">
                         <span>{mk.nama_lengkap} <span className="text-muted-foreground">- {mk.program_studi}</span></span>
                       </div>
                     ))}
@@ -143,11 +147,13 @@ export default function PreviewStep() {
           })}
         </div>
       </CardContent>
-      <CardFooter className="justify-between pt-4 pb-6 bg-muted/10 border-t">
-        <Button type="button" variant="ghost" onClick={() => setCurrentStep('matkul')} disabled={loading}>Sebelumnya</Button>
-        <Button onClick={handleSaveAll} disabled={loading} size="lg">
-          {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Selanjutnya
+      <CardFooter className="flex justify-between border-t p-6">
+        <Button variant="outline" onClick={() => setCurrentStep('matkul')} disabled={loading} className="shrink-0 min-w-[140px]">
+          <ArrowLeft className="mr-2 h-4 w-4" /> Sebelumnya
+        </Button>
+        <Button onClick={handleSaveAll} disabled={loading} className="shrink-0 min-w-[160px] bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm">
+          {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+          {loading ? 'Menyimpan...' : 'Simpan Permanen'}
         </Button>
       </CardFooter>
     </Card>

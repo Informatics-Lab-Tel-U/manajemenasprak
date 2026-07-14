@@ -436,6 +436,7 @@ export interface BulkUpsertResult {
   updated: number;
   skipped: number;
   errors: string[];
+  kodeToIdMap: Record<string, string>;
 }
 
 function buildUpsertPayloads(
@@ -481,7 +482,7 @@ export async function bulkUpsertAspraks(
   supabaseClient?: SupabaseClient
 ): Promise<BulkUpsertResult> {
   const supabase = supabaseClient ?? (await createClient());
-  const result: BulkUpsertResult = { inserted: 0, updated: 0, skipped: 0, errors: [] };
+  const result: BulkUpsertResult = { inserted: 0, updated: 0, skipped: 0, errors: [], kodeToIdMap: {} };
 
   if (rows.length === 0) return result;
 
@@ -499,20 +500,26 @@ export async function bulkUpsertAspraks(
     result.skipped = skipped;
 
     if (upsertPayload.length > 0) {
-      const { error } = await supabase.from('asprak').upsert(upsertPayload);
+      const { data, error } = await supabase.from('asprak').upsert(upsertPayload).select('id, kode');
       if (error) {
         result.errors.push(`Bulk updates err: ${error.message}`);
       } else {
         result.updated = upsertPayload.length;
+        data?.forEach((d) => {
+          result.kodeToIdMap[d.kode] = d.id;
+        });
       }
     }
 
     if (insertPayload.length > 0) {
-      const { error } = await supabase.from('asprak').insert(insertPayload);
+      const { data, error } = await supabase.from('asprak').insert(insertPayload).select('id, kode');
       if (error) {
         result.errors.push(`Bulk inserts err: ${error.message}`);
       } else {
         result.inserted = insertPayload.length;
+        data?.forEach((d) => {
+          result.kodeToIdMap[d.kode] = d.id;
+        });
       }
     }
   } catch (e: any) {
