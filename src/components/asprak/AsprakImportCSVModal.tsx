@@ -15,6 +15,7 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import Papa from 'papaparse';
+import * as XLSX from 'xlsx';
 import { FileSpreadsheet, Upload, FileText, X, Download } from 'lucide-react';
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -105,8 +106,7 @@ const handleDownloadTemplate = async (format: 'csv' | 'xlsx') => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-  } else {
-    const XLSX = await import('xlsx');
+  } else if (format === 'xlsx') {
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Template');
@@ -150,58 +150,89 @@ export default function AsprakImportCSVModal({
 
   // ─── CSV Parsing ─────────────────────────────────────────────────────────
 
-  const processCSV = useCallback((file: File) => {
+  const processFile = useCallback((file: File) => {
     setError(null);
     setFileName(file.name);
 
-    Papa.parse<RawCSVRow>(file, {
-      header: true,
-      skipEmptyLines: true,
-      transformHeader: (header: string) => {
-        const h = header.trim().toLowerCase();
-        if (h.includes('nama')) return 'nama_lengkap';
-        if (h.includes('nim')) return 'nim';
-        if (h.includes('kode')) return 'kode';
-        if (h.includes('role') || h.includes('peran')) return 'role';
-        if (h.includes('angkatan') || h.includes('tahun')) return 'angkatan';
-        return h.replace(/[^a-z0-9]/g, '_');
-      },
-      complete: (results) => {
-        const { data, errors } = results;
+    const normalizeHeader = (header: string) => {
+      const h = header.trim().toLowerCase();
+      if (h.includes('nama')) return 'nama_lengkap';
+      if (h.includes('nim')) return 'nim';
+      if (h.includes('kode')) return 'kode';
+      if (h.includes('role') || h.includes('peran')) return 'role';
+      if (h.includes('angkatan') || h.includes('tahun')) return 'angkatan';
+      return h.replace(/[^a-z0-9]/g, '_');
+    };
 
-        if (errors.length > 0) {
-          setError(`CSV parsing error: ${errors[0].message}`);
-          return;
-        }
+    const handleParsedData = (data: any[]) => {
+      if (data.length === 0) {
+        setError('File kosong — tidak ada data yang ditemukan.');
+        return;
+      }
 
-        if (data.length === 0) {
-          setError('CSV kosong — tidak ada data yang ditemukan.');
-          return;
-        }
+      // Validate required columns
+      const firstRow = data[0];
+      const requiredCols = ['nama_lengkap', 'nim'];
+      const missingCols = requiredCols.filter((col) => !(col in firstRow));
+      if (missingCols.length > 0) {
+        setError(
+          `Kolom wajib tidak ditemukan: ${missingCols.join(', ')}. Kolom yang ada: ${Object.keys(firstRow).join(', ')}`
+        );
+        return;
+      }
 
-        // Validate required columns
-        const firstRow = data[0];
-        const requiredCols = ['nama_lengkap', 'nim'];
-        const missingCols = requiredCols.filter((col) => !(col in firstRow));
-        if (missingCols.length > 0) {
-          setError(
-            `Kolom wajib tidak ditemukan: ${missingCols.join(', ')}. Kolom yang ada: ${Object.keys(firstRow).join(', ')}`
-          );
-          return;
-        }
+      // Build preview rows with code generation
+      try {
+        setParsedData(data);
+        setStep('preview');
+      } catch (e: any) {
+        setError(`Error saat generate kode: ${e instanceof Error ? e.message : String(e)}`);
+      }
+    };
 
-        // Build preview rows with code generation
+    if (file.name.endsWith('.xlsx')) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
         try {
-          setParsedData(data);
-          setStep('preview');
-        } catch (e: any) {
-          setError(`Error saat generate kode: ${e instanceof Error ? e.message : String(e)}`);
+          const data = e.target?.result;
+          const workbook = XLSX.read(data, { type: 'binary' });
+          const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+          const jsonData = XLSX.utils.sheet_to_json<any>(worksheet);
+
+          const normalizedData = jsonData.map((row: any) => {
+            const newRow: any = {};
+            Object.keys(row).forEach((key) => {
+              newRow[normalizeHeader(key)] = row[key];
+            });
+            return newRow;
+          });
+          
+          handleParsedData(normalizedData);
+        } catch (err: any) {
+          setError(`Gagal membaca file Excel: ${err.message}`);
         }
-      },
-      error: (err: Error) => {
-        setError(`Failed to parse CSV: ${err.message}`);
-      },
-    });
+      };
+      reader.readAsBinaryString(file);
+    } else {
+      Papa.parse<RawCSVRow>(file, {
+        header: true,
+        skipEmptyLines: true,
+        transformHeader: normalizeHeader,
+        complete: (results) => {
+          const { data, errors } = results;
+
+          if (errors.length > 0) {
+            setError(`CSV parsing error: ${errors[0].message}`);
+            return;
+          }
+
+          handleParsedData(data);
+        },
+        error: (err: Error) => {
+          setError(`Failed to parse CSV: ${err.message}`);
+        },
+      });
+    }
   }, []);
 
   // Re-run validation when data or forceOverride changes
@@ -321,14 +352,14 @@ export default function AsprakImportCSVModal({
     (acceptedFiles: File[]) => {
       const file = acceptedFiles[0];
       if (!file) return;
-      processCSV(file);
+      processFile(file);
     },
-    [processCSV]
+    [processFile]
   );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
-    accept: { 'text/csv': ['.csv'] },
+    accept: { 'text/csv': ['.csv'], 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'] },
     maxFiles: 1,
     disabled: !isTermValid,
   });
@@ -479,7 +510,7 @@ export default function AsprakImportCSVModal({
                         <div className="space-y-1">
                           <p className="font-medium">Drag & drop file CSV di sini</p>
                           <p className="text-xs text-muted-foreground">
-                            atau klik untuk pilih file
+                            atau klik untuk pilih file (.csv, .xlsx)
                           </p>
                         </div>
                       )}

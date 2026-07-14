@@ -1,8 +1,6 @@
 'use client';
 
-/* eslint-disable react-doctor/no-fetch-in-effect */
-
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
   Stepper,
   StepperItem,
@@ -24,6 +22,7 @@ import { toast } from 'sonner';
 
 import { useDropzone } from 'react-dropzone';
 import Papa from 'papaparse';
+import * as XLSX from 'xlsx';
 import PraktikumCSVPreview, { PraktikumPreviewRow } from '@/components/praktikum/PraktikumCSVPreview';
 import { validatePraktikumData } from '@/utils/validation/praktikumValidation';
 import MataKuliahCSVPreview, { MataKuliahCSVRow } from '@/components/mata-kuliah/MataKuliahCSVPreview';
@@ -90,7 +89,6 @@ const handleDownloadTemplate = async (format: 'csv' | 'xlsx') => {
     link.click();
     document.body.removeChild(link);
   } else {
-    const XLSX = await import('xlsx');
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Template');
@@ -137,13 +135,15 @@ export default function MatkulStep() {
   const [isCopyModalOpen, setIsCopyModalOpen] = useState(false);
   const [copySourceTerm, setCopySourceTerm] = useState('');
   const [availableTerms, setAvailableTerms] = useState<string[]>([]);
+  const termsLoading = useRef(false);
 
-  useEffect(() => {
-    if (isCopyModalOpen && availableTerms.length === 0) {
-      // eslint-disable-next-line react-doctor/no-fetch-in-effect
+  const handleCopyModalOpenChange = (open: boolean) => {
+    setIsCopyModalOpen(open);
+    if (open && availableTerms.length === 0) {
+      termsLoading.current = true;
       fetch('/api/tahun-ajaran')
-        .then(res => res.json())
-        .then(res => {
+        .then((res) => res.json())
+        .then((res) => {
           if (res.ok && res.data) {
             setAvailableTerms(res.data);
             if (res.data.length > 0 && !copySourceTerm) {
@@ -151,9 +151,10 @@ export default function MatkulStep() {
             }
           }
         })
-        .catch(err => console.error(err));
+        .catch((err) => console.error(err))
+        .finally(() => { termsLoading.current = false; });
     }
-  }, [isCopyModalOpen, availableTerms.length, copySourceTerm]);
+  };
 
   const processCSV = useCallback((file: File) => {
     setUploadError(null);
@@ -194,41 +195,36 @@ export default function MatkulStep() {
     if (!file) return;
 
     if (file.name.endsWith('.xlsx')) {
-      try {
-        const XLSX = await import('xlsx');
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          try {
-            const data = e.target?.result;
-            const workbook = XLSX.read(data, { type: 'binary' });
-            const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-            const jsonData = XLSX.utils.sheet_to_json<any>(worksheet);
-            
-            if (jsonData.length === 0) {
-              setUploadError('File Excel kosong — tidak ada data yang ditemukan.');
-              return;
-            }
-
-            const preview = validateMataKuliahData(jsonData, validPraktikums, []);
-            const strictPreview = preview.map(r => {
-              if (!r.statusMessage?.includes('Praktikum baru akan dibuat otomatis')) return r;
-              return {
-                ...r,
-                status: 'error' as const,
-                statusMessage: 'Praktikum tidak ditemukan di Langkah 1',
-                selected: false
-              };
-            });
-
-            setPreviewRows(prev => [...prev, ...strictPreview]);
-          } catch (err: any) {
-            setUploadError(`Gagal membaca file Excel: ${err.message}`);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = e.target?.result;
+          const workbook = XLSX.read(data, { type: 'binary' });
+          const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+          const jsonData = XLSX.utils.sheet_to_json<any>(worksheet);
+          
+          if (jsonData.length === 0) {
+            setUploadError('File Excel kosong — tidak ada data yang ditemukan.');
+            return;
           }
-        };
-        reader.readAsBinaryString(file);
-      } catch (err: any) {
-        setUploadError(`Library xlsx belum siap. Coba gunakan CSV sementara.`);
-      }
+
+          const preview = validateMataKuliahData(jsonData, validPraktikums, []);
+          const strictPreview = preview.map(r => {
+            if (!r.statusMessage?.includes('Praktikum baru akan dibuat otomatis')) return r;
+            return {
+              ...r,
+              status: 'error' as const,
+              statusMessage: 'Praktikum tidak ditemukan di Langkah 1',
+              selected: false
+            };
+          });
+
+          setPreviewRows(prev => [...prev, ...strictPreview]);
+        } catch (err: any) {
+          setUploadError(`Gagal membaca file Excel: ${err.message}`);
+        }
+      };
+      reader.readAsBinaryString(file);
     } else {
       processCSV(file);
     }
@@ -477,7 +473,7 @@ export default function MatkulStep() {
                 </DialogContent>
               </Dialog>
 
-              <Dialog open={isCopyModalOpen} onOpenChange={setIsCopyModalOpen}>
+              <Dialog open={isCopyModalOpen} onOpenChange={handleCopyModalOpenChange}>
                 <DialogTrigger asChild>
                   <Button variant="outline" size="sm" className="gap-2"><Copy className="w-4 h-4"/> Copy dari Tahun Lalu</Button>
                 </DialogTrigger>

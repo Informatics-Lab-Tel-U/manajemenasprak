@@ -247,6 +247,30 @@ export async function bulkImportAspraks(
   }
 }
 
+export async function bulkImportAspraksWithPlotting(
+  rows: BulkImportRow[],
+  plottingPayload: { asprak_id: string; praktikum_id: string; kode_asprak: string; }[]
+): Promise<ServiceResult<BulkImportResult>> {
+  try {
+    const res = await fetch('/api/asprak', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'bulk-import-with-plotting', rows, plottingPayload }),
+    });
+
+    const json = await res.json();
+
+    if (!res.ok) {
+      return { ok: false, error: json.error };
+    }
+
+    return { ok: true, data: json.data };
+  } catch (e: any) {
+    logger.error('Error bulk importing aspraks with plotting:', e);
+    return { ok: false, error: e.message };
+  }
+}
+
 // ... existing code ...
 
 export async function checkNim(nim: string): Promise<ServiceResult<boolean>> {

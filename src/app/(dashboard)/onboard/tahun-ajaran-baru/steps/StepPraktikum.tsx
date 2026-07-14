@@ -1,7 +1,5 @@
 'use client';
 
-/* eslint-disable react-doctor/no-fetch-in-effect, react-doctor/no-chain-state-updates */
-
 import React, { useState, useCallback, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,6 +10,7 @@ import { toast } from 'sonner';
 
 import { useDropzone } from 'react-dropzone';
 import Papa from 'papaparse';
+import * as XLSX from 'xlsx';
 import PraktikumCSVPreview, { PraktikumPreviewRow } from '@/components/praktikum/PraktikumCSVPreview';
 import { validatePraktikumData } from '@/utils/validation/praktikumValidation';
 import { usePraktikum } from '@/hooks/usePraktikum';
@@ -42,9 +41,16 @@ import { useSearchParams } from 'next/navigation';
 
 const handleDownloadTemplate = async (format: 'csv' | 'xlsx') => {
   const data = [
-    { nama: 'PBO', tahun_ajaran: '2425-2' },
-    { nama: 'JARKOM', tahun_ajaran: '2425-2' },
+    {
+      nama: 'Konteks - Praktikum Contoh',
+      tahun_ajaran: '2425/1',
+    },
+    {
+      nama: 'Konteks - Praktikum Lain',
+      tahun_ajaran: '2425/1',
+    },
   ];
+
   if (format === 'csv') {
     const csv = Papa.unparse(data);
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -55,8 +61,7 @@ const handleDownloadTemplate = async (format: 'csv' | 'xlsx') => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-  } else {
-    const XLSX = await import('xlsx');
+  } else if (format === 'xlsx') {
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Template');
@@ -128,11 +133,10 @@ export default function PraktikumStep() {
   const [isManualModalOpen, setIsManualModalOpen] = useState(false);
   const [manualInputName, setManualInputName] = useState('');
 
-  // eslint-disable-next-line react-doctor/no-chain-state-updates
-  useEffect(() => {
-    if (isCopyModalOpen && availableTerms.length === 0) {
+  const handleCopyModalOpenChange = (open: boolean) => {
+    setIsCopyModalOpen(open);
+    if (open && availableTerms.length === 0) {
       setTermsLoading(true);
-      // eslint-disable-next-line react-doctor/no-fetch-in-effect
       fetch('/api/tahun-ajaran')
         .then((res) => res.json())
         .then((res) => {
@@ -146,7 +150,7 @@ export default function PraktikumStep() {
         .catch((err) => console.error(err))
         .finally(() => setTermsLoading(false));
     }
-  }, [isCopyModalOpen, availableTerms.length, copySourceTerm]);
+  };
 
   // Handlers for CSV
   const processCSV = useCallback(
@@ -185,35 +189,30 @@ export default function PraktikumStep() {
       if (!file) return;
 
       if (file.name.endsWith('.xlsx')) {
-        try {
-          const XLSX = await import('xlsx');
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            try {
-              const data = e.target?.result;
-              const workbook = XLSX.read(data, { type: 'binary' });
-              const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-              const jsonData = XLSX.utils.sheet_to_json<any>(worksheet);
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const data = e.target?.result;
+            const workbook = XLSX.read(data, { type: 'binary' });
+            const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+            const jsonData = XLSX.utils.sheet_to_json<any>(worksheet);
 
-              if (jsonData.length === 0) {
-                setUploadError('File Excel kosong — tidak ada data yang ditemukan.');
-                return;
-              }
-
-              const preview = validatePraktikumData(jsonData, praktikumNames.map((p) => ({ ...p, tahun_ajaran: '' })));
-              setPreviewRows((prev) => {
-                const existingNames = new Set(prev.map((r) => r.nama.toUpperCase()));
-                const newRows = preview.filter((r) => !existingNames.has(r.nama.toUpperCase()));
-                return [...prev, ...newRows];
-              });
-            } catch (err: any) {
-              setUploadError(`Gagal membaca file Excel: ${err.message}`);
+            if (jsonData.length === 0) {
+              setUploadError('File Excel kosong — tidak ada data yang ditemukan.');
+              return;
             }
-          };
-          reader.readAsBinaryString(file);
-        } catch (err: any) {
-          setUploadError(`Library xlsx belum siap. Coba gunakan CSV sementara.`);
-        }
+
+            const preview = validatePraktikumData(jsonData, praktikumNames.map((p) => ({ ...p, tahun_ajaran: '' })));
+            setPreviewRows((prev) => {
+              const existingNames = new Set(prev.map((r) => r.nama.toUpperCase()));
+              const newRows = preview.filter((r) => !existingNames.has(r.nama.toUpperCase()));
+              return [...prev, ...newRows];
+            });
+          } catch (err: any) {
+            setUploadError(`Gagal membaca file Excel: ${err.message}`);
+          }
+        };
+        reader.readAsBinaryString(file);
       } else {
         processCSV(file);
       }
@@ -396,7 +395,7 @@ export default function PraktikumStep() {
                 </DialogContent>
               </Dialog>
 
-              <Dialog open={isCopyModalOpen} onOpenChange={setIsCopyModalOpen}>
+              <Dialog open={isCopyModalOpen} onOpenChange={handleCopyModalOpenChange}>
                 <DialogTrigger asChild>
                   <Button variant="outline" size="sm" className="gap-2"><Copy className="w-4 h-4"/> Copy dari Tahun Lalu</Button>
                 </DialogTrigger>

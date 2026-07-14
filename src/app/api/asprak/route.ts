@@ -71,6 +71,14 @@ export async function POST(req: Request) {
         const result = await asprakService.bulkUpsertAspraks(body.rows, supabase);
         return NextResponse.json({ ok: true, data: result });
       }
+      case 'bulk-import-with-plotting': {
+        const result = await asprakService.bulkUpsertAspraksWithPlotting(
+          body.rows,
+          body.plottingPayload,
+          supabase
+        );
+        return NextResponse.json({ ok: true, data: result });
+      }
       case 'update-assignments': {
         const { asprakId, term, praktikumIds, newKode, nim, forceOverride } = body;
         await asprakService.updateAsprakAssignments(

@@ -437,6 +437,7 @@ export interface BulkUpsertResult {
   skipped: number;
   errors: string[];
   kodeToIdMap: Record<string, string>;
+  insertedIds: string[];
 }
 
 function buildUpsertPayloads(
@@ -482,7 +483,7 @@ export async function bulkUpsertAspraks(
   supabaseClient?: SupabaseClient
 ): Promise<BulkUpsertResult> {
   const supabase = supabaseClient ?? (await createClient());
-  const result: BulkUpsertResult = { inserted: 0, updated: 0, skipped: 0, errors: [], kodeToIdMap: {} };
+  const result: BulkUpsertResult = { inserted: 0, updated: 0, skipped: 0, errors: [], kodeToIdMap: {}, insertedIds: [] };
 
   if (rows.length === 0) return result;
 
@@ -519,6 +520,7 @@ export async function bulkUpsertAspraks(
         result.inserted = insertPayload.length;
         data?.forEach((d) => {
           result.kodeToIdMap[d.kode] = d.id;
+          result.insertedIds.push(d.id);
         });
       }
     }
@@ -528,6 +530,47 @@ export async function bulkUpsertAspraks(
   }
 
   return result;
+}
+
+export async function bulkUpsertAspraksWithPlotting(
+  rows: BulkUpsertRow[],
+  plottingPayload: { asprak_id: string; praktikum_id: string; kode_asprak: string; }[],
+  supabaseClient?: SupabaseClient
+): Promise<BulkUpsertResult> {
+  const supabase = supabaseClient ?? (await createClient());
+  const bulkResult = await bulkUpsertAspraks(rows, supabase);
+
+  if (bulkResult.errors.length > 0) {
+    throw new Error(`Bulk import asprak errors: ${bulkResult.errors.join(' | ')}`);
+  }
+
+  const { kodeToIdMap } = bulkResult;
+
+  const resolvedPlotting = plottingPayload.map(row => {
+    let finalId = row.asprak_id;
+    if (finalId.startsWith('pending_')) {
+      const realId = kodeToIdMap[row.kode_asprak];
+      if (!realId) {
+        throw new Error(`Kritikal: Tidak dapat menemukan ID untuk asisten dengan kode ${row.kode_asprak}. Plotting dibatalkan.`);
+      }
+      finalId = realId;
+    }
+    return { asprak_id: finalId, praktikum_id: row.praktikum_id };
+  });
+
+  if (resolvedPlotting.length > 0) {
+    const { savePlotting } = await import('@/services/plottingService');
+    try {
+      await savePlotting(resolvedPlotting, supabase);
+    } catch (e: any) {
+      if (bulkResult.insertedIds.length > 0) {
+        await supabase.from('asprak').delete().in('id', bulkResult.insertedIds);
+      }
+      throw new Error(`Gagal menyimpan plotting. Data asprak yang baru dimasukkan telah dibatalkan (rollback). Detail: ${e.message}`);
+    }
+  }
+
+  return bulkResult;
 }
 
 async function updateAsprakCodeIfNeeded(

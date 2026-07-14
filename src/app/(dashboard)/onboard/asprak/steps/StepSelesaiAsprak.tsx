@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { CheckCircle2, Users } from 'lucide-react';
+import { CheckCircle2, Users, Loader2 } from 'lucide-react';
 import { useAsprakOnboardStore } from '@/store/useAsprakOnboardStore';
 
 interface StepSelesaiAsprakProps {
@@ -19,10 +19,16 @@ export default function StepSelesaiAsprak({ term }: StepSelesaiAsprakProps) {
     markStepCompleted('selesai');
   }, [markStepCompleted]);
 
+  const [isNavigating, setIsNavigating] = useState(false);
+
   const handleFinish = () => {
-    resetProgress();
+    setIsNavigating(true);
     router.push('/onboard');
-    router.refresh();
+    
+    setTimeout(() => {
+      resetProgress();
+      router.refresh();
+    }, 1000);
   };
 
   return (
@@ -54,8 +60,15 @@ export default function StepSelesaiAsprak({ term }: StepSelesaiAsprakProps) {
         </div>
 
         <div>
-          <Button size="lg" onClick={handleFinish}>
-            Selesai & Kembali ke Hub Setup
+          <Button size="lg" onClick={handleFinish} disabled={isNavigating}>
+            {isNavigating ? (
+              <span className="flex items-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Mengalihkan...
+              </span>
+            ) : (
+              'Selesai & Kembali ke Hub Setup'
+            )}
           </Button>
         </div>
       </CardContent>

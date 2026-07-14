@@ -74,10 +74,15 @@ const steps = [
 
 export default function SelesaiStep() {
   const { resetProgress } = useOnboardingStore();
+  const [isNavigating, setIsNavigating] = useState(false);
 
   const handleFinish = () => {
-    resetProgress();
+    setIsNavigating(true);
     window.location.href = '/onboard';
+    
+    setTimeout(() => {
+      resetProgress();
+    }, 1000);
   };
 
   return (
@@ -109,8 +114,15 @@ export default function SelesaiStep() {
         </div>
 
         <div>
-          <Button size="lg" onClick={handleFinish}>
-            Selesai & Kembali ke Dashboard
+          <Button size="lg" onClick={handleFinish} disabled={isNavigating}>
+            {isNavigating ? (
+              <span className="flex items-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Membawa Anda ke Dashboard...
+              </span>
+            ) : (
+              'Selesai & Kembali ke Dashboard'
+            )}
           </Button>
         </div>
       </CardContent>

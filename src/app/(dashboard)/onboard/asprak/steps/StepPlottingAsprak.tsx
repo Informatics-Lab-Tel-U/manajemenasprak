@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import Papa from 'papaparse';
+import * as XLSX from 'xlsx';
 
 import { FileSpreadsheet, Upload, X, Download, FileText, Loader2, ArrowRight, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -43,8 +44,7 @@ const handleDownloadTemplate = async (format: 'csv' | 'xlsx') => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-  } else {
-    const XLSX = await import('xlsx');
+  } else if (format === 'xlsx') {
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Template');
@@ -69,39 +69,36 @@ export default function StepPlottingAsprak({ term }: StepPlottingAsprakProps) {
     });
   };
 
-  // CSV Processing
-  const processCSV = (file: File) => {
+  const processFile = (file: File) => {
     setError(null);
     setFileName(file.name);
     setLoading(true);
 
-    Papa.parse(file, {
-      header: true,
-      skipEmptyLines: true,
-      complete: async (results: any) => {
-        const rawRows = results.data.reduce((acc: any[], row: any) => {
-          const kode_asprak = row.kode_asprak || '';
-          const mk_singkat = row.mk_singkat || '';
-          if (kode_asprak && mk_singkat) {
-            acc.push({ kode_asprak, mk_singkat });
-          }
-          return acc;
-        }, []);
-
-        if (rawRows.length === 0) {
-          setError('CSV kosong atau format kolom salah (harus ada kode_asprak, mk_singkat)');
-          setLoading(false);
-          return;
+    const handleParsedData = async (resultsData: any[]) => {
+      const rawRows = resultsData.reduce((acc: any[], row: any) => {
+        const kode_asprak = row.kode_asprak || '';
+        const mk_singkat = row.mk_singkat || '';
+        if (kode_asprak && mk_singkat) {
+          acc.push({ kode_asprak, mk_singkat });
         }
+        return acc;
+      }, []);
 
-        // Validate via API
-        const pendingAspraks = validatedAsprakRows.map(r => ({
-          kode: r.kode,
-          nama_lengkap: r.nama_lengkap,
-          nim: r.nim,
-          angkatan: r.angkatan
-        }));
-        
+      if (rawRows.length === 0) {
+        setError('File kosong atau format kolom salah (harus ada kode_asprak, mk_singkat)');
+        setLoading(false);
+        return;
+      }
+
+      // Validate via API
+      const pendingAspraks = validatedAsprakRows.map(r => ({
+        kode: r.kode,
+        nama_lengkap: r.nama_lengkap,
+        nim: r.nim,
+        angkatan: r.angkatan
+      }));
+      
+      try {
         const res = await validatePlottingImport(rawRows, term, pendingAspraks);
         setLoading(false);
 
@@ -112,19 +109,64 @@ export default function StepPlottingAsprak({ term }: StepPlottingAsprakProps) {
         } else {
           setError(res.error || 'Validasi gagal');
         }
-      },
-      error: (e) => {
-        setError(`CSV Error: ${e.message}`);
+      } catch (e: any) {
+        setError(`API Error: ${e.message}`);
         setLoading(false);
-      },
-    });
+      }
+    };
+
+    const normalizeHeader = (header: string) => {
+      const h = header.trim().toLowerCase();
+      if (h.includes('kode') && h.includes('asprak')) return 'kode_asprak';
+      if (h.includes('mk') || h.includes('mata') || h.includes('singkat')) return 'mk_singkat';
+      return h.replace(/[^a-z0-9]/g, '_');
+    };
+
+    if (file.name.endsWith('.xlsx')) {
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          const data = e.target?.result;
+          const workbook = XLSX.read(data, { type: 'binary' });
+          const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+          const jsonData = XLSX.utils.sheet_to_json<any>(worksheet);
+
+          const normalizedData = jsonData.map((row: any) => {
+            const newRow: any = {};
+            Object.keys(row).forEach((key) => {
+              newRow[normalizeHeader(key)] = row[key];
+            });
+            return newRow;
+          });
+          
+          await handleParsedData(normalizedData);
+        } catch (err: any) {
+          setError(`Gagal membaca file Excel: ${err.message}`);
+          setLoading(false);
+        }
+      };
+      reader.readAsBinaryString(file);
+    } else {
+      Papa.parse(file, {
+        header: true,
+        skipEmptyLines: true,
+        transformHeader: normalizeHeader,
+        complete: async (results: any) => {
+          await handleParsedData(results.data);
+        },
+        error: (e) => {
+          setError(`CSV Error: ${e.message}`);
+          setLoading(false);
+        },
+      });
+    }
   };
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    accept: { 'text/csv': ['.csv'] },
+    accept: { 'text/csv': ['.csv'], 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'] },
     maxFiles: 1,
     disabled: !term || loading,
-    onDrop: (files) => files[0] && processCSV(files[0]),
+    onDrop: (files) => files[0] && processFile(files[0]),
   });
 
   const handleResolve = (index: number, candidateId: string) => {
@@ -294,7 +336,7 @@ export default function StepPlottingAsprak({ term }: StepPlottingAsprakProps) {
                 ) : (
                   <div className="space-y-1">
                     <p className="font-medium text-lg">Drag & drop file CSV Plotting di sini</p>
-                    <p className="text-sm text-muted-foreground">atau klik untuk memilih file</p>
+                    <p className="text-xs text-muted-foreground">atau klik untuk pilih file (.csv, .xlsx)</p>
                   </div>
                 )}
               </>
