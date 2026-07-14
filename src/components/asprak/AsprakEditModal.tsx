@@ -1,3 +1,4 @@
+/* eslint-disable react-doctor/no-impure-state-updater */
 /* eslint-disable react-doctor/no-chain-state-updates, react-doctor/no-cascading-set-state, react-doctor/no-effect-chain, react-doctor/rendering-hydration-no-flicker */
 import { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';

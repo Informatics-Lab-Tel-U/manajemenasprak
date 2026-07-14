@@ -78,6 +78,8 @@ interface StepperProps extends HTMLAttributes<HTMLDivElement> {
   onValueChange?: (value: string) => void
 }
 
+const EMPTY_INDICATORS: StepIndicators = {}
+
 function Stepper({
   steps,
   defaultValue,
@@ -85,7 +87,7 @@ function Stepper({
   responsive = false,
   className,
   children,
-  indicators = {},
+  indicators = EMPTY_INDICATORS,
   value,
   onValueChange,
   ...props
@@ -108,34 +110,21 @@ function Stepper({
   // Track viewport breakpoint (tailwind md = 768px). If `responsive` is true
   // and the configured orientation is horizontal, switch to vertical on
   // Viewport width smaller than md.
-  const [isMdUp, setIsMdUp] = useState<boolean>(() =>
-    typeof window !== 'undefined' ? window.matchMedia('(min-width: 768px)').matches : true
-  )
+  const [isMdUp, setIsMdUp] = useState<boolean>(true)
 
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setIsMdUp(window.matchMedia('(min-width: 768px)').matches)
+    }
+    
     if (!responsive) return
 
     const mql = window.matchMedia('(min-width: 768px)')
     const handler = (e: MediaQueryListEvent | MediaQueryList) => setIsMdUp('matches' in e ? e.matches : mql.matches)
 
-    if ('addEventListener' in mql) {
-      // modern browsers
+    mql.addEventListener('change', handler)
 
-      mql.addEventListener('change', handler)
-    } else {
-      // fallback
-      // @ts-expect-error - legacy
-      mql.addListener(handler)
-    }
-
-    return () => {
-      if ('removeEventListener' in mql) {
-        mql.removeEventListener('change', handler)
-      } else {
-        // @ts-expect-error - legacy
-        mql.removeListener(handler)
-      }
-    }
+    return () => mql.removeEventListener('change', handler)
   }, [responsive])
 
   // Register/unregister triggers
@@ -247,8 +236,12 @@ function StepperItem({
 
   const isLoading = loading && currentIndex === stepIndex
 
+  const contextValue = useMemo(() => ({
+    step, index: stepIndex, state, isDisabled: disabled, isLoading
+  }), [step, stepIndex, state, disabled, isLoading])
+
   return (
-    <StepItemContext.Provider value={{ step, index: stepIndex, state, isDisabled: disabled, isLoading }}>
+    <StepItemContext.Provider value={contextValue}>
       <div
         data-slot='stepper-item'
         className={cn(

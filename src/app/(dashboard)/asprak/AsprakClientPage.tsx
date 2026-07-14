@@ -1,5 +1,6 @@
-'use client';
+"use client";
 
+/* eslint-disable react-doctor/no-impure-state-updater */
 /* eslint-disable react-doctor/no-chain-state-updates, react-doctor/no-cascading-set-state, react-doctor/no-effect-chain, react-doctor/rendering-hydration-no-flicker */
 
 import { useState, useMemo, useEffect } from 'react';

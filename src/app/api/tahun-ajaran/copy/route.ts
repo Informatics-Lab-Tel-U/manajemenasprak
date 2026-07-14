@@ -3,6 +3,12 @@ import { requireRoleApi } from '@/lib/auth';
 import { copyTahunAjaran } from '@/services/tahunAjaranCopyService';
 import { logger } from '@/lib/logger';
 
+const defaultOptions = {
+  copyPraktikum: true,
+  copyMataKuliah: true,
+  copyAsprakAssignments: true,
+};
+
 export async function POST(req: Request) {
   try {
     // RBAC: Only Admin or Aslab can initiate copy
@@ -19,11 +25,6 @@ export async function POST(req: Request) {
       );
     }
 
-    const defaultOptions = {
-      copyPraktikum: true,
-      copyMataKuliah: true,
-      copyAsprakAssignments: true,
-    };
 
     const finalOptions = { ...defaultOptions, ...options };
 

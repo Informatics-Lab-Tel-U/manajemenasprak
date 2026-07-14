@@ -71,6 +71,29 @@ const steps = [
   { id: 'selesai', title: 'Selesai', description: 'Setup berhasil', icon: <CheckCircle2 /> },
 ];
 
+const handleDownloadTemplate = async (format: 'csv' | 'xlsx') => {
+  const data = [
+    { mk_singkat: 'ALPRO 1', nama_lengkap: 'ALGORITMA PEMROGRAMAN 1', program_studi: 'IF', dosen_koor: 'PEY' },
+    { mk_singkat: 'STD', nama_lengkap: 'STRUKTUR DATA', program_studi: 'SE-PJJ', dosen_koor: 'HUI' },
+  ];
+  if (format === 'csv') {
+    const csv = Papa.unparse(data);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'template_matakuliah.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  } else {
+    const XLSX = await import('xlsx');
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Template');
+    XLSX.writeFile(wb, 'template_matakuliah.xlsx');
+  }
+};
 
 export default function MatkulStep() {
   const { stepper } = useStepper();
@@ -213,29 +236,7 @@ export default function MatkulStep() {
     maxFiles: 1,
   });
 
-  const handleDownloadTemplate = async (format: 'csv' | 'xlsx') => {
-    const data = [
-      { mk_singkat: 'ALPRO 1', nama_lengkap: 'ALGORITMA PEMROGRAMAN 1', program_studi: 'IF', dosen_koor: 'PEY' },
-      { mk_singkat: 'STD', nama_lengkap: 'STRUKTUR DATA', program_studi: 'SE-PJJ', dosen_koor: 'HUI' },
-    ];
-    if (format === 'csv') {
-      const csv = Papa.unparse(data);
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', 'template_matakuliah.csv');
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } else {
-      const XLSX = await import('xlsx');
-      const ws = XLSX.utils.json_to_sheet(data);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, 'Template');
-      XLSX.writeFile(wb, 'template_matakuliah.xlsx');
-    }
-  };
+
 
   const handleAddManual = (e: React.FormEvent) => {
     e.preventDefault();
@@ -296,10 +297,8 @@ export default function MatkulStep() {
         };
       });
 
-      setPreviewRows(prev => {
-         toast.success(`Berhasil menarik ${strictPreview.length} mata kuliah`);
-         return [...prev, ...strictPreview];
-      });
+      toast.success(`Berhasil menarik ${strictPreview.length} mata kuliah`);
+      setPreviewRows(prev => [...prev, ...strictPreview]);
       
       setIsCopyModalOpen(false);
     } catch (err: any) {

@@ -185,8 +185,8 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
       </SidebarHeader>
 
       <SidebarContent>
-        {visibleNavGroups.map((group, index) => (
-          <SidebarGroup key={index}>
+        {visibleNavGroups.map((group) => (
+          <SidebarGroup key={group.label}>
             <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>

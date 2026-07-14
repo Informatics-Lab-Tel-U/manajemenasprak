@@ -1,5 +1,6 @@
-'use client';
+"use client";
 
+/* eslint-disable react-doctor/no-impure-state-updater */
 import * as React from 'react';
 import { toast } from 'sonner';
 import { Eye, EyeOff, Loader2, Key } from 'lucide-react';

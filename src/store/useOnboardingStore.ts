@@ -225,8 +225,9 @@ export const useOnboardingStore = create<OnboardingState>()(
         if (stepIndex === 0) return true;
         
         // Check if all previous steps are completed
+        const completedSet = new Set(state.completedSteps);
         for (let i = 0; i < stepIndex; i++) {
-          if (!state.completedSteps.includes(STEP_ORDER[i])) {
+          if (!completedSet.has(STEP_ORDER[i])) {
             return false;
           }
         }

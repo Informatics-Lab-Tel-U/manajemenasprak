@@ -36,6 +36,30 @@ import TermInput from '@/components/asprak/TermInput';
 import { buildTermString } from '@/utils/termHelpers';
 import { useTermStore } from '@/store/useTermStore';
 
+const handleDownloadTemplate = async (format: 'csv' | 'xlsx') => {
+  const data = [
+    { nama: 'PBO', tahun_ajaran: '2425-2' },
+    { nama: 'JARKOM', tahun_ajaran: '2425-2' },
+  ];
+  if (format === 'csv') {
+    const csv = Papa.unparse(data);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'template_praktikum.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  } else {
+    const XLSX = await import('xlsx');
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Template');
+    XLSX.writeFile(wb, 'template_praktikum.xlsx');
+  }
+};
+
 export default function PraktikumStep() {
   const { praktikumNames } = usePraktikum();
   const {
@@ -194,29 +218,7 @@ export default function PraktikumStep() {
     maxFiles: 1,
   });
 
-  const handleDownloadTemplate = async (format: 'csv' | 'xlsx') => {
-    const data = [
-      { nama: 'PBO', tahun_ajaran: '2425-2' },
-      { nama: 'JARKOM', tahun_ajaran: '2425-2' },
-    ];
-    if (format === 'csv') {
-      const csv = Papa.unparse(data);
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', 'template_praktikum.csv');
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } else {
-      const XLSX = await import('xlsx');
-      const ws = XLSX.utils.json_to_sheet(data);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, 'Template');
-      XLSX.writeFile(wb, 'template_praktikum.xlsx');
-    }
-  };
+
 
   const handleToggleSelect = useCallback((rowIndex: number) => {
     setPreviewRows((prev) => {
