@@ -120,3 +120,50 @@ export async function clearAllData(supabaseClient?: SupabaseClient) {
 
   logger.info('Database cleared successfully');
 }
+
+export async function clearDataByTerm(term: string, supabaseClient?: SupabaseClient) {
+  const supabase = supabaseClient ?? createAdminClient();
+  logger.info(`Clearing all data for term: ${term}...`);
+
+  // 1. Get Praktikum IDs for this term
+  const { data: prakData } = await supabase.from('praktikum').select('id').eq('tahun_ajaran', term);
+  const prakIds = prakData?.map((p: any) => p.id) || [];
+  if (prakIds.length === 0) {
+    logger.info(`No praktikum found for term ${term}, nothing to delete.`);
+    return;
+  }
+
+  // 2. Get Mata Kuliah IDs
+  const { data: mkData } = await supabase.from('mata_kuliah').select('id').in('id_praktikum', prakIds);
+  const mkIds = mkData?.map((mk: any) => mk.id) || [];
+
+  // 3. Get Jadwal IDs
+  let jadwalIds: string[] = [];
+  if (mkIds.length > 0) {
+    const { data: jData } = await supabase.from('jadwal').select('id').in('id_mk', mkIds);
+    jadwalIds = jData?.map((j: any) => j.id) || [];
+  }
+
+  // Execute deletions bottom-up
+  if (jadwalIds.length > 0) {
+    await supabase.from('pelanggaran').delete().in('id_jadwal', jadwalIds);
+    await supabase.from('jadwal_pengganti').delete().in('id_jadwal', jadwalIds);
+    await supabase.from('jadwal').delete().in('id', jadwalIds);
+  }
+
+  if (prakIds.length > 0) {
+    await supabase.from('asprak_praktikum').delete().in('id_praktikum', prakIds);
+    // If 'asprak_koordinator' exists, we would delete it here. Checked clearAllData and it does exist.
+    await supabase.from('asprak_koordinator').delete().in('id_praktikum', prakIds);
+  }
+
+  if (mkIds.length > 0) {
+    await supabase.from('mata_kuliah').delete().in('id', mkIds);
+  }
+
+  if (prakIds.length > 0) {
+    await supabase.from('praktikum').delete().in('id', prakIds);
+  }
+
+  logger.info(`Successfully cleared data for term: ${term}`);
+}

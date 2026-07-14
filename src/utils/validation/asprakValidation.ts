@@ -5,7 +5,7 @@ import type { ExistingAsprakInfo } from '@/components/asprak/AsprakImportCSVModa
 const CODE_RECYCLE_YEARS = 5;
 
 // Define a type for existing nims with roles
-export type ExistingNimInfo = { nim: string; role: string };
+export type ExistingNimInfo = { nim: string; role: string; kode?: string };
 
 export function validateAsprakData(
   data: any[],
@@ -15,7 +15,12 @@ export function validateAsprakData(
 ): PreviewRow[] {
   const usedCodes = new Set(existingCodes.map((c) => c.toUpperCase()));
   // We check uniqueness for NIM+Role combination
-  const existingRecords = new Set(existingNims.map((e) => `${e.nim}_${e.role}`));
+  const existingRecords = new Map<string, string>();
+  existingNims.forEach((e) => {
+    if (e.kode) {
+      existingRecords.set(`${e.nim}_${e.role}`, e.kode.toUpperCase());
+    }
+  });
 
   // Map column variations mapped from headers
   const normalizedData = data.map((r: any) => {
@@ -68,8 +73,8 @@ export function validateAsprakData(
       typeof rawAngkatan === 'number' ? rawAngkatan : parseInt(String(rawAngkatan || '0'), 10);
     if (angkatan > 0 && angkatan < 100) angkatan += 2000;
 
-    const originalKode = row.kode ? row.kode.toUpperCase() : '';
-    const generated = generatedCodes[idx];
+    let originalKode = row.kode ? row.kode.toUpperCase() : '';
+    let generated = generatedCodes[idx];
 
     // Determine status
     let status: PreviewRow['status'] = 'ok';
@@ -82,8 +87,16 @@ export function validateAsprakData(
       status = 'error';
       statusMessage = 'NIM kosong';
     } else if (existingRecords.has(`${nim}_${role}`)) {
-      status = 'error';
-      statusMessage = `Duplikat — NIM ${role} sudah ada di database`;
+      status = 'warning';
+      statusMessage = `Data sudah ada di DB — akan di-update`;
+      // Preserve their existing code if they didn't provide one
+      if (!originalKode) {
+        const oldCode = existingRecords.get(`${nim}_${role}`);
+        if (oldCode) {
+          originalKode = oldCode;
+          generated = { code: oldCode, rule: 'Existing (DB)' };
+        }
+      }
     } else if (seenNimsInCSV.has(`${nim}_${role}`)) {
       status = 'duplicate-csv';
       statusMessage = 'Duplikat dalam CSV — NIM dan Role sama dengan row sebelumnya';
@@ -102,7 +115,7 @@ export function validateAsprakData(
     if (nim) seenNimsInCSV.add(`${nim}_${role}`);
 
     const codeSource: PreviewRow['codeSource'] =
-      generated.rule === 'Provided (CSV)' ? 'csv' : 'generated';
+      generated.rule === 'Provided (CSV)' || generated.rule === 'Existing (DB)' ? 'csv' : 'generated';
 
     const isDuplicate =
       (status === 'error' && statusMessage.includes('Duplikat')) || status === 'duplicate-csv';
@@ -186,6 +199,8 @@ export function validateAsprakCodeEdit(
       row.role !== 'ASLAB' &&
       !forceOverride &&
       existingAspraks.some((a) => {
+        // Skip conflict check if it's the exact same user (by NIM)
+        if (a.nim === row.nim) return false;
         if (a.kode.toUpperCase() !== uppercased) return false;
         const gap = row.angkatan - a.angkatan;
         return gap < CODE_RECYCLE_YEARS;

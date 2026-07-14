@@ -4,7 +4,7 @@ import { ArrowLeft, Save, CheckCircle, AlertTriangle, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
 export interface PraktikumPreviewRow {
   nama: string;
@@ -70,7 +70,7 @@ export default function PraktikumCSVPreview({
       {/* Preview Table */}
       <div className="rounded-lg border border-border overflow-hidden">
         <ScrollArea className="h-[400px]">
-          <table className="w-full text-sm border-collapse">
+          <table className="w-max min-w-full text-sm border-collapse">
             <thead className="bg-muted/50 sticky top-0 z-10">
               <tr>
                 <th className="px-3 py-2.5 text-center border-b border-border w-[40px]">
@@ -141,6 +141,7 @@ export default function PraktikumCSVPreview({
               })}
             </tbody>
           </table>
+          <ScrollBar orientation="horizontal" />
         </ScrollArea>
       </div>
 

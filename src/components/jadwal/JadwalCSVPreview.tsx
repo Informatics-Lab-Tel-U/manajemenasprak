@@ -1,5 +1,6 @@
 import { AlertTriangle, ArrowLeft, CheckCircle, Loader2, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { NavButton } from '@/components/ui/nav-button';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
@@ -196,10 +197,7 @@ export default function JadwalCSVPreview({
 
       {/* Action Buttons */}
       <div className="flex justify-between items-center pt-2">
-        <Button type="button" variant="outline" onClick={onBack} disabled={loading}>
-          <ArrowLeft size={16} className="mr-1" />
-          Kembali
-        </Button>
+        <NavButton direction="prev" type="button" onClick={onBack} disabled={loading} />
 
         <div className="flex items-center gap-3">
           {totalError > 0 && (
@@ -210,14 +208,16 @@ export default function JadwalCSVPreview({
               Lewati Langkah Ini
             </Button>
           )}
-          <Button onClick={onConfirm} disabled={loading || selectedCount === 0} variant="default">
-            {loading ? (
-              <Loader2 className="animate-spin mr-2" size={16} />
-            ) : (
-              <Save size={16} className="mr-1" />
-            )}
-            {loading ? 'Menyimpan...' : `Simpan ${selectedCount} Data Terpilih`}
-          </Button>
+          <NavButton 
+            direction="next" 
+            onClick={onConfirm} 
+            disabled={loading || selectedCount === 0}
+            loading={loading}
+            loadingText="Menyimpan..."
+            icon={<Save size={16} className="ml-2" />}
+          >
+            {`Simpan ${selectedCount} Data Terpilih`}
+          </NavButton>
         </div>
       </div>
     </div>

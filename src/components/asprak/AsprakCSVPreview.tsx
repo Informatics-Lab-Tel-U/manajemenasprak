@@ -19,10 +19,18 @@ import {
   Pencil,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { NavButton } from '@/components/ui/nav-button';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 export interface PreviewRow {
   nama_lengkap: string;
@@ -54,6 +62,7 @@ interface AsprakCSVPreviewProps {
   onSkip?: () => void;
   forceOverride?: boolean;
   onForceOverrideChange?: (val: boolean) => void;
+  hideButtons?: boolean;
 }
 
 export default function AsprakCSVPreview({
@@ -69,6 +78,7 @@ export default function AsprakCSVPreview({
   onSkip,
   forceOverride = false,
   onForceOverrideChange,
+  hideButtons = false,
 }: AsprakCSVPreviewProps) {
   const totalOk = rows.filter((r) => r.status === 'ok').length;
   const totalWarning = rows.filter((r) => r.status === 'warning').length;
@@ -314,15 +324,18 @@ export default function AsprakCSVPreview({
                       className={`px-3 py-2 text-center font-mono text-xs ${isDuplicate ? 'opacity-50' : ''}`}
                     >
                       {onRoleEdit ? (
-                        <select
-                          aria-label="Pilih Role"
-                          className="bg-background border border-border text-xs rounded px-1 py-1 w-min min-w-[75px]"
+                        <Select
                           value={row.role}
-                          onChange={(e) => onRoleEdit(idx, e.target.value as 'ASPRAK' | 'ASLAB')}
+                          onValueChange={(value) => onRoleEdit(idx, value as 'ASPRAK' | 'ASLAB')}
                         >
-                          <option value="ASPRAK">ASPRAK</option>
-                          <option value="ASLAB">ASLAB</option>
-                        </select>
+                          <SelectTrigger className="h-[20px] w-[72px] text-[10px] leading-none font-mono mx-auto bg-background/50 px-1.5 py-0 [&_svg]:size-3 gap-1 min-h-0">
+                            <SelectValue placeholder="Role" />
+                          </SelectTrigger>
+                          <SelectContent className="min-w-[72px]">
+                            <SelectItem value="ASPRAK" className="text-[10px] font-mono py-1 px-2">ASPRAK</SelectItem>
+                            <SelectItem value="ASLAB" className="text-[10px] font-mono py-1 px-2">ASLAB</SelectItem>
+                          </SelectContent>
+                        </Select>
                       ) : (
                         row.role
                       )}
@@ -375,29 +388,34 @@ export default function AsprakCSVPreview({
       </div>
 
       {/* Action Buttons */}
-      <div className="flex justify-between items-center pt-2">
-        <Button type="button" variant="outline" onClick={onBack} disabled={loading}>
-          <ArrowLeft size={16} className="mr-1" />
-          Kembali
-        </Button>
+      {!hideButtons && (
+        <div className="flex justify-between items-center pt-2">
+          <NavButton direction="prev" type="button" onClick={onBack} disabled={loading} />
 
-        <div className="flex items-center gap-3">
-          {totalError + totalDuplicateCSV > 0 && (
-            <p className="text-xs text-amber-500">
-              {totalError + totalDuplicateCSV} row(s) bermasalah akan di-skip saat import.
-            </p>
-          )}
-          {onSkip && (
-            <Button type="button" variant="secondary" onClick={onSkip} disabled={loading}>
-              Lewati Langkah Ini
-            </Button>
-          )}
-          <Button onClick={onConfirm} disabled={loading || selectedCount === 0} variant="default">
-            <Save size={16} className="mr-1" />
-            {loading ? 'Menyimpan...' : `Simpan ${selectedCount} Data Terpilih`}
-          </Button>
+          <div className="flex items-center gap-3">
+            {totalError + totalDuplicateCSV > 0 && (
+              <p className="text-xs text-amber-500">
+                {totalError + totalDuplicateCSV} row(s) bermasalah akan di-skip saat import.
+              </p>
+            )}
+            {onSkip && (
+              <Button type="button" variant="secondary" onClick={onSkip} disabled={loading}>
+                Lewati Langkah Ini
+              </Button>
+            )}
+            <NavButton 
+              direction="next" 
+              onClick={onConfirm} 
+              disabled={loading || selectedCount === 0}
+              loading={loading}
+              loadingText="Menyimpan..."
+              icon={<Save size={16} className="ml-2" />}
+            >
+              {`Simpan ${selectedCount} Data Terpilih`}
+            </NavButton>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

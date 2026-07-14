@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { CheckCircle, AlertTriangle, ArrowLeft, Save, X, Plus, Ban } from 'lucide-react';
-// Table imports removed as we use native table for better scroll control
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import {
   Select,
   SelectContent,
@@ -58,65 +58,64 @@ export default function MataKuliahCSVPreview({
 
 
   return (
-    <div className="flex flex-col h-full w-full bg-background relative">
-      {/* 1. Statistics / Header - Fixed at top of preview area */}
-      <div className="flex items-center justify-between px-6 py-3 border-b bg-background/95 backdrop-blur z-20 shrink-0">
-        <div className="flex flex-wrap gap-2 items-center text-sm">
-          <Badge variant="outline" className="px-3 py-1 bg-muted/50">
-            Term: <span className="font-bold ml-1">{term}</span>
-          </Badge>
-          <Badge variant="outline" className="px-3 py-1 bg-muted/50">
-            Total: <span className="font-bold ml-1">{rows.length}</span>
-          </Badge>
-          <Badge
-            variant={selectedCount > 0 ? 'default' : 'outline'}
-            className="px-3 py-1 transition-colors"
-          >
-            Dipilih: <span className="font-bold ml-1">{selectedCount}</span>
-          </Badge>
+    <div className="space-y-4">
+      {/* 1. Statistics / Header */}
+      <div className="flex flex-wrap gap-3 items-center">
+        <Badge variant="outline" className="text-sm px-3 py-1">
+          Term: <span className="font-bold ml-1">{term}</span>
+        </Badge>
+        <Badge variant="outline" className="text-sm px-3 py-1">
+          Total: <span className="font-bold ml-1">{rows.length}</span>
+        </Badge>
+        <Badge
+          variant={selectedCount > 0 ? 'default' : 'outline'}
+          className="text-sm px-3 py-1"
+        >
+          Dipilih: <span className="font-bold ml-1">{selectedCount}</span>
+        </Badge>
 
-          {totalError > 0 && (
-            <Badge className="bg-red-500/10 text-red-500 border-red-500/20 px-3 py-1">
-              <X size={13} className="mr-1" />
-              {totalError} Errors
-            </Badge>
-          )}
-        </div>
+        {totalError > 0 && (
+          <Badge className="bg-red-500/10 text-red-500 border-red-500/30 text-sm px-3 py-1">
+            <X size={14} className="mr-1" />
+            {totalError} Errors
+          </Badge>
+        )}
       </div>
 
       {/* 2. Scrollable Table Area */}
-      <div className="flex-1 w-full overflow-auto relative border-b">
-        <table className="w-max min-w-full caption-bottom text-sm">
-          <thead className="bg-muted sticky top-0 z-30 shadow-sm [&_tr]:border-b">
-            <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
-              <th className="h-10 px-2 text-center sticky left-0 bg-muted z-40 border-r shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] w-[50px]">
-                <Checkbox
-                  checked={allSelected ? true : isIndeterminate ? 'indeterminate' : false}
-                  onCheckedChange={(checked) => onToggleAll(!!checked)}
-                  disabled={selectableRows.length === 0}
-                />
-              </th>
-              <th className="h-10 px-2 text-center align-middle font-medium text-muted-foreground w-[50px]">
-                #
-              </th>
-              <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground min-w-[200px]">
-                MK Singkat (Praktikum)
-              </th>
-              <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground min-w-[300px]">
-                Nama Lengkap
-              </th>
-              <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground min-w-[100px]">
-                Prodi
-              </th>
-              <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground min-w-[80px]">
-                Koord
-              </th>
-              <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground min-w-[150px]">
-                Status
-              </th>
-            </tr>
-          </thead>
-          <tbody className="[&_tr:last-child]:border-0">
+      <div className="rounded-lg border border-border overflow-hidden">
+        <ScrollArea className="h-[400px]">
+          <table className="w-max min-w-full text-sm border-collapse">
+            <thead className="bg-muted/50 sticky top-0 z-30">
+              <tr>
+                <th className="px-3 py-2.5 text-center border-b border-border w-[40px]">
+                  <Checkbox
+                    checked={allSelected ? true : isIndeterminate ? 'indeterminate' : false}
+                    onCheckedChange={(checked) => onToggleAll(!!checked)}
+                    disabled={selectableRows.length === 0}
+                  />
+                </th>
+                <th className="px-3 py-2.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border w-10">
+                  #
+                </th>
+                <th className="px-3 py-2.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border min-w-[200px]">
+                  MK Singkat (Praktikum)
+                </th>
+                <th className="px-3 py-2.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border min-w-[300px]">
+                  Nama Lengkap
+                </th>
+                <th className="px-3 py-2.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border min-w-[100px]">
+                  Prodi
+                </th>
+                <th className="px-3 py-2.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border min-w-[80px]">
+                  Koord
+                </th>
+                <th className="px-3 py-2.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border min-w-[150px]">
+                  Status
+                </th>
+              </tr>
+            </thead>
+            <tbody>
             {rows.map((row, idx) => {
               // Validations
               const isMkUnknown =
@@ -129,49 +128,26 @@ export default function MataKuliahCSVPreview({
               return (
                 <tr
                   key={`${row.mk_singkat}-${row.nama_lengkap}-${row.program_studi}`}
-                  className={cn(
-                    'group border-b transition-colors data-[state=selected]:bg-muted',
-                    row.status === 'error'
-                      ? 'bg-red-500/5 hover:bg-red-500/10 data-[state=selected]:bg-red-500/10'
-                      : row.status === 'warning'
-                        ? 'bg-amber-500/5 hover:bg-amber-500/10 data-[state=selected]:bg-amber-500/10'
-                        : row.selected
-                          ? 'bg-primary/5 hover:bg-primary/10'
-                          : 'hover:bg-muted/50'
-                  )}
-                  data-state={row.selected ? 'selected' : undefined}
+                  className={`
+                    border-b border-border/50 transition-colors
+                    ${row.status === 'error' ? 'bg-red-500/5' : ''}
+                    ${row.status === 'warning' ? 'bg-amber-500/5' : ''}
+                    ${!isDisabled && row.selected ? 'bg-muted/40' : ''}
+                    hover:bg-muted/60
+                  `}
                 >
-                  {/* Sticky Checkbox */}
-                  <td className="p-2 text-center sticky left-0 z-20 border-r shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] w-[50px] align-middle">
-                    <div className="absolute inset-0 -z-20 bg-background" />
-                    <div
-                      className={cn(
-                        'absolute inset-0 -z-10 transition-colors group-data-[state=selected]:bg-muted',
-                        row.status === 'error'
-                          ? 'bg-red-500/5 group-hover:bg-red-500/10 group-data-[state=selected]:bg-red-500/10'
-                          : row.status === 'warning'
-                            ? 'bg-amber-500/5 group-hover:bg-amber-500/10 group-data-[state=selected]:bg-amber-500/10'
-                            : row.selected
-                              ? 'bg-primary/5 group-hover:bg-primary/10'
-                              : 'bg-transparent group-hover:bg-muted/50'
-                      )}
+                  <td className="px-3 py-2 text-center">
+                    <Checkbox
+                      checked={row.selected}
+                      onCheckedChange={() => onToggleSelect(idx)}
+                      disabled={isDisabled}
+                      className={isDisabled ? 'opacity-50 cursor-not-allowed' : ''}
                     />
-
-                    <div className="flex items-center justify-center">
-                      <Checkbox
-                        checked={row.selected}
-                        onCheckedChange={() => onToggleSelect(idx)}
-                        disabled={isDisabled}
-                        className={isDisabled ? 'opacity-50 cursor-not-allowed z-30' : 'z-30'}
-                      />
-                    </div>
                   </td>
-                  <td className="p-2 align-middle font-mono text-xs text-muted-foreground text-center">
-                    {idx + 1}
-                  </td>
+                  <td className="px-3 py-2 text-muted-foreground font-mono text-xs">{idx + 1}</td>
 
                   {/* MK Singkat / Mapping */}
-                  <td className="p-2 align-middle">
+                  <td className="px-3 py-2 font-medium">
                     <div className="flex flex-col gap-1 w-full max-w-[220px]">
                       <span className={isMkUnknown ? 'text-amber-600 font-bold' : 'font-semibold'}>
                         {row.mk_singkat}
@@ -228,7 +204,7 @@ export default function MataKuliahCSVPreview({
                   </td>
 
                   {/* Nama Lengkap */}
-                  <td className="p-2 align-middle text-sm">
+                  <td className="px-3 py-2 text-sm">
                     <div
                       className="max-w-[400px] text-wrap break-words leading-snug"
                       title={row.nama_lengkap}
@@ -238,7 +214,7 @@ export default function MataKuliahCSVPreview({
                   </td>
 
                   {/* Prodi Validation */}
-                  <td className="p-2 align-middle">
+                  <td className="px-3 py-2">
                     <div className="flex flex-col gap-1 w-[100px]">
                       <span
                         className={`font-mono font-bold ${
@@ -281,7 +257,7 @@ export default function MataKuliahCSVPreview({
                   </td>
 
                   {/* Dosen Validation */}
-                  <td className="p-2 align-middle">
+                  <td className="px-3 py-2">
                     <div className="flex flex-col gap-1 w-[80px]">
                       <span
                         className={`font-mono ${isKoorInvalid ? 'text-red-500 font-bold' : ''}`}
@@ -317,30 +293,30 @@ export default function MataKuliahCSVPreview({
                     </div>
                   </td>
 
-                  <td className="p-2 align-middle">
+                  <td className="px-3 py-2">
                     {row.status === 'ok' && (
-                      <span className="flex items-center text-emerald-600 dark:text-emerald-400 text-xs font-medium whitespace-nowrap bg-emerald-50 dark:bg-emerald-500/10 px-2 py-1 rounded-full border border-emerald-100 dark:border-emerald-500/20 w-max">
-                        <CheckCircle size={14} className="mr-1.5" />
+                      <span className="inline-flex items-center gap-1 text-emerald-500 text-xs">
+                        <CheckCircle size={14} />
                         {isMkUnknown ? 'Siap Import (Buat Baru)' : 'Siap Import'}
                       </span>
                     )}
                     {row.status === 'warning' && (
-                      <span className="flex items-center text-amber-600 dark:text-amber-400 text-xs font-medium whitespace-nowrap bg-amber-50 dark:bg-amber-500/10 px-2 py-1 rounded-full border border-amber-100 dark:border-amber-500/20 w-max">
-                        <AlertTriangle size={14} className="mr-1.5" /> Check Data
+                      <span className="inline-flex items-center gap-1 text-amber-500 text-xs">
+                        <AlertTriangle size={14} /> Check Data
                       </span>
                     )}
                     {row.status === 'error' && (
                       <span
-                        className="flex items-center text-red-600 dark:text-red-400 text-xs font-medium whitespace-nowrap bg-red-50 dark:bg-red-500/10 px-2 py-1 rounded-full border border-red-100 dark:border-red-500/20 w-max"
+                        className="inline-flex items-center gap-1 text-red-500 text-xs"
                         title={row.statusMessage}
                       >
                         {isDuplicate ? (
                           <>
-                            <Ban size={14} className="mr-1.5" /> Duplicate
+                            <Ban size={14} /> Duplicate
                           </>
                         ) : (
                           <>
-                            <X size={14} className="mr-1.5" /> {row.statusMessage || 'Error'}
+                            <X size={14} /> {row.statusMessage || 'Error'}
                           </>
                         )}
                       </span>
@@ -350,7 +326,9 @@ export default function MataKuliahCSVPreview({
               );
             })}
           </tbody>
-        </table>
+          </table>
+          <ScrollBar orientation="horizontal" />
+        </ScrollArea>
       </div>
     </div>
   );

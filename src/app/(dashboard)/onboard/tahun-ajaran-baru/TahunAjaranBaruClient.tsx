@@ -1,5 +1,9 @@
 'use client';
 
+/* eslint-disable react-doctor/no-locale-format-in-render */
+
+import Link from 'next/link';
+
 import React, { useState, useCallback, useEffect } from 'react';
 import {
   Stepper,
@@ -22,7 +26,7 @@ import SelesaiStep from './steps/StepSelesai';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { BookOpen, CheckCircle2, FileSpreadsheet, Download, FileText, AlertCircle, Copy, Save, RefreshCw, Loader2 } from 'lucide-react';
+import { BookOpen, CheckCircle2, FileSpreadsheet, Download, FileText, AlertCircle, Copy, Save, RefreshCw, Loader2, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { useDropzone } from 'react-dropzone';
@@ -88,23 +92,21 @@ export default function TahunAjaranBaruClient() {
   
   const { lastSaved, isDirty } = useAutosaveStatus();
 
-  const [isMounted, setIsMounted] = useState(false);
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
-  if (!isMounted) {
-    return <div className="flex h-64 items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>;
-  }
-
   return (
-    <div className="container relative space-y-8">
-      <header className="mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Setup Tahun Ajaran Baru</h1>
-          <p className="text-sm text-muted-foreground mt-2">
-            Ikuti alur ini untuk menambahkan seluruh data semester baru secara berurutan agar sesuai dengan constraint sistem.
-          </p>
+    <div className="container relative space-y-8" suppressHydrationWarning>
+      <header className="mb-6 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
+        <div className="flex items-start gap-4">
+          <Button variant="ghost" size="icon" asChild className="shrink-0 mt-1">
+            <Link href="/onboard">
+              <ArrowLeft className="w-5 h-5" />
+            </Link>
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Setup Tahun Ajaran Baru</h1>
+            <p className="text-sm text-muted-foreground mt-2">
+              Ikuti alur ini untuk menambahkan seluruh data semester baru secara berurutan agar sesuai dengan constraint sistem.
+            </p>
+          </div>
         </div>
         <div className="flex items-center gap-4">
           <div className="text-xs text-muted-foreground text-right">
@@ -141,7 +143,22 @@ export default function TahunAjaranBaruClient() {
       <Stepper 
         steps={steps} 
         value={currentStep}
-        onValueChange={(id) => setCurrentStep(id as any)}
+        onValueChange={(id) => {
+          const targetIndex = steps.findIndex(s => s.id === id);
+          const currentIndex = steps.findIndex(s => s.id === currentStep);
+          // Allow going back or going to an already completed step
+          if (targetIndex <= currentIndex || completedSteps.includes(id as any)) {
+            setCurrentStep(id as any);
+          } else {
+            // If trying to jump ahead, check if previous step is completed
+            const previousStepId = steps[targetIndex - 1]?.id;
+            if (completedSteps.includes(previousStepId as any)) {
+              setCurrentStep(id as any);
+            } else {
+              toast.error('Silakan selesaikan step saat ini terlebih dahulu.');
+            }
+          }
+        }}
         className="flex flex-col w-full items-start gap-8"
       >
         <StepperNav className="w-full bg-card p-4 rounded-xl border shadow-sm">

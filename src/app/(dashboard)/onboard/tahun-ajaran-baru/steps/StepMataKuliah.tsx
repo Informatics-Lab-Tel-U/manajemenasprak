@@ -1,5 +1,7 @@
 'use client';
 
+/* eslint-disable react-doctor/no-fetch-in-effect */
+
 import React, { useState, useCallback, useEffect } from 'react';
 import {
   Stepper,
@@ -15,8 +17,9 @@ import {
 } from '@/components/ui/stepper';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { NavButton } from '@/components/ui/nav-button';
 import { Input } from '@/components/ui/input';
-import { BookOpen, CheckCircle2, FileSpreadsheet, Download, FileText, AlertCircle, Copy, Save, RefreshCw, Loader2 , ArrowLeft} from 'lucide-react';
+import { BookOpen, CheckCircle2, FileSpreadsheet, Download, FileText, AlertCircle, Copy, Save, RefreshCw, Loader2, ArrowLeft, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { useDropzone } from 'react-dropzone';
@@ -97,7 +100,7 @@ const handleDownloadTemplate = async (format: 'csv' | 'xlsx') => {
 
 export default function MatkulStep() {
   const { stepper } = useStepper();
-  const { draft, setMataKuliahList, markStepCompleted, setCurrentStep } = useOnboardingStore();
+  const { draft, setMataKuliahList, setPraktikumList, markStepCompleted, unmarkStepCompleted, setCurrentStep } = useOnboardingStore();
   const { activeTerm } = useTermStore();
 
   const praktikumList = draft.praktikumList || [];
@@ -137,6 +140,7 @@ export default function MatkulStep() {
 
   useEffect(() => {
     if (isCopyModalOpen && availableTerms.length === 0) {
+      // eslint-disable-next-line react-doctor/no-fetch-in-effect
       fetch('/api/tahun-ajaran')
         .then(res => res.json())
         .then(res => {
@@ -298,7 +302,7 @@ export default function MatkulStep() {
       });
 
       toast.success(`Berhasil menarik ${strictPreview.length} mata kuliah`);
-      setPreviewRows(prev => [...prev, ...strictPreview]);
+      setPreviewRows(strictPreview); // Overwrite, not append
       
       setIsCopyModalOpen(false);
     } catch (err: any) {
@@ -331,14 +335,29 @@ export default function MatkulStep() {
     })));
   };
 
-  const handleConfirmImport = async () => {
+  const processDraftData = () => {
     const selectedRows = previewRows.filter((r) => r.selected);
+    const newPraktikums: typeof praktikumList = [];
     
     const draftData = selectedRows.map(r => {
       let id_praktikum = r.mappedPraktikumId;
       if (!id_praktikum) {
-        const prak = praktikumList.find(p => p.nama.toUpperCase() === r.mk_singkat.toUpperCase());
-        id_praktikum = prak?.tempId;
+        const existingPrak = praktikumList.find(p => p.nama.toUpperCase() === r.mk_singkat.toUpperCase());
+        if (existingPrak) {
+          id_praktikum = existingPrak.tempId;
+        } else {
+          // Buat Baru case: we generate a new Praktikum draft
+          let newPrak = newPraktikums.find(p => p.nama.toUpperCase() === r.mk_singkat.toUpperCase());
+          if (!newPrak) {
+            newPrak = {
+              tempId: crypto.randomUUID(),
+              nama: r.mk_singkat.toUpperCase(),
+              tahun_ajaran: term,
+            };
+            newPraktikums.push(newPrak);
+          }
+          id_praktikum = newPrak.tempId;
+        }
       }
 
       return {
@@ -349,21 +368,27 @@ export default function MatkulStep() {
       };
     });
 
-    const validDraftData = draftData.filter(d => d.id_praktikum) as any;
+    return {
+      validDraftData: draftData.filter(d => d.id_praktikum) as any,
+      newPraktikums,
+      selectedCount: selectedRows.length
+    };
+  };
 
-    if (validDraftData.length === 0 && selectedRows.length > 0) {
+  const handleConfirmImport = async () => {
+    const { validDraftData, newPraktikums, selectedCount } = processDraftData();
+
+    if (validDraftData.length === 0 && selectedCount > 0) {
       toast.error('Gagal memetakan Mata Kuliah ke Praktikum.');
       return;
     }
 
+    if (newPraktikums.length > 0) {
+      setPraktikumList([...praktikumList, ...newPraktikums]);
+    }
+
     setMataKuliahList(validDraftData);
     toast.success('Data Mata Kuliah berhasil disimpan ke draft sementara.');
-    markStepCompleted('matkul');
-    setCurrentStep('jadwal');
-  };
-
-  const handleSkip = () => {
-    setMataKuliahList([]);
     markStepCompleted('matkul');
     setCurrentStep('jadwal');
   };
@@ -373,7 +398,7 @@ export default function MatkulStep() {
       <CardHeader>
         <CardTitle className="text-xl">Langkah 2: Mata Kuliah</CardTitle>
         <CardDescription>
-          Tambahkan Mata Kuliah untuk Praktikum yang telah Anda daftarkan di Langkah 1. (Opsional, Anda bisa menambahkan nanti).
+          Tambahkan Mata Kuliah untuk Praktikum yang telah Anda daftarkan di Langkah 1.
         </CardDescription>
       </CardHeader>
       
@@ -552,15 +577,31 @@ export default function MatkulStep() {
               </div>
             </div>
           ) : (
-            <div className="border rounded-md flex flex-col h-[600px] overflow-hidden">
-              <div className="p-4 bg-muted/20 border-b flex justify-between items-center shrink-0">
+            <div className="border rounded-md">
+              <div className="p-4 bg-muted/20 border-b flex justify-between items-center">
                 <h3 className="font-medium text-sm">Preview Data Mata Kuliah ({previewRows.length})</h3>
-                <Button {...getRootProps()} type="button" variant="outline" size="sm" className="h-7 text-xs gap-1.5 cursor-pointer text-muted-foreground hover:text-foreground font-medium">
-                  <input {...getInputProps()} />
-                  <FileSpreadsheet className="w-3.5 h-3.5" /> Tambah via CSV/Excel
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-xs gap-1.5 text-destructive border-destructive/30 hover:bg-destructive/10"
+                    onClick={() => {
+                      setPreviewRows([]);
+                      setMataKuliahList([]);
+                      unmarkStepCompleted('matkul');
+                      unmarkStepCompleted('jadwal');
+                    }}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" /> Bersihkan
+                  </Button>
+                  <Button {...getRootProps()} type="button" variant="outline" size="sm" className="h-7 text-xs gap-1.5 cursor-pointer text-muted-foreground hover:text-foreground font-medium">
+                    <input {...getInputProps()} />
+                    <FileSpreadsheet className="w-3.5 h-3.5" /> Tambah via CSV/Excel
+                  </Button>
+                </div>
               </div>
-              <div className="flex-1 min-h-0 relative">
+              <div className="p-4 space-y-4">
                 <MataKuliahCSVPreview
                   rows={previewRows}
                   validPraktikums={validPraktikums}
@@ -570,35 +611,44 @@ export default function MatkulStep() {
                   onToggleAll={handleToggleAll}
                 />
               </div>
-              <div className="flex justify-between items-center px-6 py-4 border-t bg-background shrink-0 gap-4 mt-auto shadow-[0_-5px_15px_-5px_rgba(0,0,0,0.05)] z-30">
-                <Button variant="outline" onClick={() => setPreviewRows([])} disabled={loading} className="shrink-0 min-w-[140px]">
-                  <ArrowLeft className="mr-2 h-4 w-4" /> Sebelumnya
-                </Button>
-                <div className="flex items-center gap-2 overflow-hidden justify-end flex-1">
-                  {previewRows.filter((r) => r.status === 'error').length > 0 && (
-                    <span className="text-xs text-destructive font-medium mr-3 text-right hidden lg:inline-block">
-                      {previewRows.filter((r) => r.status === 'error').length} data bermasalah & akan dilewati
-                    </span>
-                  )}
-                  <Button type="button" variant="secondary" onClick={handleSkip} disabled={loading} className="shrink-0 min-w-[140px]">
-                    Lewati Langkah Ini
-                  </Button>
-                  <Button onClick={handleConfirmImport} disabled={loading || previewRows.filter(r => r.selected).length === 0} className="shrink-0 min-w-[160px] bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm">
-                    <Save className="mr-2 h-4 w-4" />
-                    {loading ? 'Menyimpan...' : 'Selanjutnya'}
-                  </Button>
-                </div>
-              </div>
             </div>
           )}
         </div>
       </CardContent>
-      {previewRows.length === 0 && (
-        <CardFooter className="justify-between pt-4 pb-6 bg-muted/10 border-t">
-          <Button type="button" variant="ghost" onClick={() => setCurrentStep('praktikum')}>Sebelumnya</Button>
-          <Button onClick={handleSkip} variant="secondary">Lewati Langkah Ini</Button>
-        </CardFooter>
-      )}
+      <CardFooter className="flex justify-between border-t p-6">
+        <NavButton 
+          direction="prev"
+          onClick={() => {
+            if (previewRows.length > 0) {
+              const { validDraftData, newPraktikums } = processDraftData();
+              if (newPraktikums.length > 0) {
+                setPraktikumList([...praktikumList, ...newPraktikums]);
+              }
+              setMataKuliahList(validDraftData);
+            }
+            setCurrentStep('praktikum');
+          }} 
+          disabled={loading} 
+        />
+        <div className="flex items-center gap-2 overflow-hidden justify-end">
+          {previewRows.length > 0 && previewRows.filter((r) => r.status === 'error').length > 0 && (
+            <span className="text-xs text-destructive font-medium mr-3 text-right hidden lg:inline-block">
+              {previewRows.filter((r) => r.status === 'error').length} data bermasalah & akan dilewati
+            </span>
+          )}
+          <NavButton 
+            direction="next"
+            onClick={handleConfirmImport} 
+            disabled={loading || previewRows.length === 0 || previewRows.filter(r => r.selected).length === 0} 
+            loading={loading}
+            loadingText="Menyimpan..."
+            className="min-w-[160px] bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
+          >
+            Selanjutnya
+          </NavButton>
+        </div>
+      </CardFooter>
+
     </Card>
   );
 }

@@ -30,17 +30,19 @@ export default function PelanggaranClientPage({
   userId,
 }: Props) {
   const router = useRouter();
+  const initialData = React.useMemo(() => ({
+    praktikumList: initialPraktikumList,
+    tahunAjaranList: initialTahunAjaranList,
+    countMap: initialCountMap,
+  }), [initialPraktikumList, initialTahunAjaranList, initialCountMap]);
+
   const {
     praktikumList,
     tahunAjaranList,
     selectedTahun: filterTahun,
     countMap,
     loading,
-  } = usePelanggaran(initialTahunAjaranList[0], isKoor, userId, {
-    praktikumList: initialPraktikumList,
-    tahunAjaranList: initialTahunAjaranList,
-    countMap: initialCountMap,
-  });
+  } = usePelanggaran(initialTahunAjaranList[0], isKoor, userId, initialData);
 
   // ── Hydration fix ──
   const [mounted, setMounted] = React.useState(false);

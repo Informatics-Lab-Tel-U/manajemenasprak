@@ -1,10 +1,13 @@
 'use client';
 
+/* eslint-disable react-doctor/no-fetch-in-effect, react-doctor/no-chain-state-updates */
+
 import React, { useState, useCallback, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { NavButton } from '@/components/ui/nav-button';
 import { Input } from '@/components/ui/input';
-import { BookOpen, FileSpreadsheet, Download, FileText, AlertCircle, Copy, Loader2, PencilLine } from 'lucide-react';
+import { BookOpen, FileSpreadsheet, Download, FileText, AlertCircle, Copy, Loader2, PencilLine, Trash2, Save } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { useDropzone } from 'react-dropzone';
@@ -35,6 +38,7 @@ import {
 import TermInput from '@/components/asprak/TermInput';
 import { buildTermString } from '@/utils/termHelpers';
 import { useTermStore } from '@/store/useTermStore';
+import { useSearchParams } from 'next/navigation';
 
 const handleDownloadTemplate = async (format: 'csv' | 'xlsx') => {
   const data = [
@@ -66,10 +70,10 @@ export default function PraktikumStep() {
     draft,
     setPraktikumList,
     setMataKuliahList,
-    setMode,
     setTargetTerm,
     setCopySourceTerm,
     markStepCompleted,
+    unmarkStepCompleted,
     setCurrentStep,
   } = useOnboardingStore();
   const { activeTerm } = useTermStore();
@@ -91,7 +95,11 @@ export default function PraktikumStep() {
   };
 
   const nextTerm = getNextTerm();
-  const draftTA = draft.praktikumList?.[0]?.tahun_ajaran || draft.targetTerm || '';
+  const searchParams = useSearchParams();
+  const urlTerm = searchParams.get('term');
+  const hasUrlTerm = !!urlTerm;
+
+  const draftTA = urlTerm || draft.praktikumList?.[0]?.tahun_ajaran || draft.targetTerm || '';
   const initialYear = draftTA ? draftTA.substring(0, 2) : nextTerm.year;
   const initialSem = draftTA ? (draftTA.endsWith('2') ? '2' : '1') : nextTerm.sem;
 
@@ -101,11 +109,10 @@ export default function PraktikumStep() {
   const [loading, setLoading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
-  // Mode: manual (default) atau copy dari tahun ajaran sebelumnya
-  const [mode, setLocalMode] = useState<'manual' | 'copy'>(draft.mode || 'manual');
   const [copySourceTerm, setLocalCopySourceTerm] = useState(draft.copySourceTerm || '');
   const [availableTerms, setAvailableTerms] = useState<string[]>([]);
   const [termsLoading, setTermsLoading] = useState(false);
+  const [isCopyModalOpen, setIsCopyModalOpen] = useState(false);
 
   // Unified State
   const [previewRows, setPreviewRows] = useState<PraktikumPreviewRow[]>(() => {
@@ -121,9 +128,11 @@ export default function PraktikumStep() {
   const [isManualModalOpen, setIsManualModalOpen] = useState(false);
   const [manualInputName, setManualInputName] = useState('');
 
+  // eslint-disable-next-line react-doctor/no-chain-state-updates
   useEffect(() => {
-    if (mode === 'copy' && availableTerms.length === 0) {
+    if (isCopyModalOpen && availableTerms.length === 0) {
       setTermsLoading(true);
+      // eslint-disable-next-line react-doctor/no-fetch-in-effect
       fetch('/api/tahun-ajaran')
         .then((res) => res.json())
         .then((res) => {
@@ -137,7 +146,7 @@ export default function PraktikumStep() {
         .catch((err) => console.error(err))
         .finally(() => setTermsLoading(false));
     }
-  }, [mode, availableTerms.length, copySourceTerm]);
+  }, [isCopyModalOpen, availableTerms.length, copySourceTerm]);
 
   // Handlers for CSV
   const processCSV = useCallback(
@@ -294,11 +303,11 @@ export default function PraktikumStep() {
       // sudah dipetakan ke tempId praktikum yang sama dari prepare-copy.
       setPraktikumList(remappedPraktikum);
       setMataKuliahList(mataKuliahList || []);
-      setMode('copy');
       setCopySourceTerm(copySourceTerm);
       setTargetTerm(finalTahunAjaran);
 
       toast.success(`Berhasil menarik ${remappedPraktikum.length} praktikum dan ${mataKuliahList?.length || 0} mata kuliah`);
+      setIsCopyModalOpen(false);
     } catch (err: any) {
       toast.error(err.message);
     } finally {
@@ -306,7 +315,6 @@ export default function PraktikumStep() {
     }
   };
 
-  // Submit all (mode manual)
   const handleConfirmImport = async () => {
     const finalTahunAjaran = buildTermString(termYear, termSem);
     const selectedRows = previewRows.filter((r) => r.selected);
@@ -315,33 +323,9 @@ export default function PraktikumStep() {
       return;
     }
 
-    // Create Draft data with temporary UUIDs
-    const draftData = selectedRows.map((r) => ({
-      tempId: crypto.randomUUID(),
-      nama: r.nama,
-      tahun_ajaran: finalTahunAjaran,
-    }));
-
-    setPraktikumList(draftData);
-    setMode('manual');
-    setTargetTerm(finalTahunAjaran);
-    toast.success('Data Praktikum berhasil disimpan ke draft sementara.');
-    markStepCompleted('praktikum');
-    setCurrentStep('matkul');
-  };
-
-  // Submit all (mode copy) -> data & mata kuliah sudah di-draft saat fetch,
-  // langkah ini hanya memvalidasi pilihan baris dan lanjut ke step berikutnya.
-  const handleConfirmCopy = () => {
-    const selectedRows = previewRows.filter((r) => r.selected);
-    if (selectedRows.length === 0) {
-      toast.error('Pilih minimal 1 praktikum untuk disalin');
-      return;
-    }
-
-    const finalTahunAjaran = buildTermString(termYear, termSem);
-    const draftData = selectedRows.map((r, idx) => {
-      const existing = draft.praktikumList?.find((p) => p.nama === r.nama);
+    // Create Draft data with temporary UUIDs, preserving existing tempId if any
+    const draftData = selectedRows.map((r) => {
+      const existing = draft.praktikumList?.find((p) => p.nama.toUpperCase() === r.nama.toUpperCase());
       return {
         tempId: existing?.tempId || crypto.randomUUID(),
         nama: r.nama,
@@ -354,6 +338,8 @@ export default function PraktikumStep() {
 
     setPraktikumList(draftData);
     setMataKuliahList(filteredMataKuliah);
+    setTargetTerm(finalTahunAjaran);
+    toast.success('Data Praktikum berhasil disimpan ke draft sementara.');
     markStepCompleted('praktikum');
     setCurrentStep('matkul');
   };
@@ -376,82 +362,16 @@ export default function PraktikumStep() {
               termSem={termSem}
               onYearChange={setTermYear}
               onSemChange={setTermSem}
+              disabled={hasUrlTerm}
+              description={hasUrlTerm ? "Tahun ajaran dikunci sesuai pilihan di Hub." : undefined}
             />
           </FieldContent>
         </Field>
 
-        <Field>
-          <FieldLabel>Metode Pengisian</FieldLabel>
-          <FieldContent>
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={() => setLocalMode('manual')}
-                className={cn(
-                  'flex flex-col items-start gap-1 rounded-lg border p-4 text-left transition-colors',
-                  mode === 'manual' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/40'
-                )}
-              >
-                <span className="flex items-center gap-2 font-medium">
-                  <PencilLine className="w-4 h-4" /> Input Manual / Upload
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  Tambah praktikum satu-satu atau upload CSV/Excel.
-                </span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setLocalMode('copy')}
-                className={cn(
-                  'flex flex-col items-start gap-1 rounded-lg border p-4 text-left transition-colors',
-                  mode === 'copy' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/40'
-                )}
-              >
-                <span className="flex items-center gap-2 font-medium">
-                  <Copy className="w-4 h-4" /> Salin dari Tahun Lalu
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  Tarik Praktikum & Mata Kuliah dari tahun ajaran sebelumnya.
-                </span>
-              </button>
-            </div>
-          </FieldContent>
-        </Field>
-
-        {mode === 'copy' && previewRows.length === 0 && (
-          <Field>
-            <FieldLabel>Tahun Ajaran Sumber</FieldLabel>
-            <FieldContent>
-              <div className="flex gap-2">
-                <Select value={copySourceTerm} onValueChange={setLocalCopySourceTerm}>
-                  <SelectTrigger className="flex-1">
-                    <SelectValue placeholder="Pilih Tahun Ajaran" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {termsLoading ? (
-                      <SelectItem value="none" disabled>Memuat data...</SelectItem>
-                    ) : availableTerms.length === 0 ? (
-                      <SelectItem value="none" disabled>Tidak ada data tahun ajaran</SelectItem>
-                    ) : (
-                      availableTerms.map((term) => (
-                        <SelectItem key={term} value={term}>{term}</SelectItem>
-                      ))
-                    )}
-                  </SelectContent>
-                </Select>
-                <Button type="button" onClick={handleFetchCopyData} disabled={loading || !copySourceTerm}>
-                  {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Tarik Data
-                </Button>
-              </div>
-            </FieldContent>
-          </Field>
-        )}
-
-        <div className="pt-2 border-t space-y-4 mt-6">
+        <div className="pt-2 space-y-4 mt-6">
           <div className="flex justify-between items-center mt-4">
             <h3 className="font-semibold text-lg">Daftar Praktikum</h3>
-            {mode === 'manual' && (
+            <div className="flex gap-2">
               <Dialog open={isManualModalOpen} onOpenChange={setIsManualModalOpen}>
                 <DialogTrigger asChild>
                   <Button variant="outline" size="sm" className="gap-2"><BookOpen className="w-4 h-4" /> Tambah Manual</Button>
@@ -475,7 +395,49 @@ export default function PraktikumStep() {
                   </form>
                 </DialogContent>
               </Dialog>
-            )}
+
+              <Dialog open={isCopyModalOpen} onOpenChange={setIsCopyModalOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-2"><Copy className="w-4 h-4"/> Copy dari Tahun Lalu</Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Tarik Data Praktikum</DialogTitle>
+                    <DialogDescription>Masukkan tahun ajaran sebelumnya untuk mengambil daftar praktikumnya.</DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    <Field>
+                      <FieldLabel>Tahun Ajaran Sumber</FieldLabel>
+                      <FieldContent>
+                        <Select value={copySourceTerm} onValueChange={setLocalCopySourceTerm}>
+                          <SelectTrigger className="flex-1">
+                            <SelectValue placeholder="Pilih Tahun Ajaran" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {termsLoading ? (
+                              <SelectItem value="none" disabled>Memuat data...</SelectItem>
+                            ) : availableTerms.length === 0 ? (
+                              <SelectItem value="none" disabled>Tidak ada data tahun ajaran</SelectItem>
+                            ) : (
+                              availableTerms.map((term) => (
+                                <SelectItem key={term} value={term}>{term}</SelectItem>
+                              ))
+                            )}
+                          </SelectContent>
+                        </Select>
+                      </FieldContent>
+                    </Field>
+                    <DialogFooter>
+                      <Button type="button" variant="outline" onClick={() => setIsCopyModalOpen(false)}>Batal</Button>
+                      <Button type="button" onClick={handleFetchCopyData} disabled={loading || !copySourceTerm}>
+                        {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Tarik Data
+                      </Button>
+                    </DialogFooter>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
           </div>
 
           {uploadError && (
@@ -487,70 +449,80 @@ export default function PraktikumStep() {
           )}
 
           {previewRows.length === 0 ? (
-            mode === 'manual' ? (
-              <div className="space-y-6">
-                <div
-                  {...getRootProps()}
-                  className={cn(
-                    'border-2 border-dashed rounded-lg p-10 text-center transition-all cursor-pointer',
-                    isDragActive
-                      ? 'border-primary bg-primary/5'
-                      : 'border-border bg-transparent hover:border-primary/50'
-                  )}
-                >
-                  <input {...getInputProps()} />
-                  <FileSpreadsheet size={40} className="mb-3 mx-auto text-muted-foreground" />
-                  <div className="space-y-1">
-                    <p className="font-medium">Drag & drop file CSV atau Excel di sini</p>
-                    <p className="text-xs text-muted-foreground">atau klik untuk pilih file (.csv, .xlsx)</p>
-                  </div>
+            <div className="space-y-6">
+              <div
+                {...getRootProps()}
+                className={cn(
+                  'border-2 border-dashed rounded-lg p-10 text-center transition-all cursor-pointer',
+                  isDragActive
+                    ? 'border-primary bg-primary/5'
+                    : 'border-border bg-transparent hover:border-primary/50'
+                )}
+              >
+                <input {...getInputProps()} />
+                <FileSpreadsheet size={40} className="mb-3 mx-auto text-muted-foreground" />
+                <div className="space-y-1">
+                  <p className="font-medium">Drag & drop file CSV atau Excel di sini</p>
+                  <p className="text-xs text-muted-foreground">atau klik untuk pilih file (.csv, .xlsx)</p>
                 </div>
+              </div>
 
-                <div className="bg-muted/30 p-4 rounded-lg border border-border/50">
-                  <p className="text-xs text-muted-foreground mb-2 font-medium">
-                    Format Kolom CSV/Excel yang Didukung:
-                  </p>
-                  <div className="flex flex-wrap gap-2 mb-1">
-                    {['nama', 'tahun_ajaran'].map((col) => (
-                      <span
-                        key={col}
-                        className="text-[10px] bg-background border px-1.5 py-0.5 rounded font-mono text-muted-foreground"
-                      >
-                        {col}
-                      </span>
-                    ))}
-                  </div>
-                  <div className="flex items-center gap-3 pt-2 border-t border-border/50 mt-2">
-                    <span className="text-xs text-muted-foreground flex items-center gap-1.5">
-                      <Download size={12} />
-                      Download Template:
+              <div className="bg-muted/30 p-4 rounded-lg border border-border/50">
+                <p className="text-xs text-muted-foreground mb-2 font-medium">
+                  Format Kolom CSV/Excel yang Didukung:
+                </p>
+                <div className="flex flex-wrap gap-2 mb-1">
+                  {['nama', 'tahun_ajaran'].map((col) => (
+                    <span
+                      key={col}
+                      className="text-[10px] bg-background border px-1.5 py-0.5 rounded font-mono text-muted-foreground"
+                    >
+                      {col}
                     </span>
-                    <div className="flex gap-2">
-                      <Button type="button" variant="outline" size="sm" className="h-7 text-xs px-2 gap-1.5" onClick={() => handleDownloadTemplate('csv')}>
-                        <FileText size={12} className="text-sky-500" /> CSV
-                      </Button>
-                      <Button type="button" variant="outline" size="sm" className="h-7 text-xs px-2 gap-1.5" onClick={() => handleDownloadTemplate('xlsx')}>
-                        <FileSpreadsheet size={12} className="text-emerald-500" /> XLSX
-                      </Button>
-                    </div>
+                  ))}
+                </div>
+                <div className="flex items-center gap-3 pt-2 border-t border-border/50 mt-2">
+                  <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+                    <Download size={12} />
+                    Download Template:
+                  </span>
+                  <div className="flex gap-2">
+                    <Button type="button" variant="outline" size="sm" className="h-7 text-xs px-2 gap-1.5" onClick={() => handleDownloadTemplate('csv')}>
+                      <FileText size={12} className="text-sky-500" /> CSV
+                    </Button>
+                    <Button type="button" variant="outline" size="sm" className="h-7 text-xs px-2 gap-1.5" onClick={() => handleDownloadTemplate('xlsx')}>
+                      <FileSpreadsheet size={12} className="text-emerald-500" /> XLSX
+                    </Button>
                   </div>
                 </div>
               </div>
-            ) : (
-              <div className="border-2 border-dashed rounded-lg p-10 text-center text-sm text-muted-foreground">
-                Pilih Tahun Ajaran sumber di atas, lalu klik "Tarik Data" untuk melihat preview.
-              </div>
-            )
+            </div>
           ) : (
             <div className="border rounded-md">
               <div className="p-4 bg-muted/20 border-b flex justify-between items-center">
                 <h3 className="font-medium text-sm">Preview Data Praktikum ({previewRows.length})</h3>
-                {mode === 'manual' && (
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-xs gap-1.5 text-destructive border-destructive/30 hover:bg-destructive/10"
+                    onClick={() => {
+                      setPreviewRows([]);
+                      setPraktikumList([]);
+                      setMataKuliahList([]);
+                      unmarkStepCompleted('praktikum');
+                      unmarkStepCompleted('matkul');
+                      unmarkStepCompleted('jadwal');
+                    }}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" /> Bersihkan
+                  </Button>
                   <Button {...getRootProps()} type="button" variant="outline" size="sm" className="h-7 text-xs gap-1.5 cursor-pointer text-muted-foreground hover:text-foreground font-medium">
                     <input {...getInputProps()} />
                     <FileSpreadsheet className="w-3.5 h-3.5" /> Tambah via CSV/Excel
                   </Button>
-                )}
+                </div>
               </div>
               <div className="p-4 space-y-4">
                 <PraktikumCSVPreview
@@ -558,36 +530,30 @@ export default function PraktikumStep() {
                   onToggleSelect={handleToggleSelect}
                   onToggleAll={handleToggleAll}
                 />
-                <div className="flex justify-between items-center pt-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      setPreviewRows([]);
-                      if (mode === 'copy') {
-                        setPraktikumList([]);
-                        setMataKuliahList([]);
-                      }
-                    }}
-                    disabled={loading}
-                  >
-                    Sebelumnya
-                  </Button>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      onClick={mode === 'copy' ? handleConfirmCopy : handleConfirmImport}
-                      disabled={loading || previewRows.filter((r) => r.selected).length === 0}
-                      variant="default"
-                    >
-                      {loading ? 'Menyimpan...' : 'Selanjutnya'}
-                    </Button>
-                  </div>
-                </div>
               </div>
             </div>
           )}
         </div>
       </CardContent>
+      <CardFooter className="flex justify-end border-t p-6">
+        <div className="flex items-center gap-2 overflow-hidden justify-end">
+          {previewRows.length > 0 && previewRows.filter((r) => r.status === 'error').length > 0 && (
+            <span className="text-xs text-destructive font-medium mr-3 text-right hidden lg:inline-block">
+              {previewRows.filter((r) => r.status === 'error').length} data bermasalah & akan dilewati
+            </span>
+          )}
+          <NavButton 
+            direction="next"
+            onClick={handleConfirmImport} 
+            disabled={loading || previewRows.length === 0 || previewRows.filter(r => r.selected && r.status !== 'error').length === 0} 
+            loading={loading}
+            loadingText="Menyimpan..."
+            className="min-w-[160px] bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
+          >
+            Selanjutnya
+          </NavButton>
+        </div>
+      </CardFooter>
     </Card>
   );
 }

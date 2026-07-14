@@ -1,6 +1,7 @@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { NavButton } from '@/components/ui/nav-button';
 import { Label } from '@/components/ui/label';
 import { CheckCircle, ArrowLeft, Save, XCircle, HelpCircle } from 'lucide-react';
 
@@ -222,23 +223,22 @@ export default function PlottingCSVPreview({
 
       {/* Footer Actions */}
       <div className="flex justify-between items-center pt-2">
-        <Button variant="outline" onClick={onBack} disabled={loading}>
-          <ArrowLeft size={16} className="mr-1" /> Back
-        </Button>
+        <NavButton direction="prev" onClick={onBack} disabled={loading} />
         <div className="flex gap-2">
           {onSkip && (
             <Button type="button" variant="secondary" onClick={onSkip} disabled={loading}>
               Lewati Langkah Ini
             </Button>
           )}
-          <Button
-            onClick={onConfirm}
+          <NavButton 
+            direction="next" 
+            onClick={onConfirm} 
             disabled={loading || validAssignmentsCount === 0}
-            variant="default"
+            loading={loading}
+            loadingText="Saving..."
           >
-            <Save size={16} className="mr-1" />
-            {loading ? 'Saving...' : `Save ${validAssignmentsCount} Assignments`}
-          </Button>
+            Selanjutnya
+          </NavButton>
         </div>
       </div>
     </div>

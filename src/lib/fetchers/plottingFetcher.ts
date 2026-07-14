@@ -20,13 +20,14 @@ export interface ValidationResult {
 
 export async function validatePlottingImport(
   rows: ValidatePlottingRow[],
-  term: string
+  term: string,
+  pendingAspraks?: { kode: string; nama_lengkap: string; nim: string; angkatan: number }[]
 ): Promise<ServiceResult<ValidationResult>> {
   try {
     const res = await fetch('/api/plotting', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'validate-import', rows, term }),
+      body: JSON.stringify({ action: 'validate-import', rows, term, pendingAspraks }),
     });
     const json = await res.json();
     if (!res.ok) return { ok: false, error: json.error };

@@ -25,8 +25,8 @@ export async function POST(req: Request) {
     const { action } = body;
 
     if (action === 'validate-import') {
-      const { rows, term } = body; // rows: { kode_asprak, mk_singkat }[]
-      const result = await plottingService.validatePlottingImport(rows, term, supabase);
+      const { rows, term, pendingAspraks } = body; // rows: { kode_asprak, mk_singkat }[]
+      const result = await plottingService.validatePlottingImport(rows, term, pendingAspraks, supabase);
       return NextResponse.json(result);
     }
 

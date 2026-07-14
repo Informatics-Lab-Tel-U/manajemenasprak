@@ -1,4 +1,4 @@
-﻿import { z } from 'zod';
+import { z } from 'zod';
 
 // ============================================================================
 // TAHUN AJARAN VALIDATION
@@ -70,6 +70,7 @@ export const mataKuliahSchema = z.object({
 });
 
 export const mataKuliahWithPraktikumSchema = mataKuliahSchema.extend({
+  // eslint-disable-next-line react-doctor/zod-v4-prefer-top-level-string-formats
   id_praktikum: z.string().uuid('ID Praktikum tidak valid'),
 });
 

@@ -120,7 +120,7 @@ export default function AsprakClientPage({
     if (allAsprakResult.ok && allAsprakResult.data) {
       setAllExistingNims(allAsprakResult.data.map((a) => ({ nim: a.nim, role: a.role })));
       setAllExistingAspraks(
-        allAsprakResult.data.map((a) => ({ kode: a.kode, angkatan: a.angkatan ?? 0 }))
+        allAsprakResult.data.map((a) => ({ nim: a.nim, kode: a.kode, angkatan: a.angkatan ?? 0 }))
       );
     }
   };

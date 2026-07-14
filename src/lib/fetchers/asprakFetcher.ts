@@ -221,6 +221,7 @@ export interface BulkImportResult {
   updated: number;
   skipped: number;
   errors: string[];
+  kodeToIdMap: Record<string, string>;
 }
 
 export async function bulkImportAspraks(
