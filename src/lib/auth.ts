@@ -1,6 +1,7 @@
 import { cache } from 'react';
 import { redirect } from 'next/navigation';
 import { NextResponse } from 'next/server';
+import { headers } from 'next/headers';
 import { createClient } from '@/lib/supabase/server';
 import { logger } from '@/lib/logger';
 import type { Role } from '@/config/rbac';
@@ -18,6 +19,21 @@ export type AuthUser = {
  * Wrapped with React.cache() so multiple calls in the same request share one DB query.
  */
 export const getCurrentUser = cache(async (): Promise<AuthUser | null> => {
+  try {
+    const headersList = await headers();
+    const authUserHeader = headersList.get('x-auth-user');
+    
+    if (authUserHeader) {
+      const decodedStr = Buffer.from(authUserHeader, 'base64').toString('utf-8');
+      const authUser = JSON.parse(decodedStr) as AuthUser;
+      if (authUser?.id && authUser?.pengguna) {
+        return authUser;
+      }
+    }
+  } catch (error) {
+    logger.warn('Failed to parse x-auth-user header, falling back to DB query', { error });
+  }
+
   const supabase = await createClient();
 
   const {
