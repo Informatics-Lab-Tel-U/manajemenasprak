@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server';
+import { unstable_cache } from 'next/cache';
 
 import {
   ensurePraktikanGetAccess,
@@ -8,6 +9,7 @@ import {
   praktikanOptionsResponse,
 } from '../_access';
 import { getPraktikanKelasByMataKuliah } from '@/services/praktikanService';
+import { createAdminClient } from '@/lib/supabase/admin';
 
 function decodeQueryValue(value: string | null) {
   if (!value) return value;
@@ -18,6 +20,13 @@ function decodeQueryValue(value: string | null) {
     return value;
   }
 }
+
+const getCachedKelas = unstable_cache(
+  async (mataKuliah: string | null) => 
+    getPraktikanKelasByMataKuliah(mataKuliah, createAdminClient()),
+  ['praktikan-kelas-api'],
+  { tags: ['praktikan'] }
+);
 
 export async function OPTIONS(request: NextRequest) {
   return praktikanOptionsResponse(request);
@@ -32,7 +41,7 @@ export async function GET(request: NextRequest) {
     const mataKuliah = decodeQueryValue(
       searchParams.get('mata_kuliah') ?? searchParams.get('matakuliah')
     );
-    const data = await getPraktikanKelasByMataKuliah(mataKuliah);
+    const data = await getCachedKelas(mataKuliah);
 
     return jsonWithCors({ ok: true, data }, getCorsOrigin(authorization.access));
   } catch (error) {

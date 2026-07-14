@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { unstable_cache, revalidateTag } from 'next/cache';
 
 import { requireRoleApi } from '@/lib/auth';
+import { createAdminClient } from '@/lib/supabase/admin';
 import {
   createPraktikan,
   deletePraktikan,
@@ -17,6 +19,19 @@ import {
   praktikanOptionsResponse,
 } from './_access';
 
+const getCachedOptions = unstable_cache(
+  async () => getPraktikanOptions(createAdminClient()),
+  ['praktikan-options'],
+  { tags: ['praktikan'] }
+);
+
+const getCachedList = unstable_cache(
+  async (kelas: string | undefined, mata_kuliah: string | undefined) => 
+    getPraktikanList({ kelas, mata_kuliah }, createAdminClient()),
+  ['praktikan-list'],
+  { tags: ['praktikan'] }
+);
+
 export async function OPTIONS(request: NextRequest) {
   return praktikanOptionsResponse(request);
 }
@@ -30,14 +45,14 @@ export async function GET(request: NextRequest) {
     const action = searchParams.get('action');
 
     if (action === 'options') {
-      const data = await getPraktikanOptions();
+      const data = await getCachedOptions();
       return jsonWithCors({ ok: true, data }, getCorsOrigin(authorization.access));
     }
 
-    const data = await getPraktikanList({
-      kelas: searchParams.get('kelas') || undefined,
-      mata_kuliah: searchParams.get('mata_kuliah') || undefined,
-    });
+    const data = await getCachedList(
+      searchParams.get('kelas') || undefined,
+      searchParams.get('mata_kuliah') || undefined
+    );
 
     return jsonWithCors({ ok: true, data }, getCorsOrigin(authorization.access));
   } catch (error) {
@@ -54,6 +69,7 @@ export async function POST(request: NextRequest) {
     const input = body.rows ?? body.data ?? body;
 
     const result = await createPraktikan(input);
+    revalidateTag('praktikan', { expire: 0 });
     return NextResponse.json({ ok: true, data: result }, { status: 201 });
   } catch (error) {
     return errorResponse(error, 'POST /api/praktikan error:');
@@ -70,6 +86,7 @@ export async function PUT(request: NextRequest) {
     const input = body.data ?? body;
 
     const data = await updatePraktikan(id, input);
+    revalidateTag('praktikan', { expire: 0 });
     return NextResponse.json({ ok: true, data });
   } catch (error) {
     return errorResponse(error, 'PUT /api/praktikan error:');
@@ -87,11 +104,13 @@ export async function DELETE(request: NextRequest) {
 
     if (kelas) {
       const data = await deletePraktikanByKelas(kelas);
+      revalidateTag('praktikan', { expire: 0 });
       return NextResponse.json({ ok: true, data });
     }
 
     if (id) {
       await deletePraktikan(id);
+      revalidateTag('praktikan', { expire: 0 });
       return NextResponse.json({ ok: true, data: null });
     }
 
@@ -99,10 +118,12 @@ export async function DELETE(request: NextRequest) {
 
     if (body.kelas) {
       const data = await deletePraktikanByKelas(body.kelas);
+      revalidateTag('praktikan', { expire: 0 });
       return NextResponse.json({ ok: true, data });
     }
 
     await deletePraktikan(body.id);
+    revalidateTag('praktikan', { expire: 0 });
     return NextResponse.json({ ok: true, data: null });
   } catch (error) {
     return errorResponse(error, 'DELETE /api/praktikan error:');

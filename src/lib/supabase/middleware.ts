@@ -3,7 +3,15 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { hasAccess, isPublicPath, ROLE_DEFAULT_REDIRECT, type Role } from '@/config/rbac';
 
 export async function updateSession(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({ request });
+  // Prevent client spoofing of the auth header
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.delete('x-auth-user');
+
+  let supabaseResponse = NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  });
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -98,10 +106,10 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // Single pengguna query — reused for both login-redirect and role-check (was 2 separate queries)
+  // Single pengguna query — Select ALL fields to pass downstream
   const { data: pengguna, error: penggunaError } = await supabase
     .from('pengguna')
-    .select('role, deleted_at')
+    .select('*')
     .eq('id', user.id)
     .maybeSingle();
 
@@ -134,5 +142,24 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  return supabaseResponse;
+  // Inject the user profile into the request headers for Server Components
+  const authUser = {
+    id: user.id,
+    email: user.email ?? '',
+    pengguna,
+  };
+  requestHeaders.set('x-auth-user', Buffer.from(JSON.stringify(authUser)).toString('base64'));
+
+  const finalResponse = NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  });
+
+  // Preserve any cookies set by Supabase
+  supabaseResponse.cookies.getAll().forEach((cookie) => {
+    finalResponse.cookies.set(cookie.name, cookie.value);
+  });
+
+  return finalResponse;
 }
