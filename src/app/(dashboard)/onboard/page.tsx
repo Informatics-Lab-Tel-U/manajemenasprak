@@ -6,7 +6,7 @@ import { Calendar, BookOpen, Users, ArrowRight } from 'lucide-react';
 
 export default function OnboardHubPage() {
   return (
-    <div className="space-y-6 max-w-5xl mx-auto p-4 md:p-8">
+    <div className="container space-y-8">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Setup Sistem</h1>
         <p className="text-muted-foreground mt-2 text-lg">
