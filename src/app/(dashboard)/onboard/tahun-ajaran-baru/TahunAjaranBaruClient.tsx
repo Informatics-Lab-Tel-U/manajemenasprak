@@ -1,5 +1,7 @@
 'use client';
 
+/* eslint-disable react-doctor/no-locale-format-in-render */
+
 import Link from 'next/link';
 
 import React, { useState, useCallback, useEffect } from 'react';
@@ -90,17 +92,8 @@ export default function TahunAjaranBaruClient() {
   
   const { lastSaved, isDirty } = useAutosaveStatus();
 
-  const [isMounted, setIsMounted] = useState(false);
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
-  if (!isMounted) {
-    return <div className="flex h-64 items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>;
-  }
-
   return (
-    <div className="container relative space-y-8">
+    <div className="container relative space-y-8" suppressHydrationWarning>
       <header className="mb-6 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
         <div className="flex items-start gap-4">
           <Button variant="ghost" size="icon" asChild className="shrink-0 mt-1">

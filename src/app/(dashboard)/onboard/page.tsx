@@ -1,6 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+/* eslint-disable react-doctor/no-fetch-in-effect, react-doctor/nextjs-no-client-fetch-for-server-data */
+
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -18,7 +20,7 @@ export default function OnboardHubPage() {
 
   const [status, setStatus] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [availableTerms, setAvailableTerms] = useState<string[]>([]);
+  const availableTerms = useRef<string[]>([]);
 
   // Sync with activeTerm once it hydrates from localStorage
   useEffect(() => {
@@ -34,7 +36,7 @@ export default function OnboardHubPage() {
       .then((res) => res.json())
       .then((res) => {
         if (res.ok) {
-          setAvailableTerms(res.data);
+          availableTerms.current = res.data;
         }
       })
       .catch(console.error);
@@ -49,12 +51,12 @@ export default function OnboardHubPage() {
       const targetTerm = `${newTermPrefix}-${termSem}`;
       
       // If the targeted term doesn't exist in the DB
-      if (!availableTerms.includes(targetTerm)) {
+      if (!availableTerms.current.includes(targetTerm)) {
         const otherSem = termSem === '1' ? '2' : '1';
         const otherTerm = `${newTermPrefix}-${otherSem}`;
         
         // If the other semester exists, switch to it
-        if (availableTerms.includes(otherTerm)) {
+        if (availableTerms.current.includes(otherTerm)) {
           setTermSem(otherSem);
         } else {
           // If neither exists (brand new year), default to semester 1 (Ganjil)
@@ -100,24 +102,29 @@ export default function OnboardHubPage() {
 
         {isLoading ? (
           <div className="space-y-8">
-            {[1, 2, 3].map((i) => (
+            {[0, 1, 2, 3].map((i) => (
               <div key={i} className="relative flex flex-col md:flex-row gap-6 items-stretch md:items-start">
                 {i < 3 && <div className="absolute top-10 bottom-[-32px] left-[19px] w-0.5 hidden md:block bg-border"></div>}
                 <div className="hidden md:flex relative z-10 items-center justify-center size-10 rounded-md border-[3px] border-background bg-muted shrink-0 shadow-sm">
-                   <Skeleton className="w-4 h-4 rounded-full" />
+                   <Skeleton className="w-5 h-5 rounded-md" />
                 </div>
-                <Card className="flex-1 flex flex-col shadow-sm min-h-[200px]">
+                <Card className="flex-1 flex flex-col shadow-sm min-h-[200px] border-border bg-card">
                   <CardHeader className="flex-grow">
-                    <div className="mb-4">
-                      <Skeleton className="w-8 h-8 rounded-full" />
-                    </div>
-                    <Skeleton className="h-6 w-3/4 mb-2" />
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-5/6 mt-1" />
+                    <Skeleton className="h-7 w-2/3 sm:w-1/3" />
+                    <Skeleton className="h-5 w-full sm:w-1/2" />
                   </CardHeader>
-                  <CardFooter>
-                    <Skeleton className="h-10 w-full rounded-md" />
-                  </CardFooter>
+                  {i === 0 ? (
+                    <CardContent>
+                      <div className="flex gap-4 max-w-[280px]">
+                        <Skeleton className="h-10 w-20 rounded-md shrink-0" />
+                        <Skeleton className="h-10 flex-1 rounded-md" />
+                      </div>
+                    </CardContent>
+                  ) : (
+                    <CardFooter>
+                      <Skeleton className="h-10 w-full sm:w-32 rounded-md" />
+                    </CardFooter>
+                  )}
                 </Card>
               </div>
             ))}

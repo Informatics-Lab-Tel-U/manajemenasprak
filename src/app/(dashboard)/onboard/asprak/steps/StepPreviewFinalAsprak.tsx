@@ -118,7 +118,7 @@ export default function StepPreviewFinalAsprak({ term }: StepPreviewFinalAsprakP
             {validatedAsprakRows.length > 0 && (
               <div className="flex flex-wrap gap-1 max-h-32 overflow-y-auto pt-2">
                 {validatedAsprakRows.map((r, i) => (
-                  <Badge key={i} variant="outline" className="bg-background">
+                  <Badge key={r.nim || r.kode || i} variant="outline" className="bg-background">
                     {r.kode} - {r.nama_lengkap}
                   </Badge>
                 ))}
@@ -138,7 +138,7 @@ export default function StepPreviewFinalAsprak({ term }: StepPreviewFinalAsprakP
             {validatedPlottingRows.length > 0 && (
               <div className="flex flex-wrap gap-1 max-h-32 overflow-y-auto pt-2">
                 {validatedPlottingRows.map((r, i) => (
-                  <Badge key={i} variant="outline" className="bg-background">
+                  <Badge key={`${r.kode_asprak}_${r.mk_singkat}`} variant="outline" className="bg-background">
                     {r.kode_asprak} ➔ {r.mk_singkat}
                   </Badge>
                 ))}

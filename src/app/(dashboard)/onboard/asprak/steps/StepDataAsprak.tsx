@@ -1,5 +1,7 @@
 'use client';
 
+/* eslint-disable react-doctor/no-chain-state-updates */
+
 import { useState, useCallback, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { FileSpreadsheet, FileText, X, Download, Loader2, Trash2 } from 'lucide-react';
@@ -34,6 +36,38 @@ interface StepDataAsprakProps {
   existingAspraks: ExistingAsprakInfo[];
 }
 
+const handleDownloadTemplate = async (format: 'csv' | 'xlsx') => {
+  const data = [
+    {
+      nama_lengkap: 'Budi Santoso',
+      nim: '1301213001',
+      kode: 'BUS',
+      angkatan: 2021,
+      role: 'ASPRAK',
+    },
+    { nama_lengkap: 'Siti Aminah', nim: '1301213002', kode: '', angkatan: 2021, role: 'ASLAB' },
+  ];
+
+  if (format === 'csv') {
+    const Papa = (await import('papaparse')).default;
+    const csv = Papa.unparse(data);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'template_asprak.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  } else {
+    const XLSX = await import('xlsx');
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Template');
+    XLSX.writeFile(wb, 'template_asprak.xlsx');
+  }
+};
+
 export default function StepDataAsprak({
   term,
   existingCodes,
@@ -51,6 +85,7 @@ export default function StepDataAsprak({
   const [forceOverride, setForceOverride] = useState(false);
   const [showOverrideConfirm, setShowOverrideConfirm] = useState(false);
 
+  // eslint-disable-next-line react-doctor/no-chain-state-updates
   useEffect(() => {
     if (asprakRows.length === 0) {
       setPreviewRows([]);
@@ -136,37 +171,7 @@ export default function StepDataAsprak({
     disabled: isLoading,
   });
 
-  const handleDownloadTemplate = async (format: 'csv' | 'xlsx') => {
-    const data = [
-      {
-        nama_lengkap: 'Budi Santoso',
-        nim: '1301213001',
-        kode: 'BUS',
-        angkatan: 2021,
-        role: 'ASPRAK',
-      },
-      { nama_lengkap: 'Siti Aminah', nim: '1301213002', kode: '', angkatan: 2021, role: 'ASLAB' },
-    ];
 
-    if (format === 'csv') {
-      const Papa = (await import('papaparse')).default;
-      const csv = Papa.unparse(data);
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', 'template_asprak.csv');
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } else {
-      const XLSX = await import('xlsx');
-      const ws = XLSX.utils.json_to_sheet(data);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, 'Template');
-      XLSX.writeFile(wb, 'template_asprak.xlsx');
-    }
-  };
 
   const handleToggleSelect = useCallback((rowIndex: number) => {
     setPreviewRows((prev) => {

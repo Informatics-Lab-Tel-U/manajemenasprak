@@ -17,9 +17,5 @@ export default async function JadwalOnboardPage(props: { searchParams: Promise<{
   const allMk = await getAllMataKuliah();
   const filteredMk = allMk.filter((mk) => mk.praktikum?.tahun_ajaran === term);
 
-  return (
-    <Suspense fallback={<div className="p-8 text-center animate-pulse">Memuat...</div>}>
-      <JadwalOnboardClient term={term} mataKuliahList={filteredMk} />
-    </Suspense>
-  );
+  return <JadwalOnboardClient term={term} mataKuliahList={filteredMk} />;
 }

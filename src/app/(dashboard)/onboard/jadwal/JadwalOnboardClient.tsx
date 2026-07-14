@@ -22,6 +22,27 @@ import StepUploadJadwal from './steps/StepUploadJadwal';
 import StepPreviewJadwal from './steps/StepPreviewJadwal';
 import StepSelesaiJadwal from './steps/StepSelesaiJadwal';
 
+const steps = [
+  {
+    id: 'upload',
+    title: 'Upload Data',
+    description: 'Upload CSV Jadwal Praktikum',
+    icon: <Upload className="w-5 h-5" />,
+  },
+  {
+    id: 'preview',
+    title: 'Preview',
+    description: 'Validasi jadwal dan konflik',
+    icon: <Eye className="w-5 h-5" />,
+  },
+  {
+    id: 'selesai',
+    title: 'Selesai',
+    description: 'Jadwal berhasil disimpan',
+    icon: <CheckCircle2 className="w-5 h-5" />,
+  },
+];
+
 interface JadwalOnboardClientProps {
   term: string;
   mataKuliahList: MataKuliah[];
@@ -38,26 +59,7 @@ export default function JadwalOnboardClient({ term, mataKuliahList }: JadwalOnbo
 
   if (!mounted) return null;
 
-  const steps = [
-    {
-      id: 'upload',
-      title: 'Upload Data',
-      description: 'Upload CSV Jadwal Praktikum',
-      icon: <Upload className="w-5 h-5" />,
-    },
-    {
-      id: 'preview',
-      title: 'Preview',
-      description: 'Validasi jadwal dan konflik',
-      icon: <Eye className="w-5 h-5" />,
-    },
-    {
-      id: 'selesai',
-      title: 'Selesai',
-      description: 'Jadwal berhasil disimpan',
-      icon: <CheckCircle2 className="w-5 h-5" />,
-    },
-  ];
+
 
   return (
     <div className="container relative space-y-8">

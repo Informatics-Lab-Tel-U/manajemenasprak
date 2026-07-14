@@ -33,13 +33,11 @@ export default async function AsprakOnboardPage(props: {
   }));
 
   return (
-    <Suspense fallback={<div className="p-8 text-center">Loading Asprak Data...</div>}>
-      <AsprakOnboardClient
-        term={term}
-        initialExistingCodes={existingCodes}
-        initialExistingNims={initialExistingNims}
-        initialExistingAspraks={initialExistingAspraks}
-      />
-    </Suspense>
+    <AsprakOnboardClient
+      term={term}
+      initialExistingCodes={existingCodes}
+      initialExistingNims={initialExistingNims}
+      initialExistingAspraks={initialExistingAspraks}
+    />
   );
 }

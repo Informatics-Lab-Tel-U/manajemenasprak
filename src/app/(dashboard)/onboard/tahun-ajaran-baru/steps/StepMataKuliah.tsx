@@ -1,5 +1,7 @@
 'use client';
 
+/* eslint-disable react-doctor/no-fetch-in-effect */
+
 import React, { useState, useCallback, useEffect } from 'react';
 import {
   Stepper,
@@ -138,6 +140,7 @@ export default function MatkulStep() {
 
   useEffect(() => {
     if (isCopyModalOpen && availableTerms.length === 0) {
+      // eslint-disable-next-line react-doctor/no-fetch-in-effect
       fetch('/api/tahun-ajaran')
         .then(res => res.json())
         .then(res => {

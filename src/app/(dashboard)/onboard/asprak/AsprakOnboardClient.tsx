@@ -24,6 +24,33 @@ import StepPlottingAsprak from './steps/StepPlottingAsprak';
 import StepPreviewFinalAsprak from './steps/StepPreviewFinalAsprak';
 import StepSelesaiAsprak from './steps/StepSelesaiAsprak';
 
+const steps = [
+  {
+    id: 'data_asprak',
+    title: 'Data Asprak',
+    description: 'Upload & Validasi Data',
+    icon: <Upload className="w-5 h-5" />,
+  },
+  {
+    id: 'plotting',
+    title: 'Plotting',
+    description: 'Upload CSV Penugasan',
+    icon: <Upload className="w-5 h-5" />,
+  },
+  {
+    id: 'preview-final',
+    title: 'Preview Final',
+    description: 'Simpan Keseluruhan',
+    icon: <CheckCircle2 className="w-5 h-5" />,
+  },
+  {
+    id: 'selesai',
+    title: 'Selesai',
+    description: 'Asprak berhasil disimpan',
+    icon: <CheckCircle2 className="w-5 h-5" />,
+  },
+];
+
 interface AsprakOnboardClientProps {
   term: string;
   initialExistingCodes: string[];
@@ -47,32 +74,7 @@ export default function AsprakOnboardClient({
 
   if (!mounted) return null;
 
-  const steps = [
-    {
-      id: 'data_asprak',
-      title: 'Data Asprak',
-      description: 'Upload & Validasi Data',
-      icon: <Upload className="w-5 h-5" />,
-    },
-    {
-      id: 'plotting',
-      title: 'Plotting',
-      description: 'Upload CSV Penugasan',
-      icon: <Upload className="w-5 h-5" />,
-    },
-    {
-      id: 'preview-final',
-      title: 'Preview Final',
-      description: 'Simpan Keseluruhan',
-      icon: <CheckCircle2 className="w-5 h-5" />,
-    },
-    {
-      id: 'selesai',
-      title: 'Selesai',
-      description: 'Asprak berhasil disimpan',
-      icon: <CheckCircle2 className="w-5 h-5" />,
-    },
-  ];
+
 
   return (
     <div className="container relative space-y-8">
