@@ -16,7 +16,7 @@ import {
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { BookOpen, CheckCircle2, FileSpreadsheet, Download, FileText, AlertCircle, Copy, Save, RefreshCw, Loader2 , ArrowLeft} from 'lucide-react';
+import { BookOpen, CheckCircle2, FileSpreadsheet, Download, FileText, AlertCircle, Copy, Save, RefreshCw, Loader2, ArrowLeft, Calendar } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { useDropzone } from 'react-dropzone';
@@ -81,25 +81,43 @@ export default function SelesaiStep() {
   };
 
   return (
-    <Card className="border shadow-sm bg-gradient-to-br from-card to-primary/5">
-      <CardHeader className="text-center pb-2">
-        <div className="mx-auto bg-green-500/10 p-4 rounded-full w-fit mb-4">
-          <CheckCircle2 className="w-12 h-12 text-green-600" />
+    <Card className="border shadow-sm overflow-hidden relative bg-card">
+      <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-primary/40 via-primary to-primary/40" />
+      <CardContent className="flex flex-col items-center text-center pt-14 pb-14 px-6 space-y-8">
+        <div className="relative flex justify-center">
+          <div className="absolute inset-0 bg-primary/20 blur-[32px] rounded-full w-24 h-24 mx-auto" />
+          <div className="relative bg-primary/10 p-4 rounded-2xl ring-1 ring-primary/20 shadow-inner">
+            <CheckCircle2 className="w-12 h-12 text-primary" strokeWidth={1.5} />
+          </div>
         </div>
-        <CardTitle className="text-2xl text-green-700 dark:text-green-500">Tahun Ajaran Berhasil Diinisialisasi!</CardTitle>
-        <CardDescription className="text-base mt-2">
-          Pondasi data Anda sudah terbentuk. Tahun ajaran baru sudah tersedia di <strong>Global Term Selector</strong> di pojok kanan atas.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="text-center space-y-4 pt-6">
-        <p className="text-sm text-muted-foreground">
-          Jangan lupa untuk melengkapi Konfigurasi Tanggal Modul di halaman <br/>
-          <strong>Jadwal Praktikum &gt; Tanggal Mulai Modul</strong>.
-        </p>
+        
+        <div className="space-y-3 max-w-xl">
+          <h2 className="text-3xl font-bold tracking-tight">Tahun Ajaran Berhasil Dibuat</h2>
+          <p className="text-muted-foreground text-[15px] leading-relaxed">
+            Pondasi data untuk tahun ajaran baru sudah berhasil disiapkan. Anda sudah bisa mulai mengelola praktikum dan mata kuliah melalui <strong className="text-foreground font-medium">Global Term Selector</strong> di pojok kanan atas.
+          </p>
+        </div>
+
+        <div className="w-full max-w-lg rounded-xl border bg-muted/30 p-4 mt-2 text-left transition-colors hover:bg-muted/50">
+          <div className="flex gap-4">
+            <div className="bg-background shadow-sm border p-2.5 rounded-lg h-fit">
+              <Calendar className="w-5 h-5 text-muted-foreground" />
+            </div>
+            <div className="space-y-1">
+              <h4 className="font-semibold text-sm">Langkah Selanjutnya</h4>
+              <p className="text-sm text-muted-foreground leading-snug">
+                Konfigurasi jadwal per modul di menu <span className="font-medium text-foreground">Jadwal Praktikum &rarr; Tanggal Mulai Modul</span> agar asisten dapat mulai melakukan pengaturan jadwal.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="pt-4">
+          <Button size="lg" onClick={handleFinish} className="rounded-full px-8 h-12 shadow-sm hover:shadow transition-all font-medium">
+            Selesai & Kembali ke Dashboard
+          </Button>
+        </div>
       </CardContent>
-      <CardFooter className="justify-center pt-6 pb-8">
-        <Button size="lg" onClick={handleFinish}>Selesai & Kembali ke Dashboard</Button>
-      </CardFooter>
     </Card>
   );
 }
