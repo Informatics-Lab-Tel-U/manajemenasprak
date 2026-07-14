@@ -144,10 +144,10 @@ export default function PreviewStep() {
         </div>
       </CardContent>
       <CardFooter className="justify-between pt-4 pb-6 bg-muted/10 border-t">
-        <Button type="button" variant="ghost" onClick={() => setCurrentStep('matkul')} disabled={loading}>Kembali</Button>
+        <Button type="button" variant="ghost" onClick={() => setCurrentStep('matkul')} disabled={loading}>Sebelumnya</Button>
         <Button onClick={handleSaveAll} disabled={loading} size="lg">
           {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Simpan ke Database
+          Selanjutnya
         </Button>
       </CardFooter>
     </Card>

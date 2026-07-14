@@ -28,8 +28,15 @@ export async function GET(req: Request) {
     if (action === 'praktikum-list') {
       const isKoor = isKoorParam === 'true';
 
-      if (isKoor && userId) {
-        const praktikumList = await pelanggaranService.getKoorPraktikumList(userId, supabase);
+      if (isKoor) {
+        // Gunakan user.id sendiri jika role ASPRAK_KOOR, abaikan userId query string (Cegah IDOR Temuan 3)
+        const effectiveUserId = guard.user.pengguna.role === 'ASPRAK_KOOR' ? guard.user.id : userId;
+        
+        if (!effectiveUserId) {
+          return NextResponse.json({ ok: false, error: 'Missing userId' }, { status: 400 });
+        }
+
+        const praktikumList = await pelanggaranService.getKoorPraktikumList(effectiveUserId, supabase);
         return NextResponse.json({ ok: true, data: praktikumList });
       }
       return NextResponse.json(
@@ -116,6 +123,15 @@ export async function POST(req: Request) {
       if (!id_praktikum) {
         return NextResponse.json({ ok: false, error: 'Missing id_praktikum' }, { status: 400 });
       }
+
+      // Validasi hak akses untuk ASPRAK_KOOR (Mencegah IDOR Temuan 2)
+      if (user.pengguna.role === 'ASPRAK_KOOR') {
+        const allowedPraktikum = await pelanggaranService.getKoorPraktikumList(user.id, supabase);
+        if (!allowedPraktikum.some(p => p.id === id_praktikum)) {
+          return NextResponse.json({ ok: false, error: 'Unauthorized: id_praktikum tidak valid' }, { status: 403 });
+        }
+      }
+
       await pelanggaranService.finalizePelanggaranByPraktikum(id_praktikum, user.id);
 
       return NextResponse.json({ ok: true });
@@ -149,6 +165,15 @@ export async function POST(req: Request) {
           { status: 400 }
         );
       }
+
+      // Validasi hak akses untuk ASPRAK_KOOR (Mencegah IDOR Temuan 2)
+      if (user.pengguna.role === 'ASPRAK_KOOR') {
+        const allowedPraktikum = await pelanggaranService.getKoorPraktikumList(user.id, supabase);
+        if (!allowedPraktikum.some(p => p.id === id_praktikum)) {
+          return NextResponse.json({ ok: false, error: 'Unauthorized: id_praktikum tidak valid' }, { status: 403 });
+        }
+      }
+
       await pelanggaranService.finalizePelanggaranByModul(id_praktikum, Number(modul), user.id);
 
       return NextResponse.json({ ok: true });

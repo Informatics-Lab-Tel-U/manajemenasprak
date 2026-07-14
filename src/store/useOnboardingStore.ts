@@ -21,14 +21,17 @@ export interface MataKuliahDraft {
   id_praktikum?: string;
 }
 
+export type OnboardingMode = 'manual' | 'copy';
+
 export interface OnboardingDraft {
   praktikumList: (PraktikumDraft & { tempId: string })[];
   mataKuliahData: MataKuliahDraft[];
+  mode?: OnboardingMode;
+  targetTerm?: string;
   copySourceTerm?: string;
   copyOptions?: {
     copyPraktikum: boolean;
     copyMataKuliah: boolean;
-    copyAsprakAssignments: boolean;
   };
 }
 
@@ -56,6 +59,8 @@ interface OnboardingState extends OnboardingProgress {
   clearMataKuliahDraft: () => void;
   setCopySourceTerm: (term: string | undefined) => void;
   setCopyOptions: (options: OnboardingDraft['copyOptions']) => void;
+  setMode: (mode: OnboardingMode) => void;
+  setTargetTerm: (term: string | undefined) => void;
   
   // State actions
   setIsDirty: (dirty: boolean) => void;
@@ -184,6 +189,16 @@ export const useOnboardingStore = create<OnboardingState>()(
       setCopyOptions: (options) =>
         set((state) => ({
           draft: { ...state.draft, copyOptions: options },
+        })),
+
+      setMode: (mode) =>
+        set((state) => ({
+          draft: { ...state.draft, mode },
+        })),
+
+      setTargetTerm: (term) =>
+        set((state) => ({
+          draft: { ...state.draft, targetTerm: term },
         })),
 
       // State actions

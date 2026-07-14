@@ -88,6 +88,15 @@ export default function TahunAjaranBaruClient() {
   
   const { lastSaved, isDirty } = useAutosaveStatus();
 
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  if (!isMounted) {
+    return <div className="flex h-64 items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>;
+  }
+
   return (
     <div className="container relative space-y-8">
       <header className="mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">

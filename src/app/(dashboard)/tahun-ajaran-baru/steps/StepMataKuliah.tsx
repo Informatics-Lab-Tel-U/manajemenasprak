@@ -573,7 +573,7 @@ export default function MatkulStep() {
               </div>
               <div className="flex justify-between items-center px-6 py-4 border-t bg-background shrink-0 gap-4 mt-auto shadow-[0_-5px_15px_-5px_rgba(0,0,0,0.05)] z-30">
                 <Button variant="outline" onClick={() => setPreviewRows([])} disabled={loading} className="shrink-0 min-w-[140px]">
-                  <ArrowLeft className="mr-2 h-4 w-4" /> Kembali ke Upload
+                  <ArrowLeft className="mr-2 h-4 w-4" /> Sebelumnya
                 </Button>
                 <div className="flex items-center gap-2 overflow-hidden justify-end flex-1">
                   {previewRows.filter((r) => r.status === 'error').length > 0 && (
@@ -586,7 +586,7 @@ export default function MatkulStep() {
                   </Button>
                   <Button onClick={handleConfirmImport} disabled={loading || previewRows.filter(r => r.selected).length === 0} className="shrink-0 min-w-[160px] bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm">
                     <Save className="mr-2 h-4 w-4" />
-                    {loading ? 'Menyimpan...' : `Simpan ${previewRows.filter(r => r.selected).length} Data`}
+                    {loading ? 'Menyimpan...' : 'Selanjutnya'}
                   </Button>
                 </div>
               </div>
@@ -596,7 +596,7 @@ export default function MatkulStep() {
       </CardContent>
       {previewRows.length === 0 && (
         <CardFooter className="justify-between pt-4 pb-6 bg-muted/10 border-t">
-          <Button type="button" variant="ghost" onClick={() => setCurrentStep('praktikum')}>Kembali</Button>
+          <Button type="button" variant="ghost" onClick={() => setCurrentStep('praktikum')}>Sebelumnya</Button>
           <Button onClick={handleSkip} variant="secondary">Lewati Langkah Ini</Button>
         </CardFooter>
       )}
