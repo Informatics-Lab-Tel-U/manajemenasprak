@@ -46,6 +46,7 @@ Sistem Manajemen Asprak menggunakan **modern web application architecture** deng
 │  Pages (/app/(dashboard)/*)                            │
 │  ├─ Page Components (RSC/Client)                       │
 │  ├─ Data Fetching (useAsprak, useJadwal, etc)         │
+│  ├─ Global State (Zustand)                             │
 │  └─ Client-side State Management                       │
 │                                                         │
 │  Components (/components/*)                            │
@@ -336,9 +337,10 @@ graph TB
 | TypeScript     | Type safety                     | Latest       |
 | Tailwind CSS   | Utility-first CSS               | 4.x          |
 | Shadcn UI      | Component library               | Latest       |
+| Zustand        | Global State Management         | 5.x          |
 | TanStack Table | Data table logic                | Latest       |
 | Recharts       | Charts & graphs                 | Latest       |
-| SWR Pattern    | Data fetching                   | Custom hooks |
+| SWR Pattern    | Server State / Data fetching    | Custom hooks |
 
 ### Backend Technologies
 

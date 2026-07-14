@@ -27,15 +27,11 @@ export interface MataKuliahCSVRow {
 
 interface MataKuliahCSVPreviewProps {
   rows: MataKuliahCSVRow[];
-  loading: boolean;
   validPraktikums: { id: string; nama: string }[];
   term: string;
-  onConfirm: () => void;
-  onBack: () => void;
   onUpdateRow: (index: number, updates: Partial<MataKuliahCSVRow>) => void;
   onToggleSelect: (index: number) => void;
   onToggleAll: (checked: boolean) => void;
-  onSkip?: () => void;
 }
 
 const PRODI_OPTIONS = ['IF', 'IF-PJJ', 'IT', 'IT-PJJ', 'SE', 'SE-PJJ', 'DS', 'DS-PJJ'];
@@ -47,15 +43,11 @@ const isValidProdi = (prodi: string) => {
 
 export default function MataKuliahCSVPreview({
   rows,
-  loading,
   validPraktikums,
   term,
-  onConfirm,
-  onBack,
   onUpdateRow,
   onToggleSelect,
   onToggleAll,
-  onSkip,
 }: MataKuliahCSVPreviewProps) {
   const totalError = rows.filter((r) => r.status === 'error').length;
 
@@ -136,9 +128,9 @@ export default function MataKuliahCSVPreview({
 
               return (
                 <tr
-                  key={`${row.mk_singkat}-${row.nama_lengkap}`}
+                  key={`${row.mk_singkat}-${row.nama_lengkap}-${row.program_studi}`}
                   className={cn(
-                    'border-b transition-colors data-[state=selected]:bg-muted',
+                    'group border-b transition-colors data-[state=selected]:bg-muted',
                     row.status === 'error'
                       ? 'bg-red-500/5 hover:bg-red-500/10 data-[state=selected]:bg-red-500/10'
                       : row.status === 'warning'
@@ -150,16 +142,18 @@ export default function MataKuliahCSVPreview({
                   data-state={row.selected ? 'selected' : undefined}
                 >
                   {/* Sticky Checkbox */}
-                  <td className="p-2 text-center sticky left-0 z-20 bg-inherit border-r shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] w-[50px] align-middle">
-                    <div className="w-full h-full flex items-center justify-center bg-background/95 backdrop-blur-[1px] absolute inset-0 -z-10" />
+                  <td className="p-2 text-center sticky left-0 z-20 border-r shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] w-[50px] align-middle">
+                    <div className="absolute inset-0 -z-20 bg-background" />
                     <div
                       className={cn(
-                        'w-full h-full flex items-center justify-center absolute inset-0 -z-10',
+                        'absolute inset-0 -z-10 transition-colors group-data-[state=selected]:bg-muted',
                         row.status === 'error'
-                          ? 'bg-red-50/90'
+                          ? 'bg-red-500/5 group-hover:bg-red-500/10 group-data-[state=selected]:bg-red-500/10'
                           : row.status === 'warning'
-                            ? 'bg-amber-50/90'
-                            : 'bg-background'
+                            ? 'bg-amber-500/5 group-hover:bg-amber-500/10 group-data-[state=selected]:bg-amber-500/10'
+                            : row.selected
+                              ? 'bg-primary/5 group-hover:bg-primary/10'
+                              : 'bg-transparent group-hover:bg-muted/50'
                       )}
                     />
 
@@ -271,7 +265,7 @@ export default function MataKuliahCSVPreview({
                             });
                           }}
                         >
-                          <SelectTrigger className="h-7 text-xs border-red-200 bg-red-50 text-red-600 w-full">
+                          <SelectTrigger className="h-7 text-xs border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 w-full">
                             <SelectValue placeholder="Fix" />
                           </SelectTrigger>
                           <SelectContent>
@@ -325,19 +319,19 @@ export default function MataKuliahCSVPreview({
 
                   <td className="p-2 align-middle">
                     {row.status === 'ok' && (
-                      <span className="flex items-center text-emerald-600 text-xs font-medium whitespace-nowrap bg-emerald-50 px-2 py-1 rounded-full border border-emerald-100 w-max">
+                      <span className="flex items-center text-emerald-600 dark:text-emerald-400 text-xs font-medium whitespace-nowrap bg-emerald-50 dark:bg-emerald-500/10 px-2 py-1 rounded-full border border-emerald-100 dark:border-emerald-500/20 w-max">
                         <CheckCircle size={14} className="mr-1.5" />
                         {isMkUnknown ? 'Siap Import (Buat Baru)' : 'Siap Import'}
                       </span>
                     )}
                     {row.status === 'warning' && (
-                      <span className="flex items-center text-amber-600 text-xs font-medium whitespace-nowrap bg-amber-50 px-2 py-1 rounded-full border border-amber-100 w-max">
+                      <span className="flex items-center text-amber-600 dark:text-amber-400 text-xs font-medium whitespace-nowrap bg-amber-50 dark:bg-amber-500/10 px-2 py-1 rounded-full border border-amber-100 dark:border-amber-500/20 w-max">
                         <AlertTriangle size={14} className="mr-1.5" /> Check Data
                       </span>
                     )}
                     {row.status === 'error' && (
                       <span
-                        className="flex items-center text-red-600 text-xs font-medium whitespace-nowrap bg-red-50 px-2 py-1 rounded-full border border-red-100 w-max"
+                        className="flex items-center text-red-600 dark:text-red-400 text-xs font-medium whitespace-nowrap bg-red-50 dark:bg-red-500/10 px-2 py-1 rounded-full border border-red-100 dark:border-red-500/20 w-max"
                         title={row.statusMessage}
                       >
                         {isDuplicate ? (
@@ -357,44 +351,6 @@ export default function MataKuliahCSVPreview({
             })}
           </tbody>
         </table>
-      </div>
-
-      {/* 3. Footer Actions - Fixed at bottom */}
-      <div className="flex justify-between items-center px-6 py-4 border-t bg-background shrink-0 gap-4 mt-auto shadow-[0_-5px_15px_-5px_rgba(0,0,0,0.05)] z-30">
-        <Button
-          variant="outline"
-          onClick={onBack}
-          disabled={loading}
-          className="shrink-0 min-w-[140px]"
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" /> Kembali ke Upload
-        </Button>
-        <div className="flex items-center gap-2 overflow-hidden justify-end flex-1">
-          {totalError > 0 && (
-            <span className="text-xs text-destructive font-medium mr-3 text-right hidden lg:inline-block">
-              {totalError} data bermasalah & akan dilewati
-            </span>
-          )}
-          {onSkip && (
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={onSkip}
-              disabled={loading}
-              className="shrink-0 min-w-[140px]"
-            >
-              Lewati Langkah Ini
-            </Button>
-          )}
-          <Button
-            onClick={onConfirm}
-            disabled={loading || selectedCount === 0}
-            className="shrink-0 min-w-[160px] bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
-          >
-            <Save className="mr-2 h-4 w-4" />
-            {loading ? 'Menyimpan...' : `Simpan ${selectedCount} Data`}
-          </Button>
-        </div>
       </div>
     </div>
   );

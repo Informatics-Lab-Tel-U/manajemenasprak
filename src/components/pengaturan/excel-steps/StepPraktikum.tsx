@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 import { X, Loader2 } from 'lucide-react';
 import PraktikumCSVPreview, { PraktikumPreviewRow } from '../../praktikum/PraktikumCSVPreview';
 import { validatePraktikumData } from '@/utils/validation/praktikumValidation';
@@ -125,15 +126,26 @@ export default function StepPraktikum({ data, onNext, onPrev, onImport }: StepPr
         </Alert>
       )}
 
-      <PraktikumCSVPreview
-        rows={previewRows}
-        onConfirm={handleConfirm}
-        onBack={onPrev || onNext}
-        onToggleSelect={handleToggleSelect}
-        onToggleAll={handleToggleAll}
-        loading={saving}
-        onSkip={onNext}
-      />
+      <div className="space-y-4 border rounded-md p-4">
+        <PraktikumCSVPreview
+          rows={previewRows}
+          onToggleSelect={handleToggleSelect}
+          onToggleAll={handleToggleAll}
+        />
+        <div className="flex justify-between items-center pt-2">
+          <Button type="button" variant="outline" onClick={onPrev || onNext} disabled={saving}>
+            Kembali
+          </Button>
+          <div className="flex items-center gap-2">
+            <Button type="button" variant="secondary" onClick={onNext} disabled={saving}>
+              Lewati Langkah Ini
+            </Button>
+            <Button onClick={handleConfirm} disabled={saving || previewRows.filter(r => r.selected).length === 0} variant="default">
+              {saving ? 'Menyimpan...' : `Simpan ${previewRows.filter(r => r.selected).length} Data Terpilih`}
+            </Button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

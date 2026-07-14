@@ -4,7 +4,8 @@
 
 import { useState, useEffect } from 'react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { X, Loader2 } from 'lucide-react';
+import { X, Loader2, ArrowLeft, Save } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import MataKuliahCSVPreview, { MataKuliahCSVRow } from '../../mata-kuliah/MataKuliahCSVPreview';
 import { validateMataKuliahData } from '@/utils/validation/mataKuliahValidation';
 import type { MataKuliahGrouped } from '@/services/mataKuliahService';
@@ -156,18 +157,35 @@ export default function StepMataKuliah({
         </div>
       )}
 
-      <MataKuliahCSVPreview
-        rows={parsedRows}
-        loading={loading}
-        validPraktikums={localValidPraktikums}
-        term={term}
-        onConfirm={handleConfirmImport}
-        onBack={onPrev || onNext} // Skip/Next representation in sequence
-        onUpdateRow={handleUpdateRow}
-        onToggleSelect={handleToggleSelect}
-        onToggleAll={handleToggleAll}
-        onSkip={onNext}
-      />
+      <div className="flex-1 min-h-0 relative">
+        <MataKuliahCSVPreview
+          rows={parsedRows}
+          validPraktikums={localValidPraktikums}
+          term={term}
+          onUpdateRow={handleUpdateRow}
+          onToggleSelect={handleToggleSelect}
+          onToggleAll={handleToggleAll}
+        />
+      </div>
+      <div className="flex justify-between items-center px-6 py-4 border-t bg-background shrink-0 gap-4 mt-auto shadow-[0_-5px_15px_-5px_rgba(0,0,0,0.05)] z-30">
+        <Button variant="outline" onClick={onPrev || onNext} disabled={loading} className="shrink-0 min-w-[140px]">
+          <ArrowLeft className="mr-2 h-4 w-4" /> Kembali
+        </Button>
+        <div className="flex items-center gap-2 overflow-hidden justify-end flex-1">
+          {parsedRows.filter((r) => r.status === 'error').length > 0 && (
+            <span className="text-xs text-destructive font-medium mr-3 text-right hidden lg:inline-block">
+              {parsedRows.filter((r) => r.status === 'error').length} data bermasalah & akan dilewati
+            </span>
+          )}
+          <Button type="button" variant="secondary" onClick={onNext} disabled={loading} className="shrink-0 min-w-[140px]">
+            Lewati Langkah Ini
+          </Button>
+          <Button onClick={handleConfirmImport} disabled={loading || parsedRows.filter(r => r.selected).length === 0} className="shrink-0 min-w-[160px] bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm">
+            <Save className="mr-2 h-4 w-4" />
+            {loading ? 'Menyimpan...' : `Simpan ${parsedRows.filter(r => r.selected).length} Data`}
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }

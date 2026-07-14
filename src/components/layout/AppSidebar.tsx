@@ -16,6 +16,7 @@ import {
   Logs,
   Shield,
   UserRoundCheck,
+  PlusCircle,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -50,58 +51,86 @@ type NavItem = {
   icon: React.ElementType;
   /** If provided, the item expands into sub-items */
   items?: NavSubItem[];
+  /** If true, item renders with primary background */
+  isPrimary?: boolean;
+};
+
+type NavGroup = {
+  label: string;
+  items: NavItem[];
 };
 
 /**
- * All possible nav items. Visibility is controlled by `hasAccess()` from rbac.ts.
- * Add new items here — no need to touch the sidebar render logic.
+ * All possible nav groups. Visibility of items is controlled by `hasAccess()` from rbac.ts.
+ * If a group has no visible items, it will not be rendered.
  */
-const ALL_NAV_ITEMS: NavItem[] = [
-  { label: 'Overview', href: '/', icon: Home },
-  { label: 'Data Praktikum', href: '/praktikum', icon: BookOpen },
-  { label: 'Data Praktikan', href: '/data-praktikan', icon: UserRoundCheck },
-  { label: 'Mata Kuliah', href: '/mata-kuliah', icon: BookOpen },
+const ALL_NAV_GROUPS: NavGroup[] = [
   {
-    label: 'Data Asisten Praktikum',
-    href: '#',
-    icon: Users,
+    label: 'Main Menu',
     items: [
-      { label: 'Data Asprak', href: '/asprak?tab=data' },
-      { label: 'Generate Kode Asprak', href: '/asprak?tab=rules' },
+      { label: 'Tahun Ajaran Baru', href: '/tahun-ajaran-baru', icon: PlusCircle, isPrimary: true },
+      { label: 'Overview', href: '/', icon: Home },
     ],
   },
   {
-    label: 'Jadwal Praktikum',
-    href: '#',
-    icon: Calendar,
+    label: 'Akademik & Data',
     items: [
-      { label: 'Overview Jadwal', href: '/jadwal' },
-      { label: 'Jadwal Pengganti', href: '/jadwal/pengganti' },
-      { label: 'Tanggal Mulai Modul', href: '/jadwal/modul' },
+      { label: 'Data Praktikum', href: '/praktikum', icon: BookOpen },
+      { label: 'Data Praktikan', href: '/data-praktikan', icon: UserRoundCheck },
+      { label: 'Mata Kuliah', href: '/mata-kuliah', icon: BookOpen },
+      {
+        label: 'Data Asisten Praktikum',
+        href: '#',
+        icon: Users,
+        items: [
+          { label: 'Data Asprak', href: '/asprak?tab=data' },
+          { label: 'Generate Kode Asprak', href: '/asprak?tab=rules' },
+        ],
+      },
     ],
   },
   {
-    label: 'Pelanggaran',
-    href: '#',
-    icon: AlertTriangle,
+    label: 'Jadwal & Pelanggaran',
     items: [
-      { label: 'Kelola Pelanggaran', href: '/pelanggaran' },
-      { label: 'Lihat Pelanggaran', href: '/pelanggaran-rekap' },
+      {
+        label: 'Jadwal Praktikum',
+        href: '#',
+        icon: Calendar,
+        items: [
+          { label: 'Overview Jadwal', href: '/jadwal' },
+          { label: 'Jadwal Pengganti', href: '/jadwal/pengganti' },
+          { label: 'Tanggal Mulai Modul', href: '/jadwal/modul' },
+        ],
+      },
+      {
+        label: 'Pelanggaran',
+        href: '#',
+        icon: AlertTriangle,
+        items: [
+          { label: 'Kelola Pelanggaran', href: '/pelanggaran' },
+          { label: 'Lihat Pelanggaran', href: '/pelanggaran-rekap' },
+        ],
+      },
+      {
+        label: 'Jadwal Jaga',
+        href: '#',
+        icon: Shield,
+        items: [
+          { label: 'Input Jaga', href: '/jadwal-jaga' },
+          { label: 'Rekap Jaga', href: '/jadwal-jaga/rekap' },
+        ],
+      },
     ],
   },
   {
-    label: 'Jadwal Jaga',
-    href: '#',
-    icon: Shield,
+    label: 'Sistem',
     items: [
-      { label: 'Input Jaga', href: '/jadwal-jaga' },
-      { label: 'Rekap Jaga', href: '/jadwal-jaga/rekap' },
+      { label: 'Manajemen Akun', href: '/manajemen-akun', icon: Notebook },
+      { label: 'Audit Logs', href: '/audit-logs', icon: Logs },
+      { label: 'Panduan Sistem', href: '/panduan', icon: HelpCircle },
+      { label: 'Pengaturan', href: '/pengaturan', icon: Settings },
     ],
-  },
-  { label: 'Manajemen Akun', href: '/manajemen-akun', icon: Notebook },
-  { label: 'Audit Logs', href: '/audit-logs', icon: Logs },
-  { label: 'Panduan Sistem', href: '/panduan', icon: HelpCircle },
-  { label: 'Pengaturan', href: '/pengaturan', icon: Settings },
+  }
 ];
 
 type AppSidebarProps = React.ComponentProps<typeof Sidebar> & {
@@ -116,13 +145,16 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const visibleNavItems = ALL_NAV_ITEMS.filter((item) => {
-    if (item.items) {
-      // Show parent if any sub-item is accessible
-      return item.items.some((sub) => hasAccess(user.role, sub.href));
-    }
-    return hasAccess(user.role, item.href);
-  });
+  // Filter groups and their items based on role access
+  const visibleNavGroups = ALL_NAV_GROUPS.map((group) => {
+    const visibleItems = group.items.filter((item) => {
+      if (item.items) {
+        return item.items.some((sub) => hasAccess(user.role, sub.href));
+      }
+      return hasAccess(user.role, item.href);
+    });
+    return { ...group, items: visibleItems };
+  }).filter((group) => group.items.length > 0);
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -153,15 +185,16 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
       </SidebarHeader>
 
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>Menu</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {visibleNavItems.map((item) => {
-                const Icon = item.icon;
-                const isActive =
-                  pathname === item.href ||
-                  item.items?.some((sub) => pathname.startsWith(sub.href.split('?')[0]));
+        {visibleNavGroups.map((group) => (
+          <SidebarGroup key={group.label}>
+            <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {group.items.map((item) => {
+                  const Icon = item.icon;
+                  const isActive =
+                    pathname === item.href ||
+                    item.items?.some((sub) => pathname.startsWith(sub.href.split('?')[0]));
                 const hasSubmenu = item.items && item.items.length > 0;
 
                 if (hasSubmenu) {
@@ -231,6 +264,7 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
                       asChild
                       isActive={pathname === item.href || pathname.startsWith(item.href + '/')}
                       tooltip={item.label}
+                      className={item.isPrimary ? 'bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground data-[active=true]:bg-primary data-[active=true]:text-primary-foreground font-semibold shadow-sm' : ''}
                     >
                       <Link href={item.href}>
                         <Icon />
@@ -243,6 +277,7 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+        ))}
       </SidebarContent>
 
       <SidebarFooter>

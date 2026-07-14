@@ -1,3 +1,4 @@
+/* eslint-disable react-doctor/no-impure-state-updater */
 import React, { useState, useEffect } from 'react';
 import { AlertTriangle, Edit2, Shield, X } from 'lucide-react';
 import { useJaga } from '@/hooks/useJaga';

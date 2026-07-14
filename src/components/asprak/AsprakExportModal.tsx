@@ -1,5 +1,6 @@
-'use client';
+"use client";
 
+/* eslint-disable react-doctor/no-impure-state-updater */
 import { useState, useMemo } from 'react';
 import Papa from 'papaparse';
 

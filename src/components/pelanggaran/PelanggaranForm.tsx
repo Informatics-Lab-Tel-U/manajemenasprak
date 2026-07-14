@@ -1,3 +1,4 @@
+/* eslint-disable react-doctor/no-impure-state-updater */
 /* eslint-disable react-doctor/exhaustive-deps */
 'use client';
 

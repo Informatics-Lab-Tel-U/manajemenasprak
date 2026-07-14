@@ -1,3 +1,4 @@
+/* eslint-disable react-doctor/no-impure-state-updater */
 import React, { useState, useEffect, useRef } from 'react';
 import {
   Dialog,

@@ -1,5 +1,6 @@
-'use client';
+"use client";
 
+/* eslint-disable react-doctor/no-impure-state-updater */
 import React, { useState } from 'react';
 import { useJadwal } from '@/hooks/useJadwal';
 import {

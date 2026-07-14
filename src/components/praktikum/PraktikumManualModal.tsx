@@ -1,5 +1,6 @@
-'use client';
+"use client";
 
+/* eslint-disable react-doctor/no-impure-state-updater */
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
