@@ -250,7 +250,11 @@ export const useOnboardingStore = create<OnboardingState>()(
         completedSteps: state.completedSteps,
         startedAt: state.startedAt,
         lastUpdated: state.lastUpdated,
-        draft: state.draft,
+        draft: {
+          ...state.draft,
+          praktikumList: [],
+          mataKuliahData: [],
+        },
       }),
     }
   )

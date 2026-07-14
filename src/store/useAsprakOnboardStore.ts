@@ -91,6 +91,11 @@ export const useAsprakOnboardStore = create<AsprakOnboardState>()(
     {
       name: 'asprak-onboard-storage',
       storage: createJSONStorage(() => localStorage),
+      partialize: (state) => ({
+        currentStep: state.currentStep,
+        completedSteps: state.completedSteps,
+        targetTerm: state.targetTerm,
+      }),
     }
   )
 );

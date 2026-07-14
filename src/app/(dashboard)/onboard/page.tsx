@@ -91,7 +91,7 @@ export default function OnboardHubPage() {
   return (
     <div className="container space-y-8">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Setup Sistem</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Setup Tahun Ajaran</h1>
         <p className="text-muted-foreground mt-2 text-lg">
           Pilih modul onboarding yang ingin Anda konfigurasi.
         </p>

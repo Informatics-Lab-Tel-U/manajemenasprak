@@ -20,39 +20,33 @@ export async function GET(request: Request) {
     const { data: prakData } = await supabase
       .from('praktikum')
       .select('id')
-      .eq('tahun_ajaran', term);
+      .eq('tahun_ajaran', term)
+      .limit(1);
     
-    const prakIds = prakData?.map((p: any) => p.id) || [];
-    const step1Done = prakIds.length > 0;
+    const step1Done = (prakData && prakData.length > 0) as boolean;
 
     // 2. Check Step 2 (Jadwal)
     let step2Done = false;
     if (step1Done) {
-      const { data: mkData } = await supabase
-        .from('mata_kuliah')
-        .select('id')
-        .in('id_praktikum', prakIds);
+      const { data: jadwalData } = await supabase
+        .from('jadwal')
+        .select('id, mata_kuliah!inner(praktikum!inner(tahun_ajaran))')
+        .eq('mata_kuliah.praktikum.tahun_ajaran', term)
+        .limit(1);
       
-      const mkIds = mkData?.map((mk: any) => mk.id) || [];
-      if (mkIds.length > 0) {
-        const { count: jadwalCount } = await supabase
-          .from('jadwal')
-          .select('*', { count: 'exact', head: true })
-          .in('id_mk', mkIds);
-        
-        step2Done = (jadwalCount || 0) > 0;
-      }
+      step2Done = (jadwalData && jadwalData.length > 0) as boolean;
     }
 
     // 3. Check Step 3 (Asprak / Plotting)
     let step3Done = false;
     if (step1Done) {
-      const { count: asprakCount } = await supabase
+      const { data: asprakData } = await supabase
         .from('asprak_praktikum')
-        .select('*', { count: 'exact', head: true })
-        .in('id_praktikum', prakIds);
+        .select('id, praktikum!inner(tahun_ajaran)')
+        .eq('praktikum.tahun_ajaran', term)
+        .limit(1);
         
-      step3Done = (asprakCount || 0) > 0;
+      step3Done = (asprakData && asprakData.length > 0) as boolean;
     }
 
     return NextResponse.json({

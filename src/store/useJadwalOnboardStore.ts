@@ -47,6 +47,11 @@ export const useJadwalOnboardStore = create<JadwalOnboardState>()(
     {
       name: 'jadwal-onboard-storage',
       storage: createJSONStorage(() => localStorage),
+      partialize: (state) => ({
+        currentStep: state.currentStep,
+        completedSteps: state.completedSteps,
+        targetTerm: state.targetTerm,
+      }),
     }
   )
 );
