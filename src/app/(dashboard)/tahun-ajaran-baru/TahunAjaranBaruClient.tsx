@@ -81,6 +81,7 @@ export default function TahunAjaranBaruClient() {
   const { 
     currentStep, 
     setCurrentStep,
+    completedSteps,
     draft,
     resetProgress 
   } = useOnboardingStore();
@@ -130,22 +131,22 @@ export default function TahunAjaranBaruClient() {
 
       <Stepper 
         steps={steps} 
-        activeStep={currentStep}
-        onStepChange={(id) => setCurrentStep(id as any)}
+        value={currentStep}
+        onValueChange={(id) => setCurrentStep(id as any)}
         className="flex flex-col w-full items-start gap-8"
       >
         <StepperNav className="w-full bg-card p-4 rounded-xl border shadow-sm">
           {steps.map((step, index) => (
-            <StepperItem key={step.id} stepId={step.id} className="relative flex-1">
-              <StepperTrigger className="flex flex-col gap-2.5 items-center">
+            <StepperItem key={step.id} stepId={step.id} completed={completedSteps.includes(step.id as any)} className="relative flex-1">
+              <StepperTrigger className="flex flex-col gap-2.5">
                 <StepperIndicator />
-                <div className="flex flex-col items-center text-center">
+                <div className="flex flex-col">
                   <StepperTitle>{step.title}</StepperTitle>
                   <StepperDescription className="text-nowrap max-md:hidden">{step.description}</StepperDescription>
                 </div>
               </StepperTrigger>
               {steps.length > index + 1 && (
-                <StepperSeparator className="absolute inset-x-0 top-3 right-[calc(-50%+18px)] left-[calc(50%+18px)]" />
+                <StepperSeparator className="absolute inset-x-0 top-2 right-[calc(-50%+18px)] left-[calc(50%+18px)]" />
               )}
             </StepperItem>
           ))}

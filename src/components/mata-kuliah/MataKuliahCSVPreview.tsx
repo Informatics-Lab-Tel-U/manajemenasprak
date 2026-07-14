@@ -128,7 +128,7 @@ export default function MataKuliahCSVPreview({
 
               return (
                 <tr
-                  key={`${row.mk_singkat}-${row.nama_lengkap}`}
+                  key={`${row.mk_singkat}-${row.nama_lengkap}-${idx}`}
                   className={cn(
                     'group border-b transition-colors data-[state=selected]:bg-muted',
                     row.status === 'error'
