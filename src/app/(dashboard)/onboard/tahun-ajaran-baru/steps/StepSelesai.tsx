@@ -77,7 +77,7 @@ export default function SelesaiStep() {
 
   const handleFinish = () => {
     resetProgress();
-    window.location.href = '/';
+    window.location.href = '/onboard';
   };
 
   return (

@@ -68,7 +68,7 @@ const ALL_NAV_GROUPS: NavGroup[] = [
   {
     label: 'Main Menu',
     items: [
-      { label: 'Tahun Ajaran Baru', href: '/tahun-ajaran-baru', icon: PlusCircle, isPrimary: true },
+      { label: 'Setup Sistem', href: '/onboard', icon: PlusCircle, isPrimary: true },
       { label: 'Overview', href: '/', icon: Home },
     ],
   },

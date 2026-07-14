@@ -24,7 +24,7 @@ export const ALL_ROLES: Role[] = [ROLES.ADMIN, ROLES.ASLAB, ROLES.ASPRAK_KOOR];
 export const ROLE_ALLOWED_PATHS: Record<Role, string[]> = {
   ADMIN: [
     '/',
-    '/tahun-ajaran-baru',
+    '/onboard',
     '/praktikum',
     '/data-praktikan',
     '/mata-kuliah',
@@ -42,7 +42,7 @@ export const ROLE_ALLOWED_PATHS: Record<Role, string[]> = {
   ],
   ASLAB: [
     '/',
-    '/tahun-ajaran-baru',
+    '/onboard',
     '/praktikum',
     '/data-praktikan',
     '/mata-kuliah',
