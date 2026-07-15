@@ -1,10 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { AlertTriangle, Trash2 } from 'lucide-react';
+import { Download } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import {
@@ -23,33 +22,31 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 
-export type BulkDeletePayload = { action: 'kelas' | 'all'; kelas?: string };
+export type ExportPayload = { action: 'kelas' | 'all' | 'current'; kelas?: string };
 
-interface PraktikanBulkDeleteDialogProps {
+interface PraktikanExportDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onConfirm: (payload: BulkDeletePayload) => Promise<void>;
+  onConfirm: (payload: ExportPayload) => Promise<void>;
   options: string[];
-  isDeleting?: boolean;
+  isExporting?: boolean;
 }
 
-export default function PraktikanBulkDeleteDialog({
+export default function PraktikanExportDialog({
   open,
   onOpenChange,
   onConfirm,
   options,
-  isDeleting,
-}: PraktikanBulkDeleteDialogProps) {
-  const [mode, setMode] = useState<'kelas' | 'all'>('kelas');
+  isExporting,
+}: PraktikanExportDialogProps) {
+  const [mode, setMode] = useState<'kelas' | 'all' | 'current'>('current');
   const [selectedKelas, setSelectedKelas] = useState('');
-  const [confirmText, setConfirmText] = useState('');
 
   // Reset state when opened
   useEffect(() => {
     if (open) {
-      setMode('kelas');
+      setMode('current');
       setSelectedKelas(options.length > 0 ? options[0] : '');
-      setConfirmText('');
     }
   }, [open, options]);
 
@@ -57,7 +54,7 @@ export default function PraktikanBulkDeleteDialog({
     if (mode === 'kelas') {
       return selectedKelas !== '';
     }
-    return confirmText === 'HAPUS SEMUA';
+    return true;
   };
 
   const handleSubmit = () => {
@@ -69,30 +66,43 @@ export default function PraktikanBulkDeleteDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[450px]">
         <DialogHeader>
-          <DialogTitle>Hapus Data Praktikan (Bulk)</DialogTitle>
+          <DialogTitle>Export Data Praktikan</DialogTitle>
           <DialogDescription>
-            Pilih metode penghapusan massal. Tindakan ini tidak dapat dibatalkan.
+            Pilih metode ekspor data ke dalam format Excel (.xlsx).
           </DialogDescription>
         </DialogHeader>
 
         <div className="py-4 space-y-6">
-          <RadioGroup value={mode} onValueChange={(val: 'kelas' | 'all') => setMode(val)}>
+          <RadioGroup value={mode} onValueChange={(val: 'kelas' | 'all' | 'current') => setMode(val)}>
             <div className="flex flex-col gap-4">
+              {/* Opsi Current Table */}
+              <div className="flex items-start space-x-3 rounded-md border p-4">
+                <RadioGroupItem value="current" id="mode-current" className="mt-1" />
+                <div className="space-y-1 flex-1">
+                  <Label htmlFor="mode-current" className="font-semibold cursor-pointer">
+                    Data Tabel Saat Ini
+                  </Label>
+                  <p className="text-sm text-muted-foreground">
+                    Mengekspor data praktikan yang saat ini sedang tampil di layar (sesuai dengan filter yang aktif).
+                  </p>
+                </div>
+              </div>
+
               {/* Opsi Kelas */}
               <div className="flex items-start space-x-3 rounded-md border p-4">
                 <RadioGroupItem value="kelas" id="mode-kelas" className="mt-1" />
                 <div className="space-y-2 flex-1">
                   <Label htmlFor="mode-kelas" className="font-semibold cursor-pointer">
-                    Hapus Berdasarkan Kelas
+                    Berdasarkan Kelas
                   </Label>
                   <p className="text-sm text-muted-foreground">
-                    Menghapus seluruh praktikan yang tergabung di dalam kelas tertentu.
+                    Mengekspor seluruh praktikan dari satu kelas secara utuh langsung dari database.
                   </p>
                   {mode === 'kelas' && (
                     <div className="pt-2">
                       <Select value={selectedKelas} onValueChange={setSelectedKelas}>
                         <SelectTrigger>
-                          <SelectValue placeholder="Pilih kelas yang akan dihapus" />
+                          <SelectValue placeholder="Pilih kelas yang akan diekspor" />
                         </SelectTrigger>
                         <SelectContent>
                           {options.map((opt) => (
@@ -110,27 +120,13 @@ export default function PraktikanBulkDeleteDialog({
               {/* Opsi Semua Data */}
               <div className="flex items-start space-x-3 rounded-md border p-4">
                 <RadioGroupItem value="all" id="mode-all" className="mt-1" />
-                <div className="space-y-2 flex-1">
-                  <Label htmlFor="mode-all" className="font-semibold text-destructive cursor-pointer">
-                    Hapus Seluruh Data
+                <div className="space-y-1 flex-1">
+                  <Label htmlFor="mode-all" className="font-semibold cursor-pointer">
+                    Seluruh Data
                   </Label>
                   <p className="text-sm text-muted-foreground">
-                    Mengosongkan tabel praktikan secara keseluruhan. Pilihan yang sangat destruktif!
+                    Mengunduh keseluruhan data praktikan yang ada di sistem tanpa terkecuali.
                   </p>
-                  {mode === 'all' && (
-                    <div className="pt-3 space-y-3">
-                      <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-md flex items-start gap-2">
-                        <AlertTriangle size={16} className="mt-0.5 flex-shrink-0" />
-                        <span>Ketik <strong>HAPUS SEMUA</strong> di bawah ini untuk mengkonfirmasi.</span>
-                      </div>
-                      <Input 
-                        placeholder="HAPUS SEMUA" 
-                        value={confirmText}
-                        onChange={(e) => setConfirmText(e.target.value)}
-                        className="border-destructive/50 focus-visible:ring-destructive/30"
-                      />
-                    </div>
-                  )}
                 </div>
               </div>
             </div>
@@ -138,16 +134,22 @@ export default function PraktikanBulkDeleteDialog({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isDeleting}>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isExporting}>
             Batal
           </Button>
           <Button 
-            variant="destructive" 
             onClick={handleSubmit} 
-            disabled={isDeleting || !isFormValid()}
+            disabled={isExporting || !isFormValid()}
           >
-            {isDeleting ? <Spinner className="mr-2 h-4 w-4" /> : <Trash2 size={16} className="mr-2" />}
-            {isDeleting ? 'Menghapus...' : 'Ya, Hapus'}
+            {isExporting ? (
+              <>
+                <Spinner className="mr-2 h-4 w-4" /> Mengekspor...
+              </>
+            ) : (
+              <>
+                <Download size={16} className="mr-2" /> Export Excel
+              </>
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>

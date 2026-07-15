@@ -1,6 +1,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, ArrowRight, Loader2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
 
 export interface NavButtonProps extends React.ComponentProps<typeof Button> {
@@ -32,7 +33,7 @@ export function NavButton({
     >
       {loading ? (
         <>
-          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+          <Spinner className="w-4 h-4 mr-2" />
           {loadingText || (isNext ? 'Menyimpan...' : 'Loading...')}
         </>
       ) : (

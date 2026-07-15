@@ -14,7 +14,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { X, Loader2 } from 'lucide-react';
+import { X } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import AsprakCSVPreview, { PreviewRow } from '../../asprak/AsprakCSVPreview';
 import type { ExistingAsprakInfo } from '../../asprak/AsprakImportCSVModal';
 import {
@@ -225,7 +226,7 @@ export default function StepAsprak({ data, term, onNext, onPrev, onImport }: Ste
   if (isFetching) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center min-h-[400px] bg-background/50 border rounded-md">
-        <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+        <Spinner className="h-8 w-8 text-primary mb-4" />
         <p className="text-sm text-muted-foreground">Memuat data eksisting untuk validasi...</p>
       </div>
     );

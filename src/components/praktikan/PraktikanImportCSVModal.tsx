@@ -1,9 +1,10 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState, memo } from 'react';
 import Papa from 'papaparse';
 import { useDropzone } from 'react-dropzone';
-import { Check, ClipboardList, FileSpreadsheet, FileText } from 'lucide-react';
+import { FileSpreadsheet, FileText, Download, Save } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import { toast } from 'sonner';
 
 import { Badge } from '@/components/ui/badge';
@@ -153,6 +154,68 @@ function updatePreviewStatus(row: PreviewRow): PreviewRow {
   };
 }
 
+const PreviewTableRow = memo(({ 
+  row, 
+  onToggle, 
+  onEdit 
+}: { 
+  row: PreviewRow;
+  onToggle: (id: string | number) => void;
+  onEdit: (id: string | number, field: keyof Pick<PreviewRow, 'nama' | 'kelas' | 'mata_kuliah' | 'kode_asprak'>, value: string) => void;
+}) => {
+  return (
+    <TableRow>
+      <TableCell className="text-center">
+        <Checkbox
+          checked={row.selected}
+          disabled={row.status === 'error'}
+          onCheckedChange={() => onToggle(row.id)}
+        />
+      </TableCell>
+      <TableCell>
+        <Input
+          value={row.nama}
+          onChange={(event) => onEdit(row.id, 'nama', event.target.value)}
+          className="min-w-56 h-8 text-sm"
+        />
+      </TableCell>
+      <TableCell>
+        <Input
+          value={row.kelas}
+          onChange={(event) => onEdit(row.id, 'kelas', event.target.value)}
+          className="min-w-24 h-8 text-sm"
+        />
+      </TableCell>
+      <TableCell>
+        <Input
+          value={row.mata_kuliah}
+          onChange={(event) => onEdit(row.id, 'mata_kuliah', event.target.value)}
+          className="min-w-24 h-8 text-sm"
+        />
+      </TableCell>
+      <TableCell>
+        <Input
+          value={row.kode_asprak ?? ''}
+          onChange={(event) => onEdit(row.id, 'kode_asprak', event.target.value)}
+          className="min-w-20 h-8 text-sm"
+        />
+      </TableCell>
+      <TableCell>
+        <Badge
+          variant={row.status === 'ok' ? 'secondary' : 'outline'}
+          className={cn(
+            row.status === 'ok' && 'bg-blue-500/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400 hover:bg-blue-500/20 border-transparent',
+            row.status !== 'ok' && 'bg-amber-500/10 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400 border-amber-500/50'
+          )}
+        >
+          {row.note}
+        </Badge>
+      </TableCell>
+    </TableRow>
+  );
+});
+PreviewTableRow.displayName = 'PreviewTableRow';
+
 interface PraktikanImportCSVModalProps {
   open: boolean;
   onClose: () => void;
@@ -164,6 +227,34 @@ export default function PraktikanImportCSVModal({
   onClose,
   onImport,
 }: PraktikanImportCSVModalProps) {
+  const handleDownloadTemplate = async (format: 'csv' | 'xlsx') => {
+    const data = [
+      { nama: 'Budi Santoso', nim: '1301213001', kelas: 'IF-45-01', mata_kuliah: 'JARKOM', kode_asprak: 'BUS' },
+      { nama: 'Siti Aminah', nim: '1301213002', kelas: 'IF-45-01', mata_kuliah: 'JARKOM', kode_asprak: 'BUS' },
+    ];
+
+    if (format === 'csv') {
+      const csv = Papa.unparse(data);
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'template_praktikan.csv');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } else if (format === 'xlsx') {
+      try {
+        const XLSX = await import('xlsx');
+        const ws = XLSX.utils.json_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Template');
+        XLSX.writeFile(wb, 'template_praktikan.xlsx');
+      } catch {
+        toast.error('Gagal membuat file XLSX');
+      }
+    }
+  };
   const [defaultKelas, setDefaultKelas] = useState('');
   const [defaultMataKuliah, setDefaultMataKuliah] = useState('');
   const [pasteValue, setPasteValue] = useState('');
@@ -171,6 +262,9 @@ export default function PraktikanImportCSVModal({
   const [previewRows, setPreviewRows] = useState<PreviewRow[]>([]);
   const [parsing, setParsing] = useState(false);
   const [saving, setSaving] = useState(false);
+  
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 100;
 
   const selectedPreviewRows = useMemo(
     () => previewRows.filter((row) => row.selected && row.status !== 'error').length,
@@ -184,12 +278,14 @@ export default function PraktikanImportCSVModal({
     setFileName('');
     setDefaultKelas('');
     setDefaultMataKuliah('');
+    setCurrentPage(1);
     onClose();
   };
 
   const applyPreviewRows = useCallback((matrix: SheetMatrix, label: string) => {
     const parsedRows = rowsFromMatrix(matrix, defaultKelas, defaultMataKuliah);
     setPreviewRows(parsedRows);
+    setCurrentPage(1);
     toast.success(`${parsedRows.length} baris dari ${label} siap ditinjau.`);
   }, [defaultKelas, defaultMataKuliah]);
 
@@ -265,7 +361,7 @@ export default function PraktikanImportCSVModal({
     maxFiles: 1,
   });
 
-  const handlePreviewEdit = (
+  const handlePreviewEdit = useCallback((
     id: string | number,
     field: keyof Pick<PreviewRow, 'nama' | 'kelas' | 'mata_kuliah' | 'kode_asprak'>,
     value: string
@@ -275,15 +371,21 @@ export default function PraktikanImportCSVModal({
         row.id === id ? updatePreviewStatus({ ...row, [field]: value.toUpperCase() }) : row
       )
     );
-  };
+  }, []);
 
-  const handleTogglePreview = (id: string | number) => {
+  const handleTogglePreview = useCallback((id: string | number) => {
     setPreviewRows((current) =>
       current.map((row) =>
         row.id === id && row.status !== 'error' ? { ...row, selected: !row.selected } : row
       )
     );
-  };
+  }, []);
+
+  const totalPages = Math.ceil(previewRows.length / itemsPerPage) || 1;
+  const currentRows = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return previewRows.slice(start, start + itemsPerPage);
+  }, [previewRows, currentPage, itemsPerPage]);
 
   const handleAddPreviewRows = async () => {
     const selected = previewRows.filter((row) => row.selected && row.status !== 'error');
@@ -360,43 +462,63 @@ export default function PraktikanImportCSVModal({
                 placeholder={'Nama\tKode Asprak\nAQIL MUJAHID\tRGG\nRAJA ASYRAF\t'}
                 className="min-h-[160px] w-full resize-y rounded-xl border border-input bg-background px-4 py-3 font-mono text-sm outline-none transition-[color,box-shadow] placeholder:text-muted-foreground focus-visible:border-primary focus-visible:ring-[3px] focus-visible:ring-primary/20"
               />
+              <Button variant="outline" onClick={handlePastePreview} className="w-full mt-2 h-auto flex gap-2 justify-center py-2 shrink-0">
+                <FileSpreadsheet size={16} />
+                <span className="text-sm font-medium">Preview Paste</span>
+              </Button>
             </div>
 
             <div className="space-y-2 shrink-0">
-              <div className="flex items-center justify-between">
-                <label htmlFor="praktikan-file-upload" className="text-sm font-medium leading-none">Upload CSV / Excel</label>
-                {fileName && (
-                  <span className="text-xs text-muted-foreground flex items-center gap-1">
-                    <FileText size={12} />
-                    {fileName}
-                  </span>
-                )}
-              </div>
+              <div className="bg-muted/30 p-4 rounded-lg border border-border/50">
+                <p className="text-xs text-muted-foreground mb-2 font-medium">
+                  Format Kolom:
+                </p>
+                <div className="flex flex-wrap gap-2 mb-1">
+                  {[
+                    'nama',
+                    'nim',
+                    'kelas',
+                    'mata_kuliah',
+                    'kode_asprak',
+                  ].map((col) => (
+                    <span
+                      key={col}
+                      className="text-[10px] bg-background border px-1.5 py-0.5 rounded font-mono text-muted-foreground"
+                    >
+                      {col}
+                    </span>
+                  ))}
+                </div>
+                <p className="text-[10px] text-muted-foreground/60 mb-3">
+                  * Kolom tidak harus berurutan, namun header (baris pertama) harus sesuai format.
+                </p>
 
-              <div className="flex flex-col gap-3 items-stretch">
-                <div
-                  {...getRootProps()}
-                  className={cn(
-                    'border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center text-center transition-all',
-                    isDragActive
-                      ? 'border-primary bg-primary/5 cursor-copy'
-                      : 'border-border bg-transparent hover:border-primary/50 cursor-pointer'
-                  )}
-                >
-                  <input {...getInputProps({ id: 'praktikan-file-upload' })} />
-                  <div className="flex flex-col items-center gap-2">
-                    <FileSpreadsheet size={32} className="text-primary/70" />
-                    <p className="text-sm font-medium">
-                      {isDragActive ? 'Lepaskan file di sini...' : 'Tarik file ke sini'}
-                    </p>
-                    <p className="text-xs text-muted-foreground">klik untuk memilih dari komputer</p>
+                <div className="flex items-center gap-3 pt-3 mt-1 border-t border-border/50">
+                  <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+                    <Download size={12} />
+                    Download Template:
+                  </span>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-xs px-2 gap-1.5 bg-background"
+                      onClick={() => handleDownloadTemplate('csv')}
+                    >
+                      <FileText size={12} className="text-sky-500" />
+                      CSV
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-xs px-2 gap-1.5 bg-background"
+                      onClick={() => handleDownloadTemplate('xlsx')}
+                    >
+                      <FileSpreadsheet size={12} className="text-emerald-500" />
+                      XLSX
+                    </Button>
                   </div>
                 </div>
-
-                <Button variant="outline" onClick={handlePastePreview} className="h-auto flex-col justify-center gap-1 py-3 px-6 shrink-0">
-                  <FileSpreadsheet size={20} />
-                  <span className="text-sm font-medium">Preview Paste</span>
-                </Button>
               </div>
             </div>
           </div>
@@ -411,24 +533,49 @@ export default function PraktikanImportCSVModal({
                     Edit, pilih, dan validasi baris sebelum dikirim ke database.
                   </p>
                 </div>
-                <Button
-                  onClick={handleAddPreviewRows}
-                  disabled={parsing || saving || selectedPreviewRows === 0}
-                  className="w-full lg:w-auto"
-                >
-                  <Check size={16} className="mr-2" />
-                  {saving ? 'Menyimpan...' : `Tambahkan ${selectedPreviewRows || ''}`}
+                <Button onClick={handleAddPreviewRows} disabled={saving || !selectedPreviewRows} className="w-full lg:w-auto">
+                  {saving ? (
+                    <>
+                      <Spinner className="mr-2 h-4 w-4" /> Menyimpan...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="mr-2 h-4 w-4" /> Tambahkan {selectedPreviewRows || ''}
+                    </>
+                  )}
                 </Button>
               </div>
               
-              <div className="flex-1 overflow-auto p-0 relative">
+              <div className="flex-1 overflow-auto p-0 relative h-full">
                 {previewRows.length === 0 ? (
-                  <div className="flex min-h-[250px] h-full flex-col items-center justify-center text-center p-8">
-                    <ClipboardList className="mb-3 text-muted-foreground" size={38} />
-                    <p className="font-medium text-foreground">{parsing ? 'Membaca file...' : 'Belum ada preview'}</p>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Paste data atau upload CSV/Excel untuk mulai validasi.
+                  <div 
+                    {...getRootProps()}
+                    className={cn(
+                      "flex min-h-[250px] h-full flex-col items-center justify-center text-center p-8 transition-all duration-200 border-2 border-dashed m-4 rounded-xl",
+                      isDragActive 
+                        ? 'border-primary bg-primary/5 cursor-copy'
+                        : 'border-transparent bg-transparent hover:border-border hover:bg-muted/10 cursor-pointer'
+                    )}
+                  >
+                    <input {...getInputProps({ id: 'praktikan-file-upload' })} />
+                    <FileSpreadsheet 
+                      size={48} 
+                      className={cn(
+                        "mb-4 transition-colors",
+                        isDragActive ? "text-primary" : "text-muted-foreground/60"
+                      )} 
+                    />
+                    <p className="font-medium text-foreground text-lg mb-1">
+                      {parsing ? 'Membaca file...' : isDragActive ? 'Lepaskan file di sini...' : 'Tarik & lepas file CSV / Excel di sini'}
                     </p>
+                    <p className="text-sm text-muted-foreground">
+                      atau klik area ini untuk memilih file
+                    </p>
+                    {fileName && (
+                      <span className="text-xs font-mono text-muted-foreground mt-4 bg-muted px-2 py-1 rounded">
+                        File terakhir: {fileName}
+                      </span>
+                    )}
                   </div>
                 ) : (
                 <Table>
@@ -443,64 +590,45 @@ export default function PraktikanImportCSVModal({
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {previewRows.map((row) => (
-                      <TableRow key={row.id}>
-                        <TableCell className="text-center">
-                          <Checkbox
-                            checked={row.selected}
-                            disabled={row.status === 'error'}
-                            onCheckedChange={() => handleTogglePreview(row.id)}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            value={row.nama}
-                            onChange={(event) => handlePreviewEdit(row.id, 'nama', event.target.value)}
-                            className="min-w-56 h-8 text-sm"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            value={row.kelas}
-                            onChange={(event) => handlePreviewEdit(row.id, 'kelas', event.target.value)}
-                            className="min-w-24 h-8 text-sm"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            value={row.mata_kuliah}
-                            onChange={(event) =>
-                              handlePreviewEdit(row.id, 'mata_kuliah', event.target.value)
-                            }
-                            className="min-w-24 h-8 text-sm"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            value={row.kode_asprak ?? ''}
-                            onChange={(event) =>
-                              handlePreviewEdit(row.id, 'kode_asprak', event.target.value)
-                            }
-                            className="min-w-20 h-8 text-sm"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Badge
-                            variant={row.status === 'ok' ? 'secondary' : 'outline'}
-                            className={cn(
-                              row.status === 'ok' && 'bg-blue-500/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400 hover:bg-blue-500/20 border-transparent',
-                              row.status !== 'ok' && 'bg-amber-500/10 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400 border-amber-500/50'
-                            )}
-                          >
-                            {row.note}
-                          </Badge>
-                        </TableCell>
-                      </TableRow>
+                    {currentRows.map((row) => (
+                      <PreviewTableRow 
+                        key={row.id} 
+                        row={row} 
+                        onToggle={handleTogglePreview} 
+                        onEdit={handlePreviewEdit} 
+                      />
                     ))}
                   </TableBody>
                 </Table>
               )}
             </div>
+            
+            {/* Pagination Controls */}
+            {previewRows.length > 0 && (
+              <div className="flex items-center justify-between px-4 py-3 border-t bg-muted/10 shrink-0">
+                <div className="text-sm text-muted-foreground">
+                  Menampilkan {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, previewRows.length)} dari {previewRows.length} baris
+                </div>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    Sebelumnya
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                  >
+                    Selanjutnya
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
         </div>

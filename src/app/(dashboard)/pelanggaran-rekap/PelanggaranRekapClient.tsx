@@ -1,7 +1,8 @@
 'use client';
 
 import * as React from 'react';
-import { Filter, Search, Loader2, ArrowUpDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Filter, Search, ArrowUpDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import {
   useReactTable,
   getCoreRowModel,
@@ -249,7 +250,7 @@ export default function PelanggaranRekapClient({ initialTahunAjaranList }: Props
 
               <Button onClick={loadData} disabled={loading} className="h-9">
                 {loading ? (
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  <Spinner className="h-4 w-4 mr-2" />
                 ) : (
                   <Search className="h-4 w-4 mr-2" />
                 )}

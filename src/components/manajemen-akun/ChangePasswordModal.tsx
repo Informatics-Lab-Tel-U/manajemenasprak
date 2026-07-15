@@ -3,7 +3,8 @@
 /* eslint-disable react-doctor/no-impure-state-updater */
 import * as React from 'react';
 import { toast } from 'sonner';
-import { Eye, EyeOff, Loader2, Key } from 'lucide-react';
+import { Eye, EyeOff, Key } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -155,7 +156,7 @@ export function ChangePasswordModal({
             <Button type="submit" disabled={isLoading}>
               {isLoading ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Spinner className="mr-2 h-4 w-4" />
                   Mengubah...
                 </>
               ) : (

@@ -5,7 +5,8 @@ import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Calendar, Clock, MapPin } from 'lucide-react';
+import { Calendar, Clock, MapPin } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import type { PraktikumWithStats, PraktikumDetails } from '@/services/praktikumService';
 import { usePraktikum } from '@/hooks/usePraktikum';
 
@@ -58,7 +59,7 @@ export default function PraktikumDetailsModal({
             <div className="flex flex-col items-center justify-center p-3 border rounded-lg bg-muted/20">
               <span className="text-sm text-muted-foreground font-medium">Total Kelas</span>
               {loading ? (
-                <Loader2 className="w-5 h-5 animate-spin mt-2 text-muted-foreground" />
+                <Spinner className="w-5 h-5 mt-2 text-muted-foreground" />
               ) : (
                 <div className="flex items-center mt-1">
                   <span className="text-2xl font-bold">{details?.total_kelas || 0}</span>
@@ -74,7 +75,7 @@ export default function PraktikumDetailsModal({
 
             {loading ? (
               <div className="flex justify-center py-8">
-                <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+                <Spinner className="w-8 h-8 text-muted-foreground" />
               </div>
             ) : !details || details.classes.length === 0 ? (
               <div className="text-center py-6 text-muted-foreground text-sm border border-dashed rounded-lg bg-muted/10">

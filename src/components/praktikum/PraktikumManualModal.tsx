@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertTriangle, CheckCircle, X } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import TermInput from '@/components/asprak/TermInput';
 import { buildTermString } from '@/utils/termHelpers';
 import { Field, FieldGroup } from '@/components/ui/field';
@@ -168,7 +169,11 @@ export default function PraktikumManualModal({
               </Button>
             </DialogClose>
             <Button type="submit" disabled={loading || status === 'exists' || !nama}>
-              {loading ? 'Menyimpan...' : 'Simpan'}
+              {loading ? (
+                <>
+                  <Spinner className="mr-2 h-4 w-4" /> Menyimpan...
+                </>
+              ) : 'Simpan'}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -26,6 +26,7 @@ import { Asprak } from '@/types/database';
 import { canInputJagaForModul, getJagaShiftsByDay } from '@/utils/jagaUtils';
 import { AlertCircle, Check, ChevronsUpDown, Search } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Spinner } from '@/components/ui/spinner';
 
 interface JagaInputModalProps {
   isOpen: boolean;
@@ -377,7 +378,11 @@ export default function JagaInputModal({
             Batal
           </Button>
           <Button onClick={handleSubmit} disabled={loading || !canInput}>
-            {loading ? 'Menyimpan...' : 'Simpan'}
+            {loading ? (
+              <>
+                <Spinner className="mr-2 h-4 w-4" /> Menyimpan...
+              </>
+            ) : 'Simpan'}
           </Button>
         </DialogFooter>
       </DialogContent>

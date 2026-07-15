@@ -17,7 +17,8 @@ import {
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useTermStore } from '@/store/useTermStore';
-import { Loader2, Search, X, ChevronRight, Users, Calendar } from 'lucide-react';
+import { Search, X, ChevronRight, Users, Calendar } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import { toast } from 'sonner';
 import type { Asprak, Jadwal, Praktikum } from '@/types/database';
 import { Field, FieldGroup } from '@/components/ui/field';
@@ -603,7 +604,7 @@ export default function PelanggaranForm({
               <Button type="submit" size="sm" className="h-8" disabled={isLoading || !contextReady}>
                 {isLoading ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Menyimpan...
+                    <Spinner className="mr-2 h-4 w-4" /> Menyimpan...
                   </>
                 ) : (
                   'Catat Pelanggaran'

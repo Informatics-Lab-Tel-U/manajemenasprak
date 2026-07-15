@@ -17,6 +17,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Spinner } from '@/components/ui/spinner';
 
 interface JagaPanelProps {
   term: string;
@@ -315,7 +316,11 @@ export default function JagaPanel({
               variant={'destructive'}
               disabled={loading}
             >
-              {loading ? 'Menghapus...' : 'Ya, Hapus Jadwal'}
+              {loading ? (
+                <>
+                  <Spinner className="mr-2 h-4 w-4" /> Menghapus...
+                </>
+              ) : 'Ya, Hapus Jadwal'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
