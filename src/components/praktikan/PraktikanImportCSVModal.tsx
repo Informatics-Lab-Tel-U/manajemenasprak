@@ -222,39 +222,41 @@ interface PraktikanImportCSVModalProps {
   onImport: (rows: Omit<PraktikanRecord, 'id' | 'created_at'>[]) => Promise<void>;
 }
 
+const handleDownloadTemplate = async (format: 'csv' | 'xlsx') => {
+  const data = [
+    { nama: 'Budi Santoso', nim: '1301213001', kelas: 'IF-45-01', mata_kuliah: 'JARKOM', kode_asprak: 'BUS' },
+    { nama: 'Siti Aminah', nim: '1301213002', kelas: 'IF-45-01', mata_kuliah: 'JARKOM', kode_asprak: 'BUS' },
+  ];
+
+  if (format === 'csv') {
+    const csv = Papa.unparse(data);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'template_praktikan.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  } else if (format === 'xlsx') {
+    try {
+      const XLSX = await import('xlsx');
+      const ws = XLSX.utils.json_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Template');
+      XLSX.writeFile(wb, 'template_praktikan.xlsx');
+    } catch {
+      toast.error('Gagal membuat file XLSX');
+    }
+  }
+};
+
 export default function PraktikanImportCSVModal({
   open,
   onClose,
   onImport,
 }: PraktikanImportCSVModalProps) {
-  const handleDownloadTemplate = async (format: 'csv' | 'xlsx') => {
-    const data = [
-      { nama: 'Budi Santoso', nim: '1301213001', kelas: 'IF-45-01', mata_kuliah: 'JARKOM', kode_asprak: 'BUS' },
-      { nama: 'Siti Aminah', nim: '1301213002', kelas: 'IF-45-01', mata_kuliah: 'JARKOM', kode_asprak: 'BUS' },
-    ];
 
-    if (format === 'csv') {
-      const csv = Papa.unparse(data);
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', 'template_praktikan.csv');
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } else if (format === 'xlsx') {
-      try {
-        const XLSX = await import('xlsx');
-        const ws = XLSX.utils.json_to_sheet(data);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'Template');
-        XLSX.writeFile(wb, 'template_praktikan.xlsx');
-      } catch {
-        toast.error('Gagal membuat file XLSX');
-      }
-    }
-  };
   const [defaultKelas, setDefaultKelas] = useState('');
   const [defaultMataKuliah, setDefaultMataKuliah] = useState('');
   const [pasteValue, setPasteValue] = useState('');

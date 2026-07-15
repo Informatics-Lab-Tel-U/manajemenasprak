@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { unstable_cache, revalidateTag } from 'next/cache';
 
+export const fetchCache = 'force-no-store';
+
 import { requireRoleApi } from '@/lib/auth';
 import { createAdminClient } from '@/lib/supabase/admin';
 import {
@@ -26,12 +28,12 @@ const getCachedOptions = unstable_cache(
   { tags: ['praktikan'] }
 );
 
-const getCachedList = unstable_cache(
-  async (kelas: string | undefined, mata_kuliah: string | undefined) => 
-    getPraktikanList({ kelas, mata_kuliah }, createAdminClient()),
-  ['praktikan-list'],
-  { tags: ['praktikan'] }
-);
+const getCachedList = (kelas: string | undefined, mata_kuliah: string | undefined) =>
+  unstable_cache(
+    async () => getPraktikanList({ kelas, mata_kuliah }, createAdminClient()),
+    ['praktikan-list', kelas ?? 'all', mata_kuliah ?? 'all'],
+    { tags: ['praktikan'] }
+  )();
 
 export async function OPTIONS(request: NextRequest) {
   return praktikanOptionsResponse(request);
