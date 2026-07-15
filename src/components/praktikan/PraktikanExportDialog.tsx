@@ -141,8 +141,15 @@ export default function PraktikanExportDialog({
             onClick={handleSubmit} 
             disabled={isExporting || !isFormValid()}
           >
-            {isExporting ? <Spinner className="mr-2 h-4 w-4" /> : <Download size={16} className="mr-2" />}
-            {isExporting ? 'Mengekspor...' : 'Export Excel'}
+            {isExporting ? (
+              <>
+                <Spinner className="mr-2 h-4 w-4" /> Mengekspor...
+              </>
+            ) : (
+              <>
+                <Download size={16} className="mr-2" /> Export Excel
+              </>
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>
