@@ -3,6 +3,7 @@
 
 import { useEffect, useState } from 'react';
 import { Save } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -121,7 +122,7 @@ export default function PraktikanEditModal({ open, onClose, praktikan, onSave }:
               Batal
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              <Save className="mr-2" size={16} />
+              {isSubmitting ? <Spinner className="mr-2 h-4 w-4" /> : <Save className="mr-2 h-4 w-4" />}
               {isSubmitting ? 'Menyimpan...' : 'Simpan'}
             </Button>
           </div>

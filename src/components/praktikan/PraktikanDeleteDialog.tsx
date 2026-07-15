@@ -1,6 +1,7 @@
 'use client';
 
 import { Trash2 } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -42,7 +43,7 @@ export default function PraktikanDeleteDialog({
             Batal
           </Button>
           <Button variant="destructive" onClick={onConfirm} disabled={isDeleting}>
-            <Trash2 size={16} className="mr-2" />
+            {isDeleting ? <Spinner className="mr-2 h-4 w-4" /> : <Trash2 size={16} className="mr-2" />}
             {isDeleting ? 'Menghapus...' : 'Ya, Hapus'}
           </Button>
         </DialogFooter>

@@ -322,3 +322,22 @@ export async function deletePraktikanByKelas(
 
   return { deleted: data?.length ?? 0 };
 }
+
+export async function deleteAllPraktikan(
+  supabaseClient?: SupabaseClient
+): Promise<{ deleted: number }> {
+  const supabase = await getClient(supabaseClient);
+
+  const { data, error } = await supabase
+    .from('praktikan')
+    .delete()
+    .not('id', 'is', null)
+    .select('id');
+
+  if (error) {
+    logger.error('Error deleting all praktikan:', error);
+    throw new Error(`Gagal menghapus seluruh data praktikan: ${error.message}`);
+  }
+
+  return { deleted: data?.length ?? 0 };
+}

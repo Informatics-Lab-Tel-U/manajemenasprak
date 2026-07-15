@@ -10,6 +10,7 @@ import {
   getPraktikanList,
   getPraktikanOptions,
   updatePraktikan,
+  deleteAllPraktikan,
 } from '@/services/praktikanService';
 import {
   ensurePraktikanGetAccess,
@@ -101,6 +102,13 @@ export async function DELETE(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const id = searchParams.get('id');
     const kelas = searchParams.get('kelas');
+    const action = searchParams.get('action');
+
+    if (action === 'deleteAll') {
+      const data = await deleteAllPraktikan();
+      revalidateTag('praktikan', { expire: 0 });
+      return NextResponse.json({ ok: true, data });
+    }
 
     if (kelas) {
       const data = await deletePraktikanByKelas(kelas);

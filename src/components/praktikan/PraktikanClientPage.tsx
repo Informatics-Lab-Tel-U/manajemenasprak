@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Plus, Upload, Trash2 } from 'lucide-react';
+import { Plus, Upload, Trash2, Download } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -12,7 +12,8 @@ import PraktikanAddModal from './PraktikanAddModal';
 import PraktikanImportCSVModal from './PraktikanImportCSVModal';
 import PraktikanEditModal from './PraktikanEditModal';
 import PraktikanDeleteDialog from './PraktikanDeleteDialog';
-import PraktikanBulkDeleteDialog from './PraktikanBulkDeleteDialog';
+import PraktikanBulkDeleteDialog, { BulkDeletePayload } from './PraktikanBulkDeleteDialog';
+import PraktikanExportDialog, { ExportPayload } from './PraktikanExportDialog';
 
 export default function PraktikanClientPage() {
   const [rows, setRows] = useState<PraktikanRecord[]>([]);
@@ -29,8 +30,9 @@ export default function PraktikanClientPage() {
   const [deleteTarget, setDeleteTarget] = useState<PraktikanRecord | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   
-  const [bulkDeleteKelas, setBulkDeleteKelas] = useState('');
   const [showBulkDelete, setShowBulkDelete] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
   const fetchRows = useCallback(async () => {
     setLoading(true);
@@ -75,11 +77,10 @@ export default function PraktikanClientPage() {
       });
 
       if (kelasFilter && !kelas.includes(kelasFilter)) setKelasFilter('');
-      if (bulkDeleteKelas && !kelas.includes(bulkDeleteKelas)) setBulkDeleteKelas('');
     } catch (error) {
       console.error('Failed to fetch options', error);
     }
-  }, [kelasFilter, bulkDeleteKelas, mataKuliahFilter]);
+  }, [kelasFilter, mataKuliahFilter]);
 
   useEffect(() => {
     fetchRows();
@@ -174,11 +175,19 @@ export default function PraktikanClientPage() {
     }
   };
 
-  const handleBulkDelete = async () => {
-    if (!bulkDeleteKelas) return;
+  const handleBulkDelete = async (payload: BulkDeletePayload) => {
     setIsDeleting(true);
     try {
-      const response = await fetch(`/api/praktikan?kelas=${encodeURIComponent(bulkDeleteKelas)}`, {
+      let url = '/api/praktikan';
+      if (payload.action === 'all') {
+        url += '?action=deleteAll';
+      } else if (payload.action === 'kelas' && payload.kelas) {
+        url += `?kelas=${encodeURIComponent(payload.kelas)}`;
+      } else {
+        return; // invalid
+      }
+
+      const response = await fetch(url, {
         method: 'DELETE',
       });
       const result = await response.json();
@@ -187,8 +196,11 @@ export default function PraktikanClientPage() {
         throw new Error(result.error || 'Gagal menghapus data praktikan.');
       }
 
-      toast.success(`${result.data?.deleted ?? 0} data dari kelas ${bulkDeleteKelas} dihapus.`);
-      setBulkDeleteKelas('');
+      const msg = payload.action === 'all' 
+        ? `${result.data?.deleted ?? 0} seluruh data dihapus.`
+        : `${result.data?.deleted ?? 0} data dari kelas ${payload.kelas} dihapus.`;
+      
+      toast.success(msg);
       setShowBulkDelete(false);
       fetchRows();
       fetchOptions();
@@ -199,10 +211,57 @@ export default function PraktikanClientPage() {
     }
   };
 
-  // Only allow bulk delete from currently visible unique classes in filteredRows
-  const availableClassesForDelete = useMemo(() => {
-    return Array.from(new Set(filteredRows.map(r => r.kelas))).sort();
-  }, [filteredRows]);
+
+
+  const handleExportExcel = async (payload: ExportPayload) => {
+    setIsExporting(true);
+    try {
+      let dataToExport: PraktikanRecord[] = [];
+
+      if (payload.action === 'current') {
+        dataToExport = filteredRows;
+      } else {
+        const params = new URLSearchParams();
+        if (payload.action === 'kelas' && payload.kelas) {
+          params.set('kelas', payload.kelas);
+        }
+        
+        const response = await fetch(`/api/praktikan?${params.toString()}`);
+        const result = await response.json();
+        
+        if (!response.ok || !result.ok) {
+          throw new Error(result.error || 'Gagal mengambil data untuk diekspor.');
+        }
+        dataToExport = result.data ?? [];
+      }
+
+      if (dataToExport.length === 0) {
+        toast.error('Tidak ada data yang ditemukan untuk diekspor.');
+        return;
+      }
+
+      const XLSX = await import('xlsx');
+      const exportData = dataToExport.map((row, index) => ({
+        No: index + 1,
+        'Nama Lengkap': row.nama,
+        Kelas: row.kelas,
+        'Mata Kuliah': row.mata_kuliah,
+        'Kode Asprak': row.kode_asprak || '-',
+      }));
+
+      const ws = XLSX.utils.json_to_sheet(exportData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Data Praktikan');
+      XLSX.writeFile(wb, payload.action === 'kelas' ? `data_praktikan_${payload.kelas}.xlsx` : 'data_praktikan.xlsx');
+      
+      toast.success('Data praktikan berhasil diekspor');
+      setShowExportModal(false);
+    } catch (error: any) {
+      toast.error(error.message || 'Gagal mengekspor data Excel');
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   return (
     <div className="container" style={{ position: 'relative' }}>
@@ -232,20 +291,21 @@ export default function PraktikanClientPage() {
           </Button>
 
           <Button
+            variant="outline"
+            onClick={() => setShowExportModal(true)}
+            className="flex-1 md:flex-none min-w-0 md:whitespace-nowrap"
+          >
+            <Download size={18} className="flex-shrink-0" />
+            <span className="hidden sm:inline ml-1">Export Excel</span>
+          </Button>
+
+          <Button
             variant="destructive"
-            onClick={() => {
-              if (availableClassesForDelete.length > 0) {
-                setBulkDeleteKelas(availableClassesForDelete[0]);
-                setShowBulkDelete(true);
-              } else {
-                toast.error('Tidak ada data kelas yang dapat dihapus pada filter saat ini.');
-              }
-            }}
-            disabled={availableClassesForDelete.length === 0}
+            onClick={() => setShowBulkDelete(true)}
             className="flex-1 md:flex-none min-w-0 md:whitespace-nowrap bg-red-600 hover:bg-red-700 dark:bg-red-900 dark:hover:bg-red-800"
           >
             <Trash2 size={18} className="flex-shrink-0" />
-            <span className="hidden sm:inline ml-1">Hapus Kelas</span>
+            <span className="hidden sm:inline ml-1">Hapus (Bulk)</span>
           </Button>
         </div>
       </div>
@@ -303,8 +363,16 @@ export default function PraktikanClientPage() {
         open={showBulkDelete}
         onOpenChange={(open) => !open && setShowBulkDelete(false)}
         onConfirm={handleBulkDelete}
-        kelas={bulkDeleteKelas}
+        options={options.kelas}
         isDeleting={isDeleting}
+      />
+
+      <PraktikanExportDialog
+        open={showExportModal}
+        onOpenChange={(open) => !open && setShowExportModal(false)}
+        onConfirm={handleExportExcel}
+        options={options.kelas}
+        isExporting={isExporting}
       />
     </div>
   );
