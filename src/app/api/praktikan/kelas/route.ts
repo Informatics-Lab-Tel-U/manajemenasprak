@@ -21,12 +21,11 @@ function decodeQueryValue(value: string | null) {
   }
 }
 
-const getCachedKelas = unstable_cache(
-  async (mataKuliah: string | null) => 
-    getPraktikanKelasByMataKuliah(mataKuliah, createAdminClient()),
-  ['praktikan-kelas-api'],
+const getCachedKelas = (mataKuliah: string | null) => unstable_cache(
+  async () => getPraktikanKelasByMataKuliah(mataKuliah, createAdminClient()),
+  ['praktikan-kelas-api', mataKuliah ?? 'all'],
   { tags: ['praktikan'] }
-);
+)();
 
 export async function OPTIONS(request: NextRequest) {
   return praktikanOptionsResponse(request);
