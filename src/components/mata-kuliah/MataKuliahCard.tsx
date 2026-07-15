@@ -41,7 +41,7 @@ export default function MataKuliahCard({ mk }: MataKuliahCardProps) {
         <div className="flex justify-between items-start mb-3">
           <div
             className={cn(
-              'px-2.5 py-1 rounded-md text-xs font-bold tracking-wide border flex items-center gap-1.5 shadow-sm',
+              'px-2.5 py-1 rounded-md text-xs 2xl:text-sm font-bold tracking-wide border flex items-center gap-1.5 shadow-sm',
               theme.pill
             )}
           >
@@ -50,7 +50,7 @@ export default function MataKuliahCard({ mk }: MataKuliahCardProps) {
           </div>
 
           {isPJJ && (
-            <span className="text-[10px] font-bold text-muted-foreground/70 dark:text-muted-foreground bg-muted/50 dark:bg-muted/20 px-2 py-0.5 rounded-full border border-muted dark:border-white/10">
+            <span className="text-[10px] 2xl:text-xs font-bold text-muted-foreground/70 dark:text-muted-foreground bg-muted/50 dark:bg-muted/20 px-2 py-0.5 rounded-full border border-muted dark:border-white/10">
               PJJ
             </span>
           )}
@@ -59,12 +59,12 @@ export default function MataKuliahCard({ mk }: MataKuliahCardProps) {
         {/* Main Content: Nama Mata Kuliah */}
         <div className="flex-grow mb-2">
           <h3
-            className="font-semibold text-base leading-snug text-foreground/90 dark:text-foreground group-hover:text-primary transition-colors line-clamp-2"
+            className="font-semibold text-base 2xl:text-lg leading-snug text-foreground/90 dark:text-foreground group-hover:text-primary transition-colors line-clamp-2"
             title={mk.nama_lengkap}
           >
             {mk.nama_lengkap}
           </h3>
-          <p className="text-xs text-muted-foreground mt-1 font-mono opacity-80">
+          <p className="text-xs 2xl:text-sm text-muted-foreground mt-1 font-mono opacity-80">
             {mk.praktikum.nama}
           </p>
         </div>
@@ -86,10 +86,10 @@ export default function MataKuliahCard({ mk }: MataKuliahCardProps) {
               {mk.dosen_koor?.substring(0, 1)}
             </div>
             <div className="flex flex-col">
-              <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
+              <span className="text-[10px] 2xl:text-xs text-muted-foreground font-medium uppercase tracking-wider">
                 Koordinator
               </span>
-              <span className="text-xs font-bold text-foreground">{mk.dosen_koor}</span>
+              <span className="text-xs 2xl:text-sm font-bold text-foreground">{mk.dosen_koor}</span>
             </div>
           </div>
         </div>

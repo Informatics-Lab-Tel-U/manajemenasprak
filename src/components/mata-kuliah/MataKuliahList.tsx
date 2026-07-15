@@ -43,8 +43,8 @@ export default function MataKuliahList({ groupedData, loading }: MataKuliahListP
               <Skeleton className="h-7 w-48" />
               <Skeleton className="h-4 w-16 rounded-full" />
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {[1, 2, 3, 4].map((i) => (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 min-[2000px]:grid-cols-6 gap-4 2xl:gap-6">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
                 <MataKuliahCardSkeleton key={i} />
               ))}
             </div>
@@ -70,13 +70,13 @@ export default function MataKuliahList({ groupedData, loading }: MataKuliahListP
       {groupedData.map((group) => (
         <div key={group.mk_singkat} className="space-y-4">
           <div className="flex items-center gap-2 border-b pb-2">
-            <h2 className="text-xl font-bold tracking-tight text-foreground">{group.mk_singkat}</h2>
+            <h2 className="text-xl 2xl:text-2xl font-bold tracking-tight text-foreground">{group.mk_singkat}</h2>
             <span className="text-xs font-mono bg-muted px-2 py-0.5 rounded-full text-muted-foreground">
               {group.items.length} variants
             </span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 min-[2000px]:grid-cols-6 gap-4 2xl:gap-6">
             {group.items.map((mk) => (
               <MataKuliahCard key={mk.id} mk={mk} />
             ))}

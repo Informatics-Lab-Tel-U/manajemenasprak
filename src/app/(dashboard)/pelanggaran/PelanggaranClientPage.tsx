@@ -68,17 +68,17 @@ export default function PelanggaranClientPage({
 
   if (!mounted) {
     return (
-      <div className="container">
+      <div className="container mx-auto max-w-[2000px] 2xl:px-8">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Pelanggaran</h1>
-            <p className="text-sm text-muted-foreground mt-1">
+            <h1 className="text-2xl 2xl:text-3xl font-bold tracking-tight">Pelanggaran</h1>
+            <p className="text-sm 2xl:text-base text-muted-foreground mt-1">
               Log indisipliner asisten praktikum per praktikum
             </p>
           </div>
         </div>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, i) => (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 min-[2000px]:grid-cols-5">
+          {Array.from({ length: 12 }).map((_, i) => (
             <PelanggaranCardSkeleton key={i} />
           ))}
         </div>
@@ -87,12 +87,12 @@ export default function PelanggaranClientPage({
   }
 
   return (
-    <div className="container">
+    <div className="container mx-auto max-w-[2000px] 2xl:px-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Pelanggaran</h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <h1 className="text-2xl 2xl:text-3xl font-bold tracking-tight">Pelanggaran</h1>
+          <p className="text-sm 2xl:text-base text-muted-foreground mt-1">
             Log indisipliner asisten praktikum per praktikum
           </p>
         </div>
@@ -110,15 +110,15 @@ export default function PelanggaranClientPage({
       </div>
 
       {loading && filteredPraktikum.length === 0 ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, i) => (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 min-[2000px]:grid-cols-5">
+          {Array.from({ length: 12 }).map((_, i) => (
             <PelanggaranCardSkeleton key={i} />
           ))}
         </div>
       ) : filteredPraktikum.length === 0 ? (
         <p className="text-muted-foreground text-sm text-center py-16">Tidak ada data praktikum.</p>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 min-[2000px]:grid-cols-5">
           {filteredPraktikum.map((p) => {
             const info = (displayedCountMap as any)[p.id] ?? {
               total: 0,
@@ -145,10 +145,10 @@ export default function PelanggaranClientPage({
                 <div className="p-5 flex flex-col h-full relative z-10">
                   <div className="flex items-start justify-between gap-2 mb-4">
                     <div>
-                      <h3 className="font-semibold text-base leading-snug text-foreground/90 dark:text-foreground group-hover:text-foreground transition-colors">
+                      <h3 className="font-semibold text-base 2xl:text-lg leading-snug text-foreground/90 dark:text-foreground group-hover:text-foreground transition-colors">
                         {p.nama}
                       </h3>
-                      <p className="text-xs text-muted-foreground mt-1 font-mono opacity-80">
+                      <p className="text-xs 2xl:text-sm text-muted-foreground mt-1 font-mono opacity-80">
                         {p.tahun_ajaran}
                       </p>
                     </div>
@@ -166,10 +166,10 @@ export default function PelanggaranClientPage({
 
                   <div className="flex items-center justify-between mt-auto">
                     <div>
-                      <span className="text-2xl font-bold tracking-tight text-foreground">
+                      <span className="text-2xl 2xl:text-4xl font-bold tracking-tight text-foreground">
                         {info.total}
                       </span>
-                      <span className="text-[10px] text-muted-foreground ml-1.5 font-medium uppercase tracking-wider">
+                      <span className="text-[10px] 2xl:text-xs text-muted-foreground ml-1.5 font-medium uppercase tracking-wider">
                         pelanggaran
                       </span>
                     </div>

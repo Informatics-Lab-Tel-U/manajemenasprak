@@ -35,7 +35,7 @@ export default async function Home() {
   ]);
 
   return (
-    <div className="container">
+    <div className="container mx-auto max-w-[2000px] 2xl:px-8">
       <DashboardClient
         initialStats={initialStats}
         initialJadwal={initialJadwal}

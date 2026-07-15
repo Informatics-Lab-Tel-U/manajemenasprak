@@ -75,6 +75,30 @@ Sistem Manajemen Asprak menggunakan **modern web application architecture** deng
 
 **Technology**: React 19, TypeScript, Tailwind CSS, Shadcn UI
 
+**Dashboard Modules (Pages)**:
+Berikut adalah penjabaran modul-modul halaman (pages) utama yang terdapat di dalam direktori `/app/(dashboard)/`:
+
+- **Dashboard Utama (`/`)**: Halaman beranda yang menampilkan *Stat Cards* dan *Charts* analitik (sebaran asisten, tren pelanggaran, dll).
+- **Setup Tahun Ajaran (`/onboard`)**: *Hub* utama untuk inisialisasi awal semester, memiliki sub-halaman *wizard step-by-step* untuk:
+  - `/onboard/tahun-ajaran-baru`: Setup dasar tahun ajaran dan daftar praktikum.
+  - `/onboard/jadwal`: Konfigurasi jadwal shift dan tanggal-tanggal modul.
+  - `/onboard/asprak`: Manajemen, validasi, dan plotting data asisten praktikum (impor via CSV).
+- **Manajemen Asprak (`/asprak`)**: Halaman direktori asisten praktikum. Mendukung fitur impor/ekspor data dan melihat plotting.
+- **Jadwal Praktikum (`/jadwal`)**: Halaman manajemen jadwal terpusat, dengan sub-halaman:
+  - `/jadwal/modul`: Tampilan kalender khusus untuk modul (ModulCalendarView).
+  - `/jadwal/pengganti`: Tabel penjadwalan jadwal pengganti (JadwalPenggantiTable).
+- **Jadwal Jaga (`/jadwal-jaga`)**: Panel informasi tugas jaga/asistensi asisten (JagaPanel), beserta rekapitulasi jaga di `/jadwal-jaga/rekap`.
+- **Manajemen Mata Kuliah (`/mata-kuliah`)**: Halaman untuk mengelola referensi kode mata kuliah dan pengampunya.
+- **Manajemen Praktikum (`/praktikum`)**: Halaman untuk mengelola daftar praktikum per tahun ajaran.
+- **Pelanggaran (`/pelanggaran`)**: Modul khusus untuk manajemen disiplin asisten:
+  - `/pelanggaran`: Tampilan *grid card* daftar praktikum.
+  - `/pelanggaran/[id]`: Detail tabel log pelanggaran per praktikum dan rekapitulasi asistennya (PelanggaranDetailClient).
+  - `/pelanggaran-rekap`: Ringkasan (*summary*) tingkat tinggi terkait pelanggaran yang terjadi.
+- **Audit Logs (`/audit-logs`)**: Riwayat jejak aktivitas pengguna (*create, update, delete*) di dalam sistem.
+- **Manajemen Akun (`/manajemen-akun`)**: Halaman khusus admin untuk mengatur daftar pengguna dan hak akses (RBAC).
+- **Panduan (`/panduan`)**: Halaman FAQ atau instruksi manual penggunaan sistem bagi *user*.
+- **Pengaturan (`/pengaturan`)**: Halaman kontrol utilitas sistem (seperti ekspor/impor seluruh data *database*, dan *tools* administratif).
+
 ### Layer 2: API Layer (Next.js Route Handlers)
 
 **Location**: `/src/app/api/`

@@ -89,7 +89,7 @@ export default function OnboardHubPage() {
   }, [currentTerm]);
 
   return (
-    <div className="container space-y-8">
+    <div className="container mx-auto max-w-[2000px] space-y-8 2xl:px-8">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Setup Tahun Ajaran</h1>
         <p className="text-muted-foreground mt-2 text-lg">
@@ -97,7 +97,7 @@ export default function OnboardHubPage() {
         </p>
       </div>
 
-      <div className="relative mt-12 space-y-8 max-w-5xl mx-auto">
+      <div className="relative mt-12 space-y-8 max-w-6xl mx-auto">
         {/* Timeline Connecting Line dihapus, dipindah ke masing-masing step */}
 
         {isLoading ? (

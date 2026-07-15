@@ -32,7 +32,7 @@ export const ScheduleCell: React.FC<ScheduleCellProps> = ({
           onClick();
         }
       } : undefined}
-      className={`w-full flex-1 flex flex-col items-center justify-center p-1 transition-all overflow-hidden origin-center min-h-[60px] ${
+      className={`w-full flex-1 flex flex-col items-center justify-center p-1 transition-all overflow-hidden origin-center min-h-[60px] 2xl:min-h-[80px] ${
         onClick
           ? 'cursor-pointer hover:brightness-110 hover:scale-105 hover:z-20 hover:shadow-lg'
           : ''
@@ -52,17 +52,17 @@ export const ScheduleCell: React.FC<ScheduleCellProps> = ({
       }
     >
       <div className="text-center leading-tight">
-        <div className="font-bold text-[10px] sm:text-xs text-white drop-shadow-md truncate w-full px-1">
+        <div className="font-bold text-[10px] sm:text-xs 2xl:text-sm text-white drop-shadow-md truncate w-full px-1">
           {jadwal.mata_kuliah?.praktikum?.nama || jadwal.mata_kuliah?.nama_lengkap || 'Unknown'}
         </div>
-        <div className="text-[9px] sm:text-[10px] text-white/90">{jadwal.kelas}</div>
+        <div className="text-[9px] sm:text-[10px] 2xl:text-xs text-white/90">{jadwal.kelas}</div>
         {showAsprakCount && (
-          <div className="text-[8px] sm:text-[9px] text-white/80 truncate px-1">
+          <div className="text-[8px] sm:text-[9px] 2xl:text-[10px] text-white/80 truncate px-1">
             {jadwal.total_asprak || 0} asprak
           </div>
         )}
         {showLecturer && (
-          <div className="text-[8px] sm:text-[9px] text-white/80 truncate px-1">
+          <div className="text-[8px] sm:text-[9px] 2xl:text-[10px] text-white/80 truncate px-1">
             {(jadwal.dosen || '-').split(' ')[0]}
           </div>
         )}

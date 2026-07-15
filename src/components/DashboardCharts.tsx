@@ -155,7 +155,7 @@ export default function DashboardCharts({
                       <th className="p-2 border-r border-border min-w-[60px]">
                         <Skeleton className="h-4 w-8 mx-auto" />
                       </th>
-                      {Array.from({ length: 4 }).map((_, i) => (
+                      {Array.from({ length: 6 }).map((_, i) => (
                         <th key={i} className="p-2 border-r border-border min-w-[120px]">
                           <Skeleton className="h-4 w-16 mx-auto" />
                         </th>
@@ -164,16 +164,16 @@ export default function DashboardCharts({
                   </thead>
                   <tbody>
                     {Array.from({ length: 4 }).map((_, i) => (
-                      <tr key={i} className="border-b border-border/50 h-[60px]">
+                      <tr key={i} className="border-b border-border/50 h-[60px] 2xl:h-[80px]">
                         <td className="p-2 border-r border-border text-center">
                           <div className="space-y-1">
                             <Skeleton className="h-3 w-8 mx-auto" />
                             <Skeleton className="h-2 w-10 mx-auto" />
                           </div>
                         </td>
-                        {Array.from({ length: 4 }).map((_, j) => (
+                        {Array.from({ length: 6 }).map((_, j) => (
                           <td key={j} className="p-2 border-r border-border align-middle">
-                            {i % 2 === 0 && j % 2 === 0 && <Skeleton className="h-10 w-full" />}
+                            {i % 2 === 0 && j % 2 === 0 && <Skeleton className="h-10 2xl:h-[72px] w-full" />}
                           </td>
                         ))}
                       </tr>
@@ -192,19 +192,19 @@ export default function DashboardCharts({
                 <table className="w-full border-collapse text-sm">
                   <thead>
                     <tr className="bg-muted/50 border-b border-border">
-                      <th className="p-2 border-r-0 text-center font-bold min-w-[120px] text-[10px] uppercase text-muted-foreground bg-transparent leading-tight">
+                      <th className="p-2 border-r-0 text-center font-bold min-w-[120px] text-[10px] 2xl:text-xs uppercase text-muted-foreground bg-transparent leading-tight">
                         Penjagaan
                         <br />
                         <span className="text-primary/70">(Modul {activeModul})</span>
                       </th>
                       <th className="w-4 bg-transparent border-none"></th>
-                      <th className="p-2 border-r border-l border-border text-center font-bold min-w-[60px] text-xs uppercase text-muted-foreground">
+                      <th className="p-2 border-r border-l border-border text-center font-bold min-w-[60px] text-xs 2xl:text-sm uppercase text-muted-foreground">
                         Sesi
                       </th>
                       {uniqueRooms.map((room) => (
                         <th
                           key={room}
-                          className="p-2 border-r border-border text-center font-bold min-w-[120px] whitespace-nowrap text-xs"
+                          className="p-2 border-r border-border text-center font-bold min-w-[120px] whitespace-nowrap text-xs 2xl:text-sm"
                         >
                           {room}
                         </th>
@@ -274,11 +274,11 @@ export default function DashboardCharts({
                             </div>
                           </td>
                           <td className="w-4 bg-transparent border-none"></td>
-                          <td className="p-2 border-r border-l border-border text-center font-medium text-muted-foreground text-xs">
+                          <td className="p-2 border-r border-l border-border text-center font-medium text-muted-foreground text-xs 2xl:text-sm">
                             {session.sesi ? (
                               <div className="font-bold">Sesi {session.sesi}</div>
                             ) : null}
-                            <div className="text-[10px] opacity-80">{session.jam}</div>
+                            <div className="text-[10px] 2xl:text-xs opacity-80">{session.jam}</div>
                           </td>
                           {uniqueRooms.map((room) => {
                             const jadwals = scheduleMatrix[session.rowKey]?.[room] || [];
@@ -345,7 +345,7 @@ export default function DashboardCharts({
               ))}
             </div>
           ) : (
-            <ChartContainer config={chartConfigAsprak} className="h-[300px] w-full">
+            <ChartContainer config={chartConfigAsprak} className="h-[300px] 2xl:h-[450px] w-full">
               <BarChart data={dataAsprak} accessibilityLayer>
                 <CartesianGrid vertical={false} />
                 <XAxis dataKey="name" tickLine={false} tickMargin={10} axisLine={false} />
@@ -376,7 +376,7 @@ export default function DashboardCharts({
               ))}
             </div>
           ) : (
-            <ChartContainer config={chartConfigJadwal} className="h-[300px] w-full">
+            <ChartContainer config={chartConfigJadwal} className="h-[300px] 2xl:h-[450px] w-full">
               <BarChart data={dataJadwal} accessibilityLayer>
                 <CartesianGrid vertical={false} />
                 <XAxis dataKey="name" tickLine={false} tickMargin={10} axisLine={false} />

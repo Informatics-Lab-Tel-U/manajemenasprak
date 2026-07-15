@@ -219,7 +219,7 @@ export default function JadwalPenggantiTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {Array.from({ length: 5 }).map((_, i) => (
+            {Array.from({ length: 10 }).map((_, i) => (
               <TableRow key={i}>
                 {Array.from({ length: 7 }).map((_, j) => (
                   <TableCell key={j}>

@@ -66,11 +66,11 @@ export default function JadwalJagaClient({
   };
 
   return (
-    <div className="container space-y-6">
+    <div className="container mx-auto max-w-[2000px] 2xl:px-8 space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Manajemen Penjagaan</h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <h1 className="text-2xl 2xl:text-3xl font-bold tracking-tight">Manajemen Penjagaan</h1>
+          <p className="text-sm 2xl:text-base text-muted-foreground mt-1">
             Input dan kelola jadwal jaga Asisten Praktikum
           </p>
         </div>
@@ -101,7 +101,7 @@ export default function JadwalJagaClient({
         </div>
       </div>
 
-      <div className="h-[600px]">
+      <div className="h-[600px] 2xl:h-[800px]">
         <JagaPanel
           term={selectedTerm}
           selectedModul={selectedModul}

@@ -107,7 +107,7 @@ export default function AuditLogsClientPage({
         accessorKey: 'created_at',
         header: 'Waktu',
         cell: ({ row }) => (
-          <span className="text-sm text-muted-foreground whitespace-nowrap">
+        <span className="text-sm 2xl:text-base text-muted-foreground whitespace-nowrap">
             {new Date(row.original.created_at).toLocaleString('id-ID', {
               day: 'numeric',
               month: 'short',
@@ -125,7 +125,7 @@ export default function AuditLogsClientPage({
         cell: ({ row }) => (
           <div>
             <div className="font-medium">{row.original.pengguna?.nama_lengkap ?? 'System'}</div>
-            <div className="text-xs text-muted-foreground">
+            <div className="text-xs 2xl:text-sm text-muted-foreground">
               {row.original.pengguna?.role ?? 'ACTION_SYSTEM'}
             </div>
           </div>
@@ -135,7 +135,7 @@ export default function AuditLogsClientPage({
         accessorKey: 'table_name',
         header: 'Tabel',
         cell: ({ row }) => (
-          <code className="text-xs font-mono bg-muted px-1.5 py-0.5 rounded">
+          <code className="text-xs 2xl:text-sm font-mono bg-muted px-1.5 py-0.5 rounded">
             {row.original.table_name}
           </code>
         ),
@@ -168,12 +168,12 @@ export default function AuditLogsClientPage({
   });
 
   return (
-    <div className="container relative space-y-8">
+    <div className="container mx-auto max-w-[2000px] 2xl:px-8 relative space-y-8">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Audit Logs</h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <h1 className="text-2xl 2xl:text-3xl font-bold tracking-tight">Audit Logs</h1>
+          <p className="text-sm 2xl:text-base text-muted-foreground mt-1">
             Riwayat aktifitas dan perubahan data dalam sistem
           </p>
         </div>
@@ -193,7 +193,7 @@ export default function AuditLogsClientPage({
         </div>
 
         <div className="rounded-md border mb-4">
-          <Table>
+          <Table className="2xl:text-base">
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id}>
@@ -287,7 +287,7 @@ export default function AuditLogsClientPage({
 
       {/* Details Dialog */}
       <Dialog open={!!selectedLog} onOpenChange={(open) => !open && setSelectedLog(null)}>
-        <DialogContent className="max-w-3xl max-h-[80vh] flex flex-col">
+        <DialogContent className="max-w-3xl max-h-[80vh] 2xl:max-w-5xl 2xl:max-h-[85vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>Detail Perubahan</DialogTitle>
             <DialogDescription>
@@ -301,7 +301,7 @@ export default function AuditLogsClientPage({
                 <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
                   Data Lama
                 </h4>
-                <pre className="p-4 bg-muted rounded-lg text-xs overflow-auto max-h-64">
+                <pre className="p-4 bg-muted rounded-lg text-xs 2xl:text-sm overflow-auto max-h-64 2xl:max-h-96">
                   {JSON.stringify(selectedLog?.old_values, null, 2) || '// Tidak ada data lama'}
                 </pre>
               </div>
@@ -309,7 +309,7 @@ export default function AuditLogsClientPage({
                 <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
                   Data Baru
                 </h4>
-                <pre className="p-4 bg-muted rounded-lg text-xs overflow-auto max-h-64">
+                <pre className="p-4 bg-muted rounded-lg text-xs 2xl:text-sm overflow-auto max-h-64 2xl:max-h-96">
                   {JSON.stringify(selectedLog?.new_values, null, 2) || '// Tidak ada data baru'}
                 </pre>
               </div>

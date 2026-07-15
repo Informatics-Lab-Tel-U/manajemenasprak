@@ -90,14 +90,14 @@ export function ModulCalendarView({ rows }: ModulCalendarViewProps) {
 
           return (
             <div key={month.toISOString()} className="space-y-4">
-              <h3 className="font-bold text-lg capitalize flex items-center gap-4">
+              <h3 className="font-bold text-lg 2xl:text-xl capitalize flex items-center gap-4">
                 {format(month, 'MMMM yyyy', { locale: id })}
                 <div className="flex-1 h-px bg-border/50"></div>
               </h3>
 
               <div className="grid grid-cols-7 gap-1 sm:gap-2">
                 {DAY_NAMES.map((day) => (
-                  <div key={day} className="text-center font-semibold text-xs text-muted-foreground pb-2 uppercase tracking-wide">
+                  <div key={day} className="text-center font-semibold text-xs 2xl:text-sm text-muted-foreground pb-2 uppercase tracking-wide">
                     {day}
                   </div>
                 ))}
@@ -116,7 +116,7 @@ export function ModulCalendarView({ rows }: ModulCalendarViewProps) {
                     <div
                       key={day.toISOString()}
                       className={cn(
-                        'aspect-square p-1 flex flex-col items-center justify-center rounded-none relative text-sm font-medium transition-all duration-200',
+                        'aspect-square p-1 flex flex-col items-center justify-center rounded-none relative text-sm 2xl:text-base font-medium transition-all duration-200',
                         modulNum ? 'text-white shadow-sm' : 'bg-transparent hover:bg-muted/50 border border-transparent hover:border-border',
                         modulNum ? 'hover:scale-105 hover:z-10 hover:shadow-md cursor-default' : ''
                       )}
@@ -125,7 +125,7 @@ export function ModulCalendarView({ rows }: ModulCalendarViewProps) {
                     >
                       <span className={cn('z-10', modulNum ? 'font-bold' : '')}>{format(day, 'd')}</span>
                       {modulNum !== null && (
-                        <span className="text-[10px] font-bold uppercase tracking-tighter mt-1 opacity-90 leading-none">
+                        <span className="text-[10px] 2xl:text-xs font-bold uppercase tracking-tighter mt-1 opacity-90 leading-none">
                           M{modulNum}
                         </span>
                       )}

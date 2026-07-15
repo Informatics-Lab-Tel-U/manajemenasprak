@@ -13,12 +13,12 @@ import {
 
 export default function AuditLogsLoading() {
   return (
-    <div className="container relative space-y-8">
+    <div className="container mx-auto max-w-[2000px] 2xl:px-8 relative space-y-8">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Audit Logs</h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <h1 className="text-2xl 2xl:text-3xl font-bold tracking-tight">Audit Logs</h1>
+          <p className="text-sm 2xl:text-base text-muted-foreground mt-1">
             Riwayat aktifitas dan perubahan data dalam sistem
           </p>
         </div>
@@ -33,7 +33,7 @@ export default function AuditLogsLoading() {
         </div>
 
         <div className="rounded-md border mb-4">
-          <Table>
+          <Table className="2xl:text-base">
             <TableHeader>
               <TableRow>
                 <TableHead>Waktu</TableHead>

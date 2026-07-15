@@ -93,7 +93,7 @@ export default function TahunAjaranBaruClient() {
   const { lastSaved, isDirty } = useAutosaveStatus();
 
   return (
-    <div className="container relative space-y-8" suppressHydrationWarning>
+    <div className="container mx-auto max-w-[2000px] relative space-y-8 2xl:px-8" suppressHydrationWarning>
       <header className="mb-6 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
         <div className="flex items-start gap-4">
           <Button variant="ghost" size="icon" asChild className="shrink-0 mt-1">
@@ -102,8 +102,8 @@ export default function TahunAjaranBaruClient() {
             </Link>
           </Button>
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Setup Tahun Ajaran Baru</h1>
-            <p className="text-sm text-muted-foreground mt-2">
+            <h1 className="text-3xl 2xl:text-4xl font-bold tracking-tight">Setup Tahun Ajaran Baru</h1>
+            <p className="text-sm 2xl:text-base text-muted-foreground mt-2">
               Ikuti alur ini untuk menambahkan seluruh data semester baru secara berurutan agar sesuai dengan constraint sistem.
             </p>
           </div>
