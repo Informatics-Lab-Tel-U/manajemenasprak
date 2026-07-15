@@ -119,8 +119,15 @@ export default function PraktikanAddModal({ open, onClose, onSubmit }: Praktikan
               Batal
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? <Spinner className="mr-2 h-4 w-4" /> : <Save className="mr-2 h-4 w-4" />}
-              {isSubmitting ? 'Menyimpan...' : 'Simpan'}
+              {isSubmitting ? (
+                <>
+                  <Spinner className="mr-2 h-4 w-4" /> Menyimpan...
+                </>
+              ) : (
+                <>
+                  <Save className="mr-2 h-4 w-4" /> Simpan
+                </>
+              )}
             </Button>
           </div>
         </form>

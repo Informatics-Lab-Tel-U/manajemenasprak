@@ -13,6 +13,7 @@ import {
   ChevronRight,
   Key,
 } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import {
   useReactTable,
   getCoreRowModel,
@@ -331,7 +332,11 @@ export function ManajemenAkunClientPage({ users }: { users: UserWithEmail[] }) {
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isDeleting}>Batal</AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete} disabled={isDeleting} variant="destructive">
-              {isDeleting ? 'Menghapus...' : 'Hapus'}
+              {isDeleting ? (
+                <>
+                  <Spinner className="mr-2 h-4 w-4" /> Menghapus...
+                </>
+              ) : 'Hapus'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

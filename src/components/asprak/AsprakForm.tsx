@@ -13,7 +13,8 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent } from '@/components/ui/card';
-import { Loader2, Plus, Trash2, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Plus, Trash2, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import { toast } from 'sonner';
 
 import {
@@ -362,9 +363,8 @@ export default function AsprakForm({ onSubmit, onCancel }: AsprakFormProps) {
                 required
               />
               {nimStatus === 'checking' && (
-                <Loader2
-                  size={14}
-                  className="absolute right-3 top-2.5 animate-spin text-muted-foreground"
+                <Spinner
+                  className="absolute right-3 top-2.5 text-muted-foreground w-3.5 h-3.5"
                 />
               )}
               {nimStatus === 'valid' && (
@@ -399,9 +399,8 @@ export default function AsprakForm({ onSubmit, onCancel }: AsprakFormProps) {
                 required
               />
               {codeStatus === 'generating' && (
-                <Loader2
-                  size={14}
-                  className="absolute right-3 top-2.5 animate-spin text-muted-foreground"
+                <Spinner
+                  className="absolute right-3 top-2.5 text-muted-foreground w-3.5 h-3.5"
                 />
               )}
             </div>
@@ -518,7 +517,7 @@ export default function AsprakForm({ onSubmit, onCancel }: AsprakFormProps) {
                       <Label className="text-xs">Mata Kuliah Diampu</Label>
                       {block.loadingCourses ? (
                         <div className="flex justify-center p-2">
-                          <Loader2 size={16} className="animate-spin text-muted-foreground" />
+                          <Spinner className="w-4 h-4 text-muted-foreground" />
                         </div>
                       ) : (
                         <div className="grid grid-cols-2 gap-2 max-h-[120px] overflow-y-auto border rounded-md p-2 bg-background">
@@ -582,7 +581,11 @@ export default function AsprakForm({ onSubmit, onCancel }: AsprakFormProps) {
             codeStatus === 'generating'
           }
         >
-          {submitLoading ? 'Menyimpan...' : 'Simpan Data Asprak'}
+          {submitLoading ? (
+            <>
+              <Spinner className="mr-2 h-4 w-4" /> Menyimpan...
+            </>
+          ) : 'Simpan Data Asprak'}
         </Button>
       </div>
     </form>

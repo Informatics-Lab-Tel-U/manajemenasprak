@@ -4,7 +4,8 @@
 
 import { useState, useEffect } from 'react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { X, Loader2, ArrowLeft, Save } from 'lucide-react';
+import { X, ArrowLeft, Save } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
 import MataKuliahCSVPreview, { MataKuliahCSVRow } from '../../mata-kuliah/MataKuliahCSVPreview';
 import { validateMataKuliahData } from '@/utils/validation/mataKuliahValidation';
@@ -138,7 +139,7 @@ export default function StepMataKuliah({
   if (isFetching) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center min-h-[400px] bg-background/50 border rounded-md">
-        <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+        <Spinner className="h-8 w-8 text-primary mb-4" />
         <p className="text-sm text-muted-foreground">Memuat data eksisting untuk validasi...</p>
       </div>
     );
@@ -181,8 +182,15 @@ export default function StepMataKuliah({
             Lewati Langkah Ini
           </Button>
           <Button onClick={handleConfirmImport} disabled={loading || parsedRows.filter(r => r.selected).length === 0} className="shrink-0 min-w-[160px] bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm">
-            <Save className="mr-2 h-4 w-4" />
-            {loading ? 'Menyimpan...' : `Simpan ${parsedRows.filter(r => r.selected).length} Data`}
+            {loading ? (
+              <>
+                <Spinner className="mr-2 h-4 w-4" /> Menyimpan...
+              </>
+            ) : (
+              <>
+                <Save className="mr-2 h-4 w-4" /> Simpan {parsedRows.filter(r => r.selected).length} Data
+              </>
+            )}
           </Button>
         </div>
       </div>

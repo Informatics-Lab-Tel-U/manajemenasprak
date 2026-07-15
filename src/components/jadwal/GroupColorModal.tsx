@@ -10,7 +10,8 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Loader2, PaintBucket } from 'lucide-react';
+import { PaintBucket } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import { MataKuliah } from '@/types/database';
 import { toast } from 'sonner';
 import { COURSE_COLORS } from '@/utils/colorUtils';
@@ -277,7 +278,7 @@ export function GroupColorModal({ isOpen, onClose, mataKuliahList }: GroupColorM
             disabled={loading || uniqueGroups.length === 0 || !hasChanges}
             className="px-6 sm:px-8 text-sm sm:text-base"
           >
-            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {loading && <Spinner className="mr-2 h-4 w-4" />}
             Simpan
           </Button>
         </DialogFooter>

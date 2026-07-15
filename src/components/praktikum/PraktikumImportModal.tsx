@@ -4,6 +4,7 @@ import { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import Papa from 'papaparse';
 import { FileSpreadsheet, Upload, FileText, X, Download } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -277,7 +278,11 @@ export default function PraktikumImportModal({
                       Kembali
                     </Button>
                     <Button onClick={handleConfirm} disabled={saving || previewRows.filter(r => r.selected).length === 0} variant="default">
-                      {saving ? 'Menyimpan...' : `Simpan ${previewRows.filter(r => r.selected).length} Data Terpilih`}
+                      {saving ? (
+                        <>
+                          <Spinner className="mr-2 h-4 w-4" /> Menyimpan...
+                        </>
+                      ) : `Simpan ${previewRows.filter(r => r.selected).length} Data Terpilih`}
                     </Button>
                   </div>
                 </div>

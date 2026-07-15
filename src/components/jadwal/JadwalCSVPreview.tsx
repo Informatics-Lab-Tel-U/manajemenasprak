@@ -1,4 +1,4 @@
-import { AlertTriangle, ArrowLeft, CheckCircle, Loader2, Save } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, CheckCircle, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { NavButton } from '@/components/ui/nav-button';
 import { Badge } from '@/components/ui/badge';

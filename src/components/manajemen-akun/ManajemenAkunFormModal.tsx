@@ -3,7 +3,8 @@
 
 import * as React from 'react';
 import { toast } from 'sonner';
-import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -365,7 +366,7 @@ export function ManajemenAkunFormModal({ open, onOpenChange, mode, user, onSucce
                   Assignment Praktikum
                 </p>
                 {loadingPraktikum && (
-                  <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+                  <Spinner className="h-3 w-3 text-muted-foreground" />
                 )}
               </div>
 
@@ -419,7 +420,7 @@ export function ManajemenAkunFormModal({ open, onOpenChange, mode, user, onSucce
             <Button type="submit" disabled={isLoading}>
               {isLoading ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Spinner className="mr-2 h-4 w-4" />
                   Menyimpan...
                 </>
               ) : mode === 'create' ? (

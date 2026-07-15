@@ -534,8 +534,15 @@ export default function PraktikanImportCSVModal({
                   </p>
                 </div>
                 <Button onClick={handleAddPreviewRows} disabled={saving || !selectedPreviewRows} className="w-full lg:w-auto">
-                    {saving ? <Spinner className="mr-2 h-4 w-4" /> : <Save className="mr-2 h-4 w-4" />}
-                    {saving ? 'Menyimpan...' : `Tambahkan ${selectedPreviewRows || ''}`}
+                  {saving ? (
+                    <>
+                      <Spinner className="mr-2 h-4 w-4" /> Menyimpan...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="mr-2 h-4 w-4" /> Tambahkan {selectedPreviewRows || ''}
+                    </>
+                  )}
                 </Button>
               </div>
               

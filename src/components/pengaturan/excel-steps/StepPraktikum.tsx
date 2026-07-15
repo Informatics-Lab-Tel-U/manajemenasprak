@@ -3,7 +3,8 @@
 import { useState, useCallback, useEffect } from 'react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { X, Loader2 } from 'lucide-react';
+import { X } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import PraktikumCSVPreview, { PraktikumPreviewRow } from '../../praktikum/PraktikumCSVPreview';
 import { validatePraktikumData } from '@/utils/validation/praktikumValidation';
 import { fetchAllPraktikum } from '@/lib/fetchers/praktikumFetcher';
@@ -109,7 +110,7 @@ export default function StepPraktikum({ data, onNext, onPrev, onImport }: StepPr
   if (isFetching) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center min-h-[400px] bg-background/50 border rounded-md">
-        <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+        <Spinner className="h-8 w-8 text-primary mb-4" />
         <p className="text-sm text-muted-foreground">Memuat data eksisting untuk validasi...</p>
       </div>
     );
@@ -141,7 +142,11 @@ export default function StepPraktikum({ data, onNext, onPrev, onImport }: StepPr
               Lewati Langkah Ini
             </Button>
             <Button onClick={handleConfirm} disabled={saving || previewRows.filter(r => r.selected).length === 0} variant="default">
-              {saving ? 'Menyimpan...' : `Simpan ${previewRows.filter(r => r.selected).length} Data Terpilih`}
+              {saving ? (
+                <>
+                  <Spinner className="mr-2 h-4 w-4" /> Menyimpan...
+                </>
+              ) : `Simpan ${previewRows.filter(r => r.selected).length} Data Terpilih`}
             </Button>
           </div>
         </div>

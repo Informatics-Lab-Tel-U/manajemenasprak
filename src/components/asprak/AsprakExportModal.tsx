@@ -4,7 +4,8 @@
 import { useState, useMemo } from 'react';
 import Papa from 'papaparse';
 
-import { Download, FileSpreadsheet, FileText, Loader2 } from 'lucide-react';
+import { Download, FileSpreadsheet, FileText } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -177,7 +178,7 @@ export default function AsprakExportModal({ onClose, open }: AsprakExportModalPr
               onClick={() => handleExport('csv')}
             >
               {exporting === 'csv' ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <Spinner className="mr-2 h-4 w-4" />
               ) : (
                 <FileText className="mr-2 h-4 w-4 text-sky-500" />
               )}
@@ -189,7 +190,7 @@ export default function AsprakExportModal({ onClose, open }: AsprakExportModalPr
               onClick={() => handleExport('xlsx')}
             >
               {exporting === 'xlsx' ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <Spinner className="mr-2 h-4 w-4" />
               ) : (
                 <FileSpreadsheet className="mr-2 h-4 w-4 text-emerald-500" />
               )}

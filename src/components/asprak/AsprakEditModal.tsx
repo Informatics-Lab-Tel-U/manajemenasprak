@@ -16,6 +16,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
 import { Asprak, Praktikum } from '@/types/database';
 import { usePraktikum } from '@/hooks/usePraktikum';
+import { Spinner } from '@/components/ui/spinner';
 
 interface AsprakEditModalProps {
   asprak: Asprak;
@@ -252,7 +253,11 @@ export default function AsprakEditModal({
             Batal
           </Button>
           <Button onClick={handleSave} disabled={saving}>
-            {saving ? 'Menyimpan...' : 'Simpan Perubahan'}
+            {saving ? (
+              <>
+                <Spinner className="mr-2 h-4 w-4" /> Menyimpan...
+              </>
+            ) : 'Simpan Perubahan'}
           </Button>
         </DialogFooter>
       </DialogContent>

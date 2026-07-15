@@ -15,6 +15,7 @@ import { DialogFooter } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { Plus } from 'lucide-react';
 import TermInput from '@/components/asprak/TermInput';
+import { Spinner } from '@/components/ui/spinner';
 import { buildTermString } from '@/utils/termHelpers';
 
 interface MataKuliahManualModalProps {
@@ -280,7 +281,11 @@ export default function MataKuliahManualModal({
               Batal
             </Button>
             <Button type="submit" disabled={loading}>
-              {loading ? 'Menyimpan...' : 'Simpan'}
+              {loading ? (
+                <>
+                  <Spinner className="mr-2 h-4 w-4" /> Menyimpan...
+                </>
+              ) : 'Simpan'}
             </Button>
           </DialogFooter>
         </form>

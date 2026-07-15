@@ -2,6 +2,7 @@ import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import Papa from 'papaparse';
 import { FileSpreadsheet, Upload, FileText, X, Download, ArrowLeft, Save } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import { toast } from 'sonner';
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -447,8 +448,15 @@ export default function MataKuliahImportModal({
                     </span>
                   )}
                   <Button onClick={handleConfirmImport} disabled={loading || parsedRows.filter(r => r.selected).length === 0} className="shrink-0 min-w-[160px] bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm">
-                    <Save className="mr-2 h-4 w-4" />
-                    {loading ? 'Menyimpan...' : `Simpan ${parsedRows.filter(r => r.selected).length} Data`}
+                    {loading ? (
+                      <>
+                        <Spinner className="mr-2 h-4 w-4" /> Menyimpan...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="mr-2 h-4 w-4" /> Simpan {parsedRows.filter(r => r.selected).length} Data
+                      </>
+                    )}
                   </Button>
                 </div>
               </div>
