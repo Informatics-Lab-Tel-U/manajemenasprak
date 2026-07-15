@@ -44,10 +44,10 @@ export function ModulCalendarView({ rows }: ModulCalendarViewProps) {
 
   const monthsToRender = useMemo(() => {
     if (moduleRanges.length === 0) return [];
-    
+
     const minDate = moduleRanges[0].start;
     const maxDate = moduleRanges[moduleRanges.length - 1].end;
-    
+
     let current = startOfMonth(minDate);
     const end = startOfMonth(maxDate);
     const months = [];
@@ -94,17 +94,17 @@ export function ModulCalendarView({ rows }: ModulCalendarViewProps) {
                 {format(month, 'MMMM yyyy', { locale: id })}
                 <div className="flex-1 h-px bg-border/50"></div>
               </h3>
-              
+
               <div className="grid grid-cols-7 gap-1 sm:gap-2">
                 {DAY_NAMES.map((day) => (
                   <div key={day} className="text-center font-semibold text-xs text-muted-foreground pb-2 uppercase tracking-wide">
                     {day}
                   </div>
                 ))}
-                
+
                 {days.map((day) => {
                   const isCurrentMonth = isSameMonth(day, month);
-                  
+
                   if (!isCurrentMonth) {
                     return <div key={day.toISOString()} className="aspect-square p-1" />;
                   }
