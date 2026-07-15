@@ -263,134 +263,132 @@ export default function JadwalModulClientPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-[400px_1fr] xl:grid-cols-[460px_1fr] gap-6 items-start">
-        {/* Left Panel: Controls */}
-        <Card className="flex flex-col shadow-sm lg:sticky lg:top-[88px] lg:h-[600px] max-h-[80vh]">
-          <CardHeader className="pb-4 shrink-0">
-            <CardTitle className="text-lg">Daftar Modul</CardTitle>
-            <CardDescription>Pilih hari Senin untuk awal setiap modul</CardDescription>
-          </CardHeader>
-          <CardContent className="p-0 flex-1 overflow-hidden flex flex-col">
-            <div className="divide-y divide-border/50 flex-1 overflow-y-auto border-t border-border/50">
-            {rows.map((row) => {
-              const dayName = getDayName(row.tanggal_mulai);
-              const { valid, error } = isSequentiallyValid(row.modul, row.tanggal_mulai);
+          {/* Left Panel: Controls */}
+          <Card className="flex flex-col shadow-sm lg:sticky lg:top-[88px] lg:h-[600px] max-h-[80vh]">
+            <CardHeader className="pb-4 shrink-0">
+              <CardTitle className="text-lg">Daftar Modul</CardTitle>
+              <CardDescription>Pilih hari Senin untuk awal setiap modul</CardDescription>
+            </CardHeader>
+            <CardContent className="p-0 flex-1 overflow-hidden flex flex-col">
+              <div className="divide-y divide-border/50 flex-1 overflow-y-auto border-t border-border/50">
+                {rows.map((row) => {
+                  const dayName = getDayName(row.tanggal_mulai);
+                  const { valid, error } = isSequentiallyValid(row.modul, row.tanggal_mulai);
 
-              return (
-                <div
-                  key={row.modul}
-                  className="flex flex-row items-center justify-between px-4 sm:px-5 py-3 sm:py-2 text-sm hover:bg-muted/30 transition-colors group gap-2 sm:gap-4"
-                >
-                  <div className="font-semibold text-foreground shrink-0">Modul {row.modul}</div>
-                  <div className="flex items-center justify-end gap-2 sm:gap-3 shrink-0">
-                    <Input
-                      type="date"
-                      className={`h-8 text-xs max-w-[140px] ${
-                        !valid
-                          ? 'border-destructive text-destructive focus-visible:ring-destructive'
-                          : ''
-                      }`}
-                      value={row.tanggal_mulai ?? ''}
-                      onChange={(e) => handleChangeDate(row.modul, e.target.value)}
-                      disabled={loading || !term}
-                    />
-                    {row.tanggal_mulai && (
-                      <>
-                        <span
-                          className={`text-xs font-medium px-2 py-1 rounded-sm ${
-                            valid
-                              ? 'bg-emerald-50 text-emerald-700'
-                              : 'bg-destructive/10 text-destructive'
-                          }`}
-                        >
-                          {dayName}
-                          {!valid && ` (${error})`}
-                        </span>
-                        <div
-                          className="w-4 h-4 rounded-sm border border-border/50 shrink-0"
-                          style={{ backgroundColor: COURSE_COLORS[(row.modul - 1) % COURSE_COLORS.length] }}
-                          title={`Warna Modul ${row.modul}`}
+                  return (
+                    <div
+                      key={row.modul}
+                      className="flex flex-row items-center justify-between px-4 sm:px-5 py-3 sm:py-2 text-sm hover:bg-muted/30 transition-colors group gap-2 sm:gap-4"
+                    >
+                      <div className="font-semibold text-foreground shrink-0">Modul {row.modul}</div>
+                      <div className="flex items-center justify-end gap-2 sm:gap-3 shrink-0">
+                        <Input
+                          type="date"
+                          className={`h-8 text-xs max-w-[140px] ${!valid
+                            ? 'border-destructive text-destructive focus-visible:ring-destructive'
+                            : ''
+                            }`}
+                          value={row.tanggal_mulai ?? ''}
+                          onChange={(e) => handleChangeDate(row.modul, e.target.value)}
+                          disabled={loading || !term}
                         />
-                      </>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-          </CardContent>
-
-        <CardFooter className="p-4 pt-4 flex items-center justify-between gap-3 border-t border-border/50 bg-muted/10 shrink-0">
-          <Dialog open={isGenerateDialogOpen} onOpenChange={setIsGenerateDialogOpen}>
-            <DialogTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-2"
-                disabled={loading || !term || rows.length === 0}
-              >
-                <Wand2 className="h-4 w-4 text-primary" />
-                Generate
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[360px] p-0 overflow-hidden border-none shadow-2xl">
-              <DialogHeader className="p-6 pb-2">
-                <DialogTitle className="text-xl font-bold">Generate Otomatis</DialogTitle>
-              </DialogHeader>
-              <div className="px-6 py-4 space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="startModul" className="text-sm font-medium">
-                    Mulai dari Modul
-                  </Label>
-                  <Select value={startModul} onValueChange={setStartModul}>
-                    <SelectTrigger className="h-10">
-                      <SelectValue placeholder="Pilih Modul" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {rows.map((r) => (
-                        <SelectItem key={r.modul} value={r.modul.toString()}>
-                          Modul {r.modul}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-[11px] leading-relaxed text-muted-foreground bg-muted/50 p-3 rounded-md border border-border/40">
-                    Sistem akan mengisi modul-modul berikutnya dengan interval{' '}
-                    <strong>7 hari</strong> sekali dimulai dari modul yang dipilih.
-                  </p>
-                </div>
+                        {row.tanggal_mulai && (
+                          <>
+                            <span
+                              className={`text-xs font-medium px-2 py-1 rounded-sm ${valid
+                                ? 'bg-emerald-50 text-emerald-700'
+                                : 'bg-destructive/10 text-destructive'
+                                }`}
+                            >
+                              {dayName}
+                              {!valid && ` (${error})`}
+                            </span>
+                            <div
+                              className="w-4 h-4 rounded-sm border border-border/50 shrink-0"
+                              style={{ backgroundColor: COURSE_COLORS[(row.modul - 1) % COURSE_COLORS.length] }}
+                              title={`Warna Modul ${row.modul}`}
+                            />
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-              <DialogFooter className="p-6 pt-2 flex-row gap-2 sm:justify-end bg-muted/20">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setIsGenerateDialogOpen(false)}
-                  className="flex-1 sm:flex-none"
-                >
-                  Batal
-                </Button>
-                <Button size="sm" onClick={handleGenerate} className="flex-1 sm:flex-none px-6">
-                  Generate
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+            </CardContent>
 
-          <Button
-            size="sm"
-            className="px-6"
-            onClick={handleSave}
-            disabled={loading || !term || hasInvalidDates}
-          >
-            Simpan Perubahan
-          </Button>
-        </CardFooter>
-        </Card>
+            <CardFooter className="p-4 pt-4 flex items-center justify-between gap-3 border-t border-border/50 bg-muted/10 shrink-0">
+              <Dialog open={isGenerateDialogOpen} onOpenChange={setIsGenerateDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
+                    disabled={loading || !term || rows.length === 0}
+                  >
+                    <Wand2 className="h-4 w-4 text-primary" />
+                    Generate
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[360px] p-0 overflow-hidden border-none shadow-2xl">
+                  <DialogHeader className="p-6 pb-2">
+                    <DialogTitle className="text-xl font-bold">Generate Otomatis</DialogTitle>
+                  </DialogHeader>
+                  <div className="px-6 py-4 space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="startModul" className="text-sm font-medium">
+                        Mulai dari Modul
+                      </Label>
+                      <Select value={startModul} onValueChange={setStartModul}>
+                        <SelectTrigger className="h-10">
+                          <SelectValue placeholder="Pilih Modul" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {rows.map((r) => (
+                            <SelectItem key={r.modul} value={r.modul.toString()}>
+                              Modul {r.modul}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-[11px] leading-relaxed text-muted-foreground bg-muted/50 p-3 rounded-md border border-border/40">
+                        Sistem akan mengisi modul-modul berikutnya dengan interval{' '}
+                        <strong>7 hari</strong> sekali dimulai dari modul yang dipilih.
+                      </p>
+                    </div>
+                  </div>
+                  <DialogFooter className="p-6 pt-2 flex-row gap-2 sm:justify-end bg-muted/20">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setIsGenerateDialogOpen(false)}
+                      className="flex-1 sm:flex-none"
+                    >
+                      Batal
+                    </Button>
+                    <Button size="sm" onClick={handleGenerate} className="flex-1 sm:flex-none px-6">
+                      Generate
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
 
-        {/* Right Panel: Calendar Visualizer */}
-        <section className="h-full">
-          <ModulCalendarView rows={rows} />
-        </section>
-      </div>
+              <Button
+                size="sm"
+                className="px-6"
+                onClick={handleSave}
+                disabled={loading || !term || hasInvalidDates}
+              >
+                Simpan Perubahan
+              </Button>
+            </CardFooter>
+          </Card>
+
+          {/* Right Panel: Calendar Visualizer */}
+          <section className="h-full">
+            <ModulCalendarView rows={rows} />
+          </section>
+        </div>
       )}
     </div>
   );

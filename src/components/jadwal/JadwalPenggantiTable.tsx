@@ -5,11 +5,12 @@ import {
   useReactTable,
   getCoreRowModel,
   getSortedRowModel,
+  getPaginationRowModel,
   flexRender,
   ColumnDef,
   SortingState,
 } from '@tanstack/react-table';
-import { ArrowUpDown, Edit, Trash2, FilterX } from 'lucide-react';
+import { ArrowUpDown, Edit, Trash2, FilterX, ChevronLeft, ChevronRight } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -21,6 +22,14 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface JadwalPenggantiTableProps {
   data: any[];
@@ -98,7 +107,7 @@ export default function JadwalPenggantiTable({
           </Button>
         ),
         cell: ({ row }) => (
-          <Badge className="bg-primary/10 text-primary hover:bg-primary/20 border-none">
+          <Badge className="bg-secondary text-secondary-foreground hover:bg-secondary/80 border-none">
             Modul {row.original.modul}
           </Badge>
         ),
@@ -120,7 +129,7 @@ export default function JadwalPenggantiTable({
           const dayB = rowB.original.hari || '';
           return (DAY_ORDER[dayA] || 99) - (DAY_ORDER[dayB] || 99);
         },
-        cell: ({ row }) => <span className="font-medium text-primary">{row.original.hari}</span>,
+        cell: ({ row }) => <span className="font-medium text-foreground">{row.original.hari}</span>,
       },
       {
         accessorKey: 'jam',
@@ -136,13 +145,13 @@ export default function JadwalPenggantiTable({
         ),
         cell: ({ row }) => (
           <div className="flex flex-col gap-0.5">
-            <span className="text-sm font-semibold text-primary">
+            <span className="text-sm font-semibold text-foreground">
               {formatTime(row.original.jam)}
             </span>
             <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground uppercase font-medium">
               <span>SESI {row.original.sesi}</span>
-              <span className="text-primary/50">•</span>
-              <span className="text-primary/80">{row.original.ruangan}</span>
+              <span className="text-muted-foreground/50">•</span>
+              <span className="text-muted-foreground/80">{row.original.ruangan}</span>
             </div>
           </div>
         ),
@@ -158,7 +167,7 @@ export default function JadwalPenggantiTable({
                 variant="ghost"
                 size="icon"
                 onClick={() => onEdit(item)}
-                className="h-8 w-8 text-primary hover:text-primary/80 hover:bg-primary/10"
+                className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted"
               >
                 <Edit size={16} />
               </Button>
@@ -187,13 +196,20 @@ export default function JadwalPenggantiTable({
     onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    initialState: {
+      pagination: {
+        pageSize: 10,
+      },
+    },
   });
 
   if (loading) {
     return (
-      <div className="rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm overflow-hidden shadow-sm">
-        <Table>
-          <TableHeader className="bg-muted/30">
+      <div className="space-y-4">
+        <div className="rounded-md border overflow-hidden">
+          <Table>
+            <TableHeader>
             <TableRow>
               {Array.from({ length: 7 }).map((_, i) => (
                 <TableHead key={i}>
@@ -214,26 +230,30 @@ export default function JadwalPenggantiTable({
             ))}
           </TableBody>
         </Table>
+        </div>
       </div>
     );
   }
 
   if (data.length === 0) {
     return (
-      <div className="rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm overflow-hidden shadow-sm p-48 text-center text-muted-foreground">
-        <div className="flex flex-col items-center justify-center gap-2">
-          <FilterX size={40} className="opacity-20" />
-          <p>Tidak ada jadwal pengganti ditemukan untuk term ini.</p>
+      <div className="space-y-4">
+        <div className="rounded-md border p-32 text-center text-muted-foreground">
+          <div className="flex flex-col items-center justify-center gap-2">
+            <FilterX size={40} className="opacity-20" />
+            <p>Tidak ada jadwal pengganti ditemukan untuk term ini.</p>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm overflow-hidden shadow-sm">
-      <div className="overflow-x-auto">
-        <Table>
-          <TableHeader className="bg-muted/30">
+    <div className="space-y-4">
+      <div className="rounded-md border overflow-hidden">
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
@@ -258,6 +278,61 @@ export default function JadwalPenggantiTable({
             ))}
           </TableBody>
         </Table>
+      </div>
+      </div>
+      
+      {/* Pagination Controls */}
+      <div className="flex flex-col gap-4 md:gap-0 md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+          <p className="text-sm font-medium whitespace-nowrap">Baris per halaman</p>
+          <Select
+            value={`${table.getState().pagination.pageSize}`}
+            onValueChange={(value) => {
+              table.setPageSize(Number(value));
+            }}
+          >
+            <SelectTrigger className="h-8 w-full sm:w-[70px]">
+              <SelectValue placeholder={table.getState().pagination.pageSize} />
+            </SelectTrigger>
+            <SelectContent side="top">
+              <SelectGroup>
+                {[10, 20, 30, 50, 100].map((pageSize) => (
+                  <SelectItem key={pageSize} value={`${pageSize}`}>
+                    {pageSize}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="flex flex-col gap-3 sm:gap-0 sm:flex-row sm:items-center sm:justify-end">
+          <div className="flex w-full sm:w-auto sm:min-w-[120px] items-center justify-center text-sm font-medium order-3 sm:order-none">
+            Halaman {table.getState().pagination.pageIndex + 1} dari {table.getPageCount() || 1}
+          </div>
+          <div className="flex gap-2 justify-between sm:justify-end sm:gap-2 order-2 sm:order-none sm:ml-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => table.previousPage()}
+              disabled={!table.getCanPreviousPage()}
+              className="flex-1 sm:flex-none"
+            >
+              <ChevronLeft className="h-4 w-4 flex-shrink-0" />
+              <span className="hidden sm:inline ml-1">Sebelumnya</span>
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => table.nextPage()}
+              disabled={!table.getCanNextPage()}
+              className="flex-1 sm:flex-none"
+            >
+              <span className="hidden sm:inline">Berikutnya</span>
+              <ChevronRight className="h-4 w-4 flex-shrink-0 sm:ml-1" />
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   );
