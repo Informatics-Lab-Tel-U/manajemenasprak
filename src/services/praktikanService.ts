@@ -241,26 +241,99 @@ export async function createPraktikan(
 ): Promise<CreatePraktikanResult> {
   const supabase = await getClient(supabaseClient);
   const rows = Array.isArray(input) ? input : [input];
-  const payload = rows.map(normalizeCreateInput);
+  
+  // Deduplicate the payload itself based on unique key: nama + kelas + mata_kuliah
+  const uniquePayloadMap = new Map<string, CreatePraktikanInput>();
+  for (const row of rows) {
+    const normalized = normalizeCreateInput(row);
+    const key = `${normalized.nama}|${normalized.kelas}|${normalized.mata_kuliah}`;
+    uniquePayloadMap.set(key, normalized);
+  }
+  const payload = Array.from(uniquePayloadMap.values());
 
   if (payload.length === 0) {
     return { inserted: 0, data: [] };
   }
 
-  const { data, error } = await supabase
+  // Optimize fetch by only querying affected classes
+  const kelasSet = new Set(payload.map(p => p.kelas));
+  
+  const { data: existingData, error: fetchError } = await supabase
     .from('praktikan')
-    .insert(payload)
-    .select('id, created_at, nama, kelas, kode_asprak, mata_kuliah');
+    .select('id, nama, kelas, mata_kuliah, kode_asprak')
+    .in('kelas', Array.from(kelasSet));
 
-  if (error) {
-    logger.error('Error creating praktikan data:', error);
-    throw new Error(`Gagal membuat data praktikan: ${error.message}`);
+  if (fetchError) {
+    logger.error('Error fetching existing praktikan data:', fetchError);
+    throw new Error(`Gagal mengecek duplikasi data: ${fetchError.message}`);
   }
 
-  return {
-    inserted: data?.length ?? 0,
-    data: (data ?? []) as PraktikanRecord[],
-  };
+  const existingMap = new Map<string, { id: string, kode_asprak: string | null }>();
+  for (const row of existingData ?? []) {
+    const key = `${row.nama}|${row.kelas}|${row.mata_kuliah}`;
+    existingMap.set(key, { id: String(row.id), kode_asprak: row.kode_asprak });
+  }
+
+  const toInsert: CreatePraktikanInput[] = [];
+  const updatesByKode = new Map<string | null, string[]>();
+
+  for (const row of payload) {
+    const key = `${row.nama}|${row.kelas}|${row.mata_kuliah}`;
+    const existing = existingMap.get(key);
+    
+    if (existing) {
+      // Only update if kode_asprak is different and provided
+      if (row.kode_asprak !== undefined && row.kode_asprak !== existing.kode_asprak) {
+        const kode = row.kode_asprak || null;
+        if (!updatesByKode.has(kode)) updatesByKode.set(kode, []);
+        updatesByKode.get(kode)!.push(existing.id);
+      }
+    } else {
+      toInsert.push(row);
+    }
+  }
+
+  let totalInserted = 0;
+  const returnedData: PraktikanRecord[] = [];
+
+  // 1. Execute bulk insert for new students
+  if (toInsert.length > 0) {
+    const { data: insertedData, error: insertError } = await supabase
+      .from('praktikan')
+      .insert(toInsert)
+      .select('id, created_at, nama, kelas, kode_asprak, mata_kuliah');
+
+    if (insertError) {
+      logger.error('Error inserting praktikan data:', insertError);
+      throw new Error(`Gagal menyimpan data praktikan baru: ${insertError.message}`);
+    }
+    
+    totalInserted = insertedData?.length || 0;
+    if (insertedData) returnedData.push(...(insertedData as PraktikanRecord[]));
+  }
+
+  // 2. Execute bulk updates grouping by kode_asprak for existing students
+  const updatePromises = Array.from(updatesByKode.entries()).map(async ([kode, ids]) => {
+    const { data: updatedData, error: updateError } = await supabase
+      .from('praktikan')
+      .update({ kode_asprak: kode })
+      .in('id', ids)
+      .select('id, created_at, nama, kelas, kode_asprak, mata_kuliah');
+      
+    if (updateError) {
+      logger.error(`Error updating praktikan (kode_asprak: ${kode}):`, updateError);
+      throw new Error(`Gagal memperbarui data praktikan lama: ${updateError.message}`);
+    }
+    
+    return updatedData;
+  });
+
+  const updateResults = await Promise.all(updatePromises);
+  for (const updatedData of updateResults) {
+    if (updatedData) returnedData.push(...(updatedData as PraktikanRecord[]));
+  }
+
+  return { inserted: totalInserted, data: returnedData };
 }
 
 export async function updatePraktikan(
