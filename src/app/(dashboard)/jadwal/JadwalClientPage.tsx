@@ -55,7 +55,7 @@ function JadwalTableSkeleton() {
           <th className="p-2 border-r border-border text-center min-w-[60px]">
             <Skeleton className="h-4 w-8 mx-auto" />
           </th>
-          {Array.from({ length: 4 }).map((_, i) => (
+          {Array.from({ length: 6 }).map((_, i) => (
             <th key={i} className="p-2 border-r border-border text-center min-w-[120px]">
               <Skeleton className="h-4 w-16 mx-auto" />
             </th>
@@ -73,10 +73,10 @@ function JadwalTableSkeleton() {
             <td className="p-2 border-r border-border text-center">
               <Skeleton className="h-3 w-10 mx-auto" />
             </td>
-            {Array.from({ length: 4 }).map((_, j) => (
+            {Array.from({ length: 6 }).map((_, j) => (
               <td key={j} className="p-2 border-r border-border align-top">
-                <div className="flex flex-col gap-1 w-full min-h-[60px] justify-center">
-                  {(i + j) % 3 === 0 && <Skeleton className="h-14 w-full rounded-sm" />}
+                <div className="flex flex-col gap-1 w-full min-h-[60px] 2xl:min-h-[80px] justify-center">
+                  {(i + j) % 3 === 0 && <Skeleton className="h-14 2xl:h-[72px] w-full rounded-sm" />}
                 </div>
               </td>
             ))}
@@ -225,12 +225,12 @@ export default function JadwalClientPage({
   });
 
   return (
-    <div className="container relative space-y-8">
+    <div className="container mx-auto max-w-[2000px] 2xl:px-8 relative space-y-8">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full md:w-auto">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Jadwal Praktikum</h1>
-            <p className="text-sm text-muted-foreground mt-1">Overview jadwal per ruangan</p>
+            <h1 className="text-2xl 2xl:text-3xl font-bold tracking-tight">Jadwal Praktikum</h1>
+            <p className="text-sm 2xl:text-base text-muted-foreground mt-1">Overview jadwal per ruangan</p>
           </div>
 
           <div className="bg-muted/50 p-1.5 rounded-lg flex items-center gap-1 border border-border/50">

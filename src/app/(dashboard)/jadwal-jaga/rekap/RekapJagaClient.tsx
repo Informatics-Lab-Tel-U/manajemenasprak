@@ -16,9 +16,10 @@ export default function RekapJagaClient({ initialTerms }: { initialTerms: string
     if (loading) {
       return (
         <div className="space-y-4">
-          <Skeleton className="h-8 w-full" />
-          <Skeleton className="h-12 w-full" />
-          <Skeleton className="h-12 w-full" />
+          <Skeleton className="h-8 2xl:h-10 w-full" />
+          {Array.from({ length: 10 }).map((_, i) => (
+            <Skeleton key={i} className="h-12 2xl:h-14 w-full" />
+          ))}
         </div>
       );
     }
@@ -36,8 +37,8 @@ export default function RekapJagaClient({ initialTerms }: { initialTerms: string
 
     return (
       <div className="overflow-x-auto rounded-lg border border-border">
-        <table className="w-full text-sm text-left">
-          <thead className="bg-muted/50 border-b border-border text-[13px] uppercase text-muted-foreground/80">
+        <table className="w-full text-sm 2xl:text-base text-left">
+          <thead className="bg-muted/50 border-b border-border text-[13px] 2xl:text-sm uppercase text-muted-foreground/80">
             <tr>
               <th className="px-4 py-4 font-bold text-center border-r border-border sticky left-0 bg-muted/50 w-[90px]">
                 KODE
@@ -58,7 +59,7 @@ export default function RekapJagaClient({ initialTerms }: { initialTerms: string
               <tr key={row.id} className="hover:bg-muted/30 transition-colors">
                 <td className="px-4 py-3 font-bold text-center border-r border-border sticky left-0 bg-card shadow-[1px_0_0_rgba(0,0,0,0.05)] dark:shadow-[1px_0_0_rgba(255,255,255,0.05)]">
                   <span
-                    className={`px-2.5 py-1.5 rounded-md inline-block w-full text-xs font-bold ${row.role === 'ASLAB' ? 'bg-blue-100/50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'}`}
+                    className={`px-2.5 py-1.5 rounded-md inline-block w-full text-xs 2xl:text-sm font-bold ${row.role === 'ASLAB' ? 'bg-blue-100/50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'}`}
                   >
                     {row.kode}
                   </span>
@@ -86,11 +87,11 @@ export default function RekapJagaClient({ initialTerms }: { initialTerms: string
   };
 
   return (
-    <div className="container space-y-6">
+    <div className="container mx-auto max-w-[2000px] 2xl:px-8 space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Rekapitulasi Penjagaan</h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <h1 className="text-2xl 2xl:text-3xl font-bold tracking-tight">Rekapitulasi Penjagaan</h1>
+          <p className="text-sm 2xl:text-base text-muted-foreground mt-1">
             Pantau total shift jaga tiap asisten per modul
           </p>
         </div>
@@ -100,8 +101,8 @@ export default function RekapJagaClient({ initialTerms }: { initialTerms: string
 
       <Card className="border-border/50 shadow-sm">
         <CardHeader className="pb-3 border-b border-border/50">
-          <CardTitle>Matrix Rekap Jaga</CardTitle>
-          <CardDescription>Format tabel W1-W15 untuk menghitung akumulasi jaga</CardDescription>
+          <CardTitle className="2xl:text-2xl">Matrix Rekap Jaga</CardTitle>
+          <CardDescription className="2xl:text-base">Format tabel W1-W15 untuk menghitung akumulasi jaga</CardDescription>
         </CardHeader>
         <CardContent className="pt-6">
           {renderTable(

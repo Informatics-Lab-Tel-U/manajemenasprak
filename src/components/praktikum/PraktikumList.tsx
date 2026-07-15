@@ -36,8 +36,8 @@ function PraktikumCardSkeleton() {
 export default function PraktikumList({ praktikums, loading, onSelect }: PraktikumListProps) {
   if (loading) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 animate-pulse">
-        {Array.from({ length: 8 }).map((_, i) => (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 min-[2000px]:grid-cols-6 gap-4 2xl:gap-6 animate-pulse">
+        {Array.from({ length: 12 }).map((_, i) => (
           <PraktikumCardSkeleton key={i} />
         ))}
       </div>
@@ -58,7 +58,7 @@ export default function PraktikumList({ praktikums, loading, onSelect }: Praktik
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 animate-in fade-in duration-500">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 min-[2000px]:grid-cols-6 gap-4 2xl:gap-6 animate-in fade-in duration-500">
       {praktikums.map((p) => (
         <PraktikumCard key={p.id} praktikum={p} onClick={onSelect} />
       ))}

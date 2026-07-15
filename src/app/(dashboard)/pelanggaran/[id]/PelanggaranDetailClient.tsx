@@ -364,7 +364,7 @@ export default function PelanggaranDetailClient({
 
   if (!mounted) {
     return (
-      <div className="container space-y-8">
+      <div className="container mx-auto max-w-[2000px] 2xl:px-8 space-y-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <Skeleton className="h-10 w-10 rounded-md" />
@@ -387,7 +387,7 @@ export default function PelanggaranDetailClient({
   }
 
   return (
-    <div className="container space-y-8">
+    <div className="container mx-auto max-w-[2000px] 2xl:px-8 space-y-8">
       {/* Delete confirmation dialog */}
       <AlertDialog
         open={!!violationToDelete}
@@ -426,7 +426,7 @@ export default function PelanggaranDetailClient({
           </Button>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold tracking-tight">
+              <h1 className="text-2xl 2xl:text-3xl font-bold tracking-tight">
                 {praktikum?.nama ?? 'Detail Praktikum'}
               </h1>
               {isFinalized && (
@@ -436,7 +436,7 @@ export default function PelanggaranDetailClient({
                 </Badge>
               )}
             </div>
-            <p className="text-sm text-muted-foreground mt-1">
+            <p className="text-sm 2xl:text-base text-muted-foreground mt-1">
               {praktikum?.tahun_ajaran} · Detail log pelanggaran per asisten
             </p>
           </div>
@@ -540,11 +540,11 @@ export default function PelanggaranDetailClient({
       <div className="">
         {/* === Violation Log Table === */}
         <div className="card glass p-4 mb-6">
-          <h2 className="text-sm font-semibold mb-3 text-muted-foreground uppercase tracking-wide">
+          <h2 className="text-sm 2xl:text-base font-semibold mb-3 text-muted-foreground uppercase tracking-wide">
             Log Pelanggaran
           </h2>
           <div className="rounded-md border overflow-x-auto">
-            <Table>
+            <Table className="2xl:text-base">
               <TableHeader>
                 {table.getHeaderGroups().map((hg) => (
                   <TableRow key={hg.id}>
@@ -570,7 +570,7 @@ export default function PelanggaranDetailClient({
                     </TableRow>
                   ))
                 ) : loading ? (
-                  Array.from({ length: 5 }).map((_, i) => (
+                  Array.from({ length: 10 }).map((_, i) => (
                     <TableRow key={i}>
                       <TableCell>
                         <Skeleton className="h-4 w-20" />
@@ -638,11 +638,11 @@ export default function PelanggaranDetailClient({
 
         {/* === Recap Table === */}
         <div className="card glass p-4">
-          <h2 className="text-sm font-semibold mb-3 text-muted-foreground uppercase tracking-wide">
+          <h2 className="text-sm 2xl:text-base font-semibold mb-3 text-muted-foreground uppercase tracking-wide">
             Rekap per Asprak
           </h2>
           <div className="rounded-md border overflow-x-auto">
-            <Table>
+            <Table className="2xl:text-base">
               <TableHeader>
                 <TableRow>
                   <TableHead>Kode</TableHead>
@@ -670,7 +670,7 @@ export default function PelanggaranDetailClient({
                     </TableRow>
                   ))
                 ) : loading ? (
-                  Array.from({ length: 3 }).map((_, i) => (
+                  Array.from({ length: 6 }).map((_, i) => (
                     <TableRow key={i}>
                       <TableCell>
                         <Skeleton className="h-4 w-12" />

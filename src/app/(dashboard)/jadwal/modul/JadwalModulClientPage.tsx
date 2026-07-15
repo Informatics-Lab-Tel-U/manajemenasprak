@@ -203,12 +203,12 @@ export default function JadwalModulClientPage() {
   };
 
   return (
-    <div className="container relative space-y-8">
+    <div className="container mx-auto max-w-[2000px] 2xl:px-8 relative space-y-8">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full md:w-auto">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Jadwal Tanggal Modul</h1>
-            <p className="text-sm text-muted-foreground mt-1">Atur tanggal mulai praktikum untuk setiap modul (1-16).</p>
+            <h1 className="text-2xl 2xl:text-3xl font-bold tracking-tight">Jadwal Tanggal Modul</h1>
+            <p className="text-sm 2xl:text-base text-muted-foreground mt-1">Atur tanggal mulai praktikum untuk setiap modul (1-16).</p>
           </div>
         </div>
       </div>
@@ -223,7 +223,7 @@ export default function JadwalModulClientPage() {
             </CardHeader>
             <CardContent className="p-0 flex-1 overflow-hidden flex flex-col">
               <div className="divide-y divide-border/50 flex-1 overflow-y-auto border-t border-border/50">
-                {Array.from({ length: 8 }).map((_, i) => (
+                {Array.from({ length: 16 }).map((_, i) => (
                   <div key={i} className="flex flex-row items-center justify-between px-4 sm:px-5 py-3 sm:py-2 gap-2 sm:gap-4">
                     <Skeleton className="h-5 w-20 shrink-0" />
                     <div className="flex items-center justify-end gap-2 sm:gap-3 shrink-0">

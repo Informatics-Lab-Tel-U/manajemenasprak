@@ -528,6 +528,15 @@ export class AsprakList extends React.Component {
 }
 ```
 
+### UI & Layout Responsiveness
+
+Sistem ini didesain agar tetap proporsional dan tidak "pecah" bahkan ketika dibuka di layar monitor beresolusi tinggi (4K / Ultrawide). Ikuti standar kelas Tailwind berikut untuk membungkus halaman (Page Container):
+
+- ✅ **Gunakan `max-w-[2000px]`**: Untuk halaman utama dashboard, pastikan pembungkus utamanya memakai kelas `container mx-auto max-w-[2000px] 2xl:px-8`. Ini untuk memastikan batas maksimal lebar konten tidak melebihi 2000px, sehingga tidak merenggang tak terbatas.
+- ✅ **Skalakan Tipografi untuk Layar Lebar**: Gunakan varian `2xl:` untuk membesarkan teks pada elemen yang krusial jika di-*render* di monitor besar (contoh: `text-2xl 2xl:text-3xl`).
+- ✅ **Grid Responsif**: Pada tata letak tipe kartu (Card Grid), pastikan untuk mendefinisikan seluruh fase *breakpoint*, contohnya `sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 min-[2000px]:grid-cols-5`. Hindari melompat drastis (contoh: dari 3 kolom ke 5 kolom) yang dapat membuat lebar kartu menjadi sesak.
+- ✅ **Skeleton Loaders Proporsional**: Sesuaikan porsi komponen skeleton dengan kepadatan layar (misal merender *placeholder* tabel hingga 10 baris) agar layout tidak terlihat melompat (Layout Shift) secara drastis saat proses *loading* ke *loaded* pada layar lebar.
+
 ### Functions
 
 - Keep functions small (< 50 lines typically)

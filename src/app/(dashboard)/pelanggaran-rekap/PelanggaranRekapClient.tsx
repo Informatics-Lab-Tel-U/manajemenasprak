@@ -189,12 +189,12 @@ export default function PelanggaranRekapClient({ initialTahunAjaranList }: Props
   if (!mounted) return null;
 
   return (
-    <div className="container relative space-y-8">
+    <div className="container mx-auto max-w-[2000px] 2xl:px-8 relative space-y-8">
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Data Pelanggaran Asprak</h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <h1 className="text-2xl 2xl:text-3xl font-bold tracking-tight">Data Pelanggaran Asprak</h1>
+          <p className="text-sm 2xl:text-base text-muted-foreground mt-1">
             Agregasi data pelanggaran asisten praktikum lintas praktikum
           </p>
         </div>
@@ -285,7 +285,7 @@ export default function PelanggaranRekapClient({ initialTahunAjaranList }: Props
                   </TableHeader>
                   <TableBody>
                     {loading ? (
-                      Array.from({ length: 5 }).map((_, i) => (
+                      Array.from({ length: 10 }).map((_, i) => (
                         <TableRow key={i}>
                           <TableCell><Skeleton className="h-4 w-24" /></TableCell>
                           <TableCell><Skeleton className="h-4 w-16" /><Skeleton className="h-3 w-20 mt-1 opacity-50" /></TableCell>

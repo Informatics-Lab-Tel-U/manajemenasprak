@@ -121,9 +121,9 @@ export default function JagaPanel({
     if (loading) {
       return (
         <div className="space-y-4 mt-4">
-          <Skeleton className="h-20 w-full" />
-          <Skeleton className="h-20 w-full" />
-          <Skeleton className="h-20 w-full" />
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-20 2xl:h-24 w-full" />
+          ))}
         </div>
       );
     }
@@ -145,11 +145,11 @@ export default function JagaPanel({
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                  <span className="font-bold text-base tracking-tight text-foreground/90">
+                  <span className="font-bold text-base 2xl:text-lg tracking-tight text-foreground/90">
                     Shift {shiftInfo.shift}
                   </span>
                 </div>
-                <span className="text-xs font-bold text-muted-foreground bg-muted/50 px-2.5 py-1 rounded-full border border-border/30">
+                <span className="text-xs 2xl:text-sm font-bold text-muted-foreground bg-muted/50 px-2.5 py-1 rounded-full border border-border/30">
                   {shiftInfo.jam}
                 </span>
               </div>
@@ -159,7 +159,7 @@ export default function JagaPanel({
                   shiftJaga.map((j) => (
                     <div
                       key={j.id}
-                      className={`group relative flex items-center gap-1.5 text-xs px-3 py-2 rounded-md font-semibold transition-all shadow-sm border
+                      className={`group relative flex items-center gap-1.5 text-xs 2xl:text-sm px-3 py-2 rounded-md font-semibold transition-all shadow-sm border
                         ${
                           j.asprak?.role === 'ASLAB'
                             ? 'bg-blue-50/50 text-blue-700 border-blue-200/60 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800/40'
@@ -167,7 +167,7 @@ export default function JagaPanel({
                         }`}
                       title={`${j.asprak?.nama_lengkap} (${j.asprak?.nim})`}
                     >
-                      <span className="truncate max-w-[80px]">{j.asprak?.kode || 'Unknown'}</span>
+                      <span className="truncate max-w-[80px] 2xl:max-w-[100px]">{j.asprak?.kode || 'Unknown'}</span>
 
                       {/* Hover Actions */}
                       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-1 border-l pl-1 border-current/20">
@@ -231,7 +231,7 @@ export default function JagaPanel({
         {/* Konten — langsung tanpa header button */}
         <div className="flex-1 overflow-y-auto no-scrollbar">
           <div className="mb-4 pt-1">
-            <div className="text-sm text-muted-foreground mb-2 flex items-center justify-between">
+            <div className="text-sm 2xl:text-base text-muted-foreground mb-2 flex items-center justify-between">
               <span>Menampilkan shift untuk hari:</span>
               <span className="font-semibold text-foreground">{activeDay.toUpperCase()}</span>
             </div>
@@ -242,7 +242,7 @@ export default function JagaPanel({
                     key={d}
                     type="button"
                     onClick={() => setLocalDay(d)}
-                    className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors border
+                    className={`px-4 py-1.5 rounded-full text-sm 2xl:text-base font-medium whitespace-nowrap transition-colors border
                        ${
                          activeDay.toUpperCase() === d.toUpperCase()
                            ? 'bg-primary text-primary-foreground border-primary'

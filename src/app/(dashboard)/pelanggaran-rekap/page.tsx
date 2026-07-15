@@ -23,11 +23,11 @@ export default async function PelanggaranRekapPage() {
 
 function RekapLoading() {
   return (
-    <div className="container space-y-6">
+    <div className="container mx-auto max-w-[2000px] 2xl:px-8 space-y-6">
       {/* Header Skeleton */}
       <div className="flex flex-col gap-1">
-        <Skeleton className="h-9 w-64" />
-        <Skeleton className="h-4 w-96 opacity-50" />
+        <Skeleton className="h-9 2xl:h-10 w-64" />
+        <Skeleton className="h-4 2xl:h-5 w-96 opacity-50" />
       </div>
 
       {/* Filters Card Skeleton */}

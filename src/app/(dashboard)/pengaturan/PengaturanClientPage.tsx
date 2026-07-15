@@ -418,11 +418,11 @@ export default function DatabaseClientPage({
   };
 
   return (
-    <div className="container mx-auto">
+    <div className="container mx-auto max-w-[2000px] 2xl:px-8">
       {/* Page Header */}
       <header className="mb-10 pb-8 border-b border-border/50">
-        <h1 className="text-2xl font-bold tracking-tight">Pengaturan</h1>
-        <p className="text-sm text-muted-foreground mt-1">
+        <h1 className="text-2xl 2xl:text-3xl font-bold tracking-tight">Pengaturan</h1>
+        <p className="text-sm 2xl:text-base text-muted-foreground mt-1">
           Kelola impor, ekspor, dan pembersihan data sistem.
         </p>
       </header>

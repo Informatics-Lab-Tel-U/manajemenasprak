@@ -75,13 +75,13 @@ export function StatCard({
 
       <CardHeader className="flex items-start justify-between space-y-0 pb-3 relative z-10">
         <div className="space-y-1 flex-1">
-          <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
+          <p className="text-[10px] 2xl:text-xs font-semibold text-muted-foreground uppercase tracking-widest">
             {title}
           </p>
           {loading ? (
-            <Skeleton className="h-8 w-16 mt-1" />
+            <Skeleton className="h-8 2xl:h-10 w-16 mt-1" />
           ) : (
-            <h3 className="text-2xl font-bold tracking-tight text-foreground/90 dark:text-foreground">
+            <h3 className="text-2xl 2xl:text-4xl font-bold tracking-tight text-foreground/90 dark:text-foreground">
               {value}
             </h3>
           )}
@@ -91,7 +91,7 @@ export function StatCard({
         </div>
       </CardHeader>
       <CardContent className="space-y-2 pt-0 relative z-10">
-        <p className="text-xs text-muted-foreground font-medium opacity-80">{subtitle}</p>
+        <p className="text-xs 2xl:text-sm text-muted-foreground font-medium opacity-80">{subtitle}</p>
         {trend && (
           <Badge
             variant="outline"

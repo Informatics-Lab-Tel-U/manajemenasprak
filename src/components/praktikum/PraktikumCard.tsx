@@ -31,7 +31,7 @@ export default function PraktikumCard({ praktikum, onClick }: PraktikumCardProps
         <div className="flex justify-between items-start mb-3">
           <div
             className={cn(
-              'px-2.5 py-1 rounded-md text-xs font-bold tracking-wide border flex items-center gap-1.5 shadow-sm',
+              'px-2.5 py-1 rounded-md text-xs 2xl:text-sm font-bold tracking-wide border flex items-center gap-1.5 shadow-sm',
               'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-500/10 dark:text-indigo-300 dark:border-indigo-500/20'
             )}
           >
@@ -43,7 +43,7 @@ export default function PraktikumCard({ praktikum, onClick }: PraktikumCardProps
         {/* Main Content: Nama Praktikum */}
         <div className="flex-grow mb-2">
           <h3
-            className="font-semibold text-lg leading-snug text-foreground/90 dark:text-foreground group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-2"
+            className="font-semibold text-lg 2xl:text-xl leading-snug text-foreground/90 dark:text-foreground group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-2"
             title={praktikum.nama}
           >
             {praktikum.nama}
@@ -67,10 +67,10 @@ export default function PraktikumCard({ praktikum, onClick }: PraktikumCardProps
               <Users size={14} />
             </div>
             <div className="flex flex-col">
-              <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
+              <span className="text-[10px] 2xl:text-xs text-muted-foreground font-medium uppercase tracking-wider">
                 Total Asprak
               </span>
-              <span className="text-xs font-bold text-foreground">
+              <span className="text-xs 2xl:text-sm font-bold text-foreground">
                 {praktikum.asprak_count} Orang
               </span>
             </div>
