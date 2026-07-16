@@ -31,7 +31,7 @@ class JsonLogExporter {
     logs: ReadableLogRecord[],
     resultCallback: (result: ExportResult) => void,
   ): void {
-    process.stdout.write(`[OTEL-DEBUG] JsonLogExporter.export called with ${logs.length} logs\n`);
+
     if (logs.length === 0) {
       resultCallback({ code: 0 });
       return;
