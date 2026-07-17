@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server';
-import { logger } from '@/lib/logger';
+import { type NextRequest, NextResponse } from 'next/server';
+import { logger, extractRequestMetadata } from '@/lib/logger';
 
 /**
  * Safe error response for Route Handlers.
@@ -16,12 +16,14 @@ const GENERIC_MESSAGE = 'Terjadi kesalahan pada server';
 export function apiErrorResponse(
   err: unknown,
   context: string,
-  options: { status?: number; expose?: string } = {}
+  options: { status?: number; expose?: string; req?: NextRequest } = {}
 ): NextResponse {
-  const { status = 500, expose } = options;
+  const { status = 500, expose, req } = options;
+
+  const metadata = req ? extractRequestMetadata(req) : {};
 
   // Log the full internal detail server-side for debugging.
-  logger.error(context, err);
+  logger.error(context, err, metadata);
 
   // Only return `expose` (a known, safe message) to the client when provided.
   const message = expose ?? GENERIC_MESSAGE;
