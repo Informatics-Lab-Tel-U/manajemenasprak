@@ -42,9 +42,9 @@ class JsonLogExporter {
         resource: {
           attributes: logs[0]?.resource?.attributes
             ? Object.entries(logs[0].resource.attributes).map(([key, value]) => ({
-                key,
-                value: { stringValue: String(value) },
-              }))
+              key,
+              value: { stringValue: String(value) },
+            }))
             : [],
         },
         scopeLogs: [
@@ -167,16 +167,16 @@ export function setupConsoleBridge(baseUrl: string, headers: Record<string, stri
   const { LoggerProvider, SimpleLogRecordProcessor } = require('@opentelemetry/sdk-logs');
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { resourceFromAttributes } = require('@opentelemetry/resources');
-  
+
   const logExporter = new JsonLogExporter(`${baseUrl}/v1/logs`, headers);
-  
+
   // Kita buat LoggerProvider independen khusus untuk Console Bridge agar tidak mengganggu (override)
   // telemetry internal bawaan @vercel/otel dan Next.js (menghindari logs.disable() hack).
   const provider = new LoggerProvider({
     resource: resourceFromAttributes({ 'service.name': 'manajemenasprak-app' }),
     processors: [new SimpleLogRecordProcessor({ exporter: logExporter })]
   });
-  
+
   const otelLogger = provider.getLogger('console-bridge', '1.0.0');
 
   const severityMap: Record<string, number> = {

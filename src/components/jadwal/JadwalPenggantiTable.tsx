@@ -211,7 +211,7 @@ export default function JadwalPenggantiTable({
           <Table>
             <TableHeader>
             <TableRow>
-              {Array.from({ length: 7 }).map((_, i) => (
+              {Array.from({ length: 6 }).map((_, i) => (
                 <TableHead key={i}>
                   <Skeleton className="h-6 w-full" />
                 </TableHead>
@@ -221,7 +221,7 @@ export default function JadwalPenggantiTable({
           <TableBody>
             {Array.from({ length: 10 }).map((_, i) => (
               <TableRow key={i}>
-                {Array.from({ length: 7 }).map((_, j) => (
+                {Array.from({ length: 6 }).map((_, j) => (
                   <TableCell key={j}>
                     <Skeleton className="h-6 w-full" />
                   </TableCell>

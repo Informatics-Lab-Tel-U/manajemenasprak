@@ -11,21 +11,23 @@ interface PraktikumListProps {
   onSelect: (praktikum: PraktikumWithStats) => void;
 }
 
-function PraktikumCardSkeleton() {
+export function PraktikumCardSkeleton() {
   return (
-    <Card className="p-4 flex flex-col h-[136px] relative overflow-hidden transition-all duration-300 border bg-white/60 dark:bg-zinc-900/60 border-indigo-200/50 dark:border-indigo-500/20">
-      <div className="flex justify-between items-start mb-3">
-        <Skeleton className="h-6 w-24 rounded-md" />
-      </div>
-      <div className="flex-grow mb-2">
-        <Skeleton className="h-5 w-full rounded-md" />
-      </div>
-      <div className="mt-auto pt-3 border-t border-dashed border-border/60 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Skeleton className="h-7 w-7 rounded-sm" />
-          <div className="flex flex-col gap-1">
-            <Skeleton className="h-2 w-16" />
-            <Skeleton className="h-3 w-12" />
+    <Card className="relative overflow-hidden transition-all duration-300 border backdrop-blur-sm bg-white/60 dark:bg-zinc-900/60 border-indigo-200/50 dark:border-indigo-500/20 h-full min-h-[136px]">
+      <div className="p-4 flex flex-col h-full relative z-10">
+        <div className="flex justify-between items-start mb-3">
+          <Skeleton className="h-6 2xl:h-[26px] w-[100px] rounded-md" />
+        </div>
+        <div className="flex-grow mb-2">
+          <Skeleton className="h-7 2xl:h-7 w-3/4 rounded-md" />
+        </div>
+        <div className="mt-auto pt-3 border-t border-dashed border-border/60 dark:border-indigo-500/10 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-7 w-7 rounded-sm shrink-0" />
+            <div className="flex flex-col gap-1">
+              <Skeleton className="h-3 2xl:h-4 w-16" />
+              <Skeleton className="h-4 2xl:h-5 w-12" />
+            </div>
           </div>
         </div>
       </div>

@@ -8,23 +8,23 @@ interface MataKuliahListProps {
   loading: boolean;
 }
 
-function MataKuliahCardSkeleton() {
+export function MataKuliahCardSkeleton() {
   return (
-    <Card className="relative overflow-hidden transition-all duration-300 border bg-white/60 dark:bg-zinc-900/60 rounded-xl border-primary/20 dark:border-primary/20">
-      <div className="p-4 flex flex-col h-[160px] relative z-10">
+    <Card className="relative overflow-hidden transition-all duration-300 border backdrop-blur-sm bg-white/60 dark:bg-zinc-900/60 rounded-xl border-primary/20 dark:border-primary/20 h-full min-h-[160px]">
+      <div className="p-4 flex flex-col h-full relative z-10">
         <div className="flex justify-between items-start mb-3">
-          <Skeleton className="h-6 w-32 rounded-md" />
+          <Skeleton className="h-6 2xl:h-[26px] w-[110px] rounded-md" />
         </div>
         <div className="flex-grow mb-2">
-          <Skeleton className="h-5 w-full rounded-md mt-1" />
-          <Skeleton className="h-3 w-24 rounded-md mt-2" />
+          <Skeleton className="h-6 2xl:h-7 w-3/4 rounded-md" />
+          <Skeleton className="h-4 2xl:h-5 w-1/2 rounded-md mt-2" />
         </div>
-        <div className="mt-auto pt-3 border-t border-dashed border-border/60 flex items-center justify-between">
+        <div className="mt-auto pt-3 border-t border-dashed border-border/60 dark:border-white/10 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Skeleton className="h-7 w-7 rounded-sm" />
+            <Skeleton className="h-7 w-7 rounded-sm shrink-0" />
             <div className="flex flex-col gap-1">
-              <Skeleton className="h-2 w-16" />
-              <Skeleton className="h-3 w-24" />
+              <Skeleton className="h-3 2xl:h-4 w-16" />
+              <Skeleton className="h-4 2xl:h-5 w-24" />
             </div>
           </div>
         </div>
