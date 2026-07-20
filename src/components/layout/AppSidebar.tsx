@@ -17,6 +17,7 @@ import {
   Shield,
   UserRoundCheck,
   PlusCircle,
+  FileSpreadsheet,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -87,6 +88,12 @@ const ALL_NAV_GROUPS: NavGroup[] = [
           { label: 'Generate Kode Asprak', href: '/asprak?tab=rules' },
         ],
       },
+    ],
+  },
+  {
+    label: 'Generator',
+    items: [
+      { label: 'Generate Presensi', href: '/generator/presensi', icon: FileSpreadsheet },
     ],
   },
   {

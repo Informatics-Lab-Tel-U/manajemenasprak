@@ -39,6 +39,7 @@ export const ROLE_ALLOWED_PATHS: Record<Role, string[]> = {
     '/panduan',
     '/pengaturan',
     '/database',
+    '/generator',
   ],
   ASLAB: [
     '/',
@@ -55,6 +56,7 @@ export const ROLE_ALLOWED_PATHS: Record<Role, string[]> = {
     '/panduan',
     '/database',
     '/audit-logs',
+    '/generator',
   ],
   ASPRAK_KOOR: ['/pelanggaran', '/panduan'],
 };
