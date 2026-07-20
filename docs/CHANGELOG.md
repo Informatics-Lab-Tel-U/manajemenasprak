@@ -1,3 +1,18 @@
+# [1.7.0](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/compare/v1.6.0...v1.7.0) (2026-07-20)
+
+
+### Bug Fixes
+
+* **generator:** fix kode asprak formula in rekap sheet and add generators ([742b955](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/commit/742b9556bf9a7be52ebb661ffe4f7c74b1af14a2))
+* **presensi:** fix rekap kode asprak, merge evidence column, and apply color constants ([0a08446](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/commit/0a084467499a3036f7b869993f83cf2ec21b8793))
+* **ui:** make date picker label more descriptive for Modul 1 ([4fd883d](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/commit/4fd883d700e09e31651122fca65097db9f64731a))
+
+
+### Features
+
+* **presensi:** shift LIST ASPRAK table and apply header color ([d4c55f1](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/commit/d4c55f136042cfb1bc7d6dbeec6405457aeb330c))
+* **presensi:** shift LIST ASPRAK table to B2 and use white background for data ([b9ae39e](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/commit/b9ae39e7571a41bb1bdfa3c3060ed6a0b501e774))
+
 # [1.6.0](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/compare/v1.5.0...v1.6.0) (2026-07-20)
 
 
