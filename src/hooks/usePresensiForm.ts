@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { useTermStore } from '@/store/useTermStore';
-import { getPraktikumList, getPraktikumClasses } from '@/app/actions/presensi';
+import { getPraktikumList, getPraktikumClasses, getAsprakListByPraktikum } from '@/app/actions/presensi';
+import type { AsprakEntry } from '@/services/presensiGenerator';
 
 export interface PresensiComponent {
   enabled: boolean;
@@ -51,6 +52,11 @@ export function usePresensiForm() {
   const [availableJurusans, setAvailableJurusans] = useState<string[]>([]);
   const [selectedJurusan, setSelectedJurusan] = useState<string>('all');
 
+  // Asprak State (untuk sheet REKAP & ASPRAK BELUM NILAI)
+  const [asprakList, setAsprakList] = useState<AsprakEntry[]>([]);
+  const [loadingAsprak, setLoadingAsprak] = useState(false);
+  const [generateRekapSheet, setGenerateRekapSheet] = useState(false);
+
   // 1. Fetch Praktikum List when activeTerm changes
   useEffect(() => {
     async function fetchPraktikum() {
@@ -73,6 +79,7 @@ export function usePresensiForm() {
       if (!selectedPraktikumId) {
         setKelasNames([]);
         setKelasSettings([]);
+        setAsprakList([]);
         return;
       }
       setLoadingKelas(true);
@@ -104,7 +111,8 @@ export function usePresensiForm() {
       setLoadingKelas(false);
     }
     fetchKelas();
-  }, [selectedPraktikumId, praktikumList, globalJumlahPraktikan, globalJumlahAsprak]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedPraktikumId, praktikumList]);
 
   // 3. Filter Kelas by Jurusan
   useEffect(() => {
@@ -131,6 +139,26 @@ export function usePresensiForm() {
       );
     }
   }, [selectedJurusan, allFetchedKelas, globalJumlahPraktikan, globalJumlahAsprak]);
+
+  // 4. Fetch Asprak List when selectedPraktikumId changes (untuk sheet REKAP)
+  useEffect(() => {
+    async function fetchAsprak() {
+      if (!selectedPraktikumId) {
+        setAsprakList([]);
+        return;
+      }
+      setLoadingAsprak(true);
+      const res = await getAsprakListByPraktikum(selectedPraktikumId);
+      if (res.success && res.data) {
+        setAsprakList(res.data);
+      } else {
+        // Tidak perlu toast error — asprak kosong hanya berarti toggle REKAP akan disabled
+        setAsprakList([]);
+      }
+      setLoadingAsprak(false);
+    }
+    fetchAsprak();
+  }, [selectedPraktikumId]);
 
   // Handlers
   const handleAddCustomKelas = () => {
@@ -193,6 +221,10 @@ export function usePresensiForm() {
       customKelasInput,
       availableJurusans,
       selectedJurusan,
+      // Asprak
+      asprakList,
+      loadingAsprak,
+      generateRekapSheet,
     },
     setters: {
       setNamaFile,
@@ -203,6 +235,7 @@ export function usePresensiForm() {
       setSelectedPraktikumId,
       setSelectedJurusan,
       setCustomKelasInput,
+      setGenerateRekapSheet,
     },
     handlers: {
       handleAddCustomKelas,

@@ -45,6 +45,8 @@ export default function PresensiPage() {
         jumlahModul: state.jumlahModul,
         kelasSettings: state.kelasSettings,
         opsi: state.opsi,
+        asprakList: state.asprakList,
+        generateRekapSheet: state.generateRekapSheet,
       });
       toast.success('File excel berhasil di-generate dan diunduh!');
     } catch (error: any) {
@@ -211,7 +213,15 @@ export default function PresensiPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <OptionsToggles opsi={state.opsi} setOpsi={setters.setOpsi} />
+            <OptionsToggles 
+              opsi={state.opsi} 
+              setOpsi={setters.setOpsi} 
+              generateRekapSheet={state.generateRekapSheet}
+              onToggleRekapSheet={setters.setGenerateRekapSheet}
+              asprakCount={state.asprakList.length}
+              loadingAsprak={state.loadingAsprak}
+              hasPraktikum={!!state.selectedPraktikumId}
+            />
             {!isWeightValid && totalWeight > 0 && (
               <p className="text-sm text-destructive mt-4">
                 Total bobot saat ini: {totalWeight}%. Total bobot harus tepat 100%.
