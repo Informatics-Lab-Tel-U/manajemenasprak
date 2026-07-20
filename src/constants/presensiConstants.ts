@@ -6,6 +6,7 @@ export const PRESENSI_STYLES = {
     HEADER_FG: 'FFFFFFFF',
     BAND_1_BG: 'FFDAEEF3',
     BAND_2_BG: 'FFC5D9F1',
+    TAB_LIST_ASPRAK: 'FF00B0F0',
   },
   BORDERS: {
     top: { style: 'thin' as ExcelJS.BorderStyle },

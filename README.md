@@ -1,9 +1,5 @@
 # Sistem Manajemen Asprak - Technical Documentation
 
-**Version**: 1.0.0  
-**Last Updated**: March 16, 2026  
-**Status**: Active
-
 ⚠️ **PROPRIETARY SOFTWARE** - This software is proprietary and confidential. Unauthorized use, copying, modification, or distribution is strictly prohibited. See [LICENSE](./LICENSE) for details.
 
 ---
@@ -362,6 +358,4 @@ This software is **proprietary and confidential**. For complete licensing terms 
 
 ---
 
-**Last Updated**: March 16, 2026  
 **Maintained By**: Development Team  
-**Next Review**: June 16, 2026

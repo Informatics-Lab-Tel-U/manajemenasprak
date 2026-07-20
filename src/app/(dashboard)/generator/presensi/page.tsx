@@ -12,28 +12,30 @@ import { format } from 'date-fns';
 import { CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { generatePresensiExcel } from '@/services/presensiGenerator';
-import { usePresensiForm } from '@/hooks/usePresensiForm';
+import { usePresensiState } from '@/hooks/usePresensiState';
+import { usePresensiData } from '@/hooks/usePresensiData';
 import { PraktikumSelector } from '@/components/presensi/PraktikumSelector';
 import { KelasManager } from '@/components/presensi/KelasManager';
 import { OptionsToggles } from '@/components/presensi/OptionsToggles';
 
 export default function PresensiPage() {
-  const { state, setters, handlers } = usePresensiForm();
-
-  // Calculate total weight (only for 'number' input types)
-  const totalWeight =
-    (state.opsi.tp.enabled && state.opsi.tp.inputType === 'number' ? state.opsi.tp.weight : 0) +
-    (state.opsi.jurnal.enabled && state.opsi.jurnal.inputType === 'number' ? state.opsi.jurnal.weight : 0) +
-    (state.opsi.tesAkhir.enabled && state.opsi.tesAkhir.inputType === 'number' ? state.opsi.tesAkhir.weight : 0);
-
-  const isWeightValid = totalWeight === 100 || totalWeight === 0; // 0 is valid if nothing is checked or all are YA/TIDAK
+  const state = usePresensiState();
+  const data = usePresensiData({
+    selectedPraktikumId: state.selectedPraktikumId,
+    selectedJurusan: state.selectedJurusan,
+    setKelasNames: state.setKelasNames,
+    setKelasSettings: state.setKelasSettings,
+    setNamaFile: state.setNamaFile,
+    globalJumlahPraktikan: state.globalJumlahPraktikan,
+    globalJumlahAsprak: state.globalJumlahAsprak,
+  });
 
   const handleGenerate = async () => {
     if (!state.selectedPraktikumId || state.kelasNames.length === 0) {
       toast.error('Silakan pilih Praktikum terlebih dahulu');
       return;
     }
-    if (!isWeightValid) {
+    if (!state.isWeightValid) {
       toast.error('Total bobot nilai harus 100%');
       return;
     }
@@ -45,6 +47,8 @@ export default function PresensiPage() {
         jumlahModul: state.jumlahModul,
         kelasSettings: state.kelasSettings,
         opsi: state.opsi,
+        asprakList: data.asprakList,
+        generateRekapSheet: state.generateRekapSheet,
       });
       toast.success('File excel berhasil di-generate dan diunduh!');
     } catch (error: any) {
@@ -74,22 +78,22 @@ export default function PresensiPage() {
           </CardHeader>
           <CardContent className="grid gap-6 sm:grid-cols-2">
             <PraktikumSelector
-              praktikumList={state.praktikumList}
+              praktikumList={data.praktikumList}
               selectedPraktikumId={state.selectedPraktikumId}
-              setSelectedPraktikumId={setters.setSelectedPraktikumId}
-              loadingPraktikum={state.loadingPraktikum}
-              availableJurusans={state.availableJurusans}
+              setSelectedPraktikumId={state.setSelectedPraktikumId}
+              loadingPraktikum={data.loadingPraktikum}
+              availableJurusans={data.availableJurusans}
               selectedJurusan={state.selectedJurusan}
-              setSelectedJurusan={setters.setSelectedJurusan}
+              setSelectedJurusan={state.setSelectedJurusan}
             />
 
             <KelasManager
-              loadingKelas={state.loadingKelas}
+              loadingKelas={data.loadingKelas}
               kelasNames={state.kelasNames}
-              handleRemoveKelas={handlers.handleRemoveKelas}
+              handleRemoveKelas={state.handleRemoveKelas}
               customKelasInput={state.customKelasInput}
-              setCustomKelasInput={setters.setCustomKelasInput}
-              handleAddCustomKelas={handlers.handleAddCustomKelas}
+              setCustomKelasInput={state.setCustomKelasInput}
+              handleAddCustomKelas={state.handleAddCustomKelas}
             />
 
             <div className="space-y-2 sm:col-span-1">
@@ -97,7 +101,7 @@ export default function PresensiPage() {
               <Input
                 id="namaFile"
                 value={state.namaFile}
-                onChange={(e) => setters.setNamaFile(e.target.value)}
+                onChange={(e) => state.setNamaFile(e.target.value)}
               />
             </div>
             
@@ -108,7 +112,7 @@ export default function PresensiPage() {
                 type="number"
                 min={1}
                 value={state.jumlahModul}
-                onChange={(e) => setters.setJumlahModul(Number(e.target.value))}
+                onChange={(e) => state.setJumlahModul(Number(e.target.value))}
               />
             </div>
 
@@ -119,7 +123,7 @@ export default function PresensiPage() {
                 type="number"
                 min={1}
                 value={state.globalJumlahPraktikan}
-                onChange={(e) => setters.setGlobalJumlahPraktikan(Number(e.target.value))}
+                onChange={(e) => state.setGlobalJumlahPraktikan(Number(e.target.value))}
               />
             </div>
             
@@ -130,12 +134,12 @@ export default function PresensiPage() {
                 type="number"
                 min={1}
                 value={state.globalJumlahAsprak}
-                onChange={(e) => setters.setGlobalJumlahAsprak(Number(e.target.value))}
+                onChange={(e) => state.setGlobalJumlahAsprak(Number(e.target.value))}
               />
             </div>
             
             <div className="sm:col-span-2 flex justify-end">
-              <Button variant="secondary" onClick={handlers.applyGlobalToAll} disabled={state.kelasNames.length === 0}>
+              <Button variant="secondary" onClick={state.applyGlobalToAll} disabled={state.kelasNames.length === 0}>
                 Terapkan Default ke Semua Kelas
               </Button>
             </div>
@@ -152,7 +156,7 @@ export default function PresensiPage() {
               {state.kelasNames.map((kelasName, i) => (
                 <div key={kelasName} className="flex flex-col md:flex-row gap-4 items-end border p-4 rounded-md bg-muted/20">
                   <div className="w-full md:w-1/3 flex flex-col space-y-2">
-                    <Label>Kelas {kelasName}</Label>
+                    <Label>Tanggal Modul 1 ({kelasName})</Label>
                     <Popover>
                       <PopoverTrigger asChild>
                         <Button
@@ -172,7 +176,7 @@ export default function PresensiPage() {
                         <Calendar
                           mode="single"
                           selected={state.kelasSettings[i]?.tanggalMulai}
-                          onSelect={(date) => handlers.updateKelasSetting(i, 'tanggalMulai', date)}
+                          onSelect={(date) => state.updateKelasSetting(i, 'tanggalMulai', date)}
                         />
                       </PopoverContent>
                     </Popover>
@@ -184,7 +188,7 @@ export default function PresensiPage() {
                       type="number"
                       min={1}
                       value={state.kelasSettings[i]?.jumlahPraktikan || 0}
-                      onChange={(e) => handlers.updateKelasSetting(i, 'jumlahPraktikan', Number(e.target.value))}
+                      onChange={(e) => state.updateKelasSetting(i, 'jumlahPraktikan', Number(e.target.value))}
                     />
                   </div>
                   
@@ -194,7 +198,7 @@ export default function PresensiPage() {
                       type="number"
                       min={1}
                       value={state.kelasSettings[i]?.jumlahAsprak || 0}
-                      onChange={(e) => handlers.updateKelasSetting(i, 'jumlahAsprak', Number(e.target.value))}
+                      onChange={(e) => state.updateKelasSetting(i, 'jumlahAsprak', Number(e.target.value))}
                     />
                   </div>
                 </div>
@@ -211,15 +215,23 @@ export default function PresensiPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <OptionsToggles opsi={state.opsi} setOpsi={setters.setOpsi} />
-            {!isWeightValid && totalWeight > 0 && (
+            <OptionsToggles 
+              opsi={state.opsi} 
+              setOpsi={state.setOpsi} 
+              generateRekapSheet={state.generateRekapSheet}
+              onToggleRekapSheet={state.setGenerateRekapSheet}
+              asprakCount={data.asprakList.length}
+              loadingAsprak={data.loadingAsprak}
+              hasPraktikum={!!state.selectedPraktikumId}
+            />
+            {!state.isWeightValid && state.totalWeight > 0 && (
               <p className="text-sm text-destructive mt-4">
-                Total bobot saat ini: {totalWeight}%. Total bobot harus tepat 100%.
+                Total bobot saat ini: {state.totalWeight}%. Total bobot harus tepat 100%.
               </p>
             )}
           </CardContent>
           <CardFooter className="bg-muted/50 flex justify-end p-4 border-t">
-            <Button size="lg" onClick={handleGenerate} disabled={state.kelasNames.length === 0 || (!isWeightValid && totalWeight > 0)}>
+            <Button size="lg" onClick={handleGenerate} disabled={state.kelasNames.length === 0 || (!state.isWeightValid && state.totalWeight > 0)}>
               Generate File Excel
             </Button>
           </CardFooter>
