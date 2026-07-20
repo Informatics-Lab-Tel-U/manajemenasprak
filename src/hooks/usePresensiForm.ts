@@ -3,10 +3,15 @@ import { toast } from 'sonner';
 import { useTermStore } from '@/store/useTermStore';
 import { getPraktikumList, getPraktikumClasses } from '@/app/actions/presensi';
 
+export interface PresensiComponent {
+  enabled: boolean;
+  weight: number;
+}
+
 export interface PresensiFormOptions {
-  tp: boolean;
-  jurnal: boolean;
-  tesAkhir: boolean;
+  tp: PresensiComponent;
+  jurnal: PresensiComponent;
+  tesAkhir: PresensiComponent;
   rate: boolean;
 }
 
@@ -26,9 +31,9 @@ export function usePresensiForm() {
   const [globalJumlahAsprak, setGlobalJumlahAsprak] = useState(4);
   const [kelasSettings, setKelasSettings] = useState<KelasSetting[]>([]);
   const [opsi, setOpsi] = useState<PresensiFormOptions>({
-    tp: true,
-    jurnal: true,
-    tesAkhir: true,
+    tp: { enabled: true, weight: 30 },
+    jurnal: { enabled: true, weight: 40 },
+    tesAkhir: { enabled: true, weight: 30 },
     rate: true,
   });
 

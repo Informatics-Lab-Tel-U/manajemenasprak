@@ -13,9 +13,9 @@ export interface PresensiOptions {
     jumlahAsprak: number;
   }[];
   opsi: {
-    tp: boolean;
-    jurnal: boolean;
-    tesAkhir: boolean;
+    tp: { enabled: boolean; weight: number };
+    jurnal: { enabled: boolean; weight: number };
+    tesAkhir: { enabled: boolean; weight: number };
     rate: boolean;
   };
 }
@@ -80,9 +80,9 @@ function createModul(
   modulNum: number
 ) {
   const optionalCols: { name: string; on: boolean }[] = [
-    { name: 'TP', on: opsi.tp },
-    { name: 'JURNAL', on: opsi.jurnal },
-    { name: 'TES AKHIR', on: opsi.tesAkhir },
+    { name: 'TP', on: opsi.tp.enabled },
+    { name: 'JURNAL', on: opsi.jurnal.enabled },
+    { name: 'TES AKHIR', on: opsi.tesAkhir.enabled },
     { name: 'RATE', on: opsi.rate },
   ];
   const selectedOptionNames = optionalCols.reduce<string[]>((acc, col) => {
@@ -196,26 +196,39 @@ function injectRowValidationAndFormulas(
     };
 
     // TOTAL NILAI Formula
-    let tpCol = '', jurnalCol = '';
+    let tpCol = '', jurnalCol = '', tesAkhirCol = '';
     let currentOffset = startCol + 3;
-    if (opsi.tp) {
+    if (opsi.tp.enabled) {
       tpCol = sheet.getColumn(currentOffset).letter;
       currentOffset++;
     }
-    if (opsi.jurnal) {
+    if (opsi.jurnal.enabled) {
       jurnalCol = sheet.getColumn(currentOffset).letter;
+      currentOffset++;
+    }
+    if (opsi.tesAkhir.enabled) {
+      tesAkhirCol = sheet.getColumn(currentOffset).letter;
       currentOffset++;
     }
 
     const totalNilaiCol = sheet.getColumn(startCol + totalColsThisModule - 1).letter;
     const totalNilaiCell = sheet.getCell(`${totalNilaiCol}${r}`);
 
-    if (tpCol && jurnalCol) {
-      totalNilaiCell.value = { formula: `${tpCol}${r}*0.5+${jurnalCol}${r}*0.5`, result: 0 };
-    } else if (tpCol) {
-      totalNilaiCell.value = { formula: `${tpCol}${r}`, result: 0 };
-    } else if (jurnalCol) {
-      totalNilaiCell.value = { formula: `${jurnalCol}${r}`, result: 0 };
+    const formulaParts = [];
+    if (tpCol && opsi.tp.weight > 0) {
+      formulaParts.push(`${tpCol}${r}*${opsi.tp.weight / 100}`);
+    }
+    if (jurnalCol && opsi.jurnal.weight > 0) {
+      formulaParts.push(`${jurnalCol}${r}*${opsi.jurnal.weight / 100}`);
+    }
+    if (tesAkhirCol && opsi.tesAkhir.weight > 0) {
+      formulaParts.push(`${tesAkhirCol}${r}*${opsi.tesAkhir.weight / 100}`);
+    }
+
+    if (formulaParts.length > 0) {
+      totalNilaiCell.value = { formula: formulaParts.join('+'), result: 0 };
+    } else {
+      totalNilaiCell.value = 0; // Default if nothing is weighted
     }
   }
 }
@@ -260,7 +273,7 @@ function formatRows(
   jumlahPraktikan: number,
   jumlahAsprak: number
 ) {
-  const numOption = [opsi.tp, opsi.jurnal, opsi.tesAkhir, opsi.rate].filter(Boolean).length;
+  const numOption = [opsi.tp.enabled, opsi.jurnal.enabled, opsi.tesAkhir.enabled, opsi.rate].filter(Boolean).length;
   const totalColsThisModule = 4 + numOption;
   const rataCol = 5 + (numModules * totalColsThisModule);
 

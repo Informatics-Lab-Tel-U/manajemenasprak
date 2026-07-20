@@ -20,9 +20,21 @@ import { OptionsToggles } from '@/components/presensi/OptionsToggles';
 export default function PresensiPage() {
   const { state, setters, handlers } = usePresensiForm();
 
+  // Calculate total weight
+  const totalWeight =
+    (state.opsi.tp.enabled ? state.opsi.tp.weight : 0) +
+    (state.opsi.jurnal.enabled ? state.opsi.jurnal.weight : 0) +
+    (state.opsi.tesAkhir.enabled ? state.opsi.tesAkhir.weight : 0);
+
+  const isWeightValid = totalWeight === 100 || totalWeight === 0; // 0 is valid if nothing is checked
+
   const handleGenerate = async () => {
     if (!state.selectedPraktikumId || state.kelasNames.length === 0) {
       toast.error('Silakan pilih Praktikum terlebih dahulu');
+      return;
+    }
+    if (!isWeightValid) {
+      toast.error('Total bobot nilai harus 100%');
       return;
     }
 
@@ -200,9 +212,14 @@ export default function PresensiPage() {
           </CardHeader>
           <CardContent>
             <OptionsToggles opsi={state.opsi} setOpsi={setters.setOpsi} />
+            {!isWeightValid && totalWeight > 0 && (
+              <p className="text-sm text-destructive mt-4">
+                Total bobot saat ini: {totalWeight}%. Total bobot harus tepat 100%.
+              </p>
+            )}
           </CardContent>
           <CardFooter className="bg-muted/50 flex justify-end p-4 border-t">
-            <Button size="lg" onClick={handleGenerate} disabled={state.kelasNames.length === 0}>
+            <Button size="lg" onClick={handleGenerate} disabled={state.kelasNames.length === 0 || (!isWeightValid && totalWeight > 0)}>
               Generate File Excel
             </Button>
           </CardFooter>
