@@ -156,7 +156,7 @@ export default function PresensiPage() {
               {state.kelasNames.map((kelasName, i) => (
                 <div key={kelasName} className="flex flex-col md:flex-row gap-4 items-end border p-4 rounded-md bg-muted/20">
                   <div className="w-full md:w-1/3 flex flex-col space-y-2">
-                    <Label>Kelas {kelasName}</Label>
+                    <Label>Tanggal Modul 1 ({kelasName})</Label>
                     <Popover>
                       <PopoverTrigger asChild>
                         <Button

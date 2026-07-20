@@ -346,8 +346,13 @@ export function addRekapBroadcastEngine(
 
   ws.getCell('E11').value = 'Modul ke-'; ws.getCell('E11').style = tbl1HeaderStyle;
   ws.mergeCells('E11:F11');
+  const startDate = options.kelasSettings[0]?.tanggalMulai || new Date();
+  const year = startDate.getFullYear();
+  const month = startDate.getMonth() + 1;
+  const day = startDate.getDate();
+
   ws.getCell('E12').value = {
-    formula: `IF(INT((TODAY()-DATE(2026,2,23))/7)<=3,INT((TODAY()-DATE(2026,2,23))/7),IF(INT((TODAY()-DATE(2026,2,23))/7)<=5,4,INT((TODAY()-DATE(2026,2,23))/7)-1))`,
+    formula: `INT((TODAY()-DATE(${year},${month},${day}))/7)+1`,
     result: 1
   };
   ws.getCell('E12').font = { bold: true, size: 20 };
