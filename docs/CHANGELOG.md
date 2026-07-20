@@ -1,3 +1,38 @@
+# [1.5.0](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/compare/v1.4.0...v1.5.0) (2026-07-20)
+
+
+### Bug Fixes
+
+* consistent spinner structure for export dialog ([609ec3e](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/commit/609ec3e018292b3fba74a437fbfe2a96c05f3dfa))
+* **onboard:** optimize API queries, Zustand localstorage quota, and update page title ([9b9a113](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/commit/9b9a11375ce2ddbfebd548484ad6b8cb360714e0))
+* **praktikan:** fix cache staleness and react-doctor warnings ([bc0ab86](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/commit/bc0ab868be6b53a845cb1509b43d006576ce9c59))
+* re-add TooltipProvider and shadcn preset updates ([7cfb21a](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/commit/7cfb21ab82fd7e500526d1fa6c98d8645973ce0d))
+* resolve 36 react-doctor issues for 100/100 score ([d648cf9](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/commit/d648cf9aee22ef865672a29e922ad01d5f5aab5e))
+* resolve cache key bug in getCachedKelas to ensure independent caching per mata kuliah ([8dea669](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/commit/8dea66956420fee0c01e8abe2093de8d6393e31a))
+* resolve UI freezing on onboard navigation with loading skeletons ([86fb953](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/commit/86fb95352da5f5d5c4c3fb8db9e4b48732345db2))
+* **security:** Fix IDOR in pelanggaran, fix SSR cookie bug, and implement atomic copy RPC ([208ab77](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/commit/208ab77e7dd6284d1b621708a1beb789f05dc5eb))
+* sync pnpm-lock.yaml with package.json ([9aa4c0e](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/commit/9aa4c0e6e485da43731d0d65a54d9853ef35911a))
+
+
+### Features
+
+* add presensi generator feature and fix freeze panes bug ([88d8741](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/commit/88d87417630fb6ca0671cd1a709f45d40293db43))
+* add YA/TIDAK input type and support shadcn Select for total nilai weighting ([81b6905](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/commit/81b69055de163bb58a423bd8bb5a1b32e0797843))
+* customizable formula weights for total nilai in presensi excel ([e678e69](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/commit/e678e69b9ab255f4a1bb280753b5015476e2c806))
+* customizable praktikan and asprak rows for excel generator ([ca384ee](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/commit/ca384ee92ba6aecb6b08d4e6ad0d70deb806ea0a))
+* implement global term selector, fix react-doctor warnings, and resolve calendar overlap UI ([b5a11aa](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/commit/b5a11aa0df07461290577c3115c18345b1772048))
+* **observability:** refactor logger to JSON and fix TS errors ([fb0c617](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/commit/fb0c61790642f93a4bb87e0f0291b469c59feebf))
+* **praktikan:** bulk delete, export modal, import perf fix & loader spinner ([b6c1bf6](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/commit/b6c1bf61ef91f36ae46e07d040c210bb9fb37f6d))
+* redesign success step UI to be more modern and premium ([e66f75e](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/commit/e66f75eca67a19923da2aa5c0d201dafb5fdba56))
+* restructure onboarding flow to central hub ([60b41e0](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/commit/60b41e01b5731d23277c688fe430aff77b3d5325))
+* sync Jadwal Pengganti features with Data Praktikan and fix react-doctor warnings ([10b1095](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/commit/10b1095a1cfc3dad35493a14eec112e988845e45))
+
+
+### Performance Improvements
+
+* optimize API endpoints with unstable_cache and fix Next.js 16 types ([88aa149](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/commit/88aa149f2b17eac4c52e08b2e3a52ea2fa2a0f88))
+* refactor sequential loop to Promise.all in praktikanService ([619727c](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/commit/619727c315fc995d598be49af8b9b27472f930a9))
+
 # [1.4.0](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/compare/v1.3.0...v1.4.0) (2026-06-20)
 
 
