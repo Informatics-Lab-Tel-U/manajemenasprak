@@ -6,6 +6,7 @@ import { getPraktikumList, getPraktikumClasses } from '@/app/actions/presensi';
 export interface PresensiComponent {
   enabled: boolean;
   weight: number;
+  inputType: 'number' | 'boolean';
 }
 
 export interface PresensiFormOptions {
@@ -31,9 +32,9 @@ export function usePresensiForm() {
   const [globalJumlahAsprak, setGlobalJumlahAsprak] = useState(4);
   const [kelasSettings, setKelasSettings] = useState<KelasSetting[]>([]);
   const [opsi, setOpsi] = useState<PresensiFormOptions>({
-    tp: { enabled: true, weight: 30 },
-    jurnal: { enabled: true, weight: 40 },
-    tesAkhir: { enabled: true, weight: 30 },
+    tp: { enabled: true, weight: 30, inputType: 'number' },
+    jurnal: { enabled: true, weight: 40, inputType: 'number' },
+    tesAkhir: { enabled: true, weight: 30, inputType: 'number' },
     rate: true,
   });
 

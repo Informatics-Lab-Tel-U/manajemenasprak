@@ -13,9 +13,9 @@ export interface PresensiOptions {
     jumlahAsprak: number;
   }[];
   opsi: {
-    tp: { enabled: boolean; weight: number };
-    jurnal: { enabled: boolean; weight: number };
-    tesAkhir: { enabled: boolean; weight: number };
+    tp: { enabled: boolean; weight: number; inputType: 'number' | 'boolean' };
+    jurnal: { enabled: boolean; weight: number; inputType: 'number' | 'boolean' };
+    tesAkhir: { enabled: boolean; weight: number; inputType: 'number' | 'boolean' };
     rate: boolean;
   };
 }
@@ -200,14 +200,29 @@ function injectRowValidationAndFormulas(
     let currentOffset = startCol + 3;
     if (opsi.tp.enabled) {
       tpCol = sheet.getColumn(currentOffset).letter;
+      if (opsi.tp.inputType === 'boolean') {
+        sheet.getCell(`${tpCol}${r}`).dataValidation = {
+          type: 'list', allowBlank: true, formulae: PRESENSI_STRINGS.YA_TIDAK_OPTIONS, showErrorMessage: true, showInputMessage: true,
+        };
+      }
       currentOffset++;
     }
     if (opsi.jurnal.enabled) {
       jurnalCol = sheet.getColumn(currentOffset).letter;
+      if (opsi.jurnal.inputType === 'boolean') {
+        sheet.getCell(`${jurnalCol}${r}`).dataValidation = {
+          type: 'list', allowBlank: true, formulae: PRESENSI_STRINGS.YA_TIDAK_OPTIONS, showErrorMessage: true, showInputMessage: true,
+        };
+      }
       currentOffset++;
     }
     if (opsi.tesAkhir.enabled) {
       tesAkhirCol = sheet.getColumn(currentOffset).letter;
+      if (opsi.tesAkhir.inputType === 'boolean') {
+        sheet.getCell(`${tesAkhirCol}${r}`).dataValidation = {
+          type: 'list', allowBlank: true, formulae: PRESENSI_STRINGS.YA_TIDAK_OPTIONS, showErrorMessage: true, showInputMessage: true,
+        };
+      }
       currentOffset++;
     }
 
@@ -215,13 +230,13 @@ function injectRowValidationAndFormulas(
     const totalNilaiCell = sheet.getCell(`${totalNilaiCol}${r}`);
 
     const formulaParts = [];
-    if (tpCol && opsi.tp.weight > 0) {
+    if (tpCol && opsi.tp.inputType === 'number' && opsi.tp.weight > 0) {
       formulaParts.push(`${tpCol}${r}*${opsi.tp.weight / 100}`);
     }
-    if (jurnalCol && opsi.jurnal.weight > 0) {
+    if (jurnalCol && opsi.jurnal.inputType === 'number' && opsi.jurnal.weight > 0) {
       formulaParts.push(`${jurnalCol}${r}*${opsi.jurnal.weight / 100}`);
     }
-    if (tesAkhirCol && opsi.tesAkhir.weight > 0) {
+    if (tesAkhirCol && opsi.tesAkhir.inputType === 'number' && opsi.tesAkhir.weight > 0) {
       formulaParts.push(`${tesAkhirCol}${r}*${opsi.tesAkhir.weight / 100}`);
     }
 

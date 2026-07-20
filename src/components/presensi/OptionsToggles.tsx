@@ -2,6 +2,13 @@ import * as React from 'react';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { PresensiFormOptions } from '@/hooks/usePresensiForm';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface OptionsTogglesProps {
   opsi: PresensiFormOptions;
@@ -21,17 +28,33 @@ export function OptionsToggles({ opsi, setOpsi }: OptionsTogglesProps) {
           Tugas Pendahuluan (TP)
         </Label>
         {opsi.tp.enabled && (
-          <div className="flex items-center space-x-1 ml-2">
-            <input
-              type="number"
-              min="0"
-              max="100"
-              value={opsi.tp.weight}
-              onChange={(e) => setOpsi({ ...opsi, tp: { ...opsi.tp, weight: Number(e.target.value) } })}
-              className="w-16 px-2 py-1 text-sm border rounded-md"
-              aria-label="Bobot TP"
-            />
-            <span className="text-sm text-muted-foreground">%</span>
+          <div className="flex items-center space-x-2 ml-2">
+            <Select
+              value={opsi.tp.inputType}
+              onValueChange={(val) => setOpsi({ ...opsi, tp: { ...opsi.tp, inputType: val as 'number' | 'boolean' } })}
+            >
+              <SelectTrigger className="w-[140px] h-8 text-xs">
+                <SelectValue placeholder="Tipe Input" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="number">Tipe: Angka (%)</SelectItem>
+                <SelectItem value="boolean">Tipe: YA / TIDAK</SelectItem>
+              </SelectContent>
+            </Select>
+            {opsi.tp.inputType === 'number' && (
+              <div className="flex items-center space-x-1">
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={opsi.tp.weight}
+                  onChange={(e) => setOpsi({ ...opsi, tp: { ...opsi.tp, weight: Number(e.target.value) } })}
+                  className="w-16 px-2 py-1 text-sm border rounded-md"
+                  aria-label="Bobot TP"
+                />
+                <span className="text-sm text-muted-foreground">%</span>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -45,17 +68,33 @@ export function OptionsToggles({ opsi, setOpsi }: OptionsTogglesProps) {
           Jurnal / Test Awal
         </Label>
         {opsi.jurnal.enabled && (
-          <div className="flex items-center space-x-1 ml-2">
-            <input
-              type="number"
-              min="0"
-              max="100"
-              value={opsi.jurnal.weight}
-              onChange={(e) => setOpsi({ ...opsi, jurnal: { ...opsi.jurnal, weight: Number(e.target.value) } })}
-              className="w-16 px-2 py-1 text-sm border rounded-md"
-              aria-label="Bobot Jurnal"
-            />
-            <span className="text-sm text-muted-foreground">%</span>
+          <div className="flex items-center space-x-2 ml-2">
+            <Select
+              value={opsi.jurnal.inputType}
+              onValueChange={(val) => setOpsi({ ...opsi, jurnal: { ...opsi.jurnal, inputType: val as 'number' | 'boolean' } })}
+            >
+              <SelectTrigger className="w-[140px] h-8 text-xs">
+                <SelectValue placeholder="Tipe Input" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="number">Tipe: Angka (%)</SelectItem>
+                <SelectItem value="boolean">Tipe: YA / TIDAK</SelectItem>
+              </SelectContent>
+            </Select>
+            {opsi.jurnal.inputType === 'number' && (
+              <div className="flex items-center space-x-1">
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={opsi.jurnal.weight}
+                  onChange={(e) => setOpsi({ ...opsi, jurnal: { ...opsi.jurnal, weight: Number(e.target.value) } })}
+                  className="w-16 px-2 py-1 text-sm border rounded-md"
+                  aria-label="Bobot Jurnal"
+                />
+                <span className="text-sm text-muted-foreground">%</span>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -69,17 +108,33 @@ export function OptionsToggles({ opsi, setOpsi }: OptionsTogglesProps) {
           Tes Akhir
         </Label>
         {opsi.tesAkhir.enabled && (
-          <div className="flex items-center space-x-1 ml-2">
-            <input
-              type="number"
-              min="0"
-              max="100"
-              value={opsi.tesAkhir.weight}
-              onChange={(e) => setOpsi({ ...opsi, tesAkhir: { ...opsi.tesAkhir, weight: Number(e.target.value) } })}
-              className="w-16 px-2 py-1 text-sm border rounded-md"
-              aria-label="Bobot Tes Akhir"
-            />
-            <span className="text-sm text-muted-foreground">%</span>
+          <div className="flex items-center space-x-2 ml-2">
+            <Select
+              value={opsi.tesAkhir.inputType}
+              onValueChange={(val) => setOpsi({ ...opsi, tesAkhir: { ...opsi.tesAkhir, inputType: val as 'number' | 'boolean' } })}
+            >
+              <SelectTrigger className="w-[140px] h-8 text-xs">
+                <SelectValue placeholder="Tipe Input" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="number">Tipe: Angka (%)</SelectItem>
+                <SelectItem value="boolean">Tipe: YA / TIDAK</SelectItem>
+              </SelectContent>
+            </Select>
+            {opsi.tesAkhir.inputType === 'number' && (
+              <div className="flex items-center space-x-1">
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={opsi.tesAkhir.weight}
+                  onChange={(e) => setOpsi({ ...opsi, tesAkhir: { ...opsi.tesAkhir, weight: Number(e.target.value) } })}
+                  className="w-16 px-2 py-1 text-sm border rounded-md"
+                  aria-label="Bobot Tes Akhir"
+                />
+                <span className="text-sm text-muted-foreground">%</span>
+              </div>
+            )}
           </div>
         )}
       </div>

@@ -20,13 +20,13 @@ import { OptionsToggles } from '@/components/presensi/OptionsToggles';
 export default function PresensiPage() {
   const { state, setters, handlers } = usePresensiForm();
 
-  // Calculate total weight
+  // Calculate total weight (only for 'number' input types)
   const totalWeight =
-    (state.opsi.tp.enabled ? state.opsi.tp.weight : 0) +
-    (state.opsi.jurnal.enabled ? state.opsi.jurnal.weight : 0) +
-    (state.opsi.tesAkhir.enabled ? state.opsi.tesAkhir.weight : 0);
+    (state.opsi.tp.enabled && state.opsi.tp.inputType === 'number' ? state.opsi.tp.weight : 0) +
+    (state.opsi.jurnal.enabled && state.opsi.jurnal.inputType === 'number' ? state.opsi.jurnal.weight : 0) +
+    (state.opsi.tesAkhir.enabled && state.opsi.tesAkhir.inputType === 'number' ? state.opsi.tesAkhir.weight : 0);
 
-  const isWeightValid = totalWeight === 100 || totalWeight === 0; // 0 is valid if nothing is checked
+  const isWeightValid = totalWeight === 100 || totalWeight === 0; // 0 is valid if nothing is checked or all are YA/TIDAK
 
   const handleGenerate = async () => {
     if (!state.selectedPraktikumId || state.kelasNames.length === 0) {
