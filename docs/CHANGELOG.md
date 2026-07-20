@@ -1,3 +1,10 @@
+# [1.6.0](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/compare/v1.5.0...v1.6.0) (2026-07-20)
+
+
+### Features
+
+* display package version on login page and adjust title alignment ([ede9b44](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/commit/ede9b44b955cbc77215ab0d86217a74f91fb2bfd))
+
 # [1.5.0](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/compare/v1.4.0...v1.5.0) (2026-07-20)
 
 
