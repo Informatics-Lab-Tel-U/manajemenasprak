@@ -2,7 +2,7 @@ import { TableSkeleton } from '@/components/ui/TableSkeleton';
 
 export default function AsprakLoading() {
   return (
-    <div className="container relative space-y-8">
+    <div className="container mx-auto max-w-[2000px] 2xl:px-8 relative space-y-8">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div className="space-y-2">
           <h1 className="text-2xl font-bold tracking-tight">Data Asisten Praktikum</h1>
