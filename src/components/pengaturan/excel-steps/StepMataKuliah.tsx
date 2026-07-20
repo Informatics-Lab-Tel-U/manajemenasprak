@@ -33,6 +33,7 @@ export default function StepMataKuliah({
   const [localValidPraktikums, setLocalValidPraktikums] = useState<{ id: string; nama: string }[]>(
     []
   );
+  // eslint-disable-next-line react-doctor/rerender-state-only-in-handlers
   const [existingMataKuliah, setExistingMataKuliah] = useState<MataKuliahGrouped[]>([]);
 
   // Fetch valid praktikums AND existing MK for the term
@@ -80,17 +81,21 @@ export default function StepMataKuliah({
   }, [term]);
 
   // Process data after fetch is complete (or updated)
-  // eslint-disable-next-line react-doctor/no-chain-state-updates
-  // eslint-disable-next-line react-doctor/no-chain-state-updates
-  useEffect(() => {
+  const [prevDeps, setPrevDeps] = useState({ data, localValidPraktikums, existingMataKuliah });
+
+  if (
+    data !== prevDeps.data ||
+    localValidPraktikums !== prevDeps.localValidPraktikums ||
+    existingMataKuliah !== prevDeps.existingMataKuliah
+  ) {
+    setPrevDeps({ data, localValidPraktikums, existingMataKuliah });
     if (!data || data.length === 0) {
       setError('Data Excel Mata Kuliah kosong.');
-      return;
+    } else {
+      const transformed = validateMataKuliahData(data, localValidPraktikums, existingMataKuliah);
+      setParsedRows(transformed);
     }
-
-    const transformed = validateMataKuliahData(data, localValidPraktikums, existingMataKuliah);
-    setParsedRows(transformed);
-  }, [data, localValidPraktikums, existingMataKuliah]);
+  }
 
   const handleUpdateRow = (index: number, updates: Partial<MataKuliahCSVRow>) => {
     const newRows = [...parsedRows];

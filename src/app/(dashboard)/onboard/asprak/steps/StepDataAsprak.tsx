@@ -85,19 +85,21 @@ export default function StepDataAsprak({
   const [forceOverride, setForceOverride] = useState(false);
   const [showOverrideConfirm, setShowOverrideConfirm] = useState(false);
 
-  // eslint-disable-next-line react-doctor/no-chain-state-updates
-  useEffect(() => {
+  const [prevAsprakRows, setPrevAsprakRows] = useState(asprakRows);
+
+  if (asprakRows !== prevAsprakRows) {
+    setPrevAsprakRows(asprakRows);
     if (asprakRows.length === 0) {
       setPreviewRows([]);
-      return;
+    } else {
+      try {
+        const preview = validateAsprakData(asprakRows, existingCodes, existingNims, forceOverride);
+        setPreviewRows(preview);
+      } catch (e: any) {
+        setError(`Error saat menyiapkan data: ${e.message}`);
+      }
     }
-    try {
-      const preview = validateAsprakData(asprakRows, existingCodes, existingNims, forceOverride);
-      setPreviewRows(preview);
-    } catch (e: any) {
-      setError(`Error saat menyiapkan data: ${e.message}`);
-    }
-  }, [asprakRows, existingCodes, existingNims, forceOverride]);
+  }
 
   const processAndValidate = useCallback(
     async (file: File) => {

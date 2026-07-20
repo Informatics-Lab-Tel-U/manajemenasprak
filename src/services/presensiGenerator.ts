@@ -70,7 +70,10 @@ function createModul(
     { name: 'TES AKHIR', on: opsi.tesAkhir },
     { name: 'RATE', on: opsi.rate },
   ];
-  const selectedOptionNames = optionalCols.filter((col) => col.on).map((col) => col.name);
+  const selectedOptionNames = optionalCols.reduce<string[]>((acc, col) => {
+    if (col.on) acc.push(col.name);
+    return acc;
+  }, []);
   const numOption = selectedOptionNames.length;
 
   const totalColsThisModule = 4 + numOption;

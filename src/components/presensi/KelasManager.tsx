@@ -31,12 +31,13 @@ export function KelasManager({
             <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
           ) : kelasNames.length > 0 ? (
             kelasNames.map((kelas, idx) => (
-              <Badge key={`${kelas}-${idx}`} variant="secondary" className="flex items-center gap-1">
+              <Badge key={kelas} variant="secondary" className="flex items-center gap-1">
                 {kelas}
                 <button
                   type="button"
                   onClick={() => handleRemoveKelas(idx)}
                   className="hover:text-destructive"
+                  aria-label={`Hapus kelas ${kelas}`}
                 >
                   <X className="h-3 w-3" />
                 </button>

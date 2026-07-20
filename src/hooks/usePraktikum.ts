@@ -42,10 +42,8 @@ export function usePraktikum(initialData?: { praktikumNames: { id: string; nama:
     return await praktikumFetcher.bulkImportPraktikum(rows);
   }, []);
 
-  // eslint-disable-next-line react-doctor/no-chain-state-updates
   useEffect(() => {
     if (initialDataRef.current && praktikumNames.length > 0) {
-      setLoading(false);
       return;
     }
     fetchPraktikumNames();

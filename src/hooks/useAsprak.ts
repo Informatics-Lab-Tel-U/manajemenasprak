@@ -28,12 +28,15 @@ export function useAsprak(
 ) {
   const initialDataRef = useRef(initialData);
   const initialRenderRef = useRef(true);
+  const { activeTerm, setActiveTerm } = useTermStore();
+
+  const effectiveInitialTerm = initialTerm || initialData?.terms?.[0] || 'all';
+  const isInitialDataValid = !!(initialData?.asprakList && (activeTerm || '') === effectiveInitialTerm);
 
   const [data, setData] = useState<Asprak[]>(initialData?.asprakList || []);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!isInitialDataValid);
   const [error, setError] = useState<string | null>(null);
 
-  const { activeTerm, setActiveTerm } = useTermStore();
   const selectedTerm = activeTerm || '';
 
   const fetchAll = useCallback(async () => {
@@ -56,7 +59,7 @@ export function useAsprak(
     }
 
     setLoading(false);
-  }, [activeTerm]);
+  }, [selectedTerm]);
 
   const upsert = async (input: asprakFetcher.UpsertAsprakInput) => {
     const result = await asprakFetcher.upsertAsprak(input);
@@ -66,8 +69,6 @@ export function useAsprak(
     return result;
   };
 
-
-
   const deleteAsprak = async (id: number | string) => {
     const result = await asprakFetcher.deleteAsprak(id);
     if (result.ok) {
@@ -76,22 +77,16 @@ export function useAsprak(
     return result;
   };
 
-
-  // eslint-disable-next-line react-doctor/no-chain-state-updates
   useEffect(() => {
-    // On the first render, if we have initial data matching the selected term, skip fetching
-    const effectiveInitialTerm = initialTerm || initialDataRef.current?.terms?.[0] || 'all';
-
     if (initialRenderRef.current) {
       initialRenderRef.current = false;
-      if (initialDataRef.current?.asprakList && selectedTerm === effectiveInitialTerm) {
-        setLoading(false);
+      if (isInitialDataValid) {
         return;
       }
     }
 
     fetchAll();
-  }, [fetchAll, activeTerm, initialTerm]);
+  }, [fetchAll, isInitialDataValid]);
 
   return {
     data,

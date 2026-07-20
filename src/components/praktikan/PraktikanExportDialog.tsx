@@ -42,13 +42,15 @@ export default function PraktikanExportDialog({
   const [mode, setMode] = useState<'kelas' | 'all' | 'current'>('current');
   const [selectedKelas, setSelectedKelas] = useState('');
 
-  // Reset state when opened
-  useEffect(() => {
+  const [prevOpen, setPrevOpen] = useState(open);
+
+  if (open !== prevOpen) {
+    setPrevOpen(open);
     if (open) {
       setMode('current');
       setSelectedKelas(options.length > 0 ? options[0] : '');
     }
-  }, [open, options]);
+  }
 
   const isFormValid = () => {
     if (mode === 'kelas') {

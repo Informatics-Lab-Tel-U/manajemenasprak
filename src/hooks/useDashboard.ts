@@ -1,7 +1,7 @@
 /* eslint-disable react-doctor/exhaustive-deps */
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Jadwal, JadwalPengganti } from '@/types/database';
 import * as jadwalFetcher from '@/lib/fetchers/jadwalFetcher';
 import type { DashboardStats } from '@/services/databaseService';
@@ -33,11 +33,6 @@ export function useDashboard(
   const [stats, setStats] = useState<DashboardStats>(initialStats);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
-
-  // Track whether this is the initial mount — initial data is already
-  // correctly scoped from the server, so we skip the first refetch.
-  const [hasMounted, setHasMounted] = useState(false);
-
   const fetchDashboardData = useCallback(
     async (term: string) => {
       if (!term) return;
@@ -75,15 +70,17 @@ export function useDashboard(
     [activeModul]
   );
 
+  const hasMountedRef = useRef(false);
+
   useEffect(() => {
-    if (!hasMounted) {
+    if (!hasMountedRef.current) {
       // First render: SSR data is already correct for this term — skip refetch
-      setHasMounted(true);
+      hasMountedRef.current = true;
       return;
     }
     // User changed the term selector: refetch
     fetchDashboardData(selectedTerm);
-  }, [selectedTerm, fetchDashboardData, hasMounted]);
+  }, [selectedTerm, fetchDashboardData]);
 
   return {
     terms,

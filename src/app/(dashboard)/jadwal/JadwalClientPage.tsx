@@ -397,7 +397,7 @@ export default function JadwalClientPage({
                               <div className="flex flex-col w-full h-full min-h-[60px]">
                                 {jadwals.map((jadwal, idx) => (
                                   <ScheduleCell
-                                    key={jadwal.id || idx}
+                                    key={jadwal.id}
                                     jadwal={jadwal}
                                     onClick={() => setSelectedJadwal(jadwal)}
                                     showAsprakCount={true}

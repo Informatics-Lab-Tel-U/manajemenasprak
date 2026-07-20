@@ -103,10 +103,11 @@ export function usePresensiForm() {
   // Handlers
   const handleAddCustomKelas = () => {
     if (!customKelasInput.trim()) return;
+    const kelasNamesSet = new Set(kelasNames);
     const newClasses = customKelasInput
       .split(',')
       .map((c) => c.trim())
-      .filter((c) => c && !kelasNames.includes(c));
+      .filter((c) => c && !kelasNamesSet.has(c));
       
     if (newClasses.length > 0) {
       setKelasNames([...kelasNames, ...newClasses]);

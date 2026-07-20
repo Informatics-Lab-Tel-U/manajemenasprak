@@ -18,15 +18,23 @@ interface GlobalTermSelectorProps {
 export function GlobalTermSelector({ availableTerms, disabled = false }: GlobalTermSelectorProps) {
   const { activeTerm, setActiveTerm } = useTermStore();
   const [mounted, setMounted] = React.useState(false);
+  const [prevAvailableTerms, setPrevAvailableTerms] = React.useState(availableTerms);
 
-  React.useEffect(() => {
-    setMounted(true);
-    // Auto-select the latest term if no active term is set
-    // Or if the active term is somehow no longer in the available list
+  if (availableTerms !== prevAvailableTerms) {
+    setPrevAvailableTerms(availableTerms);
     if ((!activeTerm || !availableTerms.includes(activeTerm)) && availableTerms.length > 0) {
       setActiveTerm(availableTerms[0]);
     }
-  }, [activeTerm, availableTerms, setActiveTerm]);
+  }
+
+  // eslint-disable-next-line react-doctor/rendering-hydration-no-flicker
+  React.useEffect(() => {
+    setMounted(true);
+    if ((!activeTerm || !availableTerms.includes(activeTerm)) && availableTerms.length > 0) {
+      setActiveTerm(availableTerms[0]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (!mounted) {
     return (
