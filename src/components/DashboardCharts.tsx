@@ -296,9 +296,9 @@ export default function DashboardCharts({
                                 className="p-0 border-r border-border h-[60px] w-[120px] relative align-top"
                               >
                                 <div className="flex flex-col w-full h-full min-h-[60px]">
-                                  {jadwals.map((jadwal, idx) => (
+                                  {jadwals.map((jadwal) => (
                                     <ScheduleCell
-                                      key={jadwal.id || idx}
+                                      key={jadwal.id}
                                       jadwal={jadwal}
                                       showAsprakCount={true}
                                     />

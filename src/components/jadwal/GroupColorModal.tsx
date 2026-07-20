@@ -50,7 +50,10 @@ export function GroupColorModal({ isOpen, onClose, mataKuliahList }: GroupColorM
     [mataKuliahList]
   );
 
-  useEffect(() => {
+  const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
+
+  if (isOpen !== prevIsOpen) {
+    setPrevIsOpen(isOpen);
     if (isOpen) {
       const dbColors: Record<string, string> = {};
       uniqueGroups.forEach((groupName) => {
@@ -63,7 +66,7 @@ export function GroupColorModal({ isOpen, onClose, mataKuliahList }: GroupColorM
       setColors(dbColors);
       setInitialColors(dbColors);
     }
-  }, [isOpen, mataKuliahList, uniqueGroups]);
+  }
 
   const handleColorChange = (groupName: string, color: string) => {
     setColors((prev) => ({ ...prev, [groupName]: color }));

@@ -66,11 +66,17 @@ export default function AsprakOnboardClient({
 }: AsprakOnboardClientProps) {
   const { currentStep, setCurrentStep, setTargetTerm, completedSteps } = useAsprakOnboardStore();
   const [mounted, setMounted] = useState(false);
+  const [prevTerm, setPrevTerm] = useState(term);
 
+  if (term !== prevTerm) {
+    setPrevTerm(term);
+    setTargetTerm(term);
+  }
+
+  // eslint-disable-next-line react-doctor/rendering-hydration-no-flicker
   useEffect(() => {
     setMounted(true);
-    setTargetTerm(term);
-  }, [term, setTargetTerm]);
+  }, []);
 
   if (!mounted) return null;
 

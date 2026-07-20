@@ -50,8 +50,11 @@ export default function StepAsprak({ data, term, onNext, onPrev, onImport }: Ste
   const [showOverrideConfirm, setShowOverrideConfirm] = useState(false);
 
   // Asprak specific existing data fetched independently
+  // eslint-disable-next-line react-doctor/rerender-state-only-in-handlers
   const [existingCodes, setExistingCodes] = useState<string[]>([]);
+  // eslint-disable-next-line react-doctor/rerender-state-only-in-handlers
   const [existingNims, setExistingNims] = useState<ExistingNimInfo[]>([]);
+  // eslint-disable-next-line react-doctor/rerender-state-only-in-handlers
   const [existingAspraks, setExistingAspraks] = useState<ExistingAsprakInfo[]>([]);
 
   useEffect(() => {
@@ -87,21 +90,26 @@ export default function StepAsprak({ data, term, onNext, onPrev, onImport }: Ste
     };
   }, []);
 
-  // eslint-disable-next-line react-doctor/no-chain-state-updates
-  // eslint-disable-next-line react-doctor/no-chain-state-updates
-  useEffect(() => {
+  const [prevDeps, setPrevDeps] = useState({ data, existingCodes, existingNims, forceOverride });
+
+  if (
+    data !== prevDeps.data ||
+    existingCodes !== prevDeps.existingCodes ||
+    existingNims !== prevDeps.existingNims ||
+    forceOverride !== prevDeps.forceOverride
+  ) {
+    setPrevDeps({ data, existingCodes, existingNims, forceOverride });
     if (!data || data.length === 0) {
       setError('Data Excel Asprak kosong.');
-      return;
+    } else {
+      try {
+        const preview = validateAsprakData(data, existingCodes, existingNims, forceOverride);
+        setPreviewRows(preview);
+      } catch (e: any) {
+        setError(`Error saat menyiapkan data: ${e.message}`);
+      }
     }
-
-    try {
-      const preview = validateAsprakData(data, existingCodes, existingNims, forceOverride);
-      setPreviewRows(preview);
-    } catch (e: any) {
-      setError(`Error saat menyiapkan data: ${e.message}`);
-    }
-  }, [data, existingCodes, existingNims, existingAspraks, forceOverride]);
+  }
 
   const handleToggleSelect = useCallback((rowIndex: number) => {
     setPreviewRows((prev) => {

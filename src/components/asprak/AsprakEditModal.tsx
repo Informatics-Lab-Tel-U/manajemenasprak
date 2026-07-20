@@ -37,12 +37,21 @@ export default function AsprakEditModal({
   const [availablePraktikums, setAvailablePraktikums] = useState<Praktikum[]>([]);
   const [selectedPraktikumIds, setSelectedPraktikumIds] = useState<string[]>([]);
   const [newKode, setNewKode] = useState<string>(asprak.kode);
-  const [kodeError, setKodeError] = useState<string | null>(null);
   const [forceOverride, setForceOverride] = useState(false);
   const [saving, setSaving] = useState(false);
   const [existingAspraks, setExistingAspraks] = useState<{ kode: string; angkatan: number }[]>([]);
 
-  // eslint-disable-next-line react-doctor/no-chain-state-updates
+  const [prevOpen, setPrevOpen] = useState(open);
+
+  if (open !== prevOpen) {
+    setPrevOpen(open);
+    if (open) {
+      setSelectedPraktikumIds(assignments);
+      setNewKode(asprak.kode);
+      setForceOverride(false);
+    }
+  }
+
   useEffect(() => {
     const controller = new AbortController();
     if (open) {
@@ -58,65 +67,38 @@ export default function AsprakEditModal({
             setExistingAspraks(json.data);
           }
         });
-
-      // Initialize selection
-
-      setSelectedPraktikumIds(assignments);
-      setNewKode(asprak.kode);
-      setKodeError(null);
-      setForceOverride(false);
     }
     return () => controller.abort();
-  }, [open, getPraktikumByTerm, assignments, asprak.kode]);
+  }, [open, getPraktikumByTerm]);
 
-  const validateKodeMatch = (up: string, force: boolean) => {
+  const getKodeError = (up: string, force: boolean) => {
     const safeUp = up || '';
-    if (safeUp.length === 0) {
-      setKodeError('Kode tidak boleh kosong');
-      return;
-    }
-    if (safeUp.length !== 3) {
-      setKodeError('Kode Asisten harus persis 3 huruf');
-      return;
-    }
+    if (safeUp.length === 0) return 'Kode tidak boleh kosong';
+    if (safeUp.length !== 3) return 'Kode Asisten harus persis 3 huruf';
 
     if (!force) {
       let calculatedAngkatan = asprak.angkatan || 0;
       if (calculatedAngkatan > 0 && calculatedAngkatan < 100) calculatedAngkatan += 2000;
 
       const conflictInDB = existingAspraks.find((a) => {
-        return a.kode.toUpperCase() === up && a.kode.toUpperCase() !== asprak.kode.toUpperCase();
+        return a.kode.toUpperCase() === safeUp && a.kode.toUpperCase() !== asprak.kode.toUpperCase();
       });
 
       if (conflictInDB) {
         const gap = calculatedAngkatan - conflictInDB.angkatan;
-
-        if (gap < 1) {
-          setKodeError('KODE KERAS: Kode sedang aktif digunakan!');
-          return;
-        }
-
-        setKodeError('Kode digunakan (cooldown 1-6 thn)');
-        return;
+        if (gap < 1) return 'KODE KERAS: Kode sedang aktif digunakan!';
+        return 'Kode digunakan (cooldown 1-6 thn)';
       }
     }
-
-    setKodeError(null);
+    return null;
   };
+
+  const kodeError = getKodeError(newKode, forceOverride);
 
   const handleKodeChange = (val: string) => {
     const up = val.toUpperCase().slice(0, 3);
     setNewKode(up);
-    validateKodeMatch(up, forceOverride);
   };
-
-  // React to force override changes
-  useEffect(() => {
-    if (open && newKode) {
-      validateKodeMatch(newKode, forceOverride);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [forceOverride, open, existingAspraks]);
 
   const handleSave = async () => {
     if (newKode.length !== 3 || kodeError) {

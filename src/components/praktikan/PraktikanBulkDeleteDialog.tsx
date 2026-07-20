@@ -44,14 +44,16 @@ export default function PraktikanBulkDeleteDialog({
   const [selectedKelas, setSelectedKelas] = useState('');
   const [confirmText, setConfirmText] = useState('');
 
-  // Reset state when opened
-  useEffect(() => {
+  const [prevOpen, setPrevOpen] = useState(open);
+
+  if (open !== prevOpen) {
+    setPrevOpen(open);
     if (open) {
       setMode('kelas');
       setSelectedKelas(options.length > 0 ? options[0] : '');
       setConfirmText('');
     }
-  }, [open, options]);
+  }
 
   const isFormValid = () => {
     if (mode === 'kelas') {

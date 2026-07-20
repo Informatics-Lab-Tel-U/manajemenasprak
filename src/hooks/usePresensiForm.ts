@@ -3,11 +3,23 @@ import { toast } from 'sonner';
 import { useTermStore } from '@/store/useTermStore';
 import { getPraktikumList, getPraktikumClasses } from '@/app/actions/presensi';
 
+export interface PresensiComponent {
+  enabled: boolean;
+  weight: number;
+  inputType: 'number' | 'boolean';
+}
+
 export interface PresensiFormOptions {
-  tp: boolean;
-  jurnal: boolean;
-  tesAkhir: boolean;
+  tp: PresensiComponent;
+  jurnal: PresensiComponent;
+  tesAkhir: PresensiComponent;
   rate: boolean;
+}
+
+export interface KelasSetting {
+  tanggalMulai: Date | undefined;
+  jumlahPraktikan: number;
+  jumlahAsprak: number;
 }
 
 export function usePresensiForm() {
@@ -16,11 +28,13 @@ export function usePresensiForm() {
   // Basic Form State
   const [namaFile, setNamaFile] = useState('presensi');
   const [jumlahModul, setJumlahModul] = useState(8);
-  const [tanggalMulai, setTanggalMulai] = useState<Date[]>([]);
+  const [globalJumlahPraktikan, setGlobalJumlahPraktikan] = useState(40);
+  const [globalJumlahAsprak, setGlobalJumlahAsprak] = useState(4);
+  const [kelasSettings, setKelasSettings] = useState<KelasSetting[]>([]);
   const [opsi, setOpsi] = useState<PresensiFormOptions>({
-    tp: true,
-    jurnal: true,
-    tesAkhir: true,
+    tp: { enabled: true, weight: 30, inputType: 'number' },
+    jurnal: { enabled: true, weight: 40, inputType: 'number' },
+    tesAkhir: { enabled: true, weight: 30, inputType: 'number' },
     rate: true,
   });
 
@@ -58,7 +72,7 @@ export function usePresensiForm() {
     async function fetchKelas() {
       if (!selectedPraktikumId) {
         setKelasNames([]);
-        setTanggalMulai([]);
+        setKelasSettings([]);
         return;
       }
       setLoadingKelas(true);
@@ -73,7 +87,13 @@ export function usePresensiForm() {
         setSelectedJurusan('all');
 
         setKelasNames(res.data);
-        setTanggalMulai(Array.from({ length: res.data.length }));
+        setKelasSettings(
+          Array.from({ length: res.data.length }).map(() => ({
+            tanggalMulai: undefined,
+            jumlahPraktikan: globalJumlahPraktikan,
+            jumlahAsprak: globalJumlahAsprak,
+          }))
+        );
 
         // Auto-set nama file based on praktikum name
         const p = praktikumList.find((p) => p.id === selectedPraktikumId);
@@ -84,7 +104,7 @@ export function usePresensiForm() {
       setLoadingKelas(false);
     }
     fetchKelas();
-  }, [selectedPraktikumId, praktikumList]);
+  }, [selectedPraktikumId, praktikumList, globalJumlahPraktikan, globalJumlahAsprak]);
 
   // 3. Filter Kelas by Jurusan
   useEffect(() => {
@@ -92,27 +112,44 @@ export function usePresensiForm() {
 
     if (selectedJurusan === 'all') {
       setKelasNames(allFetchedKelas);
-      setTanggalMulai(Array.from({ length: allFetchedKelas.length }));
+      setKelasSettings(
+        Array.from({ length: allFetchedKelas.length }).map(() => ({
+          tanggalMulai: undefined,
+          jumlahPraktikan: globalJumlahPraktikan,
+          jumlahAsprak: globalJumlahAsprak,
+        }))
+      );
     } else {
       const filtered = allFetchedKelas.filter((k) => k.startsWith(`${selectedJurusan}-`));
       setKelasNames(filtered);
-      setTanggalMulai(Array.from({ length: filtered.length }));
+      setKelasSettings(
+        Array.from({ length: filtered.length }).map(() => ({
+          tanggalMulai: undefined,
+          jumlahPraktikan: globalJumlahPraktikan,
+          jumlahAsprak: globalJumlahAsprak,
+        }))
+      );
     }
-  }, [selectedJurusan, allFetchedKelas]);
+  }, [selectedJurusan, allFetchedKelas, globalJumlahPraktikan, globalJumlahAsprak]);
 
   // Handlers
   const handleAddCustomKelas = () => {
     if (!customKelasInput.trim()) return;
+    const kelasNamesSet = new Set(kelasNames);
     const newClasses = customKelasInput
       .split(',')
       .map((c) => c.trim())
-      .filter((c) => c && !kelasNames.includes(c));
+      .filter((c) => c && !kelasNamesSet.has(c));
       
     if (newClasses.length > 0) {
       setKelasNames([...kelasNames, ...newClasses]);
-      setTanggalMulai([
-        ...tanggalMulai,
-        ...Array.from({ length: newClasses.length }).map(() => new Date()),
+      setKelasSettings([
+        ...kelasSettings,
+        ...Array.from({ length: newClasses.length }).map(() => ({
+          tanggalMulai: new Date(),
+          jumlahPraktikan: globalJumlahPraktikan,
+          jumlahAsprak: globalJumlahAsprak,
+        })),
       ]);
     }
     setCustomKelasInput('');
@@ -120,21 +157,33 @@ export function usePresensiForm() {
 
   const handleRemoveKelas = (indexToRemove: number) => {
     setKelasNames(kelasNames.filter((_, i) => i !== indexToRemove));
-    setTanggalMulai(tanggalMulai.filter((_, i) => i !== indexToRemove));
+    setKelasSettings(kelasSettings.filter((_, i) => i !== indexToRemove));
   };
 
-  const setTanggal = (index: number, date: Date | undefined) => {
-    if (!date) return;
-    const newDates = [...tanggalMulai];
-    newDates[index] = date;
-    setTanggalMulai(newDates);
+  const updateKelasSetting = (index: number, field: keyof KelasSetting, value: any) => {
+    const newSettings = [...kelasSettings];
+    newSettings[index] = { ...newSettings[index], [field]: value };
+    setKelasSettings(newSettings);
+  };
+
+  const applyGlobalToAll = () => {
+    setKelasSettings(
+      kelasSettings.map((s) => ({
+        ...s,
+        jumlahPraktikan: globalJumlahPraktikan,
+        jumlahAsprak: globalJumlahAsprak,
+      }))
+    );
+    toast.success('Parameter global diterapkan ke semua kelas');
   };
 
   return {
     state: {
       namaFile,
       jumlahModul,
-      tanggalMulai,
+      globalJumlahPraktikan,
+      globalJumlahAsprak,
+      kelasSettings,
       opsi,
       praktikumList,
       selectedPraktikumId,
@@ -148,6 +197,8 @@ export function usePresensiForm() {
     setters: {
       setNamaFile,
       setJumlahModul,
+      setGlobalJumlahPraktikan,
+      setGlobalJumlahAsprak,
       setOpsi,
       setSelectedPraktikumId,
       setSelectedJurusan,
@@ -156,7 +207,8 @@ export function usePresensiForm() {
     handlers: {
       handleAddCustomKelas,
       handleRemoveKelas,
-      setTanggal,
+      updateKelasSetting,
+      applyGlobalToAll,
     },
   };
 }

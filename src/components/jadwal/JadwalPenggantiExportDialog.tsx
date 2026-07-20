@@ -42,13 +42,15 @@ export default function JadwalPenggantiExportDialog({
   const [mode, setMode] = useState<'matakuliah' | 'all' | 'current'>('current');
   const [selectedMataKuliah, setSelectedMataKuliah] = useState('');
 
-  // Reset state when opened
-  useEffect(() => {
+  const [prevOpen, setPrevOpen] = useState(open);
+
+  if (open !== prevOpen) {
+    setPrevOpen(open);
     if (open) {
       setMode('current');
       setSelectedMataKuliah(options.length > 0 ? options[0] : '');
     }
-  }, [open, options]);
+  }
 
   const isFormValid = () => {
     if (mode === 'matakuliah') {

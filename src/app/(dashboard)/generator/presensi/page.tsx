@@ -20,23 +20,30 @@ import { OptionsToggles } from '@/components/presensi/OptionsToggles';
 export default function PresensiPage() {
   const { state, setters, handlers } = usePresensiForm();
 
+  // Calculate total weight (only for 'number' input types)
+  const totalWeight =
+    (state.opsi.tp.enabled && state.opsi.tp.inputType === 'number' ? state.opsi.tp.weight : 0) +
+    (state.opsi.jurnal.enabled && state.opsi.jurnal.inputType === 'number' ? state.opsi.jurnal.weight : 0) +
+    (state.opsi.tesAkhir.enabled && state.opsi.tesAkhir.inputType === 'number' ? state.opsi.tesAkhir.weight : 0);
+
+  const isWeightValid = totalWeight === 100 || totalWeight === 0; // 0 is valid if nothing is checked or all are YA/TIDAK
+
   const handleGenerate = async () => {
     if (!state.selectedPraktikumId || state.kelasNames.length === 0) {
       toast.error('Silakan pilih Praktikum terlebih dahulu');
       return;
     }
+    if (!isWeightValid) {
+      toast.error('Total bobot nilai harus 100%');
+      return;
+    }
 
     try {
-      // Ensure tanggalMulai has enough dates, fallback to today
-      const dates = Array.from({ length: state.kelasNames.length }).map(
-        (_, i) => state.tanggalMulai[i] || new Date()
-      );
-
       await generatePresensiExcel({
         namaFile: state.namaFile,
         kelasNames: state.kelasNames,
         jumlahModul: state.jumlahModul,
-        tanggalMulai: dates,
+        kelasSettings: state.kelasSettings,
         opsi: state.opsi,
       });
       toast.success('File excel berhasil di-generate dan diunduh!');
@@ -104,42 +111,92 @@ export default function PresensiPage() {
                 onChange={(e) => setters.setJumlahModul(Number(e.target.value))}
               />
             </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="globalJumlahPraktikan">Default Praktikan</Label>
+              <Input
+                id="globalJumlahPraktikan"
+                type="number"
+                min={1}
+                value={state.globalJumlahPraktikan}
+                onChange={(e) => setters.setGlobalJumlahPraktikan(Number(e.target.value))}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="globalJumlahAsprak">Default Asprak</Label>
+              <Input
+                id="globalJumlahAsprak"
+                type="number"
+                min={1}
+                value={state.globalJumlahAsprak}
+                onChange={(e) => setters.setGlobalJumlahAsprak(Number(e.target.value))}
+              />
+            </div>
+            
+            <div className="sm:col-span-2 flex justify-end">
+              <Button variant="secondary" onClick={handlers.applyGlobalToAll} disabled={state.kelasNames.length === 0}>
+                Terapkan Default ke Semua Kelas
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
         {state.kelasNames.length > 0 && (
           <Card>
             <CardHeader>
-              <CardTitle>Tanggal Mulai per Kelas</CardTitle>
-              <CardDescription>Atur tanggal awal untuk modul 1 di setiap kelas</CardDescription>
+              <CardTitle>Pengaturan per Kelas</CardTitle>
+              <CardDescription>Atur tanggal, jumlah praktikan, dan jumlah asprak spesifik tiap kelas</CardDescription>
             </CardHeader>
-            <CardContent className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
+            <CardContent className="space-y-4">
               {state.kelasNames.map((kelasName, i) => (
-                <div key={kelasName} className="flex flex-col space-y-2">
-                  <Label>Tanggal Kelas {kelasName}</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant={'outline'}
-                        className={cn(
-                          'w-full justify-start text-left font-normal',
-                          !state.tanggalMulai[i] && 'text-muted-foreground'
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {state.tanggalMulai[i]
-                          ? format(state.tanggalMulai[i], 'PPP')
-                          : <span>Pilih tanggal</span>}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={state.tanggalMulai[i]}
-                        onSelect={(date) => handlers.setTanggal(i, date)}
-                      />
-                    </PopoverContent>
-                  </Popover>
+                <div key={kelasName} className="flex flex-col md:flex-row gap-4 items-end border p-4 rounded-md bg-muted/20">
+                  <div className="w-full md:w-1/3 flex flex-col space-y-2">
+                    <Label>Kelas {kelasName}</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant={'outline'}
+                          className={cn(
+                            'w-full justify-start text-left font-normal',
+                            !state.kelasSettings[i]?.tanggalMulai && 'text-muted-foreground'
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {state.kelasSettings[i]?.tanggalMulai
+                            ? format(state.kelasSettings[i].tanggalMulai, 'PPP')
+                            : <span>Pilih tanggal</span>}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <Calendar
+                          mode="single"
+                          selected={state.kelasSettings[i]?.tanggalMulai}
+                          onSelect={(date) => handlers.updateKelasSetting(i, 'tanggalMulai', date)}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                  
+                  <div className="w-full md:w-1/3 flex flex-col space-y-2">
+                    <Label>Jumlah Praktikan</Label>
+                    <Input
+                      type="number"
+                      min={1}
+                      value={state.kelasSettings[i]?.jumlahPraktikan || 0}
+                      onChange={(e) => handlers.updateKelasSetting(i, 'jumlahPraktikan', Number(e.target.value))}
+                    />
+                  </div>
+                  
+                  <div className="w-full md:w-1/3 flex flex-col space-y-2">
+                    <Label>Jumlah Asprak</Label>
+                    <Input
+                      type="number"
+                      min={1}
+                      value={state.kelasSettings[i]?.jumlahAsprak || 0}
+                      onChange={(e) => handlers.updateKelasSetting(i, 'jumlahAsprak', Number(e.target.value))}
+                    />
+                  </div>
                 </div>
               ))}
             </CardContent>
@@ -155,9 +212,14 @@ export default function PresensiPage() {
           </CardHeader>
           <CardContent>
             <OptionsToggles opsi={state.opsi} setOpsi={setters.setOpsi} />
+            {!isWeightValid && totalWeight > 0 && (
+              <p className="text-sm text-destructive mt-4">
+                Total bobot saat ini: {totalWeight}%. Total bobot harus tepat 100%.
+              </p>
+            )}
           </CardContent>
           <CardFooter className="bg-muted/50 flex justify-end p-4 border-t">
-            <Button size="lg" onClick={handleGenerate} disabled={state.kelasNames.length === 0}>
+            <Button size="lg" onClick={handleGenerate} disabled={state.kelasNames.length === 0 || (!isWeightValid && totalWeight > 0)}>
               Generate File Excel
             </Button>
           </CardFooter>

@@ -7,11 +7,15 @@ export interface PresensiOptions {
   namaFile: string;
   kelasNames: string[];
   jumlahModul: number;
-  tanggalMulai: Date[];
+  kelasSettings: {
+    tanggalMulai?: Date;
+    jumlahPraktikan: number;
+    jumlahAsprak: number;
+  }[];
   opsi: {
-    tp: boolean;
-    jurnal: boolean;
-    tesAkhir: boolean;
+    tp: { enabled: boolean; weight: number; inputType: 'number' | 'boolean' };
+    jurnal: { enabled: boolean; weight: number; inputType: 'number' | 'boolean' };
+    tesAkhir: { enabled: boolean; weight: number; inputType: 'number' | 'boolean' };
     rate: boolean;
   };
 }
@@ -25,6 +29,17 @@ function applyHeaderStyle(cell: ExcelJS.Cell) {
     fgColor: { argb: PRESENSI_STYLES.COLORS.HEADER_BG },
   };
   cell.border = PRESENSI_STYLES.BORDERS;
+}
+
+function getRowDistribution(totalRows: number, numGroups: number): number[] {
+  if (numGroups <= 0) return [totalRows];
+  const base = Math.floor(totalRows / numGroups);
+  const remainder = totalRows % numGroups;
+  const dist: number[] = [];
+  for (let i = 0; i < numGroups; i++) {
+    dist.push(base + (i < remainder ? 1 : 0));
+  }
+  return dist;
 }
 
 function addBase(sheet: ExcelJS.Worksheet) {
@@ -65,12 +80,15 @@ function createModul(
   modulNum: number
 ) {
   const optionalCols: { name: string; on: boolean }[] = [
-    { name: 'TP', on: opsi.tp },
-    { name: 'JURNAL', on: opsi.jurnal },
-    { name: 'TES AKHIR', on: opsi.tesAkhir },
+    { name: 'TP', on: opsi.tp.enabled },
+    { name: 'JURNAL', on: opsi.jurnal.enabled },
+    { name: 'TES AKHIR', on: opsi.tesAkhir.enabled },
     { name: 'RATE', on: opsi.rate },
   ];
-  const selectedOptionNames = optionalCols.filter((col) => col.on).map((col) => col.name);
+  const selectedOptionNames = optionalCols.reduce<string[]>((acc, col) => {
+    if (col.on) acc.push(col.name);
+    return acc;
+  }, []);
   const numOption = selectedOptionNames.length;
 
   const totalColsThisModule = 4 + numOption;
@@ -178,49 +196,99 @@ function injectRowValidationAndFormulas(
     };
 
     // TOTAL NILAI Formula
-    let tpCol = '', jurnalCol = '';
+    let tpCol = '', jurnalCol = '', tesAkhirCol = '';
     let currentOffset = startCol + 3;
-    if (opsi.tp) {
+    if (opsi.tp.enabled) {
       tpCol = sheet.getColumn(currentOffset).letter;
+      if (opsi.tp.inputType === 'boolean') {
+        sheet.getCell(`${tpCol}${r}`).dataValidation = {
+          type: 'list', allowBlank: true, formulae: PRESENSI_STRINGS.YA_TIDAK_OPTIONS, showErrorMessage: true, showInputMessage: true,
+        };
+      }
       currentOffset++;
     }
-    if (opsi.jurnal) {
+    if (opsi.jurnal.enabled) {
       jurnalCol = sheet.getColumn(currentOffset).letter;
+      if (opsi.jurnal.inputType === 'boolean') {
+        sheet.getCell(`${jurnalCol}${r}`).dataValidation = {
+          type: 'list', allowBlank: true, formulae: PRESENSI_STRINGS.YA_TIDAK_OPTIONS, showErrorMessage: true, showInputMessage: true,
+        };
+      }
+      currentOffset++;
+    }
+    if (opsi.tesAkhir.enabled) {
+      tesAkhirCol = sheet.getColumn(currentOffset).letter;
+      if (opsi.tesAkhir.inputType === 'boolean') {
+        sheet.getCell(`${tesAkhirCol}${r}`).dataValidation = {
+          type: 'list', allowBlank: true, formulae: PRESENSI_STRINGS.YA_TIDAK_OPTIONS, showErrorMessage: true, showInputMessage: true,
+        };
+      }
       currentOffset++;
     }
 
     const totalNilaiCol = sheet.getColumn(startCol + totalColsThisModule - 1).letter;
     const totalNilaiCell = sheet.getCell(`${totalNilaiCol}${r}`);
 
-    if (tpCol && jurnalCol) {
-      totalNilaiCell.value = { formula: `${tpCol}${r}*0.5+${jurnalCol}${r}*0.5`, result: 0 };
-    } else if (tpCol) {
-      totalNilaiCell.value = { formula: `${tpCol}${r}`, result: 0 };
-    } else if (jurnalCol) {
-      totalNilaiCell.value = { formula: `${jurnalCol}${r}`, result: 0 };
+    const formulaParts = [];
+    if (tpCol && opsi.tp.inputType === 'number' && opsi.tp.weight > 0) {
+      formulaParts.push(`${tpCol}${r}*${opsi.tp.weight / 100}`);
+    }
+    if (jurnalCol && opsi.jurnal.inputType === 'number' && opsi.jurnal.weight > 0) {
+      formulaParts.push(`${jurnalCol}${r}*${opsi.jurnal.weight / 100}`);
+    }
+    if (tesAkhirCol && opsi.tesAkhir.inputType === 'number' && opsi.tesAkhir.weight > 0) {
+      formulaParts.push(`${tesAkhirCol}${r}*${opsi.tesAkhir.weight / 100}`);
+    }
+
+    if (formulaParts.length > 0) {
+      totalNilaiCell.value = { formula: formulaParts.join('+'), result: 0 };
+    } else {
+      totalNilaiCell.value = 0; // Default if nothing is weighted
     }
   }
 }
 
-function applyVerticalMerges(sheet: ExcelJS.Worksheet, numModules: number, totalColsThisModule: number) {
-  // Merge KODE ASPRAK and KEHADIRAN ASPRAK vertically every 7 rows
-  for (let startRow = 4; startRow <= 49; startRow += 7) {
-    let endRow = startRow + 6;
-    if (endRow > 49) endRow = 49;
+function applyVerticalMerges(
+  sheet: ExcelJS.Worksheet,
+  numModules: number,
+  totalColsThisModule: number,
+  dist: number[]
+) {
+  let currentRow = 4;
+  for (let groupIndex = 0; groupIndex < dist.length; groupIndex++) {
+    const rowsInGroup = dist[groupIndex];
+    if (rowsInGroup <= 0) continue;
 
-    sheet.mergeCells(startRow, 4, endRow, 4); // Col D (KODE ASPRAK)
+    const startRow = currentRow;
+    const endRow = currentRow + rowsInGroup - 1;
+
+    // Merge KODE ASPRAK (Col D)
+    if (endRow > startRow) {
+      sheet.mergeCells(startRow, 4, endRow, 4);
+    }
     sheet.getCell(startRow, 4).alignment = { horizontal: 'center', vertical: 'middle' };
 
+    // Merge KEHADIRAN ASPRAK
     for (let m = 0; m < numModules; m++) {
       const startCol = m * totalColsThisModule + 5;
-      sheet.mergeCells(startRow, startCol, endRow, startCol); // KEHADIRAN ASPRAK
+      if (endRow > startRow) {
+        sheet.mergeCells(startRow, startCol, endRow, startCol);
+      }
       sheet.getCell(startRow, startCol).alignment = { horizontal: 'center', vertical: 'middle' };
     }
+
+    currentRow += rowsInGroup;
   }
 }
 
-function formatRows(sheet: ExcelJS.Worksheet, numModules: number, opsi: PresensiOptions['opsi']) {
-  const numOption = [opsi.tp, opsi.jurnal, opsi.tesAkhir, opsi.rate].filter(Boolean).length;
+function formatRows(
+  sheet: ExcelJS.Worksheet,
+  numModules: number,
+  opsi: PresensiOptions['opsi'],
+  jumlahPraktikan: number,
+  jumlahAsprak: number
+) {
+  const numOption = [opsi.tp.enabled, opsi.jurnal.enabled, opsi.tesAkhir.enabled, opsi.rate].filter(Boolean).length;
   const totalColsThisModule = 4 + numOption;
   const rataCol = 5 + (numModules * totalColsThisModule);
 
@@ -237,27 +305,33 @@ function formatRows(sheet: ExcelJS.Worksheet, numModules: number, opsi: Presensi
     totalNilaiColLetters.push(sheet.getColumn(startCol + totalColsThisModule - 1).letter);
   }
 
-  // Generate 46 placeholder rows (Row 4 to 49)
-  for (let r = 4; r <= 49; r++) {
-    // 7 rows per asprak group banding
-    const isBand1 = Math.floor((r - 4) / 7) % 2 === 0;
+  const dist = getRowDistribution(jumlahPraktikan, jumlahAsprak);
+  let currentRow = 4;
+
+  for (let groupIndex = 0; groupIndex < dist.length; groupIndex++) {
+    const rowsInGroup = dist[groupIndex];
+    const isBand1 = groupIndex % 2 === 0;
     const fillColor = isBand1 ? PRESENSI_STYLES.COLORS.BAND_1_BG : PRESENSI_STYLES.COLORS.BAND_2_BG;
 
-    injectRowValidationAndFormulas(sheet, r, numModules, totalColsThisModule, opsi, fillColor);
+    for (let i = 0; i < rowsInGroup; i++) {
+      const r = currentRow + i;
+      injectRowValidationAndFormulas(sheet, r, numModules, totalColsThisModule, opsi, fillColor);
 
-    // RATA RATA Formula
-    const rataCellRow = sheet.getCell(r, rataCol);
-    rataCellRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: fillColor } };
-    rataCellRow.border = PRESENSI_STYLES.BORDERS;
-    rataCellRow.alignment = { horizontal: 'center', vertical: 'middle' };
+      // RATA RATA Formula
+      const rataCellRow = sheet.getCell(r, rataCol);
+      rataCellRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: fillColor } };
+      rataCellRow.border = PRESENSI_STYLES.BORDERS;
+      rataCellRow.alignment = { horizontal: 'center', vertical: 'middle' };
 
-    if (totalNilaiColLetters.length > 0) {
-      const avgCells = totalNilaiColLetters.map(col => `${col}${r}`).join(',');
-      rataCellRow.value = { formula: `AVERAGE(${avgCells})`, result: 0 };
+      if (totalNilaiColLetters.length > 0) {
+        const avgCells = totalNilaiColLetters.map((col) => `${col}${r}`).join(',');
+        rataCellRow.value = { formula: `AVERAGE(${avgCells})`, result: 0 };
+      }
     }
+    currentRow += rowsInGroup;
   }
 
-  applyVerticalMerges(sheet, numModules, totalColsThisModule);
+  applyVerticalMerges(sheet, numModules, totalColsThisModule, dist);
 }
 
 export async function generatePresensiExcel(options: PresensiOptions) {
@@ -285,11 +359,18 @@ export async function generatePresensiExcel(options: PresensiOptions) {
   });
 
   worksheets.forEach((ws, idxWs) => {
-    const startDate = options.tanggalMulai[idxWs] || new Date();
+    const setting = options.kelasSettings[idxWs];
+    const startDate = setting?.tanggalMulai || new Date();
     for (let iModul = 0; iModul < options.jumlahModul; iModul++) {
       createModul(ws, startDate, options.opsi, iModul + 1);
     }
-    formatRows(ws, options.jumlahModul, options.opsi);
+    formatRows(
+      ws,
+      options.jumlahModul,
+      options.opsi,
+      setting?.jumlahPraktikan || 40,
+      setting?.jumlahAsprak || 4
+    );
   });
 
   const buffer = await workbook.xlsx.writeBuffer();

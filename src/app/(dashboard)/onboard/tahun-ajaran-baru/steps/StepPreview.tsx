@@ -133,8 +133,8 @@ export default function PreviewStep() {
                 </div>
                 {mks.length > 0 ? (
                   <div className="pl-8 space-y-2">
-                    {mks.map((mk, idx) => (
-                      <div key={mk.id || idx} className="flex items-center text-sm border-l-2 pl-3 py-1">
+                    {mks.map((mk) => (
+                      <div key={mk.id || mk.nama_lengkap} className="flex items-center text-sm border-l-2 pl-3 py-1">
                         <span>{mk.nama_lengkap} <span className="text-muted-foreground">- {mk.program_studi}</span></span>
                       </div>
                     ))}

@@ -91,9 +91,10 @@ export default function MataKuliahManualModal({
     };
   }, [term, open, isTermValid]);
 
-  // Reset form on open
-  // eslint-disable-next-line react-doctor/no-chain-state-updates
-  useEffect(() => {
+  const [prevOpen, setPrevOpen] = useState(open);
+
+  if (open !== prevOpen) {
+    setPrevOpen(open);
     if (open) {
       setTermYear(initialYear);
       setTermSem(initialSem);
@@ -104,7 +105,7 @@ export default function MataKuliahManualModal({
       setDosenKoor('');
       setWarna('#3a5edb');
     }
-  }, [open, initialYear, initialSem]);
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
