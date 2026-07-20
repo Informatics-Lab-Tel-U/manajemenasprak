@@ -15,8 +15,9 @@ export function addAsprakBelumNilaiSheet(
   ws.properties.tabColor = { argb: PRESENSI_STYLES.COLORS.TAB_LIST_ASPRAK }; // Biru muda
 
   // Lebar kolom
-  ws.getColumn(1).width = 44;
-  ws.getColumn(2).width = 18;
+  ws.getColumn(1).width = 4; // Kolom A (margin)
+  ws.getColumn(2).width = 44; // Kolom B (Nama Lengkap)
+  ws.getColumn(3).width = 18; // Kolom C (Kode)
 
   // Header style: dark blue, bold, white text
   const headerStyle: Partial<ExcelJS.Style> = {
@@ -26,36 +27,29 @@ export function addAsprakBelumNilaiSheet(
     border: PRESENSI_STYLES.BORDERS,
   };
 
-  // Row 1: Headers
-  const headerRow = ws.getRow(1);
-  const cellNama = headerRow.getCell(1);
+  // Row 2: Headers (B2, C2)
+  const headerRow = ws.getRow(2);
+  const cellNama = headerRow.getCell(2);
   cellNama.value = 'Nama Lengkap';
   Object.assign(cellNama, headerStyle);
 
-  const cellKode = headerRow.getCell(2);
+  const cellKode = headerRow.getCell(3);
   cellKode.value = 'Kode';
   Object.assign(cellKode, headerStyle);
   headerRow.height = 20;
 
-  // Data rows
-  const bandBg1 = PRESENSI_STYLES.COLORS.BAND_1_BG;
-  const bandBg2 = PRESENSI_STYLES.COLORS.BAND_2_BG;
-
+  // Data rows (Mulai dari baris 3, warna putih / default)
   asprakList.forEach((asprak, idx) => {
-    const rowNum = idx + 2;
+    const rowNum = idx + 3;
     const row = ws.getRow(rowNum);
-    const isEven = idx % 2 === 0;
-    const fillColor = isEven ? bandBg1 : bandBg2;
 
-    const namaCell = row.getCell(1);
+    const namaCell = row.getCell(2);
     namaCell.value = asprak.nama;
-    namaCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: fillColor } };
     namaCell.border = PRESENSI_STYLES.BORDERS;
     namaCell.alignment = { vertical: 'middle' };
 
-    const kodeCell = row.getCell(2);
+    const kodeCell = row.getCell(3);
     kodeCell.value = asprak.kode;
-    kodeCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: fillColor } };
     kodeCell.border = PRESENSI_STYLES.BORDERS;
     kodeCell.alignment = { vertical: 'middle', horizontal: 'center' };
   });
@@ -64,10 +58,10 @@ export function addAsprakBelumNilaiSheet(
   if (asprakList.length > 0) {
     ws.addTable({
       name: 'ASPRAK',
-      ref: 'A1',
+      ref: 'B2',
       headerRow: true,
       style: {
-        theme: 'TableStyleMedium2',
+        theme: 'TableStyleLight1', // Style tabel terang/putih
         showRowStripes: false,
       },
       columns: [

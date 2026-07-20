@@ -435,7 +435,7 @@ export function addRekapBroadcastEngine(
       const fKode = `_xlfn.LET(_xlpm.ROW_OFFSET,${groupStartRow - 4},_xlpm.COL_OFFSET,($E$12-1)*$E$16,_xlpm.KODE,TRIM(OFFSET(INDIRECT("'"&$N${currentRow}&"'!E4"),_xlpm.ROW_OFFSET,_xlpm.COL_OFFSET)),IF(_xlpm.KODE="","",_xlpm.KODE))`;
       ws.getCell(`J${currentRow}`).value = { formula: fKode, result: '' };
 
-      const fNama = `IFERROR(INDEX('LIST ASPRAK'!$A$2:$A$1000,MATCH($J${currentRow},'LIST ASPRAK'!$B$2:$B$1000,0)),"")`;
+      const fNama = `IFERROR(INDEX('LIST ASPRAK'!$B$3:$B$1000,MATCH($J${currentRow},'LIST ASPRAK'!$C$3:$C$1000,0)),"")`;
       ws.getCell(`I${currentRow}`).value = { formula: fNama, result: '' };
       ws.getCell(`K${currentRow}`).value = kelasName;
 
