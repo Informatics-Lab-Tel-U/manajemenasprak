@@ -77,15 +77,8 @@ export function addRekapSheet(
 
   // ─── Row 1: Header row (frozen) ────────────────────────────────────────────
   const headerStyle: Partial<ExcelJS.Style> = {
-    font: { bold: true, color: { argb: 'FFFFFFFF' } },
+    font: { bold: true, color: { argb: PRESENSI_STYLES.COLORS.HEADER_FG } },
     fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: PRESENSI_STYLES.COLORS.HEADER_BG } },
-    alignment: { vertical: 'middle', horizontal: 'center', wrapText: true },
-    border: PRESENSI_STYLES.BORDERS,
-  };
-
-  const lightHeaderStyle: Partial<ExcelJS.Style> = {
-    font: { bold: true, color: { argb: PRESENSI_STYLES.COLORS.HEADER_BG } },
-    fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFDAEEF3' } },
     alignment: { vertical: 'middle', horizontal: 'center', wrapText: true },
     border: PRESENSI_STYLES.BORDERS,
   };
@@ -93,11 +86,10 @@ export function addRekapSheet(
   const row2 = ws.getRow(2);
   row2.height = 36;
 
-  function setHeaderCell(row: ExcelJS.Row, colIdx: number, value: string, dark = true) {
+  function setHeaderCell(row: ExcelJS.Row, colIdx: number, value: string) {
     const cell = row.getCell(colIdx);
     cell.value = value;
-    const style = dark ? headerStyle : lightHeaderStyle;
-    Object.assign(cell, style);
+    Object.assign(cell, headerStyle);
   }
 
   const startDate = kelasSettings[0]?.tanggalMulai || new Date();
@@ -115,7 +107,7 @@ export function addRekapSheet(
   setHeaderCell(row2, COL_KELAS, 'Kelas');
 
   for (let m = 0; m < jumlahModul; m++) {
-    setHeaderCell(row2, COL_MODUL1 + m, `Modul ${m + 1}`, false);
+    setHeaderCell(row2, COL_MODUL1 + m, `Modul ${m + 1}`);
   }
 
   ws.views = [{ state: 'frozen', ySplit: 2, xSplit: 4, topLeftCell: 'E3' }];
