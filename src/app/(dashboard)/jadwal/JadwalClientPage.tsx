@@ -74,9 +74,9 @@ function JadwalTableSkeleton() {
               <Skeleton className="h-3 w-10 mx-auto" />
             </td>
             {Array.from({ length: 6 }).map((_, j) => (
-              <td key={j} className="p-2 border-r border-border align-top">
-                <div className="flex flex-col gap-1 w-full min-h-[60px] 2xl:min-h-[80px] justify-center">
-                  {(i + j) % 3 === 0 && <Skeleton className="h-14 2xl:h-[72px] w-full rounded-sm" />}
+              <td key={j} className="p-0 border-r border-border align-top relative min-w-[120px]">
+                <div className="flex flex-col w-full h-full min-h-[60px] 2xl:min-h-[80px] p-1.5">
+                  {(i + j) % 3 === 0 && <Skeleton className="flex-1 w-full rounded-md shadow-sm border border-border/50" />}
                 </div>
               </td>
             ))}

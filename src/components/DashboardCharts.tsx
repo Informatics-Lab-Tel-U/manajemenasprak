@@ -152,7 +152,11 @@ export default function DashboardCharts({
                 <table className="w-full border-collapse text-sm">
                   <thead>
                     <tr className="bg-muted/50 border-b border-border">
-                      <th className="p-2 border-r border-border min-w-[60px]">
+                      <th className="p-2 border-r-0 min-w-[120px]">
+                        <Skeleton className="h-6 w-16 mx-auto" />
+                      </th>
+                      <th className="w-4 bg-transparent border-none"></th>
+                      <th className="p-2 border-r border-l border-border min-w-[60px]">
                         <Skeleton className="h-4 w-8 mx-auto" />
                       </th>
                       {Array.from({ length: 6 }).map((_, i) => (
@@ -165,14 +169,18 @@ export default function DashboardCharts({
                   <tbody>
                     {Array.from({ length: 4 }).map((_, i) => (
                       <tr key={i} className="border-b border-border/50 h-[60px] 2xl:h-[80px]">
-                        <td className="p-2 border-r border-border text-center">
+                        <td className="p-2 border-r-0 bg-muted/5 align-middle">
+                          <Skeleton className="h-6 w-16 mx-auto rounded-sm" />
+                        </td>
+                        <td className="w-4 bg-transparent border-none"></td>
+                        <td className="p-2 border-r border-l border-border text-center align-middle">
                           <div className="space-y-1">
+                            <Skeleton className="h-4 w-10 mx-auto" />
                             <Skeleton className="h-3 w-8 mx-auto" />
-                            <Skeleton className="h-2 w-10 mx-auto" />
                           </div>
                         </td>
                         {Array.from({ length: 6 }).map((_, j) => (
-                          <td key={j} className="p-2 border-r border-border align-middle">
+                          <td key={j} className="p-1 border-r border-border align-top">
                             {i % 2 === 0 && j % 2 === 0 && <Skeleton className="h-10 2xl:h-[72px] w-full" />}
                           </td>
                         ))}

@@ -241,7 +241,7 @@ export async function createPraktikan(
 ): Promise<CreatePraktikanResult> {
   const supabase = await getClient(supabaseClient);
   const rows = Array.isArray(input) ? input : [input];
-  
+
   // Deduplicate the payload itself based on unique key: nama + kelas + mata_kuliah
   const uniquePayloadMap = new Map<string, CreatePraktikanInput>();
   for (const row of rows) {
@@ -257,7 +257,7 @@ export async function createPraktikan(
 
   // Optimize fetch by only querying affected classes
   const kelasSet = new Set(payload.map(p => p.kelas));
-  
+
   const { data: existingData, error: fetchError } = await supabase
     .from('praktikan')
     .select('id, nama, kelas, mata_kuliah, kode_asprak')
@@ -280,7 +280,7 @@ export async function createPraktikan(
   for (const row of payload) {
     const key = `${row.nama}|${row.kelas}|${row.mata_kuliah}`;
     const existing = existingMap.get(key);
-    
+
     if (existing) {
       // Only update if kode_asprak is different and provided
       if (row.kode_asprak !== undefined && row.kode_asprak !== existing.kode_asprak) {
@@ -307,7 +307,7 @@ export async function createPraktikan(
       logger.error('Error inserting praktikan data:', insertError);
       throw new Error(`Gagal menyimpan data praktikan baru: ${insertError.message}`);
     }
-    
+
     totalInserted = insertedData?.length || 0;
     if (insertedData) returnedData.push(...(insertedData as PraktikanRecord[]));
   }
@@ -319,12 +319,12 @@ export async function createPraktikan(
       .update({ kode_asprak: kode })
       .in('id', ids)
       .select('id, created_at, nama, kelas, kode_asprak, mata_kuliah');
-      
+
     if (updateError) {
       logger.error(`Error updating praktikan (kode_asprak: ${kode}):`, updateError);
       throw new Error(`Gagal memperbarui data praktikan lama: ${updateError.message}`);
     }
-    
+
     return updatedData;
   });
 
