@@ -13,26 +13,34 @@ export async function register() {
     headers,
   });
 
-  if (process.env.NEXT_RUNTIME === 'nodejs') {
-    // Import dinamis agar Turbopack tidak memindai isi file ini
-    // saat mem-bundle Edge runtime. File .node.ts hanya ada di Node.js bundle.
-    const { buildNodeOtelConfig, setupConsoleBridge, setupProcessMetrics } =
-      await import('./instrumentation.node');
+  if (process.env.NEXT_RUNTIME === 'nodejs' && !process.env.OPEN_NEXT) {
+    try {
+      // Import dinamis agar Turbopack tidak memindai isi file ini
+      // saat mem-bundle Edge runtime. File .node.ts hanya ada di Node.js bundle.
+      const { buildNodeOtelConfig, setupConsoleBridge, setupProcessMetrics } =
+        await import('./instrumentation.node');
 
-    const nodeConfig = buildNodeOtelConfig(baseUrl, headers);
+      const nodeConfig = buildNodeOtelConfig(baseUrl, headers);
 
-    registerOTel({
-      serviceName: 'manajemenasprak-app',
-      spanProcessors: [new BatchSpanProcessor(traceExporter)],
-      ...nodeConfig,
-    });
+      registerOTel({
+        serviceName: 'manajemenasprak-app',
+        spanProcessors: [new BatchSpanProcessor(traceExporter)],
+        ...nodeConfig,
+      });
 
-    setupConsoleBridge(baseUrl, headers);
-    setupProcessMetrics();
+      setupConsoleBridge(baseUrl, headers);
+      setupProcessMetrics();
 
-    console.log('[OTEL] Initialized: traces + logs + metrics →', baseUrl);
+      console.log('[OTEL] Initialized: traces + logs + metrics →', baseUrl);
+    } catch (err) {
+      console.warn('[OTEL] Node OTel setup skipped in worker environment:', err);
+      registerOTel({
+        serviceName: 'manajemenasprak-app',
+        spanProcessors: [new BatchSpanProcessor(traceExporter)],
+      });
+    }
   } else {
-    // Edge runtime: hanya traces (sdk-logs & sdk-metrics tidak support edge)
+    // Edge / Cloudflare Workers runtime: hanya traces
     registerOTel({
       serviceName: 'manajemenasprak-app',
       spanProcessors: [new BatchSpanProcessor(traceExporter)],
