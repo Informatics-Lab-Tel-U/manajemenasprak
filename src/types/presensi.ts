@@ -22,6 +22,10 @@ export interface KelasSetting {
   jumlahAsprak: number;
 }
 
+import { ThemeKey } from '@/constants/presensiConstants';
+
+export type { ThemeKey };
+
 export interface PresensiGeneratorOptions {
   namaFile: string;
   kelasNames: string[];
@@ -30,4 +34,5 @@ export interface PresensiGeneratorOptions {
   opsi: PresensiFormOptions;
   asprakList?: AsprakEntry[];
   generateRekapSheet?: boolean;
+  theme?: ThemeKey;
 }

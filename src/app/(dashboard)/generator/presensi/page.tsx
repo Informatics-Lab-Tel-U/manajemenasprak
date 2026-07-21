@@ -8,27 +8,21 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { format } from 'date-fns';
 import { CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { PRESENSI_THEMES } from '@/constants/presensiConstants';
 import { generatePresensiExcel } from '@/services/presensiGenerator';
-import { usePresensiState } from '@/hooks/usePresensiState';
-import { usePresensiData } from '@/hooks/usePresensiData';
+import { usePresensi } from '@/hooks/usePresensi';
 import { PraktikumSelector } from '@/components/presensi/PraktikumSelector';
 import { KelasManager } from '@/components/presensi/KelasManager';
 import { OptionsToggles } from '@/components/presensi/OptionsToggles';
+import { ThemeKey } from '@/types/presensi';
 
 export default function PresensiPage() {
-  const state = usePresensiState();
-  const data = usePresensiData({
-    selectedPraktikumId: state.selectedPraktikumId,
-    selectedJurusan: state.selectedJurusan,
-    setKelasNames: state.setKelasNames,
-    setKelasSettings: state.setKelasSettings,
-    setNamaFile: state.setNamaFile,
-    globalJumlahPraktikan: state.globalJumlahPraktikan,
-    globalJumlahAsprak: state.globalJumlahAsprak,
-  });
+  const state = usePresensi();
+  const data = state;
 
   const handleGenerate = async () => {
     if (!state.selectedPraktikumId || state.kelasNames.length === 0) {
@@ -49,6 +43,7 @@ export default function PresensiPage() {
         opsi: state.opsi,
         asprakList: data.asprakList,
         generateRekapSheet: state.generateRekapSheet,
+        theme: state.theme,
       });
       toast.success('File excel berhasil di-generate dan diunduh!');
     } catch (error: any) {
@@ -114,6 +109,49 @@ export default function PresensiPage() {
                 value={state.jumlahModul}
                 onChange={(e) => state.setJumlahModul(Number(e.target.value))}
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Tema Warna Excel</Label>
+              <Select value={state.theme} onValueChange={(val) => state.setTheme(val as ThemeKey)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Pilih Tema" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(PRESENSI_THEMES).map(([key, themeObj]) => (
+                    <SelectItem key={key} value={key}>
+                      {themeObj.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Default Tanggal Modul 1</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant={'outline'}
+                    className={cn(
+                      'w-full justify-start text-left font-normal',
+                      !state.globalTanggalMulai && 'text-muted-foreground'
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {state.globalTanggalMulai
+                      ? format(state.globalTanggalMulai, 'PPP')
+                      : <span>Pilih tanggal</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={state.globalTanggalMulai}
+                    onSelect={(date) => state.setGlobalTanggalMulai(date)}
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
 
             <div className="space-y-2">

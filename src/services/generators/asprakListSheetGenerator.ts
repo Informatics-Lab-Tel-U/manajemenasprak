@@ -1,5 +1,5 @@
 import * as ExcelJS from 'exceljs';
-import { PRESENSI_STYLES } from '@/constants/presensiConstants';
+import { PRESENSI_STYLES, ThemeColors } from '@/constants/presensiConstants';
 import { AsprakEntry } from '@/types/presensi';
 
 /**
@@ -9,10 +9,11 @@ import { AsprakEntry } from '@/types/presensi';
  */
 export function addAsprakBelumNilaiSheet(
   workbook: ExcelJS.Workbook,
-  asprakList: AsprakEntry[]
+  asprakList: AsprakEntry[],
+  colors: ThemeColors = PRESENSI_STYLES.COLORS
 ) {
   const ws = workbook.addWorksheet('LIST ASPRAK');
-  ws.properties.tabColor = { argb: PRESENSI_STYLES.COLORS.TAB_LIST_ASPRAK }; // Biru muda
+  ws.properties.tabColor = { argb: colors.TAB_LIST_ASPRAK };
 
   // Lebar kolom
   ws.getColumn(1).width = 4; // Kolom A (margin)
@@ -21,8 +22,8 @@ export function addAsprakBelumNilaiSheet(
 
   // Header style: dark blue, bold, white text
   const headerStyle: Partial<ExcelJS.Style> = {
-    font: { bold: true, color: { argb: PRESENSI_STYLES.COLORS.HEADER_FG } },
-    fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: PRESENSI_STYLES.COLORS.HEADER_BG } },
+    font: { bold: true, color: { argb: colors.HEADER_FG } },
+    fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: colors.HEADER_BG } },
     alignment: { vertical: 'middle', horizontal: 'center' },
     border: PRESENSI_STYLES.BORDERS,
   };
@@ -71,4 +72,24 @@ export function addAsprakBelumNilaiSheet(
       rows: asprakList.map((a) => [a.nama, a.kode]),
     });
   }
+
+  // Conditional formatting: Jika nama (kolom B) diisi manual, maka otomatis beri border
+  ws.addConditionalFormatting({
+    ref: 'B3:C1000',
+    rules: [
+      {
+        type: 'expression',
+        priority: 1,
+        formulae: ['LEN(TRIM($B3))>0'],
+        style: {
+          border: {
+            top: { style: 'thin' },
+            left: { style: 'thin' },
+            bottom: { style: 'thin' },
+            right: { style: 'thin' },
+          },
+        },
+      },
+    ],
+  });
 }
