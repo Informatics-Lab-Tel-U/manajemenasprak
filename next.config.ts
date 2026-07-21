@@ -2,6 +2,9 @@ import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   experimental: {
+    // Disable Turbopack — OpenNext requires Webpack output (Turbopack produces
+    // [root-of-the-server]__*.js chunks which OpenNext cannot trace/bundle).
+    turbopack: false,
     optimizePackageImports: [
       'lucide-react',
       'recharts',
