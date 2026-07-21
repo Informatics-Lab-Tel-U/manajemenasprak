@@ -1,3 +1,10 @@
+# [1.8.0](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/compare/v1.7.0...v1.8.0) (2026-07-21)
+
+
+### Features
+
+* **presensi:** enhance generator logic, UI, and add theme presets ([c208e29](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/commit/c208e293dfc4a5e95052af1e3ea6fe57d8d09b06))
+
 # [1.7.0](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/compare/v1.6.0...v1.7.0) (2026-07-20)
 
 
