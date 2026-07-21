@@ -6,9 +6,9 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "build:cf": "NEXT_TURBOPACK=0 opennextjs-cloudflare build",
-    "preview:cf": "NEXT_TURBOPACK=0 opennextjs-cloudflare build && wrangler dev",
-    "deploy": "NEXT_TURBOPACK=0 opennextjs-cloudflare build && wrangler deploy",
+    "build:cf": "cross-env NEXT_TURBOPACK=0 opennextjs-cloudflare build",
+    "preview:cf": "cross-env NEXT_TURBOPACK=0 opennextjs-cloudflare build && wrangler dev",
+    "deploy": "cross-env NEXT_TURBOPACK=0 opennextjs-cloudflare build && wrangler deploy",
     "start": "next start",
     "lint": "eslint",
     "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,css,json}\"",
