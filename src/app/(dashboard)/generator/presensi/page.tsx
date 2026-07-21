@@ -14,26 +14,15 @@ import { CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PRESENSI_THEMES } from '@/constants/presensiConstants';
 import { generatePresensiExcel } from '@/services/presensiGenerator';
-import { usePresensiState } from '@/hooks/usePresensiState';
-import { usePresensiData } from '@/hooks/usePresensiData';
+import { usePresensi } from '@/hooks/usePresensi';
 import { PraktikumSelector } from '@/components/presensi/PraktikumSelector';
 import { KelasManager } from '@/components/presensi/KelasManager';
 import { OptionsToggles } from '@/components/presensi/OptionsToggles';
 import { ThemeKey } from '@/types/presensi';
 
 export default function PresensiPage() {
-  const state = usePresensiState();
-  const data = usePresensiData({
-    selectedPraktikumId: state.selectedPraktikumId,
-    selectedJurusan: state.selectedJurusan,
-    kelasNames: state.kelasNames,
-    kelasSettings: state.kelasSettings,
-    setKelasNames: state.setKelasNames,
-    setKelasSettings: state.setKelasSettings,
-    setNamaFile: state.setNamaFile,
-    globalJumlahPraktikan: state.globalJumlahPraktikan,
-    globalJumlahAsprak: state.globalJumlahAsprak,
-  });
+  const state = usePresensi();
+  const data = state;
 
   const handleGenerate = async () => {
     if (!state.selectedPraktikumId || state.kelasNames.length === 0) {

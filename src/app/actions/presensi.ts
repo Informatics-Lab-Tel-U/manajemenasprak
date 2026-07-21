@@ -59,17 +59,17 @@ export async function getAsprakListByPraktikum(praktikumId: string) {
 
     // Flatten dan deduplikasi berdasarkan kode
     const seen = new Set<string>();
-    const asprakList = (data || [])
-      .map((row: any) => ({
-        nama: (row.asprak?.nama_lengkap as string) ?? '',
-        kode: (row.asprak?.kode as string) ?? '',
-      }))
-      .filter((a) => {
-        if (!a.kode || seen.has(a.kode)) return false;
-        seen.add(a.kode);
-        return true;
-      })
-      .sort((a, b) => a.kode.localeCompare(b.kode));
+    const asprakList: { nama: string; kode: string }[] = [];
+    for (const rawRow of data || []) {
+      const row = rawRow as any;
+      const nama = (row.asprak?.nama_lengkap as string) ?? '';
+      const kode = (row.asprak?.kode as string) ?? '';
+      if (kode && !seen.has(kode)) {
+        seen.add(kode);
+        asprakList.push({ nama, kode });
+      }
+    }
+    asprakList.sort((a, b) => a.kode.localeCompare(b.kode));
 
     return { success: true, data: asprakList };
   } catch (error: any) {

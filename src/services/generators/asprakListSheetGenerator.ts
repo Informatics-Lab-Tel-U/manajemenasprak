@@ -72,4 +72,24 @@ export function addAsprakBelumNilaiSheet(
       rows: asprakList.map((a) => [a.nama, a.kode]),
     });
   }
+
+  // Conditional formatting: Jika nama (kolom B) diisi manual, maka otomatis beri border
+  ws.addConditionalFormatting({
+    ref: 'B3:C1000',
+    rules: [
+      {
+        type: 'expression',
+        priority: 1,
+        formulae: ['LEN(TRIM($B3))>0'],
+        style: {
+          border: {
+            top: { style: 'thin' },
+            left: { style: 'thin' },
+            bottom: { style: 'thin' },
+            right: { style: 'thin' },
+          },
+        },
+      },
+    ],
+  });
 }
