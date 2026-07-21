@@ -35,7 +35,7 @@ export function OptionsToggles({
   loadingAsprak,
   hasPraktikum,
 }: OptionsTogglesProps) {
-  const canGenerateRekap = hasPraktikum && asprakCount > 0;
+  const canGenerateRekap = hasPraktikum;
 
   return (
     <div className="space-y-6">
@@ -211,8 +211,8 @@ export function OptionsToggles({
                   {asprakCount} asprak ditemukan
                 </Badge>
               ) : (
-                <Badge variant="destructive" className="text-xs">
-                  Asprak belum di-plot
+                <Badge variant="outline" className="text-xs text-muted-foreground border-dashed">
+                  Daftar asprak kosong (bisa diisi manual nanti)
                 </Badge>
               )}
             </div>

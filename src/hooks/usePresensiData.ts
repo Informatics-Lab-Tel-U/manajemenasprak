@@ -7,6 +7,8 @@ import { AsprakEntry, KelasSetting } from '@/types/presensi';
 interface UsePresensiDataProps {
   selectedPraktikumId: string;
   selectedJurusan: string;
+  kelasNames: string[];
+  kelasSettings: KelasSetting[];
   setKelasNames: (names: string[] | ((prev: string[]) => string[])) => void;
   setKelasSettings: (settings: KelasSetting[] | ((prev: KelasSetting[]) => KelasSetting[])) => void;
   setNamaFile: (name: string) => void;
@@ -17,6 +19,8 @@ interface UsePresensiDataProps {
 export function usePresensiData({
   selectedPraktikumId,
   selectedJurusan,
+  kelasNames,
+  kelasSettings,
   setKelasNames,
   setKelasSettings,
   setNamaFile,
@@ -65,9 +69,16 @@ export function usePresensiData({
       if (res.success && res.data) {
         setAllFetchedKelas(res.data);
 
-        const jurusans = Array.from(new Set(res.data.map((k) => k.split('-')[0])))
-          .filter(Boolean)
-          .sort();
+        const jurusansSet = new Set<string>();
+        res.data.forEach((k) => {
+          const base = k.split('-')[0];
+          if (k.endsWith('PJJ')) {
+            jurusansSet.add(`${base} PJJ`);
+          } else {
+            jurusansSet.add(base);
+          }
+        });
+        const jurusans = Array.from(jurusansSet).filter(Boolean).sort();
         setAvailableJurusans(jurusans);
 
         // Auto-set nama file based on praktikum name
@@ -86,26 +97,36 @@ export function usePresensiData({
   useEffect(() => {
     if (allFetchedKelas.length === 0) return;
 
+    const customClasses = kelasNames.filter((k) => !allFetchedKelas.includes(k));
+    const customSettings = customClasses.map((k) => {
+      const idx = kelasNames.indexOf(k);
+      return idx !== -1 ? kelasSettings[idx] : {
+        tanggalMulai: undefined,
+        jumlahPraktikan: globalJumlahPraktikan,
+        jumlahAsprak: globalJumlahAsprak,
+      };
+    });
+
+    let filtered: string[] = [];
+
     if (selectedJurusan === 'all') {
-      setKelasNames(allFetchedKelas);
-      setKelasSettings(
-        Array.from({ length: allFetchedKelas.length }).map(() => ({
-          tanggalMulai: undefined,
-          jumlahPraktikan: globalJumlahPraktikan,
-          jumlahAsprak: globalJumlahAsprak,
-        }))
-      );
+      filtered = [...allFetchedKelas];
+    } else if (selectedJurusan.endsWith(' PJJ')) {
+      const base = selectedJurusan.split(' ')[0];
+      filtered = allFetchedKelas.filter((k) => k.startsWith(`${base}-`) && k.endsWith('PJJ'));
     } else {
-      const filtered = allFetchedKelas.filter((k) => k.startsWith(`${selectedJurusan}-`));
-      setKelasNames(filtered);
-      setKelasSettings(
-        Array.from({ length: filtered.length }).map(() => ({
-          tanggalMulai: undefined,
-          jumlahPraktikan: globalJumlahPraktikan,
-          jumlahAsprak: globalJumlahAsprak,
-        }))
-      );
+      filtered = allFetchedKelas.filter((k) => k.startsWith(`${selectedJurusan}-`) && !k.endsWith('PJJ'));
     }
+
+    const newSettings = Array.from({ length: filtered.length }).map(() => ({
+      tanggalMulai: undefined,
+      jumlahPraktikan: globalJumlahPraktikan,
+      jumlahAsprak: globalJumlahAsprak,
+    }));
+
+    setKelasNames([...filtered, ...customClasses]);
+    setKelasSettings([...newSettings, ...customSettings]);
+    
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedJurusan, allFetchedKelas, globalJumlahPraktikan, globalJumlahAsprak]);
 

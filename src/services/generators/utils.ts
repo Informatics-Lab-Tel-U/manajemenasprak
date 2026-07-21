@@ -1,13 +1,13 @@
 import * as ExcelJS from 'exceljs';
-import { PRESENSI_STYLES } from '@/constants/presensiConstants';
+import { PRESENSI_STYLES, ThemeColors } from '@/constants/presensiConstants';
 
-export function applyHeaderStyle(cell: ExcelJS.Cell) {
-  cell.font = { bold: true, color: { argb: PRESENSI_STYLES.COLORS.HEADER_FG } };
+export function applyHeaderStyle(cell: ExcelJS.Cell, colors: ThemeColors = PRESENSI_STYLES.COLORS) {
+  cell.font = { bold: true, color: { argb: colors.HEADER_FG } };
   cell.alignment = { vertical: 'middle', horizontal: 'center' };
   cell.fill = {
     type: 'pattern',
     pattern: 'solid',
-    fgColor: { argb: PRESENSI_STYLES.COLORS.HEADER_BG },
+    fgColor: { argb: colors.HEADER_BG },
   };
   cell.border = PRESENSI_STYLES.BORDERS;
 }

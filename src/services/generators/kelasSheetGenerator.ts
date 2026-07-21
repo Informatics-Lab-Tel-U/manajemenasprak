@@ -1,10 +1,10 @@
 import * as ExcelJS from 'exceljs';
 import { addDays, format, startOfDay } from 'date-fns';
-import { PRESENSI_STYLES, PRESENSI_COLUMN_WIDTHS, PRESENSI_STRINGS } from '@/constants/presensiConstants';
+import { PRESENSI_STYLES, PRESENSI_COLUMN_WIDTHS, PRESENSI_STRINGS, ThemeColors } from '@/constants/presensiConstants';
 import { PresensiGeneratorOptions } from '@/types/presensi';
 import { applyHeaderStyle, getRowDistribution } from './utils';
 
-export function addBase(sheet: ExcelJS.Worksheet) {
+export function addBase(sheet: ExcelJS.Worksheet, colors: ThemeColors = PRESENSI_STYLES.COLORS) {
   // Add base columns NO, NIM, NAMA, KODE ASPRAK
   sheet.mergeCells('A1:A3');
   sheet.getCell('A1').value = 'NO.';
@@ -17,7 +17,7 @@ export function addBase(sheet: ExcelJS.Worksheet) {
 
   const baseHeaders = ['A1', 'B1', 'C1', 'D1'];
   baseHeaders.forEach((cellId) => {
-    applyHeaderStyle(sheet.getCell(cellId));
+    applyHeaderStyle(sheet.getCell(cellId), colors);
   });
 
   // Set Column Widths based on XML reference
@@ -34,7 +34,8 @@ export function createModul(
   sheet: ExcelJS.Worksheet,
   startDate: Date,
   opsi: PresensiGeneratorOptions['opsi'],
-  modulNum: number
+  modulNum: number,
+  colors: ThemeColors = PRESENSI_STYLES.COLORS
 ) {
   const optionalCols: { name: string; on: boolean }[] = [
     { name: 'TP', on: opsi.tp.enabled },
@@ -101,7 +102,7 @@ export function createModul(
     for (let c = startCol; c < startCol + totalColsThisModule; c++) {
       const cell = sheet.getCell(r, c);
       if (cell.type !== ExcelJS.ValueType.Merge || cell.address === sheet.getCell(r, c).master.address) {
-        applyHeaderStyle(cell);
+        applyHeaderStyle(cell, colors);
       } else {
         const mc = sheet.getCell(r, c);
         mc.border = PRESENSI_STYLES.BORDERS;
@@ -241,7 +242,8 @@ export function formatRows(
   numModules: number,
   opsi: PresensiGeneratorOptions['opsi'],
   jumlahPraktikan: number,
-  jumlahAsprak: number
+  jumlahAsprak: number,
+  colors: ThemeColors = PRESENSI_STYLES.COLORS
 ) {
   const numOption = [opsi.tp.enabled, opsi.jurnal.enabled, opsi.tesAkhir.enabled, opsi.rate].filter(Boolean).length;
   const totalColsThisModule = 4 + numOption;
@@ -251,7 +253,7 @@ export function formatRows(
   sheet.mergeCells(1, rataCol, 3, rataCol);
   const rataCell = sheet.getCell(1, rataCol);
   rataCell.value = 'RATA RATA';
-  applyHeaderStyle(rataCell);
+  applyHeaderStyle(rataCell, colors);
   sheet.getColumn(rataCol).width = PRESENSI_COLUMN_WIDTHS.RATA_RATA;
 
   const totalNilaiColLetters: string[] = [];
@@ -266,7 +268,7 @@ export function formatRows(
   for (let groupIndex = 0; groupIndex < dist.length; groupIndex++) {
     const rowsInGroup = dist[groupIndex];
     const isBand1 = groupIndex % 2 === 0;
-    const fillColor = isBand1 ? PRESENSI_STYLES.COLORS.BAND_1_BG : PRESENSI_STYLES.COLORS.BAND_2_BG;
+    const fillColor = isBand1 ? colors.BAND_1_BG : colors.BAND_2_BG;
 
     for (let i = 0; i < rowsInGroup; i++) {
       const r = currentRow + i;

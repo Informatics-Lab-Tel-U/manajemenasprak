@@ -1,5 +1,5 @@
 import * as ExcelJS from 'exceljs';
-import { PRESENSI_STYLES } from '@/constants/presensiConstants';
+import { PRESENSI_STYLES, ThemeColors } from '@/constants/presensiConstants';
 import { PresensiGeneratorOptions } from '@/types/presensi';
 import { colNumToLetter, getRowDistribution } from './utils';
 
@@ -20,7 +20,8 @@ import { colNumToLetter, getRowDistribution } from './utils';
  */
 export function addRekapSheet(
   workbook: ExcelJS.Workbook,
-  options: PresensiGeneratorOptions
+  options: PresensiGeneratorOptions,
+  colors: ThemeColors = PRESENSI_STYLES.COLORS
 ) {
   const { kelasNames, kelasSettings, jumlahModul, opsi } = options;
 
@@ -77,8 +78,8 @@ export function addRekapSheet(
 
   // ─── Row 1: Header row (frozen) ────────────────────────────────────────────
   const headerStyle: Partial<ExcelJS.Style> = {
-    font: { bold: true, color: { argb: PRESENSI_STYLES.COLORS.HEADER_FG } },
-    fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: PRESENSI_STYLES.COLORS.HEADER_BG } },
+    font: { bold: true, color: { argb: colors.HEADER_FG } },
+    fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: colors.HEADER_BG } },
     alignment: { vertical: 'middle', horizontal: 'center', wrapText: true },
     border: PRESENSI_STYLES.BORDERS,
   };
@@ -130,12 +131,12 @@ export function addRekapSheet(
 
       const groupEndRow = groupStartRow + rowsInGroup - 1;
       const isAlt = asprakIdx % 2 === 0;
-      const fillColor = isAlt ? PRESENSI_STYLES.COLORS.BAND_1_BG : PRESENSI_STYLES.COLORS.BAND_2_BG;
+      const fillColor = isAlt ? colors.BAND_1_BG : colors.BAND_2_BG;
 
       const row = ws.getRow(currentRow);
       row.height = 18;
 
-      function styleCell(colIdx: number, value: ExcelJS.CellValue | { formula: string; result?: ExcelJS.CellValue }, alignment: Partial<ExcelJS.Alignment> = {}) {
+      function styleCell(colIdx: number, value: ExcelJS.CellValue | { formula: string; result?: ExcelJS.CellValue }, alignment: Partial<ExcelJS.Alignment> = {}, ignoreFillColor = false) {
         const cell = row.getCell(colIdx);
         if (typeof value === 'object' && value !== null && 'formula' in value) {
           cell.value = value as ExcelJS.CellValue;
@@ -144,7 +145,7 @@ export function addRekapSheet(
         }
         cell.border = PRESENSI_STYLES.BORDERS;
         cell.alignment = { vertical: 'middle', ...alignment };
-        if (fillColor) {
+        if (fillColor && !ignoreFillColor) {
            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: fillColor } };
         }
       }
@@ -152,8 +153,9 @@ export function addRekapSheet(
       const kodeRef = `$C${currentRow}`;
       styleCell(
         COL_NAMA,
-        { formula: `IFERROR(INDEX(ASPRAK[Nama Lengkap],MATCH(${kodeRef},ASPRAK[Kode],0)),"")`, result: '' },
-        {}
+        { formula: `IFERROR(INDEX('LIST ASPRAK'!$B:$B,MATCH(${kodeRef},'LIST ASPRAK'!$C:$C,0)),"")`, result: '' },
+        {},
+        true
       );
 
       const formulaKode = `_xlfn.LET(_xlpm.WEEK,INT((TODAY()-DATE(${year},${month},${day}))/7),_xlpm.ROW_OFFSET,SUM(INDIRECT(_xlfn.CONCAT($F${currentRow},":",ADDRESS(ROW($E${currentRow}),COLUMN($E${currentRow})))))-$E${currentRow},_xlpm.COL_OFFSET,_xlpm.WEEK*${totalColsThisModule},_xlpm.KODE_ASPRAK,TRIM(OFFSET(INDIRECT(_xlfn.CONCAT("'",$G${currentRow},"'!E4")),_xlpm.ROW_OFFSET,_xlpm.COL_OFFSET)),IFERROR(IF(_xlpm.KODE_ASPRAK="","",_xlpm.KODE_ASPRAK),""))`;
@@ -163,7 +165,8 @@ export function addRekapSheet(
           formula: formulaKode,
           result: '',
         },
-        { horizontal: 'center' }
+        { horizontal: 'center' },
+        true
       );
 
       styleCell(COL_KELAS, asprakIdx === 0 ? kelasName : '', { horizontal: 'center' });
@@ -432,7 +435,7 @@ export function addRekapBroadcastEngine(
       const fKode = `_xlfn.LET(_xlpm.ROW_OFFSET,${groupStartRow - 4},_xlpm.COL_OFFSET,($E$12-1)*$E$16,_xlpm.KODE,TRIM(OFFSET(INDIRECT("'"&$N${currentRow}&"'!E4"),_xlpm.ROW_OFFSET,_xlpm.COL_OFFSET)),IF(_xlpm.KODE="","",_xlpm.KODE))`;
       ws.getCell(`J${currentRow}`).value = { formula: fKode, result: '' };
 
-      const fNama = `IFERROR(INDEX('LIST ASPRAK'!$B$3:$B$1000,MATCH($J${currentRow},'LIST ASPRAK'!$C$3:$C$1000,0)),"")`;
+      const fNama = `IFERROR(INDEX('LIST ASPRAK'!$B:$B,MATCH($J${currentRow},'LIST ASPRAK'!$C:$C,0)),"")`;
       ws.getCell(`I${currentRow}`).value = { formula: fNama, result: '' };
       ws.getCell(`K${currentRow}`).value = kelasName;
 

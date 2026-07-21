@@ -1,12 +1,14 @@
 import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
-import { KelasSetting, PresensiFormOptions } from '@/types/presensi';
+import { KelasSetting, PresensiFormOptions, ThemeKey } from '@/types/presensi';
 
 export function usePresensiState() {
   const [namaFile, setNamaFile] = useState('presensi');
   const [jumlahModul, setJumlahModul] = useState(8);
   const [globalJumlahPraktikan, setGlobalJumlahPraktikan] = useState(40);
   const [globalJumlahAsprak, setGlobalJumlahAsprak] = useState(4);
+  const [globalTanggalMulai, setGlobalTanggalMulai] = useState<Date | undefined>(new Date());
+  const [theme, setTheme] = useState<ThemeKey>('BLUE');
   const [kelasSettings, setKelasSettings] = useState<KelasSetting[]>([]);
   const [opsi, setOpsi] = useState<PresensiFormOptions>({
     tp: { enabled: true, weight: 30, inputType: 'number' },
@@ -19,7 +21,7 @@ export function usePresensiState() {
   const [kelasNames, setKelasNames] = useState<string[]>([]);
   const [customKelasInput, setCustomKelasInput] = useState('');
   const [selectedJurusan, setSelectedJurusan] = useState<string>('all');
-  const [generateRekapSheet, setGenerateRekapSheet] = useState(false);
+  const [generateRekapSheet, setGenerateRekapSheet] = useState(true);
 
   // Derived logic
   const totalWeight =
@@ -69,12 +71,13 @@ export function usePresensiState() {
     setKelasSettings((prev) =>
       prev.map((s) => ({
         ...s,
+        tanggalMulai: globalTanggalMulai !== undefined ? globalTanggalMulai : s.tanggalMulai,
         jumlahPraktikan: globalJumlahPraktikan,
         jumlahAsprak: globalJumlahAsprak,
       }))
     );
     toast.success('Parameter global diterapkan ke semua kelas');
-  }, [globalJumlahPraktikan, globalJumlahAsprak]);
+  }, [globalJumlahPraktikan, globalJumlahAsprak, globalTanggalMulai]);
 
   return {
     // State
@@ -82,6 +85,8 @@ export function usePresensiState() {
     jumlahModul,
     globalJumlahPraktikan,
     globalJumlahAsprak,
+    globalTanggalMulai,
+    theme,
     kelasSettings,
     opsi,
     selectedPraktikumId,
@@ -97,6 +102,8 @@ export function usePresensiState() {
     setJumlahModul,
     setGlobalJumlahPraktikan,
     setGlobalJumlahAsprak,
+    setGlobalTanggalMulai,
+    setTheme,
     setKelasSettings,
     setOpsi,
     setSelectedPraktikumId,
