@@ -1,3 +1,10 @@
+## [1.10.1](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/compare/v1.10.0...v1.10.1) (2026-07-22)
+
+
+### Bug Fixes
+
+* **auth:** change turnstile action to valid alphanumeric format ([6fc7b65](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/commit/6fc7b650db98664044c3026c6e04cf420b03db8f))
+
 # [1.10.0](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/compare/v1.9.1...v1.10.0) (2026-07-22)
 
 
