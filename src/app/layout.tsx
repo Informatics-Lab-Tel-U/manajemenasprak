@@ -21,6 +21,8 @@ export const metadata: Metadata = {
 import { ThemeProvider } from '@/components/theme-provider';
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import Script from 'next/script';
+import { SCRIPT_URL, DEFAULT_SCRIPT_ID } from '@marsidev/react-turnstile';
 
 export default function RootLayout({
   children,
@@ -29,10 +31,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
-        <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
-      </head>
       <body className={inter.className} suppressHydrationWarning>
+        <Script id={DEFAULT_SCRIPT_ID} src={SCRIPT_URL} strategy="afterInteractive" />
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
