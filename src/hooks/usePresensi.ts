@@ -123,6 +123,9 @@ export function usePresensi() {
         return;
       }
       setLoadingKelas(true);
+      // Clear old classes before fetching new ones so they don't bleed over as custom classes
+      setKelasNames([]);
+      setKelasSettings([]);
       const res = await getPraktikumClasses(selectedPraktikumId);
       if (res.success && res.data) {
         setAllFetchedKelas(res.data);

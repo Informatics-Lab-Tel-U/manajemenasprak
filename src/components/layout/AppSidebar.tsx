@@ -179,7 +179,7 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
                   <span className="truncate font-semibold">Informatics Lab</span>
                   <span className="truncate text-xs text-muted-foreground">
                     {user.role === 'ADMIN'
-                      ? 'Admin Portal'
+                      ? 'Manajemen Asprak'
                       : user.role === 'ASLAB'
                         ? 'Aslab Portal'
                         : 'Koor Portal'}
