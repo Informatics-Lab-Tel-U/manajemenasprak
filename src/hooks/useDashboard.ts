@@ -24,18 +24,25 @@ export function useDashboard(
   initialPengganti: JadwalPengganti[],
   activeModul: number
 ): UseDashboardResult {
-  // initialTerms is already sorted descending by fetchAvailableTerms (latest first)
   const [terms] = useState<string[]>(initialTerms);
-  const [rawJadwal, setRawJadwal] = useState<Jadwal[]>(initialJadwal);
-  const [jadwalPengganti, setJadwalPengganti] = useState<JadwalPengganti[]>(initialPengganti);
   const { activeTerm } = useTermStore();
   const selectedTerm = activeTerm || '';
+  
+  // Decide whether the selected term matches the SSR fallback term (latestTerm)
+  const isInitialTermMatching = !selectedTerm || selectedTerm === initialTerms[0];
+
+  const [rawJadwal, setRawJadwal] = useState<Jadwal[]>(initialJadwal);
+  const [jadwalPengganti, setJadwalPengganti] = useState<JadwalPengganti[]>(initialPengganti);
   const [stats, setStats] = useState<DashboardStats>(initialStats);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(!isInitialTermMatching);
   const [error, setError] = useState<Error | null>(null);
+
+  const lastFetchedTermRef = useRef<string>(initialTerms[0]);
+
   const fetchDashboardData = useCallback(
     async (term: string) => {
       if (!term) return;
+      if (term === lastFetchedTermRef.current) return;
 
       setLoading(true);
       try {
@@ -57,6 +64,8 @@ export function useDashboard(
         if (statsJson?.ok && statsJson.data) {
           setStats(statsJson.data as DashboardStats);
         }
+        
+        lastFetchedTermRef.current = term;
       } catch (err: unknown) {
         if (err instanceof Error) {
           setError(err);
@@ -74,13 +83,15 @@ export function useDashboard(
 
   useEffect(() => {
     if (!hasMountedRef.current) {
-      // First render: SSR data is already correct for this term — skip refetch
       hasMountedRef.current = true;
+      if (!isInitialTermMatching && selectedTerm) {
+        fetchDashboardData(selectedTerm);
+      }
       return;
     }
     // User changed the term selector: refetch
     fetchDashboardData(selectedTerm);
-  }, [selectedTerm, fetchDashboardData]);
+  }, [selectedTerm, fetchDashboardData, isInitialTermMatching]);
 
   return {
     terms,
