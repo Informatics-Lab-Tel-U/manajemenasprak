@@ -1,3 +1,20 @@
+# [1.9.0](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/compare/v1.8.0...v1.9.0) (2026-07-22)
+
+
+### Bug Fixes
+
+* correctly apply cross-env prefix to cloudflare build scripts ([a18788b](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/commit/a18788bee39a2be77d42c1c567918a6726b0ea2f))
+* correctly define buildCommand to use webpack for opennextjs-cloudflare ([5e238e9](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/commit/5e238e9a1428c7d964e34645b00cac795b2edeea))
+* disable turbopack in next.config.ts to force webpack output for opennext ([e8f901c](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/commit/e8f901cb3f4231788f3956dd989992db7d6199f4))
+* disable turbopack on opennext build for webpack chunk compatibility ([d4045bd](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/commit/d4045bde21d3fd5ba049c656d530a9253544bd56))
+* let turbopack run natively, add buildCommand in open-next.config, update compat date ([4e235fd](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/commit/4e235fd87acd4684340bcf3d1f89552e6ddb3e73))
+* use cross-env for windows powershell environment variable compatibility ([9cd7fca](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/commit/9cd7fcac67805a86ac9b4f2929adb6079b6299ea))
+
+
+### Features
+
+* setup opennext cloudflare adapter and wrangler config ([86ee570](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/commit/86ee57016d53c627b249d910dbb3008896bf02aa))
+
 # [1.8.0](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/compare/v1.7.0...v1.8.0) (2026-07-21)
 
 
