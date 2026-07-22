@@ -43,14 +43,14 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
     e.preventDefault();
     setError(null);
 
-    const hasSiteKey = !!process.env.NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY;
+    const TURNSTILE_SITE_KEY = '0x4AAAAAAD7HW0zcK_EcH5SX';
     console.log('[LoginForm] Form submitted. State:', {
-      hasSiteKey,
+      hasSiteKey: true,
       tokenPresent: !!turnstileToken.current,
       isUnsupported: isTurnstileUnsupported.current
     });
 
-    if (hasSiteKey && !turnstileToken.current && !isTurnstileUnsupported.current) {
+    if (!turnstileToken.current && !isTurnstileUnsupported.current) {
       setError('Harap selesaikan verifikasi keamanan.');
       return;
     }
@@ -167,17 +167,15 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
               </Label>
             </div>
 
-            {!!process.env.NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY && (
-              <TurnstileWidget
-                ref={turnstileRef}
-                onVerify={(val) => {
-                  turnstileToken.current = val;
-                }}
-                onUnsupported={() => {
-                  isTurnstileUnsupported.current = true;
-                }}
-              />
-            )}
+            <TurnstileWidget
+              ref={turnstileRef}
+              onVerify={(val) => {
+                turnstileToken.current = val;
+              }}
+              onUnsupported={() => {
+                isTurnstileUnsupported.current = true;
+              }}
+            />
 
             <Button type="submit" disabled={isLoading} className="w-full mt-2">
               {isLoading ? (
