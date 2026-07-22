@@ -3,7 +3,7 @@
   "name": "manajemenasprak",
   "main": ".open-next/worker.js",
   "keep_names": false,
-  "compatibility_date": "2025-01-01",
+  "compatibility_date": "2026-06-20",
   "compatibility_flags": [
     "nodejs_compat",
     "global_fetch_strictly_public"
