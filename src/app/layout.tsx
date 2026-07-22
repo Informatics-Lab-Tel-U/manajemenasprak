@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
+import Script from 'next/script';
+import { SCRIPT_URL, DEFAULT_SCRIPT_ID } from '@marsidev/react-turnstile';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -41,6 +43,13 @@ export default function RootLayout({
             <Toaster />
           </TooltipProvider>
         </ThemeProvider>
+        {!!process.env.NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY && (
+          <Script
+            id={DEFAULT_SCRIPT_ID}
+            src={SCRIPT_URL}
+            strategy="afterInteractive"
+          />
+        )}
       </body>
     </html>
   );

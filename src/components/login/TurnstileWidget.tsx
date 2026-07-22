@@ -1,9 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Turnstile, SCRIPT_URL, DEFAULT_SCRIPT_ID } from '@marsidev/react-turnstile';
+import { Turnstile } from '@marsidev/react-turnstile';
 import type { TurnstileInstance } from '@marsidev/react-turnstile';
-import Script from 'next/script';
 
 interface TurnstileWidgetProps {
   onVerify: (token: string | null) => void;
@@ -41,7 +40,6 @@ export function TurnstileWidget({
 
     return (
       <div className="flex justify-center w-full my-2">
-        <Script id={DEFAULT_SCRIPT_ID} src={SCRIPT_URL} strategy="afterInteractive" />
         <Turnstile
           ref={ref}
           siteKey={siteKey}
