@@ -1,3 +1,11 @@
+## [1.10.2](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/compare/v1.10.1...v1.10.2) (2026-07-22)
+
+
+### Bug Fixes
+
+* **auth:** move Turnstile script injection to root layout to fix race condition on Cloudflare Workers ([d61ff1b](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/commit/d61ff1b1b761ab8ac4b78c963f303fd12fc87504))
+* **auth:** restore Turnstile script injection to widget component ([6c3ba92](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/commit/6c3ba92f5e73ba8bead6f3fa3663781921e9ed8a))
+
 ## [1.10.1](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/compare/v1.10.0...v1.10.1) (2026-07-22)
 
 
