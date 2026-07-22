@@ -3,7 +3,7 @@
   "name": "manajemenasprak",
   "main": ".open-next/worker.js",
   "keep_names": false,
-  "compatibility_date": "2025-01-01",
+  "compatibility_date": "2026-06-20",
   "compatibility_flags": [
     "nodejs_compat",
     "global_fetch_strictly_public"
@@ -14,5 +14,9 @@
   },
   "observability": {
     "enabled": true
-  }
+  },
+  "keep_vars": true,
+  "vars": {
+    "NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY": "0x4AAAAAAD7HW0zcK_EcH5SX"
+  },
 }

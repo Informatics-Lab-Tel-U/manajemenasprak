@@ -44,12 +44,24 @@ export function TurnstileWidget({
         ref={ref}
         siteKey={siteKey}
         injectScript={false}
-        onSuccess={(token) => onVerify(token)}
-        onExpire={() => onVerify(null)}
-        onError={() => onVerify(null)}
-        onTimeout={() => onVerify(null)}
+        onSuccess={(token) => {
+          console.log('[Turnstile] Verification Success. Token:', token ? `${token.substring(0, 15)}...` : null);
+          onVerify(token);
+        }}
+        onExpire={() => {
+          console.warn('[Turnstile] Token Expired. Requesting new verification.');
+          onVerify(null);
+        }}
+        onError={(err) => {
+          console.error('[Turnstile] Verification Error:', err);
+          onVerify(null);
+        }}
+        onTimeout={() => {
+          console.warn('[Turnstile] Verification Timeout.');
+          onVerify(null);
+        }}
         onUnsupported={() => {
-          console.warn('Cloudflare Turnstile is not supported in this browser.');
+          console.error('[Turnstile] Browser unsupported by Cloudflare Turnstile.');
           onVerify(null);
           onUnsupported?.();
         }}
