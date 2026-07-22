@@ -1,3 +1,10 @@
+## [1.9.1](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/compare/v1.9.0...v1.9.1) (2026-07-22)
+
+
+### Bug Fixes
+
+* resolve dashboard stale term, presensi class append bug, and update sidebar text ([3c2739b](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/commit/3c2739b6c44860e25025a8047dbdc64e6b7d3ca9))
+
 # [1.9.0](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/compare/v1.8.0...v1.9.0) (2026-07-22)
 
 
