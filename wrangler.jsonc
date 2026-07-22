@@ -15,12 +15,5 @@
   "observability": {
     "enabled": true
   },
-  "keep_vars": true,
-  "vars": {
-    "NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY": "0x4AAAAAAD7HW0zcK_EcH5SX",
-    "NEXT_PUBLIC_SUPABASE_URL": "https://vzftikyjpioipmvyolvf.supabase.co",
-    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ6ZnRpa3lqcGlvaXBtdnlvbHZmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkyNDI0NjIsImV4cCI6MjA4NDgxODQ2Mn0.RTmZizWFiZ_hBFxFvMBPcB8cY3qd6v-MUWMC1veuMO8",
-    "PRAKTIKAN_GET_ALLOWED_ORIGINS": "https://generator-kursi-v2.iflabdev.workers.dev",
-    "OTEL_ENDPOINT": "http://localhost:5080/api/default"
-  }
+  "keep_vars": true
 }
