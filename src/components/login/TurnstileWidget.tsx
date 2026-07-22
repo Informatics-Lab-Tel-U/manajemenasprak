@@ -56,7 +56,7 @@ export function TurnstileWidget({
             onUnsupported?.();
           }}
           options={{
-            action: 'turnstile-spin-v2',
+            action: 'turnstilespinv2',
             theme,
             size: 'normal',
             language: 'id',
