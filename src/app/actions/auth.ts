@@ -46,11 +46,6 @@ export async function login(email: string, password: string, turnstileToken: str
   const { error } = await supabase.auth.signInWithPassword({
     email,
     password,
-    options: turnstileToken
-      ? {
-          captchaToken: turnstileToken,
-        }
-      : undefined,
   });
 
   if (error) {

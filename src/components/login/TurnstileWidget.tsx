@@ -19,7 +19,7 @@ export function TurnstileWidget({
   onUnsupported,
   ref,
 }: TurnstileWidgetProps & { ref?: React.Ref<TurnstileInstance> }) {
-  const siteKey = process.env.NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY;
+  const siteKey = process.env.NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY || '0x4AAAAAAD7HW0zcK_EcH5SX';
   const [theme, setTheme] = useState<'dark' | 'light'>(getAppTheme);
 
   useEffect(() => {
