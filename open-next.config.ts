@@ -1,8 +1,10 @@
 import { defineCloudflareConfig } from "@opennextjs/cloudflare";
 
-export default defineCloudflareConfig({
-  // Next.js 16 uses Turbopack by default for builds.
-  // Explicitly declare the build command so OpenNext activates its
-  // Turbopack-compatible patch plugin (handles [root-of-the-server]__*.js chunks).
-  buildCommand: "next build --turbopack",
-});
+const config = defineCloudflareConfig({});
+
+export default {
+  ...config,
+  // Force webpack build because OpenNext's file tracing is more stable with Webpack
+  // than Turbopack in some edge cases with chunk loading on Cloudflare
+  buildCommand: "next build --webpack",
+};
