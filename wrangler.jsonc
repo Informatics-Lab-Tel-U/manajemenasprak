@@ -14,5 +14,9 @@
   },
   "observability": {
     "enabled": true
-  }
+  },
+  "keep_vars": true,
+  "vars": {
+    "NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY": "0x4AAAAAAD7HW0zcK_EcH5SX"
+  },
 }
