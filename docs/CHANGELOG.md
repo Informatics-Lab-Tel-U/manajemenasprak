@@ -1,3 +1,10 @@
+# [1.10.0](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/compare/v1.9.1...v1.10.0) (2026-07-22)
+
+
+### Features
+
+* **auth:** wire canonical Turnstile siteverify and update widget options ([4d8d076](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/commit/4d8d076503fd2456cbeaf8242cae2084290dbd26))
+
 ## [1.9.1](https://github.com/Informatics-Lab-Tel-U/manajemenasprak/compare/v1.9.0...v1.9.1) (2026-07-22)
 
 
