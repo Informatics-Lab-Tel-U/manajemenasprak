@@ -44,6 +44,12 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
     setError(null);
 
     const hasSiteKey = !!process.env.NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY;
+    console.log('[LoginForm] Form submitted. State:', {
+      hasSiteKey,
+      tokenPresent: !!turnstileToken.current,
+      isUnsupported: isTurnstileUnsupported.current
+    });
+
     if (hasSiteKey && !turnstileToken.current && !isTurnstileUnsupported.current) {
       setError('Harap selesaikan verifikasi keamanan.');
       return;
