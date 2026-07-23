@@ -15,5 +15,11 @@
   "observability": {
     "enabled": true
   },
+  "kv_namespaces": [
+    {
+      "binding": "MONITORING_KV",
+      "id": "27b43b92c51c4a8992e5eb41e9055638"
+    }
+  ],
   "keep_vars": true
 }

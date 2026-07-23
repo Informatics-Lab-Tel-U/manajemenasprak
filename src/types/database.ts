@@ -135,3 +135,12 @@ export type Praktikan = {
   kelas: string;
   mata_kuliah: string;
 };
+
+export type RoomMonitoring = {
+  lab_id: string;
+  kelas: string;
+  status: string;
+  last_seen: string;
+  created_at: string;
+  updated_at: string;
+};
