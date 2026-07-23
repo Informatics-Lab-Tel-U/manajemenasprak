@@ -34,6 +34,7 @@ export async function POST(request: Request) {
     const supabaseAdmin = createAdminClient();
     const { error } = await supabaseAdmin
       .from('monitoring_lab')
+      // @ts-expect-error Type inference misses Database schema
       .upsert(dataToStore, { onConflict: 'lab_id' });
 
     if (error) {

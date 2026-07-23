@@ -91,6 +91,7 @@ export async function POST(request: NextRequest) {
     const userId = newUser.user.id;
 
     // 2. INSERT pengguna profile (Bukan UPDATE, karena trigger sudah dimatikan)
+    // @ts-expect-error Type inference misses Database schema
     const { error: insertError } = await admin.from('pengguna').insert({
       id: userId,
       nama_lengkap: nama_lengkap,
@@ -112,6 +113,7 @@ export async function POST(request: NextRequest) {
       }));
 
       // Gunakan admin client juga di sini untuk memastikan kelancaran insert server-side
+      // @ts-expect-error Type inference misses Database schema
       const { error: assignError } = await admin.from('asprak_koordinator').insert(assignmentRows);
 
       if (assignError) {

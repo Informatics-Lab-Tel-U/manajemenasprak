@@ -73,7 +73,7 @@ export function StatCard({
         )}
       />
 
-      <CardHeader className="flex items-start justify-between space-y-0 pb-3 relative z-10">
+      <CardHeader className="flex items-start justify-between space-y-0 pb-1 relative z-10">
         <div className="space-y-1 flex-1">
           <p className="text-[10px] 2xl:text-xs font-semibold text-muted-foreground uppercase tracking-widest">
             {title}
@@ -81,7 +81,7 @@ export function StatCard({
           {loading ? (
             <Skeleton className="h-8 2xl:h-10 w-16 mt-1" />
           ) : (
-            <h3 className="text-2xl 2xl:text-4xl font-bold tracking-tight text-foreground/90 dark:text-foreground">
+            <h3 className="text-xl 2xl:text-3xl font-bold tracking-tight text-foreground/90 dark:text-foreground">
               {value}
             </h3>
           )}
@@ -90,7 +90,7 @@ export function StatCard({
           <Icon size={18} strokeWidth={2.5} />
         </div>
       </CardHeader>
-      <CardContent className="space-y-2 pt-0 relative z-10">
+      <CardContent className="space-y-1.5 pt-0 relative z-10">
         <p className="text-xs 2xl:text-sm text-muted-foreground font-medium opacity-80">{subtitle}</p>
         {trend && (
           <Badge
