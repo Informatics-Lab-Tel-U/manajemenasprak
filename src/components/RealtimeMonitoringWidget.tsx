@@ -98,21 +98,10 @@ export default function RealtimeMonitoringWidget({ initialData }: { initialData:
     <Card className="w-full transition-all duration-300 border bg-card hover:border-foreground/20 shadow-sm border-blue-200/50 dark:border-blue-500/20 mb-6">
       <CardContent className="p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 w-full flex-1">
-          <div className="space-y-1.5 shrink-0">
+          <div className="shrink-0">
             <CardTitle className="flex items-center gap-2">
               Konektivitas Lab
-              {activeLabsCount > 0 ? (
-                <span className="flex h-2 w-2 relative">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-                </span>
-              ) : (
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-destructive"></span>
-              )}
             </CardTitle>
-            <CardDescription>
-              {activeLabsCount} Lab terhubung secara real-time
-            </CardDescription>
           </div>
 
           <div className="flex flex-row items-center gap-2 sm:border-l sm:pl-6 min-h-[30px] w-full flex-1 overflow-x-auto pb-2 sm:pb-0">
@@ -137,14 +126,12 @@ export default function RealtimeMonitoringWidget({ initialData }: { initialData:
                   title={isOnline ? `Online (Kelas: ${data?.kelas || 'N/A'})` : 'Offline'}
                 >
                   <div className="flex items-center gap-2">
-                    <span className={`h-2 w-2 rounded-full ${isOnline ? 'bg-green-500' : 'bg-muted-foreground'}`} />
-                    <span>{room}</span>
+                    <span className={`h-2 w-2 rounded-full shrink-0 ${isOnline ? 'bg-green-500' : 'bg-muted-foreground'}`} />
+                    <span className="whitespace-nowrap">{room}</span>
                   </div>
-                  {isOnline && data?.kelas && (
-                    <span className="text-[10px] leading-none font-normal text-muted-foreground">
-                      {data.kelas}
-                    </span>
-                  )}
+                  <span className="text-[10px] leading-none font-normal text-muted-foreground truncate w-full">
+                    {isOnline ? (data?.kelas || 'Tidak ada sesi') : 'Offline'}
+                  </span>
                 </div>
               );
             })}
