@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import type { RealtimeChannel } from '@supabase/supabase-js';
-import { Card, CardContent, CardTitle, CardDescription, CardHeader } from '@/components/ui/card';
+import { Card, CardContent, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { createClient } from '@/lib/supabase/client';
 import { LabStatus } from '@/app/(dashboard)/monitoring/RealtimeMonitoringList';
@@ -95,54 +95,55 @@ export default function RealtimeMonitoringWidget({ initialData }: { initialData:
 
   return (
     <Card className="transition-all duration-300 border bg-card hover:border-foreground/20 shadow-sm border-blue-200/50 dark:border-blue-500/20 mb-6">
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <div className="space-y-1.5">
-          <CardTitle className="flex items-center gap-2">
-            Konektivitas Lab
-            {activeLabsCount > 0 ? (
-              <span className="flex h-2 w-2 relative">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-              </span>
+      <CardContent className="p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
+          <div className="space-y-1.5 shrink-0">
+            <CardTitle className="flex items-center gap-2">
+              Konektivitas Lab
+              {activeLabsCount > 0 ? (
+                <span className="flex h-2 w-2 relative">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                </span>
+              ) : (
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-destructive"></span>
+              )}
+            </CardTitle>
+            <CardDescription>
+              {activeLabsCount} Lab terhubung secara real-time
+            </CardDescription>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 sm:border-l sm:pl-6 min-h-[30px]">
+            {monitoringData.length === 0 ? (
+              <span className="text-xs text-muted-foreground italic">Belum ada data lab</span>
             ) : (
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-destructive"></span>
+              monitoringData.map((data) => {
+                const diffInSeconds = (now.getTime() - new Date(data.last_seen).getTime()) / 1000;
+                const isOnline = diffInSeconds <= OFFLINE_THRESHOLD_S;
+
+                return (
+                  <div
+                    key={data.lab_id}
+                    className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold shadow-sm border transition-colors ${
+                      isOnline
+                        ? 'bg-green-50 text-green-700 border-green-200 dark:bg-green-500/10 dark:text-green-300 dark:border-green-500/20'
+                        : 'bg-muted/50 text-muted-foreground border-transparent opacity-70'
+                    }`}
+                    title={isOnline ? `Online (Kelas: ${data.kelas})` : 'Offline'}
+                  >
+                    <span className={`h-1.5 w-1.5 rounded-full ${isOnline ? 'bg-green-500' : 'bg-muted-foreground'}`} />
+                    {data.lab_id}
+                  </div>
+                );
+              })
             )}
-          </CardTitle>
-          <CardDescription>
-            {activeLabsCount} Lab terhubung secara real-time
-          </CardDescription>
+          </div>
         </div>
-        <Button asChild variant="outline" size="sm">
+
+        <Button asChild variant="outline" size="sm" className="shrink-0 self-start sm:self-auto">
           <Link href="/monitoring">Lihat Detail</Link>
         </Button>
-      </CardHeader>
-
-      <CardContent>
-        <div className="flex flex-wrap items-center gap-2">
-          {monitoringData.length === 0 ? (
-            <span className="text-xs text-muted-foreground italic">Belum ada data lab</span>
-          ) : (
-            monitoringData.map((data) => {
-              const diffInSeconds = (now.getTime() - new Date(data.last_seen).getTime()) / 1000;
-              const isOnline = diffInSeconds <= OFFLINE_THRESHOLD_S;
-
-              return (
-                <div
-                  key={data.lab_id}
-                  className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold shadow-sm border transition-colors ${
-                    isOnline
-                      ? 'bg-green-50 text-green-700 border-green-200 dark:bg-green-500/10 dark:text-green-300 dark:border-green-500/20'
-                      : 'bg-muted/50 text-muted-foreground border-transparent opacity-70'
-                  }`}
-                  title={isOnline ? `Online (Kelas: ${data.kelas})` : 'Offline'}
-                >
-                  <span className={`h-1.5 w-1.5 rounded-full ${isOnline ? 'bg-green-500' : 'bg-muted-foreground'}`} />
-                  {data.lab_id}
-                </div>
-              );
-            })
-          )}
-        </div>
       </CardContent>
     </Card>
   );
