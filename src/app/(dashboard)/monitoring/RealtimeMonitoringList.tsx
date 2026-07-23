@@ -63,7 +63,7 @@ export default function RealtimeMonitoringList({ initialData }: { initialData: L
 
     const subscribe = () => {
       channel = supabase
-        .channel('monitoring_updates')
+        .channel(`monitoring_updates_${Date.now()}`)
         .on(
           'postgres_changes',
           { event: '*', schema: 'public', table: 'monitoring_lab' },
@@ -132,11 +132,11 @@ export default function RealtimeMonitoringList({ initialData }: { initialData: L
                   <span className="text-sm font-medium text-muted-foreground">Status</span>
                   {isOnline ? (
                     <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-semibold text-green-800 dark:bg-green-900 dark:text-green-200">
-                      🟢 Online
+                      Online
                     </span>
                   ) : (
                     <span className="inline-flex items-center rounded-full bg-destructive/10 px-2.5 py-0.5 text-xs font-semibold text-destructive dark:bg-destructive/20">
-                      🔴 Offline
+                      Offline
                     </span>
                   )}
                 </div>

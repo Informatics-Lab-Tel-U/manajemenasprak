@@ -51,7 +51,7 @@ export default function RealtimeMonitoringWidget({ initialData }: { initialData:
 
     const subscribe = () => {
       channel = supabase
-        .channel('monitoring_updates_overview')
+        .channel(`monitoring_updates_overview_${Date.now()}`)
         .on(
           'postgres_changes',
           { event: '*', schema: 'public', table: 'monitoring_lab' },
