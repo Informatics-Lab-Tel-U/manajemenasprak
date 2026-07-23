@@ -5,6 +5,7 @@ import type { RealtimeChannel } from '@supabase/supabase-js';
 import { Card, CardContent, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { createClient } from '@/lib/supabase/client';
+import { ROOMS } from '@/constants';
 import { LabStatus } from '@/app/(dashboard)/monitoring/RealtimeMonitoringList';
 import Link from 'next/link';
 
@@ -115,29 +116,29 @@ export default function RealtimeMonitoringWidget({ initialData }: { initialData:
           </div>
 
           <div className="flex flex-wrap items-center gap-2 sm:border-l sm:pl-6 min-h-[30px]">
-            {monitoringData.length === 0 ? (
-              <span className="text-xs text-muted-foreground italic">Belum ada data lab</span>
-            ) : (
-              monitoringData.map((data) => {
+            {ROOMS.map((room) => {
+              const data = monitoringData.find((d) => d.lab_id === room);
+              let isOnline = false;
+              if (data) {
                 const diffInSeconds = (now.getTime() - new Date(data.last_seen).getTime()) / 1000;
-                const isOnline = diffInSeconds <= OFFLINE_THRESHOLD_S;
+                isOnline = diffInSeconds <= OFFLINE_THRESHOLD_S;
+              }
 
-                return (
-                  <div
-                    key={data.lab_id}
-                    className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold shadow-sm border transition-colors ${
-                      isOnline
-                        ? 'bg-green-50 text-green-700 border-green-200 dark:bg-green-500/10 dark:text-green-300 dark:border-green-500/20'
-                        : 'bg-muted/50 text-muted-foreground border-transparent opacity-70'
-                    }`}
-                    title={isOnline ? `Online (Kelas: ${data.kelas})` : 'Offline'}
-                  >
-                    <span className={`h-1.5 w-1.5 rounded-full ${isOnline ? 'bg-green-500' : 'bg-muted-foreground'}`} />
-                    {data.lab_id}
-                  </div>
-                );
-              })
-            )}
+              return (
+                <div
+                  key={room}
+                  className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold shadow-sm border transition-colors ${
+                    isOnline
+                      ? 'bg-green-50 text-green-700 border-green-200 dark:bg-green-500/10 dark:text-green-300 dark:border-green-500/20'
+                      : 'bg-muted/50 text-muted-foreground border-transparent opacity-70'
+                  }`}
+                  title={isOnline ? `Online (Kelas: ${data?.kelas || 'N/A'})` : 'Offline'}
+                >
+                  <span className={`h-1.5 w-1.5 rounded-full ${isOnline ? 'bg-green-500' : 'bg-muted-foreground'}`} />
+                  {room}
+                </div>
+              );
+            })}
           </div>
         </div>
 
