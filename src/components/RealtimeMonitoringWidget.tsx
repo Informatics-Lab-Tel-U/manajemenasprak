@@ -2,9 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 import type { RealtimeChannel } from '@supabase/supabase-js';
-import { Card, CardContent, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardTitle, CardDescription, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Activity } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { LabStatus } from '@/app/(dashboard)/monitoring/RealtimeMonitoringList';
 import Link from 'next/link';
@@ -95,30 +94,31 @@ export default function RealtimeMonitoringWidget({ initialData }: { initialData:
   ).length;
 
   return (
-    <Card className="relative overflow-hidden transition-all duration-300 group border bg-card hover:border-foreground/20 shadow-sm border-blue-200/50 dark:border-blue-500/20 mb-6">
-      <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full blur-2xl opacity-[0.15] dark:opacity-10 pointer-events-none transition-opacity group-hover:opacity-30 from-blue-500 to-cyan-500 bg-gradient-to-br" />
-
-      <CardContent className="p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative z-10">
-        <div className="flex items-center gap-4">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              Konektivitas Lab
-              {activeLabsCount > 0 ? (
-                <span className="flex h-2 w-2 relative">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-                </span>
-              ) : (
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-destructive"></span>
-              )}
-            </CardTitle>
-            <CardDescription className="mt-1">
-              {activeLabsCount} Lab terhubung secara real-time
-            </CardDescription>
-          </div>
+    <Card className="transition-all duration-300 border bg-card hover:border-foreground/20 shadow-sm border-blue-200/50 dark:border-blue-500/20 mb-6">
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <div className="space-y-1.5">
+          <CardTitle className="flex items-center gap-2">
+            Konektivitas Lab
+            {activeLabsCount > 0 ? (
+              <span className="flex h-2 w-2 relative">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+              </span>
+            ) : (
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-destructive"></span>
+            )}
+          </CardTitle>
+          <CardDescription>
+            {activeLabsCount} Lab terhubung secara real-time
+          </CardDescription>
         </div>
+        <Button asChild variant="outline" size="sm">
+          <Link href="/monitoring">Lihat Detail</Link>
+        </Button>
+      </CardHeader>
 
-        <div className="flex flex-wrap items-center gap-2 flex-1 max-w-2xl px-2">
+      <CardContent>
+        <div className="flex flex-wrap items-center gap-2">
           {monitoringData.length === 0 ? (
             <span className="text-xs text-muted-foreground italic">Belum ada data lab</span>
           ) : (
@@ -143,13 +143,6 @@ export default function RealtimeMonitoringWidget({ initialData }: { initialData:
             })
           )}
         </div>
-
-        <Button asChild variant="outline" size="sm" className="shrink-0">
-          <Link href="/monitoring" className="flex items-center gap-1">
-            Lihat Detail
-            <Activity size={14} className="animate-pulse text-muted-foreground" />
-          </Link>
-        </Button>
       </CardContent>
     </Card>
   );
