@@ -44,48 +44,35 @@ export default function RealtimeMonitoringWidget({ initialData }: { initialData:
     return () => clearInterval(pollInterval);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // === SUPABASE REALTIME (PRIMARY PUSH) + AUTO-RECONNECT ===
+  // === SUPABASE REALTIME (PRIMARY PUSH) ===
   useEffect(() => {
     const supabase = supabaseRef.current;
-    let channel: RealtimeChannel;
-    let reconnectTimer: ReturnType<typeof setTimeout>;
 
-    const subscribe = () => {
-      channel = supabase
-        .channel(`monitoring_updates_overview_${Date.now()}`)
-        .on(
-          'postgres_changes',
-          { event: '*', schema: 'public', table: 'monitoring_lab' },
-          (payload) => {
-            setMonitoringData((prev) => {
-              const updatedRow = payload.new as LabStatus;
-              const existingIndex = prev.findIndex((item) => item.lab_id === updatedRow.lab_id);
-              if (existingIndex !== -1) {
-                const newData = [...prev];
-                newData[existingIndex] = updatedRow;
-                return newData.sort((a, b) => a.lab_id.localeCompare(b.lab_id));
-              }
-              return [...prev, updatedRow].sort((a, b) => a.lab_id.localeCompare(b.lab_id));
-            });
-          }
-        )
-        .subscribe((status, err) => {
-          // Only reconnect on unexpected errors, NOT on CLOSED.
-          // CLOSED fires when we call removeChannel ourselves, causing an infinite loop.
-          if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-            console.warn('[Realtime:Widget] Channel down:', status, err ?? '— reconnecting…');
-            reconnectTimer = setTimeout(() => {
-              supabase.removeChannel(channel);
-              subscribe();
-            }, RECONNECT_DELAY_MS);
-          }
-        });
-    };
-
-    subscribe();
+    const channel = supabase
+      .channel('monitoring_updates_overview')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'monitoring_lab' },
+        (payload) => {
+          setMonitoringData((prev) => {
+            const updatedRow = payload.new as LabStatus;
+            const existingIndex = prev.findIndex((item) => item.lab_id === updatedRow.lab_id);
+            if (existingIndex !== -1) {
+              const newData = [...prev];
+              newData[existingIndex] = updatedRow;
+              return newData.sort((a, b) => a.lab_id.localeCompare(b.lab_id));
+            }
+            return [...prev, updatedRow].sort((a, b) => a.lab_id.localeCompare(b.lab_id));
+          });
+        }
+      )
+      .subscribe((status, err) => {
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          console.warn('[Realtime:Widget] Channel issue:', status, err ?? '— Supabase will auto-reconnect');
+        }
+      });
 
     return () => {
-      clearTimeout(reconnectTimer);
       supabase.removeChannel(channel);
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -118,18 +105,18 @@ export default function RealtimeMonitoringWidget({ initialData }: { initialData:
               return (
                 <div
                   key={room}
-                  className={`flex flex-col items-start justify-center gap-0.5 rounded-md px-2.5 py-1.5 text-xs font-semibold shadow-sm border transition-colors flex-1 min-w-[100px] h-full shrink-0 sm:shrink ${
+                  className={`flex flex-col items-start justify-center gap-1 rounded-md px-3 py-2 text-sm font-semibold shadow-sm border transition-colors flex-none min-w-[120px] h-full ${
                     isOnline
                       ? 'bg-card border-green-200 dark:border-green-900'
                       : 'bg-muted/30 border-border opacity-70'
                   }`}
                   title={isOnline ? `Online (Kelas: ${data?.kelas || 'N/A'})` : 'Offline'}
                 >
-                  <div className="flex items-center gap-1.5">
-                    <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${isOnline ? 'bg-green-500' : 'bg-muted-foreground'}`} />
+                  <div className="flex items-center gap-2">
+                    <span className={`h-2 w-2 rounded-full shrink-0 ${isOnline ? 'bg-green-500' : 'bg-muted-foreground'}`} />
                     <span className="whitespace-nowrap">{room}</span>
                   </div>
-                  <span className="text-[9px] leading-none font-normal text-muted-foreground truncate w-full">
+                  <span className="text-[10px] leading-none font-normal text-muted-foreground truncate w-full">
                     {isOnline ? (data?.kelas || 'Tidak ada sesi') : 'Offline'}
                   </span>
                 </div>

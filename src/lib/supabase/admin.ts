@@ -4,6 +4,8 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
+let adminClientInstance: ReturnType<typeof createClient> | null = null;
+
 /**
  * Supabase Admin Client (service_role).
  *
@@ -12,16 +14,22 @@ const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
  * This client bypasses Row Level Security.
  */
 export function createAdminClient() {
+  if (adminClientInstance) {
+    return adminClientInstance;
+  }
+
   if (!serviceRoleKey) {
     throw new Error(
       'Missing SUPABASE_SERVICE_ROLE_KEY. Add it to .env.local (no NEXT_PUBLIC_ prefix).'
     );
   }
 
-  return createClient(supabaseUrl, serviceRoleKey, {
+  adminClientInstance = createClient(supabaseUrl, serviceRoleKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false,
     },
   });
+  
+  return adminClientInstance;
 }
