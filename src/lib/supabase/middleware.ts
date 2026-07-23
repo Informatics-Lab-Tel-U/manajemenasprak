@@ -85,6 +85,11 @@ export async function updateSession(request: NextRequest) {
       return supabaseResponse;
     }
 
+    // Allow generator-kursi to send heartbeat without auth
+    if (pathname.startsWith('/api/monitoring/')) {
+      return supabaseResponse;
+    }
+
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
