@@ -3,6 +3,7 @@ import { Activity, MonitorOff } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { id } from 'date-fns/locale';
 import { getCloudflareContext } from '@opennextjs/cloudflare';
+import { AutoRefresh } from '@/components/AutoRefresh';
 
 export const metadata = {
   title: 'Monitoring Lab | Manajemen Asprak',
@@ -21,7 +22,7 @@ export default async function MonitoringPage() {
   let monitoringData: { lab_id: string; data: LabStatus }[] = [];
 
   try {
-    const { env } = getCloudflareContext();
+    const { env } = await getCloudflareContext({ async: true });
     const kv = (env as any).MONITORING_KV;
 
     if (kv) {
@@ -49,6 +50,7 @@ export default async function MonitoringPage() {
 
   return (
     <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
+      <AutoRefresh intervalMs={15000} />
       <div className="flex items-center justify-between space-y-2">
         <h2 className="text-3xl font-bold tracking-tight">Monitoring Lab</h2>
       </div>

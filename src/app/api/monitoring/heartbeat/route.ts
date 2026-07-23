@@ -24,7 +24,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { env } = getCloudflareContext();
+    const { env } = await getCloudflareContext({ async: true });
     const kv = (env as any).MONITORING_KV;
 
     if (!kv) {
