@@ -31,23 +31,23 @@ export default function RealtimeMonitoringList({ initialData }: { initialData: L
   }, []);
 
   // === POLLING FALLBACK ===
-  // Fetch fresh data directly from Supabase every 20 seconds.
+  // Fetch via our own API route (uses admin client server-side, bypasses RLS).
   // This is the safety net: even if the Realtime channel dies silently,
   // the UI will never show stale data for more than 20 seconds.
   useEffect(() => {
-    const supabase = supabaseRef.current;
-
     const poll = async () => {
-      const { data } = await supabase
-        .from('monitoring_lab')
-        .select('*')
-        .order('lab_id', { ascending: true });
-      if (data) {
-        setMonitoringData(data as LabStatus[]);
+      try {
+        const res = await fetch('/api/monitoring/status');
+        if (!res.ok) return;
+        const json = await res.json();
+        if (Array.isArray(json.data) && json.data.length > 0) {
+          setMonitoringData(json.data as LabStatus[]);
+        }
+      } catch {
+        // network error — silently skip, Realtime will still handle updates
       }
     };
 
-    poll(); // immediate poll on mount to freshen server-side initialData
     const pollInterval = setInterval(poll, POLL_INTERVAL_MS);
     return () => clearInterval(pollInterval);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
