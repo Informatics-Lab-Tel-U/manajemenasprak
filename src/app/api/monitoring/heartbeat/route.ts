@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getCloudflareContext } from '@opennextjs/cloudflare';
+import { createAdminClient } from '@/lib/supabase/admin';
 
 // Setup CORS headers to allow requests from the generator-kursi worker
 const corsHeaders = {
@@ -24,34 +24,31 @@ export async function POST(request: Request) {
       );
     }
 
-    const { env } = getCloudflareContext();
-    const kv = (env as any).MONITORING_KV;
-
-    if (!kv) {
-      console.error('MONITORING_KV is not bound!');
-      return NextResponse.json(
-        { error: 'KV Binding missing' },
-        { status: 500, headers: corsHeaders }
-      );
-    }
-
-    // Set TTL to 150 seconds (2.5 minutes)
-    // Cloudflare KV TTL must be at least 60 seconds.
-    const expirationTtl = 150; 
-
-    const dataToStore = JSON.stringify({
+    const dataToStore = {
+      lab_id,
       kelas,
       status: status || 'online',
       last_seen: new Date().toISOString()
-    });
+    };
 
-    await kv.put(lab_id, dataToStore, { expirationTtl });
+    const supabaseAdmin = createAdminClient();
+    const { error } = await supabaseAdmin
+      .from('monitoring_lab')
+      .upsert(dataToStore, { onConflict: 'lab_id' });
+
+    if (error) {
+      console.error('Failed to upsert to Supabase:', error);
+      return NextResponse.json(
+        { error: 'Failed to write to database' },
+        { status: 500, headers: corsHeaders }
+      );
+    }
 
     return NextResponse.json({ success: true }, { headers: corsHeaders });
   } catch (err: any) {
     console.error('Exception in heartbeat route:', err);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: err.message || 'Internal server error', stack: err.stack },
       { status: 500, headers: corsHeaders }
     );
   }

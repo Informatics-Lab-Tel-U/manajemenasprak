@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic';
 
 const DashboardCharts = dynamic(() => import('@/components/DashboardCharts'), { ssr: false });
 import { StatCard } from '@/components/ui/StatCard';
+import RealtimeMonitoringWidget from '@/components/RealtimeMonitoringWidget';
 
 
 import type { DashboardStats } from '@/services/databaseService';
@@ -23,6 +24,7 @@ interface DashboardClientProps {
   initialTerms: string[];
   activeModul: number;
   userRole?: string;
+  initialMonitoringData: any[];
 }
 
 export default function DashboardClient({
@@ -32,6 +34,7 @@ export default function DashboardClient({
   initialTerms,
   activeModul,
   userRole,
+  initialMonitoringData,
 }: DashboardClientProps) {
   const { terms, selectedTerm, stats, rawJadwal, jadwalPengganti, loading } =
     useDashboard(initialTerms, initialStats, initialJadwal, initialPengganti, activeModul);
@@ -106,6 +109,8 @@ export default function DashboardClient({
           loading={loading}
         />
       </div>
+
+      <RealtimeMonitoringWidget initialData={initialMonitoringData} />
 
       <div className="mb-12">
         <DashboardCharts
