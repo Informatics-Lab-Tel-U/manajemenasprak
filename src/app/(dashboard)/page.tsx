@@ -7,7 +7,7 @@ import {
 import { getModulScheduleByTerm } from '@/services/modulScheduleService';
 import DashboardClient from '@/components/DashboardClient';
 import { requireAuth } from '@/lib/auth';
-import { createAdminClient } from '@/lib/supabase/admin';
+import { getMonitoringLabs } from '@/services/monitoringService';
 
 export const revalidate = 0;
 
@@ -29,15 +29,14 @@ export default async function Home() {
       .filter((m) => m.tanggal_mulai && m.tanggal_mulai <= todayStr)
       .sort((a, b) => b.modul - a.modul)[0]?.modul || 1;
 
-  const supabaseAdmin = createAdminClient();
-  const [initialStats, initialJadwal, initialPengganti, { data: monitoringData }] = await Promise.all([
+  const [initialStats, initialJadwal, initialPengganti, monitoringData] = await Promise.all([
     getStats(latestTerm),
     getJadwalByTerm(latestTerm),
     getJadwalPengganti(activeModul),
-    supabaseAdmin.from('monitoring_lab').select('*').order('lab_id', { ascending: true })
+    getMonitoringLabs()
   ]);
 
-  const initialMonitoringData = (monitoringData || []) as any[];
+  const initialMonitoringData = monitoringData;
 
   return (
     <div className="container mx-auto max-w-[2000px] 2xl:px-8">

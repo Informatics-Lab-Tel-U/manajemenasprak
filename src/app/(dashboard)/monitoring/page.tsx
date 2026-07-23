@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Activity, MonitorOff } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { id } from 'date-fns/locale';
-import { createAdminClient } from '@/lib/supabase/admin';
+import { getMonitoringLabs } from '@/services/monitoringService';
 import RealtimeMonitoringList, { LabStatus } from './RealtimeMonitoringList';
 
 export const metadata = {
@@ -14,19 +14,9 @@ export default async function MonitoringPage() {
   let initialData: LabStatus[] = [];
 
   try {
-    const supabaseAdmin = createAdminClient();
-    const { data, error } = await supabaseAdmin
-      .from('monitoring_lab')
-      .select('*')
-      .order('lab_id', { ascending: true });
-
-    if (error) {
-      console.error('Error fetching initial lab data from Supabase:', error);
-    } else if (data) {
-      initialData = data as LabStatus[];
-    }
+    initialData = await getMonitoringLabs();
   } catch (err) {
-    console.error('Exception fetching lab data:', err);
+    console.error('Failed to load initial lab data:', err);
   }
 
   return (
