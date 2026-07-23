@@ -2,8 +2,9 @@
 
 import { useEffect, useRef, useState } from 'react';
 import type { RealtimeChannel } from '@supabase/supabase-js';
-import { Card, CardContent } from '@/components/ui/card';
-import { Activity, Server } from 'lucide-react';
+import { Card, CardContent, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Activity } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { LabStatus } from '@/app/(dashboard)/monitoring/RealtimeMonitoringList';
 import Link from 'next/link';
@@ -99,14 +100,9 @@ export default function RealtimeMonitoringWidget({ initialData }: { initialData:
 
       <CardContent className="p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative z-10">
         <div className="flex items-center gap-4">
-          <div className="rounded-md p-2.5 shrink-0 shadow-sm text-blue-600 bg-blue-100 dark:text-blue-300 dark:bg-blue-500/20">
-            <Server size={20} strokeWidth={2.5} />
-          </div>
           <div>
-            <div className="flex items-center gap-2">
-              <h3 className="text-base sm:text-lg font-bold tracking-tight text-foreground/90 dark:text-foreground">
-                Konektivitas Lab
-              </h3>
+            <CardTitle className="flex items-center gap-2">
+              Konektivitas Lab
               {activeLabsCount > 0 ? (
                 <span className="flex h-2 w-2 relative">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
@@ -115,10 +111,10 @@ export default function RealtimeMonitoringWidget({ initialData }: { initialData:
               ) : (
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-destructive"></span>
               )}
-            </div>
-            <p className="text-xs sm:text-sm text-muted-foreground font-medium opacity-80 mt-0.5">
+            </CardTitle>
+            <CardDescription className="mt-1">
               {activeLabsCount} Lab terhubung secara real-time
-            </p>
+            </CardDescription>
           </div>
         </div>
 
@@ -148,13 +144,12 @@ export default function RealtimeMonitoringWidget({ initialData }: { initialData:
           )}
         </div>
 
-        <Link
-          href="/monitoring"
-          className="shrink-0 text-xs font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors flex items-center gap-1"
-        >
-          Lihat Detail
-          <Activity size={14} className="animate-pulse" />
-        </Link>
+        <Button asChild variant="outline" size="sm" className="shrink-0">
+          <Link href="/monitoring" className="flex items-center gap-1">
+            Lihat Detail
+            <Activity size={14} className="animate-pulse text-muted-foreground" />
+          </Link>
+        </Button>
       </CardContent>
     </Card>
   );
