@@ -2,120 +2,35 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Activity, MonitorOff } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { id } from 'date-fns/locale';
-import { getCloudflareContext } from '@opennextjs/cloudflare';
-import { AutoRefresh } from '@/components/AutoRefresh';
+import { supabaseAdmin } from '@/lib/supabase/admin';
+import RealtimeMonitoringList, { LabStatus } from './RealtimeMonitoringList';
 
 export const metadata = {
   title: 'Monitoring Lab | Manajemen Asprak',
 };
 
-// Polling page every 15 seconds
-export const revalidate = 15;
-
-type LabStatus = {
-  kelas: string;
-  status: string;
-  last_seen: string;
-};
-
+// Server Component fetching initial data directly from Supabase
 export default async function MonitoringPage() {
-  let monitoringData: { lab_id: string; data: LabStatus }[] = [];
+  let initialData: LabStatus[] = [];
 
   try {
-    const { env } = await getCloudflareContext({ async: true });
-    const kv = (env as any).MONITORING_KV;
+    const { data, error } = await supabaseAdmin
+      .from('monitoring_lab')
+      .select('*')
+      .order('lab_id', { ascending: true });
 
-    if (kv) {
-      // List all keys (lab_ids) in KV
-      const keysList = await kv.list();
-      
-      // Fetch data for each key
-      for (const keyObj of keysList.keys) {
-        const lab_id = keyObj.name;
-        const valueStr = await kv.get(lab_id);
-        if (valueStr) {
-          const data = JSON.parse(valueStr) as LabStatus;
-          monitoringData.push({ lab_id, data });
-        }
-      }
-
-      // Sort alphabetically by lab_id
-      monitoringData.sort((a, b) => a.lab_id.localeCompare(b.lab_id));
-    } else {
-      console.error('MONITORING_KV binding is missing');
+    if (error) {
+      console.error('Error fetching initial lab data from Supabase:', error);
+    } else if (data) {
+      initialData = data as LabStatus[];
     }
   } catch (err) {
-    console.error('Error fetching KV for monitoring:', err);
+    console.error('Exception fetching lab data:', err);
   }
 
   return (
     <div className="container mx-auto max-w-[2000px] 2xl:px-8">
-      <AutoRefresh intervalMs={15000} />
-      
-      <header className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl 2xl:text-3xl font-bold tracking-tight">Monitoring Lab</h1>
-          <p className="text-sm 2xl:text-base text-muted-foreground mt-1">
-            Pantau status proyektor Generator Kursi di setiap ruangan Lab secara real-time.
-          </p>
-        </div>
-      </header>
-
-      {monitoringData.length === 0 ? (
-        <div className="flex flex-col items-center justify-center p-12 text-center bg-muted/20 rounded-lg border border-dashed">
-          <MonitorOff className="h-12 w-12 text-muted-foreground mb-4" />
-          <h3 className="text-lg font-medium">Belum Ada Data Lab</h3>
-          <p className="text-sm text-muted-foreground mt-2 max-w-sm">
-            Sistem belum menerima sinyal *heartbeat* dari PC Lab manapun. Pastikan Generator Kursi sedang dibuka di PC Lab yang telah dikonfigurasi.
-          </p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 2xl:gap-8">
-          {monitoringData.map(({ lab_id, data }) => {
-            const lastSeenTime = new Date(data.last_seen);
-            // If it's in KV, it's considered online because TTL handles expiration
-            const isOnline = true;
-
-            return (
-              <Card key={lab_id} className={`overflow-hidden transition-all duration-200 ${isOnline ? 'border-green-500/50 shadow-sm shadow-green-100 dark:shadow-none' : 'opacity-70'}`}>
-                <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-                  <CardTitle className="text-xl font-bold">
-                    {lab_id}
-                  </CardTitle>
-                  <Activity className={`h-5 w-5 ${isOnline ? 'text-green-500 animate-pulse' : 'text-muted-foreground'}`} />
-                </CardHeader>
-                <CardContent>
-                  <div className="flex flex-col gap-3 mt-2">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium text-muted-foreground">Status</span>
-                      {isOnline ? (
-                        <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-semibold text-green-800 dark:bg-green-900 dark:text-green-200">
-                          🟢 Online
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center rounded-full bg-destructive/10 px-2.5 py-0.5 text-xs font-semibold text-destructive dark:bg-destructive/20">
-                          🔴 Offline
-                        </span>
-                      )}
-                    </div>
-                    
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium text-muted-foreground">Kelas Aktif</span>
-                      <span className="text-sm font-bold bg-muted px-2 py-1 rounded">
-                        {isOnline ? data.kelas : '-'}
-                      </span>
-                    </div>
-
-                    <div className="text-xs text-right text-muted-foreground mt-2">
-                      Detak terakhir: {formatDistanceToNow(lastSeenTime, { addSuffix: true, locale: id })}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      )}
+      <RealtimeMonitoringList initialData={initialData} />
     </div>
   );
 }
