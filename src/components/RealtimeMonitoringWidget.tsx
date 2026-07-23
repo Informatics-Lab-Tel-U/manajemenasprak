@@ -1,56 +1,94 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import type { RealtimeChannel } from '@supabase/supabase-js';
 import { Card, CardContent } from '@/components/ui/card';
 import { Activity, Server } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { LabStatus } from '@/app/(dashboard)/monitoring/RealtimeMonitoringList';
 import Link from 'next/link';
 
+const POLL_INTERVAL_MS = 20_000;
+const RECONNECT_DELAY_MS = 5_000;
+const OFFLINE_THRESHOLD_S = 60;
+
 export default function RealtimeMonitoringWidget({ initialData }: { initialData: LabStatus[] }) {
   const [monitoringData, setMonitoringData] = useState<LabStatus[]>(initialData);
   const [now, setNow] = useState(new Date());
-  // Use a ref so the supabase instance is stable across renders and never
-  // triggers the subscription useEffect to re-run/disconnect.
   const supabaseRef = useRef(createClient());
 
+  // Clock tick for local TTL calculation
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
-  // Dependency array is intentionally empty — we only want to subscribe once on mount.
+  // === POLLING FALLBACK ===
+  // Fetch fresh data directly from Supabase every 20 seconds.
+  // This is the safety net: even if the Realtime channel dies silently,
+  // the UI will never show stale data for more than 20 seconds.
   useEffect(() => {
     const supabase = supabaseRef.current;
-    const channel = supabase
-      .channel('monitoring_updates_overview')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'monitoring_lab' },
-        (payload) => {
-          setMonitoringData((prev) => {
-            const updatedRow = payload.new as LabStatus;
-            const existingIndex = prev.findIndex((item) => item.lab_id === updatedRow.lab_id);
 
-            if (existingIndex !== -1) {
-              const newData = [...prev];
-              newData[existingIndex] = updatedRow;
-              return newData.sort((a, b) => a.lab_id.localeCompare(b.lab_id));
-            } else {
+    const poll = async () => {
+      const { data } = await supabase
+        .from('monitoring_lab')
+        .select('*')
+        .order('lab_id', { ascending: true });
+      if (data) {
+        setMonitoringData(data as LabStatus[]);
+      }
+    };
+
+    poll(); // immediate poll on mount to freshen server-side initialData
+    const pollInterval = setInterval(poll, POLL_INTERVAL_MS);
+    return () => clearInterval(pollInterval);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // === SUPABASE REALTIME (PRIMARY PUSH) + AUTO-RECONNECT ===
+  useEffect(() => {
+    const supabase = supabaseRef.current;
+    let channel: RealtimeChannel;
+    let reconnectTimer: ReturnType<typeof setTimeout>;
+
+    const subscribe = () => {
+      channel = supabase
+        .channel('monitoring_updates_overview')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'monitoring_lab' },
+          (payload) => {
+            setMonitoringData((prev) => {
+              const updatedRow = payload.new as LabStatus;
+              const existingIndex = prev.findIndex((item) => item.lab_id === updatedRow.lab_id);
+              if (existingIndex !== -1) {
+                const newData = [...prev];
+                newData[existingIndex] = updatedRow;
+                return newData.sort((a, b) => a.lab_id.localeCompare(b.lab_id));
+              }
               return [...prev, updatedRow].sort((a, b) => a.lab_id.localeCompare(b.lab_id));
-            }
-          });
-        }
-      )
-      .subscribe();
+            });
+          }
+        )
+        .subscribe((status, err) => {
+          if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+            console.warn('[Realtime:Widget] Channel down:', status, err ?? '— reconnecting…');
+            supabase.removeChannel(channel);
+            reconnectTimer = setTimeout(subscribe, RECONNECT_DELAY_MS);
+          }
+        });
+    };
+
+    subscribe();
 
     return () => {
+      clearTimeout(reconnectTimer);
       supabase.removeChannel(channel);
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const activeLabsCount = monitoringData.filter(
-    (d) => (now.getTime() - new Date(d.last_seen).getTime()) / 1000 <= 60
+    (d) => (now.getTime() - new Date(d.last_seen).getTime()) / 1000 <= OFFLINE_THRESHOLD_S
   ).length;
 
   return (
@@ -88,7 +126,7 @@ export default function RealtimeMonitoringWidget({ initialData }: { initialData:
           ) : (
             monitoringData.map((data) => {
               const diffInSeconds = (now.getTime() - new Date(data.last_seen).getTime()) / 1000;
-              const isOnline = diffInSeconds <= 60;
+              const isOnline = diffInSeconds <= OFFLINE_THRESHOLD_S;
 
               return (
                 <div

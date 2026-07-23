@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import type { RealtimeChannel } from '@supabase/supabase-js';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Activity, MonitorOff } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
@@ -14,46 +15,84 @@ export type LabStatus = {
   last_seen: string;
 };
 
+const POLL_INTERVAL_MS = 20_000;
+const RECONNECT_DELAY_MS = 5_000;
+const OFFLINE_THRESHOLD_S = 60;
+
 export default function RealtimeMonitoringList({ initialData }: { initialData: LabStatus[] }) {
   const [monitoringData, setMonitoringData] = useState<LabStatus[]>(initialData);
   const [now, setNow] = useState(new Date());
-  // Use a ref so the supabase instance is stable across renders and never
-  // triggers the subscription useEffect to re-run/disconnect.
   const supabaseRef = useRef(createClient());
 
-  // Update current time every second to calculate TTL locally
+  // Clock tick for local TTL calculation
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
-  // Listen to Supabase Realtime for changes on monitoring_lab table.
-  // Dependency array is intentionally empty — we only want to subscribe once on mount.
+  // === POLLING FALLBACK ===
+  // Fetch fresh data directly from Supabase every 20 seconds.
+  // This is the safety net: even if the Realtime channel dies silently,
+  // the UI will never show stale data for more than 20 seconds.
   useEffect(() => {
     const supabase = supabaseRef.current;
-    const channel = supabase
-      .channel('monitoring_updates')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'monitoring_lab' },
-        (payload) => {
-          setMonitoringData((prev) => {
-            const updatedRow = payload.new as LabStatus;
-            const existingIndex = prev.findIndex((item) => item.lab_id === updatedRow.lab_id);
 
-            if (existingIndex !== -1) {
-              const newData = [...prev];
-              newData[existingIndex] = updatedRow;
-              return newData.sort((a, b) => a.lab_id.localeCompare(b.lab_id));
-            } else {
+    const poll = async () => {
+      const { data } = await supabase
+        .from('monitoring_lab')
+        .select('*')
+        .order('lab_id', { ascending: true });
+      if (data) {
+        setMonitoringData(data as LabStatus[]);
+      }
+    };
+
+    poll(); // immediate poll on mount to freshen server-side initialData
+    const pollInterval = setInterval(poll, POLL_INTERVAL_MS);
+    return () => clearInterval(pollInterval);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // === SUPABASE REALTIME (PRIMARY PUSH) + AUTO-RECONNECT ===
+  // Realtime delivers instant updates on INSERT/UPDATE.
+  // If the channel goes down (CLOSED, TIMED_OUT, CHANNEL_ERROR),
+  // we reconnect automatically after a short delay.
+  useEffect(() => {
+    const supabase = supabaseRef.current;
+    let channel: RealtimeChannel;
+    let reconnectTimer: ReturnType<typeof setTimeout>;
+
+    const subscribe = () => {
+      channel = supabase
+        .channel('monitoring_updates')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'monitoring_lab' },
+          (payload) => {
+            setMonitoringData((prev) => {
+              const updatedRow = payload.new as LabStatus;
+              const existingIndex = prev.findIndex((item) => item.lab_id === updatedRow.lab_id);
+              if (existingIndex !== -1) {
+                const newData = [...prev];
+                newData[existingIndex] = updatedRow;
+                return newData.sort((a, b) => a.lab_id.localeCompare(b.lab_id));
+              }
               return [...prev, updatedRow].sort((a, b) => a.lab_id.localeCompare(b.lab_id));
-            }
-          });
-        }
-      )
-      .subscribe();
+            });
+          }
+        )
+        .subscribe((status, err) => {
+          if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+            console.warn('[Realtime:List] Channel down:', status, err ?? '— reconnecting…');
+            supabase.removeChannel(channel);
+            reconnectTimer = setTimeout(subscribe, RECONNECT_DELAY_MS);
+          }
+        });
+    };
+
+    subscribe();
 
     return () => {
+      clearTimeout(reconnectTimer);
       supabase.removeChannel(channel);
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -64,7 +103,7 @@ export default function RealtimeMonitoringList({ initialData }: { initialData: L
         <MonitorOff className="h-12 w-12 text-muted-foreground mb-4" />
         <h3 className="text-lg font-medium">Belum Ada Data Lab</h3>
         <p className="text-sm text-muted-foreground mt-2 max-w-sm">
-          Sistem belum menerima sinyal *heartbeat* dari PC Lab manapun. Pastikan Generator Kursi sedang dibuka di PC Lab yang telah dikonfigurasi.
+          Sistem belum menerima sinyal heartbeat dari PC Lab manapun. Pastikan Generator Kursi sedang dibuka di PC Lab yang telah dikonfigurasi.
         </p>
       </div>
     );
@@ -74,16 +113,13 @@ export default function RealtimeMonitoringList({ initialData }: { initialData: L
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 2xl:gap-8">
       {monitoringData.map((data) => {
         const lastSeenTime = new Date(data.last_seen);
-        // TTL Logic: If last seen was more than 60 seconds ago, consider it offline.
         const diffInSeconds = (now.getTime() - lastSeenTime.getTime()) / 1000;
-        const isOnline = diffInSeconds <= 60;
+        const isOnline = diffInSeconds <= OFFLINE_THRESHOLD_S;
 
         return (
           <Card key={data.lab_id} className={`overflow-hidden transition-all duration-200 ${isOnline ? 'border-green-500/50 shadow-sm shadow-green-100 dark:shadow-none' : 'opacity-70'}`}>
             <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-              <CardTitle className="text-xl font-bold">
-                {data.lab_id}
-              </CardTitle>
+              <CardTitle className="text-xl font-bold">{data.lab_id}</CardTitle>
               <Activity className={`h-5 w-5 ${isOnline ? 'text-green-500 animate-pulse' : 'text-muted-foreground'}`} />
             </CardHeader>
             <CardContent>
