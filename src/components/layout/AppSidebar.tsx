@@ -18,6 +18,7 @@ import {
   UserRoundCheck,
   PlusCircle,
   FileSpreadsheet,
+  Monitor,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -132,6 +133,7 @@ const ALL_NAV_GROUPS: NavGroup[] = [
   {
     label: 'Sistem',
     items: [
+      { label: 'Monitoring Lab', href: '/monitoring', icon: Monitor },
       { label: 'Manajemen Akun', href: '/manajemen-akun', icon: Notebook },
       { label: 'Audit Logs', href: '/audit-logs', icon: Logs },
       { label: 'Panduan Sistem', href: '/panduan', icon: HelpCircle },
