@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Activity, MonitorOff } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
@@ -17,7 +17,9 @@ export type LabStatus = {
 export default function RealtimeMonitoringList({ initialData }: { initialData: LabStatus[] }) {
   const [monitoringData, setMonitoringData] = useState<LabStatus[]>(initialData);
   const [now, setNow] = useState(new Date());
-  const supabase = createClient();
+  // Use a ref so the supabase instance is stable across renders and never
+  // triggers the subscription useEffect to re-run/disconnect.
+  const supabaseRef = useRef(createClient());
 
   // Update current time every second to calculate TTL locally
   useEffect(() => {
@@ -25,8 +27,10 @@ export default function RealtimeMonitoringList({ initialData }: { initialData: L
     return () => clearInterval(timer);
   }, []);
 
-  // Listen to Supabase Realtime for UPSERTS on monitoring_lab table
+  // Listen to Supabase Realtime for changes on monitoring_lab table.
+  // Dependency array is intentionally empty — we only want to subscribe once on mount.
   useEffect(() => {
+    const supabase = supabaseRef.current;
     const channel = supabase
       .channel('monitoring_updates')
       .on(
@@ -36,7 +40,7 @@ export default function RealtimeMonitoringList({ initialData }: { initialData: L
           setMonitoringData((prev) => {
             const updatedRow = payload.new as LabStatus;
             const existingIndex = prev.findIndex((item) => item.lab_id === updatedRow.lab_id);
-            
+
             if (existingIndex !== -1) {
               const newData = [...prev];
               newData[existingIndex] = updatedRow;
@@ -52,7 +56,7 @@ export default function RealtimeMonitoringList({ initialData }: { initialData: L
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [supabase]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (monitoringData.length === 0) {
     return (
@@ -96,7 +100,7 @@ export default function RealtimeMonitoringList({ initialData }: { initialData: L
                     </span>
                   )}
                 </div>
-                
+
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium text-muted-foreground">Kelas Aktif</span>
                   <span className="text-sm font-bold bg-muted px-2 py-1 rounded">
