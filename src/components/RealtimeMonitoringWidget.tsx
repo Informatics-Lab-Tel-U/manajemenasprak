@@ -95,9 +95,9 @@ export default function RealtimeMonitoringWidget({ initialData }: { initialData:
   ).length;
 
   return (
-    <Card className="transition-all duration-300 border bg-card hover:border-foreground/20 shadow-sm border-blue-200/50 dark:border-blue-500/20 mb-6">
+    <Card className="w-full transition-all duration-300 border bg-card hover:border-foreground/20 shadow-sm border-blue-200/50 dark:border-blue-500/20 mb-6">
       <CardContent className="p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 w-full flex-1">
           <div className="space-y-1.5 shrink-0">
             <CardTitle className="flex items-center gap-2">
               Konektivitas Lab
@@ -115,9 +115,11 @@ export default function RealtimeMonitoringWidget({ initialData }: { initialData:
             </CardDescription>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 sm:border-l sm:pl-6 min-h-[30px]">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-2 sm:border-l sm:pl-6 min-h-[30px] w-full flex-1">
             {ROOMS.map((room) => {
-              const data = monitoringData.find((d) => d.lab_id === room);
+              const data = monitoringData.find(
+                (d) => d.lab_id.replace(/\s+/g, '') === room.replace(/\s+/g, '')
+              );
               let isOnline = false;
               if (data) {
                 const diffInSeconds = (now.getTime() - new Date(data.last_seen).getTime()) / 1000;
@@ -127,15 +129,22 @@ export default function RealtimeMonitoringWidget({ initialData }: { initialData:
               return (
                 <div
                   key={room}
-                  className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold shadow-sm border transition-colors ${
+                  className={`flex flex-col items-start justify-center gap-1 rounded-md px-3 py-2 text-sm font-semibold shadow-sm border transition-colors w-full h-full ${
                     isOnline
-                      ? 'bg-green-50 text-green-700 border-green-200 dark:bg-green-500/10 dark:text-green-300 dark:border-green-500/20'
-                      : 'bg-muted/50 text-muted-foreground border-transparent opacity-70'
+                      ? 'bg-card border-green-200 dark:border-green-900'
+                      : 'bg-muted/30 border-border opacity-70'
                   }`}
                   title={isOnline ? `Online (Kelas: ${data?.kelas || 'N/A'})` : 'Offline'}
                 >
-                  <span className={`h-1.5 w-1.5 rounded-full ${isOnline ? 'bg-green-500' : 'bg-muted-foreground'}`} />
-                  {room}
+                  <div className="flex items-center gap-2">
+                    <span className={`h-2 w-2 rounded-full ${isOnline ? 'bg-green-500' : 'bg-muted-foreground'}`} />
+                    <span>{room}</span>
+                  </div>
+                  {isOnline && data?.kelas && (
+                    <span className="text-[10px] leading-none font-normal text-muted-foreground">
+                      {data.kelas}
+                    </span>
+                  )}
                 </div>
               );
             })}
