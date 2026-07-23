@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Activity, Server } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
@@ -10,14 +10,18 @@ import Link from 'next/link';
 export default function RealtimeMonitoringWidget({ initialData }: { initialData: LabStatus[] }) {
   const [monitoringData, setMonitoringData] = useState<LabStatus[]>(initialData);
   const [now, setNow] = useState(new Date());
-  const supabase = createClient();
+  // Use a ref so the supabase instance is stable across renders and never
+  // triggers the subscription useEffect to re-run/disconnect.
+  const supabaseRef = useRef(createClient());
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
+  // Dependency array is intentionally empty — we only want to subscribe once on mount.
   useEffect(() => {
+    const supabase = supabaseRef.current;
     const channel = supabase
       .channel('monitoring_updates_overview')
       .on(
@@ -27,7 +31,7 @@ export default function RealtimeMonitoringWidget({ initialData }: { initialData:
           setMonitoringData((prev) => {
             const updatedRow = payload.new as LabStatus;
             const existingIndex = prev.findIndex((item) => item.lab_id === updatedRow.lab_id);
-            
+
             if (existingIndex !== -1) {
               const newData = [...prev];
               newData[existingIndex] = updatedRow;
@@ -43,16 +47,16 @@ export default function RealtimeMonitoringWidget({ initialData }: { initialData:
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [supabase]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const activeLabsCount = monitoringData.filter(
-    (d) => (now.getTime() - new Date(d.last_seen).getTime()) / 1000 <= 150
+    (d) => (now.getTime() - new Date(d.last_seen).getTime()) / 1000 <= 60
   ).length;
 
   return (
     <Card className="relative overflow-hidden transition-all duration-300 group border bg-card hover:border-foreground/20 shadow-sm border-blue-200/50 dark:border-blue-500/20 mb-6">
       <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full blur-2xl opacity-[0.15] dark:opacity-10 pointer-events-none transition-opacity group-hover:opacity-30 from-blue-500 to-cyan-500 bg-gradient-to-br" />
-      
+
       <CardContent className="p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative z-10">
         <div className="flex items-center gap-4">
           <div className="rounded-md p-2.5 shrink-0 shadow-sm text-blue-600 bg-blue-100 dark:text-blue-300 dark:bg-blue-500/20">
@@ -61,7 +65,7 @@ export default function RealtimeMonitoringWidget({ initialData }: { initialData:
           <div>
             <div className="flex items-center gap-2">
               <h3 className="text-base sm:text-lg font-bold tracking-tight text-foreground/90 dark:text-foreground">
-                Konektivitas Lab 
+                Konektivitas Lab
               </h3>
               {activeLabsCount > 0 ? (
                 <span className="flex h-2 w-2 relative">
@@ -84,8 +88,8 @@ export default function RealtimeMonitoringWidget({ initialData }: { initialData:
           ) : (
             monitoringData.map((data) => {
               const diffInSeconds = (now.getTime() - new Date(data.last_seen).getTime()) / 1000;
-              const isOnline = diffInSeconds <= 150;
-              
+              const isOnline = diffInSeconds <= 60;
+
               return (
                 <div
                   key={data.lab_id}
@@ -104,8 +108,8 @@ export default function RealtimeMonitoringWidget({ initialData }: { initialData:
           )}
         </div>
 
-        <Link 
-          href="/monitoring" 
+        <Link
+          href="/monitoring"
           className="shrink-0 text-xs font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors flex items-center gap-1"
         >
           Lihat Detail

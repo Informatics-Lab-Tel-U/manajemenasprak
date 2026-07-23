@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Activity, MonitorOff } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
@@ -17,7 +17,9 @@ export type LabStatus = {
 export default function RealtimeMonitoringList({ initialData }: { initialData: LabStatus[] }) {
   const [monitoringData, setMonitoringData] = useState<LabStatus[]>(initialData);
   const [now, setNow] = useState(new Date());
-  const supabase = createClient();
+  // Use a ref so the supabase instance is stable across renders and never
+  // triggers the subscription useEffect to re-run/disconnect.
+  const supabaseRef = useRef(createClient());
 
   // Update current time every second to calculate TTL locally
   useEffect(() => {
@@ -25,8 +27,10 @@ export default function RealtimeMonitoringList({ initialData }: { initialData: L
     return () => clearInterval(timer);
   }, []);
 
-  // Listen to Supabase Realtime for UPSERTS on monitoring_lab table
+  // Listen to Supabase Realtime for changes on monitoring_lab table.
+  // Dependency array is intentionally empty — we only want to subscribe once on mount.
   useEffect(() => {
+    const supabase = supabaseRef.current;
     const channel = supabase
       .channel('monitoring_updates')
       .on(
@@ -36,7 +40,7 @@ export default function RealtimeMonitoringList({ initialData }: { initialData: L
           setMonitoringData((prev) => {
             const updatedRow = payload.new as LabStatus;
             const existingIndex = prev.findIndex((item) => item.lab_id === updatedRow.lab_id);
-            
+
             if (existingIndex !== -1) {
               const newData = [...prev];
               newData[existingIndex] = updatedRow;
@@ -52,7 +56,7 @@ export default function RealtimeMonitoringList({ initialData }: { initialData: L
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [supabase]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (monitoringData.length === 0) {
     return (
@@ -70,9 +74,9 @@ export default function RealtimeMonitoringList({ initialData }: { initialData: L
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 2xl:gap-8">
       {monitoringData.map((data) => {
         const lastSeenTime = new Date(data.last_seen);
-        // TTL Logic: If last seen was more than 150 seconds ago, consider it offline.
+        // TTL Logic: If last seen was more than 60 seconds ago, consider it offline.
         const diffInSeconds = (now.getTime() - lastSeenTime.getTime()) / 1000;
-        const isOnline = diffInSeconds <= 150;
+        const isOnline = diffInSeconds <= 60;
 
         return (
           <Card key={data.lab_id} className={`overflow-hidden transition-all duration-200 ${isOnline ? 'border-green-500/50 shadow-sm shadow-green-100 dark:shadow-none' : 'opacity-70'}`}>
@@ -96,7 +100,7 @@ export default function RealtimeMonitoringList({ initialData }: { initialData: L
                     </span>
                   )}
                 </div>
-                
+
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium text-muted-foreground">Kelas Aktif</span>
                   <span className="text-sm font-bold bg-muted px-2 py-1 rounded">
