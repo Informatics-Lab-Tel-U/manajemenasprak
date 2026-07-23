@@ -18,7 +18,7 @@
   "kv_namespaces": [
     {
       "binding": "MONITORING_KV",
-      "id": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855" // Replace with real ID later
+      "id": "27b43b92c51c4a8992e5eb41e9055638"
     }
   ],
   "keep_vars": true
