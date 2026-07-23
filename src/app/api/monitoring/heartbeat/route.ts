@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase/admin';
+import { createAdminClient } from '@/lib/supabase/admin';
 
 // Setup CORS headers to allow requests from the generator-kursi worker
 const corsHeaders = {
@@ -31,6 +31,7 @@ export async function POST(request: Request) {
       last_seen: new Date().toISOString()
     };
 
+    const supabaseAdmin = createAdminClient();
     const { error } = await supabaseAdmin
       .from('monitoring_lab')
       .upsert(dataToStore, { onConflict: 'lab_id' });
