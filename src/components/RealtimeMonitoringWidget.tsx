@@ -115,7 +115,7 @@ export default function RealtimeMonitoringWidget({ initialData }: { initialData:
             </CardDescription>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-2 sm:border-l sm:pl-6 min-h-[30px] w-full flex-1">
+          <div className="flex flex-row items-center gap-2 sm:border-l sm:pl-6 min-h-[30px] w-full flex-1 overflow-x-auto pb-2 sm:pb-0">
             {ROOMS.map((room) => {
               const data = monitoringData.find(
                 (d) => d.lab_id.replace(/\s+/g, '') === room.replace(/\s+/g, '')
@@ -129,7 +129,7 @@ export default function RealtimeMonitoringWidget({ initialData }: { initialData:
               return (
                 <div
                   key={room}
-                  className={`flex flex-col items-start justify-center gap-1 rounded-md px-3 py-2 text-sm font-semibold shadow-sm border transition-colors w-full h-full ${
+                  className={`flex flex-col items-start justify-center gap-1 rounded-md px-3 py-2 text-sm font-semibold shadow-sm border transition-colors flex-1 min-w-[100px] h-full shrink-0 sm:shrink ${
                     isOnline
                       ? 'bg-card border-green-200 dark:border-green-900'
                       : 'bg-muted/30 border-border opacity-70'
