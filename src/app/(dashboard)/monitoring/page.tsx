@@ -49,14 +49,17 @@ export default async function MonitoringPage() {
   }
 
   return (
-    <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
+    <div className="container mx-auto max-w-[2000px] 2xl:px-8">
       <AutoRefresh intervalMs={15000} />
-      <div className="flex items-center justify-between space-y-2">
-        <h2 className="text-3xl font-bold tracking-tight">Monitoring Lab</h2>
-      </div>
-      <div className="text-muted-foreground mb-6">
-        Pantau status proyektor Generator Kursi di setiap ruangan Lab secara real-time.
-      </div>
+      
+      <header className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl 2xl:text-3xl font-bold tracking-tight">Monitoring Lab</h1>
+          <p className="text-sm 2xl:text-base text-muted-foreground mt-1">
+            Pantau status proyektor Generator Kursi di setiap ruangan Lab secara real-time.
+          </p>
+        </div>
+      </header>
 
       {monitoringData.length === 0 ? (
         <div className="flex flex-col items-center justify-center p-12 text-center bg-muted/20 rounded-lg border border-dashed">
@@ -67,7 +70,7 @@ export default async function MonitoringPage() {
           </p>
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 2xl:gap-8">
           {monitoringData.map(({ lab_id, data }) => {
             const lastSeenTime = new Date(data.last_seen);
             // If it's in KV, it's considered online because TTL handles expiration
