@@ -118,18 +118,18 @@ export default function RealtimeMonitoringWidget({ initialData }: { initialData:
               return (
                 <div
                   key={room}
-                  className={`flex flex-col items-start justify-center gap-1 rounded-md px-3 py-2 text-sm font-semibold shadow-sm border transition-colors flex-1 min-w-[100px] h-full shrink-0 sm:shrink ${
+                  className={`flex flex-col items-start justify-center gap-0.5 rounded-md px-2.5 py-1.5 text-xs font-semibold shadow-sm border transition-colors flex-1 min-w-[100px] h-full shrink-0 sm:shrink ${
                     isOnline
                       ? 'bg-card border-green-200 dark:border-green-900'
                       : 'bg-muted/30 border-border opacity-70'
                   }`}
                   title={isOnline ? `Online (Kelas: ${data?.kelas || 'N/A'})` : 'Offline'}
                 >
-                  <div className="flex items-center gap-2">
-                    <span className={`h-2 w-2 rounded-full shrink-0 ${isOnline ? 'bg-green-500' : 'bg-muted-foreground'}`} />
+                  <div className="flex items-center gap-1.5">
+                    <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${isOnline ? 'bg-green-500' : 'bg-muted-foreground'}`} />
                     <span className="whitespace-nowrap">{room}</span>
                   </div>
-                  <span className="text-[10px] leading-none font-normal text-muted-foreground truncate w-full">
+                  <span className="text-[9px] leading-none font-normal text-muted-foreground truncate w-full">
                     {isOnline ? (data?.kelas || 'Tidak ada sesi') : 'Offline'}
                   </span>
                 </div>
