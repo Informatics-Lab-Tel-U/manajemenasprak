@@ -81,10 +81,14 @@ export default function RealtimeMonitoringList({ initialData }: { initialData: L
           }
         )
         .subscribe((status, err) => {
-          if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+          // Only reconnect on unexpected errors, NOT on CLOSED.
+          // CLOSED fires when we call removeChannel ourselves, causing an infinite loop.
+          if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
             console.warn('[Realtime:List] Channel down:', status, err ?? '— reconnecting…');
-            supabase.removeChannel(channel);
-            reconnectTimer = setTimeout(subscribe, RECONNECT_DELAY_MS);
+            reconnectTimer = setTimeout(() => {
+              supabase.removeChannel(channel);
+              subscribe();
+            }, RECONNECT_DELAY_MS);
           }
         });
     };
