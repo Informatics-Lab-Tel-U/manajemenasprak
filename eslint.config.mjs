@@ -13,9 +13,6 @@ const eslintConfig = defineConfig([
     },
     rules: {
       '@typescript-eslint/no-explicit-any': 'warn',
-      'react-hooks/set-state-in-effect': 'off',
-      'react-hooks/incompatible-library': 'off',
-      'react-hooks/exhaustive-deps': 'warn',
       'react/no-unescaped-entities': 'off',
       'react-compiler/react-no-impure-function-during-render': 'off',
       'react-compiler/react-no-refs-during-render': 'off',
