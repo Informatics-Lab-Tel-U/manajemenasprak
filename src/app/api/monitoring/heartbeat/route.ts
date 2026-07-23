@@ -5,7 +5,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-praktikan-api-key',
 };
 
 export async function OPTIONS() {
@@ -14,6 +14,16 @@ export async function OPTIONS() {
 
 export async function POST(request: Request) {
   try {
+    const providedKey = request.headers.get('x-praktikan-api-key')?.trim();
+    const expectedKey = (process.env.PRAKTIKAN_GET_API_KEY ?? '').trim();
+
+    if (!expectedKey || providedKey !== expectedKey) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401, headers: corsHeaders }
+      );
+    }
+
     const body = await request.json();
     const { lab_id, kelas, status } = body;
 
