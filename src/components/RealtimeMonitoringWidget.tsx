@@ -46,7 +46,7 @@ export default function RealtimeMonitoringWidget({ initialData }: { initialData:
   }, [supabase]);
 
   const activeLabsCount = monitoringData.filter(
-    (d) => (now.getTime() - new Date(d.last_seen).getTime()) / 1000 <= 150
+    (d) => (now.getTime() - new Date(d.last_seen).getTime()) / 1000 <= 60
   ).length;
 
   return (
@@ -84,7 +84,7 @@ export default function RealtimeMonitoringWidget({ initialData }: { initialData:
           ) : (
             monitoringData.map((data) => {
               const diffInSeconds = (now.getTime() - new Date(data.last_seen).getTime()) / 1000;
-              const isOnline = diffInSeconds <= 150;
+              const isOnline = diffInSeconds <= 60;
               
               return (
                 <div

@@ -70,9 +70,9 @@ export default function RealtimeMonitoringList({ initialData }: { initialData: L
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 2xl:gap-8">
       {monitoringData.map((data) => {
         const lastSeenTime = new Date(data.last_seen);
-        // TTL Logic: If last seen was more than 150 seconds ago, consider it offline.
+        // TTL Logic: If last seen was more than 60 seconds ago, consider it offline.
         const diffInSeconds = (now.getTime() - lastSeenTime.getTime()) / 1000;
-        const isOnline = diffInSeconds <= 150;
+        const isOnline = diffInSeconds <= 60;
 
         return (
           <Card key={data.lab_id} className={`overflow-hidden transition-all duration-200 ${isOnline ? 'border-green-500/50 shadow-sm shadow-green-100 dark:shadow-none' : 'opacity-70'}`}>
