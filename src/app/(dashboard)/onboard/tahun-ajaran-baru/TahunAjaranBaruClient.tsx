@@ -30,7 +30,6 @@ import { BookOpen, CheckCircle2, FileSpreadsheet, Download, FileText, AlertCircl
 import { toast } from 'sonner';
 
 import { useDropzone } from 'react-dropzone';
-import Papa from 'papaparse';
 import PraktikumCSVPreview, { PraktikumPreviewRow } from '@/components/praktikum/PraktikumCSVPreview';
 import { validatePraktikumData } from '@/utils/validation/praktikumValidation';
 import MataKuliahCSVPreview, { MataKuliahCSVRow } from '@/components/mata-kuliah/MataKuliahCSVPreview';

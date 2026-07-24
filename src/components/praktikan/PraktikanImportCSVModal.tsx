@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useMemo, useState, memo } from 'react';
-import Papa from 'papaparse';
 import { useDropzone } from 'react-dropzone';
 import { FileSpreadsheet, FileText, Download, Save } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
@@ -130,7 +129,8 @@ function rowsFromMatrix(
   });
 }
 
-function parseTextMatrix(value: string): SheetMatrix {
+async function parseTextMatrix(value: string): Promise<SheetMatrix> {
+  const Papa = (await import('papaparse')).default;
   const result = Papa.parse<string[]>(value, {
     header: false,
     skipEmptyLines: 'greedy',
@@ -229,6 +229,7 @@ const handleDownloadTemplate = async (format: 'csv' | 'xlsx') => {
   ];
 
   if (format === 'csv') {
+    const Papa = (await import('papaparse')).default;
     const csv = Papa.unparse(data);
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -291,15 +292,16 @@ export default function PraktikanImportCSVModal({
     toast.success(`${parsedRows.length} baris dari ${label} siap ditinjau.`);
   }, [defaultKelas, defaultMataKuliah]);
 
-  const handlePastePreview = () => {
+  const handlePastePreview = async () => {
     if (!pasteValue.trim()) {
       toast.error('Tempel data Excel/CSV terlebih dahulu.');
       return;
     }
-    applyPreviewRows(parseTextMatrix(pasteValue), 'paste');
+    applyPreviewRows(await parseTextMatrix(pasteValue), 'paste');
   };
 
-  const parseCsvFile = useCallback((file: File) => {
+  const parseCsvFile = useCallback(async (file: File) => {
+    const Papa = (await import('papaparse')).default;
     Papa.parse<string[]>(file, {
       header: false,
       skipEmptyLines: 'greedy',

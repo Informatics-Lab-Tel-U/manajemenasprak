@@ -14,8 +14,7 @@
 
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
-import Papa from 'papaparse';
-import * as XLSX from 'xlsx';
+
 import { FileSpreadsheet, Upload, FileText, X, Download } from 'lucide-react';
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -97,6 +96,7 @@ const handleDownloadTemplate = async (format: 'csv' | 'xlsx') => {
   ];
 
   if (format === 'csv') {
+    const Papa = (await import('papaparse')).default;
     const csv = Papa.unparse(data);
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -107,6 +107,7 @@ const handleDownloadTemplate = async (format: 'csv' | 'xlsx') => {
     link.click();
     document.body.removeChild(link);
   } else if (format === 'xlsx') {
+    const XLSX = await import('xlsx');
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Template');
@@ -150,7 +151,7 @@ export default function AsprakImportCSVModal({
 
   // ─── CSV Parsing ─────────────────────────────────────────────────────────
 
-  const processFile = useCallback((file: File) => {
+  const processFile = useCallback(async (file: File) => {
     setError(null);
     setFileName(file.name);
 
@@ -192,8 +193,9 @@ export default function AsprakImportCSVModal({
 
     if (file.name.endsWith('.xlsx')) {
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = async (e) => {
         try {
+          const XLSX = await import('xlsx');
           const data = e.target?.result;
           const workbook = XLSX.read(data, { type: 'binary' });
           const worksheet = workbook.Sheets[workbook.SheetNames[0]];
@@ -214,6 +216,7 @@ export default function AsprakImportCSVModal({
       };
       reader.readAsBinaryString(file);
     } else {
+      const Papa = (await import('papaparse')).default;
       Papa.parse<RawCSVRow>(file, {
         header: true,
         skipEmptyLines: true,

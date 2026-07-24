@@ -2,7 +2,6 @@
 
 import { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
-import Papa from 'papaparse';
 import { FileSpreadsheet, Upload, FileText, X, Download } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 
@@ -41,6 +40,7 @@ const handleDownloadTemplate = async (format: 'csv' | 'xlsx') => {
   ];
 
   if (format === 'csv') {
+    const Papa = (await import('papaparse')).default;
     const csv = Papa.unparse(data);
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -73,8 +73,9 @@ export default function PraktikumImportModal({
 
   // CSV Parsing
   const processCSV = useCallback(
-    (file: File) => {
+    async (file: File) => {
       setError(null);
+      const Papa = (await import('papaparse')).default;
 
       Papa.parse<any>(file, {
         header: true,

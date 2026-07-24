@@ -9,8 +9,7 @@ import { BookOpen, FileSpreadsheet, Download, FileText, AlertCircle, Copy, Loade
 import { toast } from 'sonner';
 
 import { useDropzone } from 'react-dropzone';
-import Papa from 'papaparse';
-import * as XLSX from 'xlsx';
+
 import PraktikumCSVPreview, { PraktikumPreviewRow } from '@/components/praktikum/PraktikumCSVPreview';
 import { validatePraktikumData } from '@/utils/validation/praktikumValidation';
 import { usePraktikum } from '@/hooks/usePraktikum';
@@ -52,6 +51,7 @@ const handleDownloadTemplate = async (format: 'csv' | 'xlsx') => {
   ];
 
   if (format === 'csv') {
+    const Papa = (await import('papaparse')).default;
     const csv = Papa.unparse(data);
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -62,6 +62,7 @@ const handleDownloadTemplate = async (format: 'csv' | 'xlsx') => {
     link.click();
     document.body.removeChild(link);
   } else if (format === 'xlsx') {
+    const XLSX = await import('xlsx');
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Template');
@@ -154,8 +155,9 @@ export default function PraktikumStep() {
 
   // Handlers for CSV
   const processCSV = useCallback(
-    (file: File) => {
+    async (file: File) => {
       setUploadError(null);
+      const Papa = (await import('papaparse')).default;
       Papa.parse<any>(file, {
         header: true,
         skipEmptyLines: true,
@@ -190,8 +192,9 @@ export default function PraktikumStep() {
 
       if (file.name.endsWith('.xlsx')) {
         const reader = new FileReader();
-        reader.onload = (e) => {
+        reader.onload = async (e) => {
           try {
+            const XLSX = await import('xlsx');
             const data = e.target?.result;
             const workbook = XLSX.read(data, { type: 'binary' });
             const worksheet = workbook.Sheets[workbook.SheetNames[0]];

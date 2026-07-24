@@ -2,7 +2,6 @@
 
 /* eslint-disable react-doctor/no-impure-state-updater */
 import { useState, useMemo } from 'react';
-import Papa from 'papaparse';
 
 import { Download, FileSpreadsheet, FileText } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
@@ -93,6 +92,7 @@ export default function AsprakExportModal({ onClose, open }: AsprakExportModalPr
       };
 
       if (format === 'csv') {
+        const Papa = (await import('papaparse')).default;
         const csvAsprak = Papa.unparse(dataAsprak);
         triggerDownload(
           new Blob([csvAsprak], { type: 'text/csv;charset=utf-8;' }),

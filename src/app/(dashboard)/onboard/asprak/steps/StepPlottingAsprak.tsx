@@ -2,8 +2,7 @@
 
 import { useState } from 'react';
 import { useDropzone } from 'react-dropzone';
-import Papa from 'papaparse';
-import * as XLSX from 'xlsx';
+
 
 import { FileSpreadsheet, Upload, X, Download, FileText, Loader2, ArrowRight, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -35,6 +34,7 @@ const handleDownloadTemplate = async (format: 'csv' | 'xlsx') => {
   ];
 
   if (format === 'csv') {
+    const Papa = (await import('papaparse')).default;
     const csv = Papa.unparse(data);
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -45,6 +45,7 @@ const handleDownloadTemplate = async (format: 'csv' | 'xlsx') => {
     link.click();
     document.body.removeChild(link);
   } else if (format === 'xlsx') {
+    const XLSX = await import('xlsx');
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Template');
@@ -69,7 +70,7 @@ export default function StepPlottingAsprak({ term }: StepPlottingAsprakProps) {
     });
   };
 
-  const processFile = (file: File) => {
+  const processFile = async (file: File) => {
     setError(null);
     setFileName(file.name);
     setLoading(true);
@@ -126,6 +127,7 @@ export default function StepPlottingAsprak({ term }: StepPlottingAsprakProps) {
       const reader = new FileReader();
       reader.onload = async (e) => {
         try {
+          const XLSX = await import('xlsx');
           const data = e.target?.result;
           const workbook = XLSX.read(data, { type: 'binary' });
           const worksheet = workbook.Sheets[workbook.SheetNames[0]];
@@ -147,6 +149,7 @@ export default function StepPlottingAsprak({ term }: StepPlottingAsprakProps) {
       };
       reader.readAsBinaryString(file);
     } else {
+      const Papa = (await import('papaparse')).default;
       Papa.parse(file, {
         header: true,
         skipEmptyLines: true,
