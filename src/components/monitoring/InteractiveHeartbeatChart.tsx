@@ -26,6 +26,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useHeartbeatLogAll } from "@/hooks/useHeartbeatLog"
+import { COURSE_COLORS } from "@/utils/colorUtils"
 
 export function InteractiveHeartbeatChart() {
   const [timeRange, setTimeRange] = React.useState("1h")
@@ -43,19 +44,21 @@ export function InteractiveHeartbeatChart() {
   }, [dataByLab]);
 
   const chartData = React.useMemo(() => {
-    const unified: { time: string; [key: string]: string | number | null }[] = [];
+    const timeMap = new Map<number, { time: string; [key: string]: string | number | null }>();
     
     Object.entries(dataByLab).forEach(([labId, points]) => {
       const safeKey = safeLabKeys[labId];
       points.forEach(point => {
-        unified.push({
-          time: point.created_at,
-          [safeKey]: point.response_time_ms
-        });
+        // Kelompokkan data per window 20 detik agar titik-titik X-axis sejajar
+        const timeMs = Math.floor(new Date(point.created_at).getTime() / 20000) * 20000;
+        if (!timeMap.has(timeMs)) {
+          timeMap.set(timeMs, { time: new Date(timeMs).toISOString() });
+        }
+        timeMap.get(timeMs)![safeKey] = point.response_time_ms;
       });
     });
     
-    return unified.sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
+    return Array.from(timeMap.values()).sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
   }, [dataByLab, safeLabKeys]);
 
   const labs = React.useMemo(() => Object.keys(dataByLab).sort(), [dataByLab]);
@@ -67,11 +70,13 @@ export function InteractiveHeartbeatChart() {
       }
     };
     
+    const START_COLOR_INDEX = 5; // Start with blue (#3a5edb)
+
     labs.forEach((labId, index) => {
       const safeKey = safeLabKeys[labId];
       config[safeKey] = {
         label: labId, // Display original label in tooltip
-        color: `hsl(var(--chart-${(index % 5) + 1}))`
+        color: COURSE_COLORS[(index + START_COLOR_INDEX) % COURSE_COLORS.length]
       };
     });
     
@@ -118,7 +123,11 @@ export function InteractiveHeartbeatChart() {
           config={chartConfig}
           className="aspect-auto h-[400px] w-full"
         >
-          <AreaChart data={chartData}>
+          <AreaChart 
+            accessibilityLayer 
+            data={chartData}
+            margin={{ left: 0, right: 0, top: 10, bottom: 0 }}
+          >
             <defs>
               {labs.map(labId => {
                 const safeKey = safeLabKeys[labId];
