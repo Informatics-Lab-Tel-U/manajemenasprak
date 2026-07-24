@@ -25,7 +25,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { lab_id, kelas, status, response_time_ms } = body;
+    const { lab_id, kelas, status, response_time_ms, client_timestamp } = body;
 
     if (!lab_id || !kelas) {
       return NextResponse.json(
@@ -45,7 +45,8 @@ export async function POST(request: Request) {
       lab_id,
       kelas,
       status: status || 'online',
-      last_seen: now
+      last_seen: now,
+      ...(client_timestamp ? { client_timestamp } : {})
     };
 
     const logData = {
@@ -58,6 +59,21 @@ export async function POST(request: Request) {
 
     const supabaseAdmin = createAdminClient();
     
+    // RACE CONDITION PROTECTION: Check if a newer client_timestamp already exists
+    if (client_timestamp) {
+      const { data: existing } = await supabaseAdmin
+        .from('monitoring_lab')
+        .select('client_timestamp')
+        .eq('lab_id', lab_id)
+        .single();
+        
+      if (existing && existing.client_timestamp && client_timestamp < existing.client_timestamp) {
+        // A newer heartbeat (e.g. status: online) has already been processed by the database.
+        // We skip this delayed/older heartbeat to prevent race conditions.
+        return NextResponse.json({ success: true, skipped: true }, { headers: corsHeaders });
+      }
+    }
+
     const [upsertResult, insertResult] = await Promise.all([
       supabaseAdmin
         .from('monitoring_lab')
