@@ -14,11 +14,11 @@ export default function MataKuliahCard({ mk }: MataKuliahCardProps) {
     <Card className="@container/card bg-card shadow-sm hover:shadow-md transition-all group">
       <CardHeader>
         <CardDescription className="line-clamp-1">{mk.praktikum.nama}</CardDescription>
-        <CardTitle className="text-lg 2xl:text-xl font-bold line-clamp-2 leading-tight group-hover:text-primary transition-colors" title={mk.nama_lengkap}>
+        <CardTitle className="text-lg 2xl:text-xl font-bold line-clamp-2 leading-tight transition-colors" title={mk.nama_lengkap}>
           {mk.nama_lengkap}
         </CardTitle>
         <CardAction className="flex gap-1.5 flex-col items-end">
-          <Badge variant="outline" className="text-primary/80">
+          <Badge variant="outline" className="text-foreground/80">
             <BookOpen size={12} className="mr-1 opacity-70" />
             {mk.program_studi}
           </Badge>

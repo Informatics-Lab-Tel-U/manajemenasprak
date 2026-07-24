@@ -16,11 +16,11 @@ export default function PraktikumCard({ praktikum, onClick }: PraktikumCardProps
     >
       <CardHeader>
         <CardDescription>Praktikum</CardDescription>
-        <CardTitle className="text-xl font-bold line-clamp-2 leading-tight group-hover:text-primary transition-colors" title={praktikum.nama}>
+        <CardTitle className="text-xl font-bold line-clamp-2 leading-tight transition-colors" title={praktikum.nama}>
           {praktikum.nama}
         </CardTitle>
         <CardAction>
-          <Badge variant="outline" className="text-primary/80">
+          <Badge variant="outline" className="text-foreground/80">
             <BookOpen size={12} className="mr-1 opacity-70" />
             Term {praktikum.tahun_ajaran}
           </Badge>

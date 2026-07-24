@@ -92,9 +92,9 @@ export default function PraktikumDetailsModal({
                         </Badge>
                       </div>
                       <div className="space-y-1.5">
-                        {cls.jadwal.map((j) => (
+                        {cls.jadwal.map((j, index) => (
                           <div
-                            key={`${j.hari}-${j.jam}`}
+                            key={`${j.hari}-${j.jam}-${index}`}
                             className="flex items-center text-sm text-muted-foreground"
                           >
                             <div className="flex items-center w-24 shrink-0">
