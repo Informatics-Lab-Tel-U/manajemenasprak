@@ -145,7 +145,7 @@ export default function RealtimeMonitoringList({ initialData }: { initialData: L
 
                 <div className="flex justify-between items-center gap-2">
                   <span className="text-sm font-medium text-muted-foreground shrink-0">Kelas Aktif</span>
-                  <span 
+                  <span
                     className="text-sm font-bold bg-muted px-2 py-1 rounded truncate max-w-[150px] sm:max-w-[200px] text-right"
                     title={isOnline ? data.kelas : '-'}
                   >
@@ -156,7 +156,7 @@ export default function RealtimeMonitoringList({ initialData }: { initialData: L
                 <div className="text-xs text-right text-muted-foreground mt-2">
                   Detak terakhir: {formatDistanceToNow(lastSeenTime, { addSuffix: true, locale: id })}
                 </div>
-                
+
                 {isOnline && labHistory.length > 0 && (
                   <ResponseTimeChart data={labHistory} compact />
                 )}
