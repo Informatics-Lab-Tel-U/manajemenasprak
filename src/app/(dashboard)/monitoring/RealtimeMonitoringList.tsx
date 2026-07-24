@@ -7,8 +7,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { id } from 'date-fns/locale';
 import { useMonitoringStore, LabStatus } from '@/store/useMonitoringStore';
 import { ResponseTimeChart } from '@/components/monitoring/ResponseTimeChart';
-
-const OFFLINE_THRESHOLD_S = 60;
+import { isLabOnline } from '@/lib/labStatus';
 
 export default function RealtimeMonitoringList({ initialData }: { initialData: LabStatus[] }) {
   const monitoringData = useMonitoringStore(s => s.labStatus);
@@ -47,10 +46,7 @@ export default function RealtimeMonitoringList({ initialData }: { initialData: L
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6 gap-6 2xl:gap-8">
       {monitoringData.map((data) => {
         const lastSeenTime = new Date(data.last_seen);
-        const diffInSeconds = (now.getTime() - lastSeenTime.getTime()) / 1000;
-        // Toleransi clock-skew (perbedaan jam client vs server) sebesar 30 detik
-        // dan hormati status eksplicit 'offline' dari sinyal tab close
-        const isOnline = data.status !== 'offline' && diffInSeconds <= (OFFLINE_THRESHOLD_S + 30);
+        const isOnline = isLabOnline(data, now);
 
         const labHistory = heartbeatHistory[data.lab_id] || [];
         const lastResponseTime = labHistory.length > 0 ? labHistory[labHistory.length - 1].response_time_ms : null;
