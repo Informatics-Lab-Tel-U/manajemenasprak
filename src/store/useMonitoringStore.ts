@@ -29,6 +29,9 @@ interface MonitoringState {
 const supabase = createClient();
 let channelLab: ReturnType<typeof supabase.channel> | null = null;
 let channelHeartbeat: ReturnType<typeof supabase.channel> | null = null;
+// Mutex: menjamin init() hanya berjalan satu kali meskipun dipanggil secara bersamaan
+let initPromise: Promise<void> | null = null;
+
 
 export const useMonitoringStore = create<MonitoringState>((set, get) => ({
   labStatus: [],
@@ -48,10 +51,11 @@ export const useMonitoringStore = create<MonitoringState>((set, get) => ({
   },
 
   init: async () => {
-    if (get().isInitialized) return; // Prevent multiple init
+    // Mutex: kembalikan promise yang sama jika init sedang berjalan atau sudah selesai
+    if (initPromise) return initPromise;
     
-    // Tandai inisialisasi mulai berjalan
-    set({ isInitialized: true });
+    initPromise = (async () => {
+      set({ isInitialized: true });
 
     // 1. Fetch data historis heartbeat
     try {
@@ -156,6 +160,9 @@ export const useMonitoringStore = create<MonitoringState>((set, get) => ({
           }
         });
     }
+    })();
+    
+    return initPromise;
   },
 
   cleanup: () => {
@@ -170,6 +177,7 @@ export const useMonitoringStore = create<MonitoringState>((set, get) => ({
       supabase.removeChannel(channelHeartbeat);
       channelHeartbeat = null;
     }
+    initPromise = null;
     set({ isInitialized: false });
   }
 }));

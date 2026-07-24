@@ -19,11 +19,13 @@ export function MonitoringSummaryCards() {
     init();
   }, [init]);
 
-  // Timer lokal untuk menghitung berapa lama lab tidak mengirim sinyal
+  // Timer lokal untuk menghitung berapa lama lab tidak mengirim sinyal.
+  // 10 detik sudah cukup — offline threshold adalah 60 detik, tidak perlu setiap detik.
   useEffect(() => {
-    const timer = setInterval(() => setNow(new Date()), 1000);
+    const timer = setInterval(() => setNow(new Date()), 10_000);
     return () => clearInterval(timer);
   }, []);
+
 
   // Kalkulasi 4 Metrics (Diupdate otomatis jika ada perubahan data)
   const metrics = useMemo(() => {
