@@ -61,11 +61,9 @@ export async function POST(request: Request) {
     const [upsertResult, insertResult] = await Promise.all([
       supabaseAdmin
         .from('monitoring_lab')
-        // @ts-expect-error Type inference misses Database schema
         .upsert(dataToStore, { onConflict: 'lab_id' }),
       supabaseAdmin
         .from('monitoring_heartbeat_log')
-        // @ts-expect-error Type inference misses Database schema
         .insert(logData)
     ]);
 

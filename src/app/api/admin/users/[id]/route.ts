@@ -55,7 +55,6 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     if (role) updateData.role = role;
 
     if (Object.keys(updateData).length > 0) {
-      // @ts-expect-error Type inference misses Database schema
       const { error } = await admin.from('pengguna').update(updateData).eq('id', userId);
       if (error) throw error;
     }
@@ -79,7 +78,6 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
           is_active: true,
         }));
 
-        // @ts-expect-error Type inference misses Database schema
         const { error: insertError } = await admin.from('asprak_koordinator').insert(rows);
         if (insertError) throw insertError;
       }
@@ -109,7 +107,6 @@ export async function DELETE(
 
     const { error } = await admin
       .from('pengguna')
-      // @ts-expect-error Type inference misses Database schema
       .update({ deleted_at: new Date().toISOString() })
       .eq('id', id);
     if (error) throw error;
