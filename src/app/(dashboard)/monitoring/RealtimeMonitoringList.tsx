@@ -48,7 +48,9 @@ export default function RealtimeMonitoringList({ initialData }: { initialData: L
       {monitoringData.map((data) => {
         const lastSeenTime = new Date(data.last_seen);
         const diffInSeconds = (now.getTime() - lastSeenTime.getTime()) / 1000;
-        const isOnline = diffInSeconds <= OFFLINE_THRESHOLD_S;
+        // Toleransi clock-skew (perbedaan jam client vs server) sebesar 30 detik
+        // dan hormati status eksplicit 'offline' dari sinyal tab close
+        const isOnline = data.status !== 'offline' && diffInSeconds <= (OFFLINE_THRESHOLD_S + 30);
 
         const labHistory = heartbeatHistory[data.lab_id] || [];
         const lastResponseTime = labHistory.length > 0 ? labHistory[labHistory.length - 1].response_time_ms : null;

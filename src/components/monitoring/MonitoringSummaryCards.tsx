@@ -41,10 +41,10 @@ export function MonitoringSummaryCards({ initialData = [] }: MonitoringSummaryCa
   // Hanya re-compute saat ada update Realtime ATAU setiap 10 detik (timer).
   const { activeLabs, offlineLabs } = useMemo(() => {
     const active = monitoringData.filter(
-      (d) => (now.getTime() - new Date(d.last_seen).getTime()) / 1000 <= OFFLINE_THRESHOLD_S
+      (d) => d.status !== 'offline' && (now.getTime() - new Date(d.last_seen).getTime()) / 1000 <= (OFFLINE_THRESHOLD_S + 30)
     );
     const offline = monitoringData.filter(
-      (d) => (now.getTime() - new Date(d.last_seen).getTime()) / 1000 > OFFLINE_THRESHOLD_S
+      (d) => d.status === 'offline' || (now.getTime() - new Date(d.last_seen).getTime()) / 1000 > (OFFLINE_THRESHOLD_S + 30)
     );
     return { activeLabs: active, offlineLabs: offline };
   }, [monitoringData, now]);
