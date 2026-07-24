@@ -1,7 +1,7 @@
 import 'server-only';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { logger } from '@/lib/logger';
-import { LabStatus } from '@/app/(dashboard)/monitoring/RealtimeMonitoringList';
+import { LabStatus } from '@/store/useMonitoringStore';
 
 export async function getMonitoringLabs(): Promise<LabStatus[]> {
   try {

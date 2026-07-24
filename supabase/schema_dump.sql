@@ -638,6 +638,41 @@ CREATE TABLE IF NOT EXISTS "public"."mata_kuliah" (
 ALTER TABLE "public"."mata_kuliah" OWNER TO "postgres";
 
 
+CREATE TABLE IF NOT EXISTS "public"."monitoring_heartbeat_log" (
+    "id" bigint NOT NULL,
+    "lab_id" "text" NOT NULL,
+    "kelas" "text",
+    "status" "text" DEFAULT 'online'::"text" NOT NULL,
+    "response_time_ms" integer,
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL
+);
+
+
+ALTER TABLE "public"."monitoring_heartbeat_log" OWNER TO "postgres";
+
+
+ALTER TABLE "public"."monitoring_heartbeat_log" ALTER COLUMN "id" ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME "public"."monitoring_heartbeat_log_id_seq"
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+
+CREATE TABLE IF NOT EXISTS "public"."monitoring_lab" (
+    "lab_id" "text" NOT NULL,
+    "kelas" "text" NOT NULL,
+    "status" "text" DEFAULT 'online'::"text" NOT NULL,
+    "last_seen" timestamp with time zone DEFAULT "now"() NOT NULL
+);
+
+
+ALTER TABLE "public"."monitoring_lab" OWNER TO "postgres";
+
+
 CREATE TABLE IF NOT EXISTS "public"."pelanggaran" (
     "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
     "id_asprak" "uuid" NOT NULL,
@@ -782,6 +817,16 @@ ALTER TABLE ONLY "public"."mata_kuliah"
 
 
 
+ALTER TABLE ONLY "public"."monitoring_heartbeat_log"
+    ADD CONSTRAINT "monitoring_heartbeat_log_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."monitoring_lab"
+    ADD CONSTRAINT "monitoring_lab_pkey" PRIMARY KEY ("lab_id");
+
+
+
 ALTER TABLE ONLY "public"."pelanggaran"
     ADD CONSTRAINT "pelanggaran_pkey" PRIMARY KEY ("id");
 
@@ -848,6 +893,14 @@ CREATE INDEX "idx_audit_log_pengguna" ON "public"."audit_log" USING "btree" ("id
 
 
 CREATE INDEX "idx_audit_log_table_record" ON "public"."audit_log" USING "btree" ("table_name", "record_id");
+
+
+
+CREATE INDEX "idx_heartbeat_log_created" ON "public"."monitoring_heartbeat_log" USING "btree" ("created_at" DESC);
+
+
+
+CREATE INDEX "idx_heartbeat_log_lab_created" ON "public"."monitoring_heartbeat_log" USING "btree" ("lab_id", "created_at" DESC);
 
 
 
@@ -1094,6 +1147,10 @@ CREATE POLICY "Allow public read access" ON "public"."praktikan" FOR SELECT TO "
 
 
 
+CREATE POLICY "Allow read access for heartbeat log" ON "public"."monitoring_heartbeat_log" FOR SELECT USING (true);
+
+
+
 CREATE POLICY "Allow system to insert audit log" ON "public"."audit_log" FOR INSERT TO "authenticated" WITH CHECK (false);
 
 
@@ -1195,6 +1252,10 @@ CREATE POLICY "Semua user dapat melihat status finalisasi" ON "public"."pelangga
 
 
 
+CREATE POLICY "Service role full access on heartbeat log" ON "public"."monitoring_heartbeat_log" USING (("auth"."role"() = 'service_role'::"text")) WITH CHECK (("auth"."role"() = 'service_role'::"text"));
+
+
+
 CREATE POLICY "User can update own data" ON "public"."pengguna" FOR UPDATE TO "authenticated" USING (((("auth"."uid"() = "id") AND ("deleted_at" IS NULL)) OR "public"."is_admin"())) WITH CHECK (((("auth"."uid"() = "id") AND ("deleted_at" IS NULL)) OR "public"."is_admin"()));
 
 
@@ -1230,6 +1291,12 @@ ALTER TABLE "public"."konfigurasi_modul" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."mata_kuliah" ENABLE ROW LEVEL SECURITY;
 
 
+ALTER TABLE "public"."monitoring_heartbeat_log" ENABLE ROW LEVEL SECURITY;
+
+
+ALTER TABLE "public"."monitoring_lab" ENABLE ROW LEVEL SECURITY;
+
+
 ALTER TABLE "public"."pelanggaran" ENABLE ROW LEVEL SECURITY;
 
 
@@ -1251,6 +1318,18 @@ ALTER TABLE "public"."system_config" ENABLE ROW LEVEL SECURITY;
 
 
 ALTER PUBLICATION "supabase_realtime" OWNER TO "postgres";
+
+
+
+
+
+
+ALTER PUBLICATION "supabase_realtime" ADD TABLE ONLY "public"."monitoring_heartbeat_log";
+
+
+
+ALTER PUBLICATION "supabase_realtime" ADD TABLE ONLY "public"."monitoring_lab";
+
 
 
 GRANT USAGE ON SCHEMA "public" TO "postgres";
@@ -1539,6 +1618,24 @@ GRANT ALL ON TABLE "public"."konfigurasi_modul" TO "service_role";
 GRANT SELECT,REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE "public"."mata_kuliah" TO "anon";
 GRANT ALL ON TABLE "public"."mata_kuliah" TO "authenticated";
 GRANT ALL ON TABLE "public"."mata_kuliah" TO "service_role";
+
+
+
+GRANT ALL ON TABLE "public"."monitoring_heartbeat_log" TO "anon";
+GRANT ALL ON TABLE "public"."monitoring_heartbeat_log" TO "authenticated";
+GRANT ALL ON TABLE "public"."monitoring_heartbeat_log" TO "service_role";
+
+
+
+GRANT ALL ON SEQUENCE "public"."monitoring_heartbeat_log_id_seq" TO "anon";
+GRANT ALL ON SEQUENCE "public"."monitoring_heartbeat_log_id_seq" TO "authenticated";
+GRANT ALL ON SEQUENCE "public"."monitoring_heartbeat_log_id_seq" TO "service_role";
+
+
+
+GRANT ALL ON TABLE "public"."monitoring_lab" TO "anon";
+GRANT ALL ON TABLE "public"."monitoring_lab" TO "authenticated";
+GRANT ALL ON TABLE "public"."monitoring_lab" TO "service_role";
 
 
 
