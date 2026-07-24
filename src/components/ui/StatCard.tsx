@@ -1,5 +1,5 @@
 import { LucideIcon } from 'lucide-react';
-import { Card, CardContent, CardHeader } from './card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardAction, CardFooter } from './card';
 import { Badge } from './badge';
 import { cn } from '@/lib/utils';
 import { Skeleton } from './skeleton';
@@ -57,53 +57,40 @@ export function StatCard({
   color,
   loading,
 }: StatCardProps) {
-  const style = colorClasses[color];
+  const textColor = 
+    color === 'purple' ? 'text-violet-500 dark:text-violet-400' : 
+    color === 'blue' ? 'text-blue-500 dark:text-blue-400' : 
+    color === 'green' ? 'text-emerald-500 dark:text-emerald-400' : 
+    'text-destructive';
 
   return (
-    <Card
-      className={cn(
-        'relative overflow-hidden transition-all duration-300 group border bg-card hover:border-foreground/20 shadow-sm',
-        style.border
-      )}
-    >
-      <div
-        className={cn(
-          'absolute -top-6 -right-6 w-24 h-24 rounded-full blur-2xl opacity-[0.15] dark:opacity-10 pointer-events-none transition-opacity group-hover:opacity-30',
-          style.gradient
-        )}
-      />
-
-      <CardHeader className="flex items-start justify-between space-y-0 pb-1 relative z-10">
-        <div className="space-y-1 flex-1">
-          <p className="text-[10px] 2xl:text-xs font-semibold text-muted-foreground uppercase tracking-widest">
-            {title}
-          </p>
-          {loading ? (
-            <Skeleton className="h-8 2xl:h-10 w-16 mt-1" />
+    <Card className="@container/card bg-card shadow-sm">
+      <CardHeader>
+        <CardDescription>{title}</CardDescription>
+        <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+          {loading ? <Skeleton className="h-8 2xl:h-10 w-16" /> : value}
+        </CardTitle>
+        <CardAction>
+          {trend ? (
+            <Badge variant="outline" className={textColor}>
+              <Icon />
+              {trend}
+            </Badge>
           ) : (
-            <h3 className="text-xl 2xl:text-3xl font-bold tracking-tight text-foreground/90 dark:text-foreground">
-              {value}
-            </h3>
+            <div className={cn("p-2 rounded-full bg-muted/50", textColor)}>
+              <Icon className="w-4 h-4" />
+            </div>
           )}
-        </div>
-        <div className={cn('rounded-md p-2 shrink-0 shadow-sm', style.icon)}>
-          <Icon size={18} strokeWidth={2.5} />
-        </div>
+        </CardAction>
       </CardHeader>
-      <CardContent className="space-y-1.5 pt-0 relative z-10">
-        <p className="text-xs 2xl:text-sm text-muted-foreground font-medium opacity-80">{subtitle}</p>
-        {trend && (
-          <Badge
-            variant="outline"
-            className={cn(
-              'text-[10px] font-bold tracking-wide border shadow-sm px-2 py-0.5',
-              style.badge
-            )}
-          >
-            {trend}
-          </Badge>
-        )}
-      </CardContent>
+      <CardFooter className="flex-col items-start gap-1.5 text-sm">
+        <div className="line-clamp-1 flex gap-2 font-medium">
+          {subtitle}
+        </div>
+        <div className="text-muted-foreground">
+          Berdasarkan data saat ini
+        </div>
+      </CardFooter>
     </Card>
   );
 }

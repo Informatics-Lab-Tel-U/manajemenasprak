@@ -4,9 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import { Card, CardContent, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { createClient } from '@/lib/supabase/client';
 import { ROOMS } from '@/constants';
-import { LabStatus } from '@/app/(dashboard)/monitoring/RealtimeMonitoringList';
+import { useMonitoringStore, LabStatus } from '@/store/useMonitoringStore';
 import Link from 'next/link';
 
 const POLL_INTERVAL_MS = 20_000;
@@ -14,9 +13,18 @@ const RECONNECT_DELAY_MS = 5_000;
 const OFFLINE_THRESHOLD_S = 60;
 
 export default function RealtimeMonitoringWidget({ initialData }: { initialData: LabStatus[] }) {
-  const [monitoringData, setMonitoringData] = useState<LabStatus[]>(initialData);
+  const monitoringData = useMonitoringStore(s => s.labStatus);
+  const init = useMonitoringStore(s => s.init);
+  const setInitialLabStatus = useMonitoringStore(s => s.setInitialLabStatus);
+  const updateLabStatus = useMonitoringStore(s => s.updateLabStatus);
+
   const [now, setNow] = useState(new Date());
-  const supabaseRef = useRef(createClient());
+
+  // Init store with SSR data
+  useEffect(() => {
+    setInitialLabStatus(initialData);
+    init();
+  }, [initialData, setInitialLabStatus, init]);
 
   // Clock tick for local TTL calculation
   useEffect(() => {
@@ -33,7 +41,7 @@ export default function RealtimeMonitoringWidget({ initialData }: { initialData:
         if (!res.ok) return;
         const json = await res.json();
         if (Array.isArray(json.data) && json.data.length > 0) {
-          setMonitoringData(json.data as LabStatus[]);
+          updateLabStatus(json.data as LabStatus[]);
         }
       } catch {
         // network error — silently skip, Realtime will still handle updates
@@ -42,40 +50,7 @@ export default function RealtimeMonitoringWidget({ initialData }: { initialData:
 
     const pollInterval = setInterval(poll, POLL_INTERVAL_MS);
     return () => clearInterval(pollInterval);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // === SUPABASE REALTIME (PRIMARY PUSH) ===
-  useEffect(() => {
-    const supabase = supabaseRef.current;
-
-    const channel = supabase
-      .channel('monitoring_updates_overview')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'monitoring_lab' },
-        (payload) => {
-          setMonitoringData((prev) => {
-            const updatedRow = payload.new as LabStatus;
-            const existingIndex = prev.findIndex((item) => item.lab_id === updatedRow.lab_id);
-            if (existingIndex !== -1) {
-              const newData = [...prev];
-              newData[existingIndex] = updatedRow;
-              return newData.sort((a, b) => a.lab_id.localeCompare(b.lab_id));
-            }
-            return [...prev, updatedRow].sort((a, b) => a.lab_id.localeCompare(b.lab_id));
-          });
-        }
-      )
-      .subscribe((status, err) => {
-        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-          console.warn('[Realtime:Widget] Channel issue:', status, err ?? '— Supabase will auto-reconnect');
-        }
-      });
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [updateLabStatus]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const activeLabsCount = monitoringData.filter(
     (d) => (now.getTime() - new Date(d.last_seen).getTime()) / 1000 <= OFFLINE_THRESHOLD_S

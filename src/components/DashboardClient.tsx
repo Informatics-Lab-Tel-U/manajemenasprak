@@ -56,21 +56,6 @@ export default function DashboardClient({
 
   return (
     <>
-      <header className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl 2xl:text-3xl font-bold tracking-tight">Ringkasan</h1>
-          <p className="text-sm 2xl:text-base text-muted-foreground mt-1">
-            Selamat datang di portal admin Manajemen Asisten Praktikum
-          </p>
-        </div>
-        <div>
-          {loading && terms.length === 0 ? (
-            <Skeleton className="h-10 w-[180px]" />
-          ) : (
-            <div className="h-10"></div>
-          )}
-        </div>
-      </header>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 2xl:gap-8 mb-6">
         <StatCard
