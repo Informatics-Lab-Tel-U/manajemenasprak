@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useDropzone } from 'react-dropzone';
-import Papa from 'papaparse';
 
 import { FileSpreadsheet, Upload, X, Download, FileText } from 'lucide-react';
 import { toast } from 'sonner';
@@ -38,6 +37,7 @@ const handleDownloadTemplate = async (format: 'csv' | 'xlsx') => {
   ];
 
   if (format === 'csv') {
+    const Papa = (await import('papaparse')).default;
     const csv = Papa.unparse(data);
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -74,9 +74,10 @@ export default function PlottingImportModal({
   const [previewRows, setPreviewRows] = useState<ExtendedPreviewRow[]>([]);
 
   // CSV Processing
-  const processCSV = (file: File) => {
+  const processCSV = async (file: File) => {
     setError(null);
     setLoading(true);
+    const Papa = (await import('papaparse')).default;
 
     Papa.parse(file, {
       header: true,

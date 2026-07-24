@@ -13,7 +13,6 @@ import { format } from 'date-fns';
 import { CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PRESENSI_THEMES } from '@/constants/presensiConstants';
-import { generatePresensiExcel } from '@/services/presensiGenerator';
 import { usePresensi } from '@/hooks/usePresensi';
 import { PraktikumSelector } from '@/components/presensi/PraktikumSelector';
 import { KelasManager } from '@/components/presensi/KelasManager';
@@ -35,6 +34,7 @@ export default function PresensiPage() {
     }
 
     try {
+      const { generatePresensiExcel } = await import('@/services/presensiGenerator');
       await generatePresensiExcel({
         namaFile: state.namaFile,
         kelasNames: state.kelasNames,

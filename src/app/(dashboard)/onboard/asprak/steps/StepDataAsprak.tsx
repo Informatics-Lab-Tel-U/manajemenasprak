@@ -4,8 +4,6 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
-import Papa from 'papaparse';
-import * as XLSX from 'xlsx';
 import { FileSpreadsheet, FileText, X, Download, Loader2, Trash2 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -51,6 +49,7 @@ const handleDownloadTemplate = async (format: 'csv' | 'xlsx') => {
   ];
 
   if (format === 'csv') {
+    const Papa = (await import('papaparse')).default;
     const csv = Papa.unparse(data);
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -61,6 +60,7 @@ const handleDownloadTemplate = async (format: 'csv' | 'xlsx') => {
     link.click();
     document.body.removeChild(link);
   } else if (format === 'xlsx') {
+    const XLSX = await import('xlsx');
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Template');
@@ -143,8 +143,9 @@ export default function StepDataAsprak({
 
       if (file.name.endsWith('.xlsx')) {
         const reader = new FileReader();
-        reader.onload = (e) => {
+        reader.onload = async (e) => {
           try {
+            const XLSX = await import('xlsx');
             const data = e.target?.result;
             const workbook = XLSX.read(data, { type: 'binary' });
             const worksheet = workbook.Sheets[workbook.SheetNames[0]];
@@ -166,6 +167,7 @@ export default function StepDataAsprak({
         };
         reader.readAsBinaryString(file);
       } else {
+        const Papa = (await import('papaparse')).default;
         Papa.parse<RawCSVRow>(file, {
           header: true,
           skipEmptyLines: true,

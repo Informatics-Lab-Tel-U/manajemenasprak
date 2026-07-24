@@ -2,7 +2,6 @@
 
 import { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
-import Papa from 'papaparse';
 
 import { FileSpreadsheet, Upload, FileText, X, Download } from 'lucide-react';
 
@@ -71,6 +70,7 @@ const handleDownloadTemplate = async (format: 'csv' | 'xlsx') => {
   ];
 
   if (format === 'csv') {
+    const Papa = (await import('papaparse')).default;
     const csv = Papa.unparse(data);
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -107,9 +107,10 @@ export default function JadwalImportCSVModal({
   // Replaced with imported validateJadwalConflicts
 
   const processAndValidate = useCallback(
-    (file: File) => {
+    async (file: File) => {
       setError(null);
       setFileName(file.name);
+      const Papa = (await import('papaparse')).default;
 
       Papa.parse<RawCSVRow>(file, {
         header: true,
