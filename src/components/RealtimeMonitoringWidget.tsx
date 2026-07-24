@@ -8,9 +8,10 @@ import { ROOMS } from '@/constants';
 import { useMonitoringStore, LabStatus } from '@/store/useMonitoringStore';
 import Link from 'next/link';
 
+import { isLabOnline } from '@/lib/labStatus';
+
 const POLL_INTERVAL_MS = 20_000;
 const RECONNECT_DELAY_MS = 5_000;
-const OFFLINE_THRESHOLD_S = 60;
 
 export default function RealtimeMonitoringWidget({ initialData }: { initialData: LabStatus[] }) {
   const monitoringData = useMonitoringStore(s => s.labStatus);
@@ -52,9 +53,7 @@ export default function RealtimeMonitoringWidget({ initialData }: { initialData:
     return () => clearInterval(pollInterval);
   }, [updateLabStatus]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const activeLabsCount = monitoringData.filter(
-    (d) => (now.getTime() - new Date(d.last_seen).getTime()) / 1000 <= OFFLINE_THRESHOLD_S
-  ).length;
+  const activeLabsCount = monitoringData.filter((d) => isLabOnline(d, now)).length;
 
   return (
     <Card className="w-full transition-all duration-300 border bg-card hover:border-foreground/20 shadow-sm border-blue-200/50 dark:border-blue-500/20 mb-6">
@@ -73,8 +72,7 @@ export default function RealtimeMonitoringWidget({ initialData }: { initialData:
               );
               let isOnline = false;
               if (data) {
-                const diffInSeconds = (now.getTime() - new Date(data.last_seen).getTime()) / 1000;
-                isOnline = diffInSeconds <= OFFLINE_THRESHOLD_S;
+                isOnline = isLabOnline(data, now);
               }
 
               return (

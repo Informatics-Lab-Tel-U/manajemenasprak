@@ -19,7 +19,7 @@ export async function updateSession(request: NextRequest) {
   // or completely public machine-to-machine APIs (like monitoring heartbeat).
   if (
     request.method === 'OPTIONS' ||
-    pathname.startsWith('/api/monitoring/') ||
+    (pathname === '/api/monitoring/heartbeat' && request.method === 'POST') ||
     ((pathname === '/api/praktikan' || pathname.startsWith('/api/praktikan/')) &&
       request.method === 'GET')
   ) {
