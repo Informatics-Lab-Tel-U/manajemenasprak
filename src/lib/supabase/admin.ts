@@ -4,32 +4,27 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
-let adminClientInstance: ReturnType<typeof createClient> | null = null;
-
 /**
  * Supabase Admin Client (service_role).
  *
  * IMPORTANT: Only use this in API routes and server-side code.
  * Never expose this client to the browser.
  * This client bypasses Row Level Security.
+ *
+ * NOTE: Tidak menggunakan singleton karena Cloudflare Workers melarang reuse I/O
+ * objects antar request. Setiap request mendapatkan instance baru yang terisolasi.
  */
 export function createAdminClient() {
-  if (adminClientInstance) {
-    return adminClientInstance;
-  }
-
   if (!serviceRoleKey) {
     throw new Error(
       'Missing SUPABASE_SERVICE_ROLE_KEY. Add it to .env.local (no NEXT_PUBLIC_ prefix).'
     );
   }
 
-  adminClientInstance = createClient(supabaseUrl, serviceRoleKey, {
+  return createClient(supabaseUrl, serviceRoleKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false,
     },
   });
-  
-  return adminClientInstance;
 }
