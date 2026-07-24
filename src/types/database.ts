@@ -144,3 +144,12 @@ export type RoomMonitoring = {
   created_at: string;
   updated_at: string;
 };
+
+export type MonitoringHeartbeatLog = {
+  id: number;
+  lab_id: string;
+  kelas: string | null;
+  status: string;
+  response_time_ms: number | null;
+  created_at: string;
+};

@@ -7,6 +7,8 @@ import { Activity, MonitorOff } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { id } from 'date-fns/locale';
 import { createClient } from '@/lib/supabase/client';
+import { useHeartbeatLogAll } from '@/hooks/useHeartbeatLog';
+import { ResponseTimeChart } from '@/components/monitoring/ResponseTimeChart';
 
 export type LabStatus = {
   lab_id: string;
@@ -23,6 +25,7 @@ export default function RealtimeMonitoringList({ initialData }: { initialData: L
   const [monitoringData, setMonitoringData] = useState<LabStatus[]>(initialData);
   const [now, setNow] = useState(new Date());
   const supabaseRef = useRef(createClient());
+  const heartbeatHistory = useHeartbeatLogAll('1h');
 
   // Clock tick for local TTL calculation
   useEffect(() => {
@@ -108,6 +111,10 @@ export default function RealtimeMonitoringList({ initialData }: { initialData: L
         const diffInSeconds = (now.getTime() - lastSeenTime.getTime()) / 1000;
         const isOnline = diffInSeconds <= OFFLINE_THRESHOLD_S;
 
+        const labHistory = heartbeatHistory[data.lab_id] || [];
+        const lastResponseTime = labHistory.length > 0 ? labHistory[labHistory.length - 1].response_time_ms : null;
+        const isSpike = lastResponseTime !== null && lastResponseTime > 800;
+
         return (
           <Card key={data.lab_id} className={`overflow-hidden transition-all duration-200 ${isOnline ? 'border-green-500/50 shadow-sm shadow-green-100 dark:shadow-none' : 'opacity-70'}`}>
             <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
@@ -119,9 +126,16 @@ export default function RealtimeMonitoringList({ initialData }: { initialData: L
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium text-muted-foreground">Status</span>
                   {isOnline ? (
-                    <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-semibold text-green-800 dark:bg-green-900 dark:text-green-200">
-                      Online
-                    </span>
+                    <div className="flex items-center gap-2">
+                      {lastResponseTime !== null && (
+                        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${isSpike ? 'bg-destructive/10 text-destructive' : 'bg-muted text-muted-foreground'}`}>
+                          {lastResponseTime}ms
+                        </span>
+                      )}
+                      <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-semibold text-green-800 dark:bg-green-900 dark:text-green-200">
+                        Online
+                      </span>
+                    </div>
                   ) : (
                     <span className="inline-flex items-center rounded-full bg-destructive/10 px-2.5 py-0.5 text-xs font-semibold text-destructive dark:bg-destructive/20">
                       Offline
@@ -142,6 +156,10 @@ export default function RealtimeMonitoringList({ initialData }: { initialData: L
                 <div className="text-xs text-right text-muted-foreground mt-2">
                   Detak terakhir: {formatDistanceToNow(lastSeenTime, { addSuffix: true, locale: id })}
                 </div>
+                
+                {isOnline && labHistory.length > 0 && (
+                  <ResponseTimeChart data={labHistory} compact />
+                )}
               </div>
             </CardContent>
           </Card>

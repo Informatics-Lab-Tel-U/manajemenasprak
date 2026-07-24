@@ -25,7 +25,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { lab_id, kelas, status } = body;
+    const { lab_id, kelas, status, response_time_ms } = body;
 
     if (!lab_id || !kelas) {
       return NextResponse.json(
@@ -34,25 +34,51 @@ export async function POST(request: Request) {
       );
     }
 
+    let parsedResponseTime: number | null = null;
+    if (typeof response_time_ms === 'number' && Number.isFinite(response_time_ms) && response_time_ms >= 0) {
+      parsedResponseTime = response_time_ms;
+    }
+
+    const now = new Date().toISOString();
+
     const dataToStore = {
       lab_id,
       kelas,
       status: status || 'online',
-      last_seen: new Date().toISOString()
+      last_seen: now
+    };
+
+    const logData = {
+      lab_id,
+      kelas,
+      status: status || 'online',
+      response_time_ms: parsedResponseTime,
+      created_at: now
     };
 
     const supabaseAdmin = createAdminClient();
-    const { error } = await supabaseAdmin
-      .from('monitoring_lab')
-      // @ts-expect-error Type inference misses Database schema
-      .upsert(dataToStore, { onConflict: 'lab_id' });
+    
+    const [upsertResult, insertResult] = await Promise.all([
+      supabaseAdmin
+        .from('monitoring_lab')
+        // @ts-expect-error Type inference misses Database schema
+        .upsert(dataToStore, { onConflict: 'lab_id' }),
+      supabaseAdmin
+        .from('monitoring_heartbeat_log')
+        // @ts-expect-error Type inference misses Database schema
+        .insert(logData)
+    ]);
 
-    if (error) {
-      console.error('Failed to upsert to Supabase:', error);
+    if (upsertResult.error) {
+      console.error('Failed to upsert to Supabase:', upsertResult.error);
       return NextResponse.json(
         { error: 'Failed to write to database' },
         { status: 500, headers: corsHeaders }
       );
+    }
+
+    if (insertResult.error) {
+      console.error('Failed to insert heartbeat log:', insertResult.error);
     }
 
     return NextResponse.json({ success: true }, { headers: corsHeaders });
