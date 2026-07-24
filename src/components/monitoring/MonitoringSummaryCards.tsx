@@ -5,8 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardAction, 
 import { Badge } from '@/components/ui/badge';
 import { useMonitoringStore, LabStatus } from '@/store/useMonitoringStore';
 import { Activity, Computer, Users, AlertTriangle } from 'lucide-react';
-
-const OFFLINE_THRESHOLD_S = 60;
+import { isLabOnline } from '@/lib/labStatus';
 
 interface MonitoringSummaryCardsProps {
   /** Data awal dari SSR — menghilangkan flash "0" di render pertama */
@@ -40,12 +39,8 @@ export function MonitoringSummaryCards({ initialData = [] }: MonitoringSummaryCa
   // Memo 1: Bergantung pada monitoringData + now (aktif/offline).
   // Hanya re-compute saat ada update Realtime ATAU setiap 10 detik (timer).
   const { activeLabs, offlineLabs } = useMemo(() => {
-    const active = monitoringData.filter(
-      (d) => (now.getTime() - new Date(d.last_seen).getTime()) / 1000 <= OFFLINE_THRESHOLD_S
-    );
-    const offline = monitoringData.filter(
-      (d) => (now.getTime() - new Date(d.last_seen).getTime()) / 1000 > OFFLINE_THRESHOLD_S
-    );
+    const active = monitoringData.filter((d) => isLabOnline(d, now));
+    const offline = monitoringData.filter((d) => !isLabOnline(d, now));
     return { activeLabs: active, offlineLabs: offline };
   }, [monitoringData, now]);
 
