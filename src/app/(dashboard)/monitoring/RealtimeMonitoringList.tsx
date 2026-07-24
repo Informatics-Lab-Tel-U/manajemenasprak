@@ -33,11 +33,27 @@ export default function RealtimeMonitoringList({ initialData }: { initialData: L
     return () => clearInterval(timer);
   }, []);
 
-  // === POLLING FALLBACK DIBUANG ===
-  // Karena akun Cloudflare menggunakan Free Tier Shared (100k limit)
-  // Polling setiap 20 detik sangat boros kuota request. 
-  // Sekarang aplikasi 100% mengandalkan SSR (initialData) & Supabase Realtime via WebSocket 
-  // (yang tidak memotong kuota Workers).
+  // === POLLING FALLBACK ===
+  // Fetch via our own API route (uses admin client server-side, bypasses RLS).
+  // This is the safety net: even if the Realtime channel dies silently,
+  // the UI will never show stale data for more than 20 seconds.
+  useEffect(() => {
+    const poll = async () => {
+      try {
+        const res = await fetch('/api/monitoring/status');
+        if (!res.ok) return;
+        const json = await res.json();
+        if (Array.isArray(json.data) && json.data.length > 0) {
+          setMonitoringData(json.data as LabStatus[]);
+        }
+      } catch {
+        // network error — silently skip, Realtime will still handle updates
+      }
+    };
+
+    const pollInterval = setInterval(poll, POLL_INTERVAL_MS);
+    return () => clearInterval(pollInterval);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // === SUPABASE REALTIME (PRIMARY PUSH) ===
   // Realtime delivers instant updates on INSERT/UPDATE.
@@ -129,7 +145,7 @@ export default function RealtimeMonitoringList({ initialData }: { initialData: L
 
                 <div className="flex justify-between items-center gap-2">
                   <span className="text-sm font-medium text-muted-foreground shrink-0">Kelas Aktif</span>
-                  <span 
+                  <span
                     className="text-sm font-bold bg-muted px-2 py-1 rounded truncate max-w-[150px] sm:max-w-[200px] text-right"
                     title={isOnline ? data.kelas : '-'}
                   >
@@ -140,7 +156,7 @@ export default function RealtimeMonitoringList({ initialData }: { initialData: L
                 <div className="text-xs text-right text-muted-foreground mt-2">
                   Detak terakhir: {formatDistanceToNow(lastSeenTime, { addSuffix: true, locale: id })}
                 </div>
-                
+
                 {isOnline && labHistory.length > 0 && (
                   <ResponseTimeChart data={labHistory} compact />
                 )}
