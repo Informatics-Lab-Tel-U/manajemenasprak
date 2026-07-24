@@ -1,7 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import type { RealtimeChannel } from '@supabase/supabase-js';
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Activity, MonitorOff } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
@@ -9,16 +8,14 @@ import { id } from 'date-fns/locale';
 import { useMonitoringStore, LabStatus } from '@/store/useMonitoringStore';
 import { ResponseTimeChart } from '@/components/monitoring/ResponseTimeChart';
 
-const POLL_INTERVAL_MS = 20_000;
-const RECONNECT_DELAY_MS = 5_000;
 const OFFLINE_THRESHOLD_S = 60;
 
 export default function RealtimeMonitoringList({ initialData }: { initialData: LabStatus[] }) {
   const monitoringData = useMonitoringStore(s => s.labStatus);
   const heartbeatHistory = useMonitoringStore(s => s.heartbeatData);
   const init = useMonitoringStore(s => s.init);
-  const updateLabStatus = useMonitoringStore(s => s.updateLabStatus);
   const setInitialLabStatus = useMonitoringStore(s => s.setInitialLabStatus);
+
 
   const [now, setNow] = useState(new Date());
 
@@ -33,28 +30,6 @@ export default function RealtimeMonitoringList({ initialData }: { initialData: L
     const timer = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
-
-  // === POLLING FALLBACK ===
-  // Fetch via our own API route (uses admin client server-side, bypasses RLS).
-  // This is the safety net: even if the Realtime channel dies silently,
-  // the UI will never show stale data for more than 20 seconds.
-  useEffect(() => {
-    const poll = async () => {
-      try {
-        const res = await fetch('/api/monitoring/status');
-        if (!res.ok) return;
-        const json = await res.json();
-        if (Array.isArray(json.data) && json.data.length > 0) {
-          updateLabStatus(json.data as LabStatus[]);
-        }
-      } catch {
-        // network error — silently skip, Realtime will still handle updates
-      }
-    };
-
-    const pollInterval = setInterval(poll, POLL_INTERVAL_MS);
-    return () => clearInterval(pollInterval);
-  }, [updateLabStatus]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (monitoringData.length === 0) {
     return (

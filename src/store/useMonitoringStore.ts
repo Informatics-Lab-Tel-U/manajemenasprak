@@ -29,6 +29,9 @@ interface MonitoringState {
 const supabase = createClient();
 let channelLab: ReturnType<typeof supabase.channel> | null = null;
 let channelHeartbeat: ReturnType<typeof supabase.channel> | null = null;
+// Mutex: menjamin init() hanya berjalan satu kali meskipun dipanggil secara bersamaan
+let initPromise: Promise<void> | null = null;
+
 
 export const useMonitoringStore = create<MonitoringState>((set, get) => ({
   labStatus: [],
@@ -48,53 +51,27 @@ export const useMonitoringStore = create<MonitoringState>((set, get) => ({
   },
 
   init: async () => {
-    if (get().isInitialized) return; // Prevent multiple init
+    // Mutex: kembalikan promise yang sama jika init sedang berjalan atau sudah selesai
+    if (initPromise) return initPromise;
     
-    // Tandai inisialisasi mulai berjalan
-    set({ isInitialized: true });
+    initPromise = (async () => {
+      set({ isInitialized: true });
 
-    // 1. Fetch data historis heartbeat
-    try {
-      const res = await fetch(`/api/monitoring/heartbeat-log?range=1h`);
-      if (res.ok) {
-        const { data } = await res.json();
-        if (data) {
-          const grouped: Record<string, HeartbeatPoint[]> = {};
-          data.forEach((log: any) => {
-            if (!grouped[log.lab_id]) grouped[log.lab_id] = [];
-            grouped[log.lab_id].push({
-              created_at: log.created_at,
-              response_time_ms: log.response_time_ms
-            });
-          });
-          // Trim to max points
-          Object.keys(grouped).forEach(labId => {
-            if (grouped[labId].length > MAX_POINTS) {
-              grouped[labId] = grouped[labId].slice(-MAX_POINTS);
+      // Fetch data lab status fallback (jika SSR belum mem-passing data via setInitialLabStatus)
+      if (get().labStatus.length === 0) {
+        try {
+          const res = await fetch('/api/monitoring/status');
+          if (res.ok) {
+            const json = await res.json();
+            if (Array.isArray(json.data) && json.data.length > 0) {
+              set({ labStatus: json.data });
             }
-          });
-          set({ heartbeatData: grouped });
-        }
-      }
-    } catch (err) {
-      console.error('Failed to fetch initial heartbeat logs:', err);
-    }
-
-    // 2. Fetch data lab status fallback (jika SSR belum mem-passing data)
-    if (get().labStatus.length === 0) {
-      try {
-        const res = await fetch('/api/monitoring/status');
-        if (res.ok) {
-          const json = await res.json();
-          if (Array.isArray(json.data) && json.data.length > 0) {
-            set({ labStatus: json.data });
           }
-        }
-      } catch (err) {}
-    }
+        } catch (err) {}
+      }
 
-    // 3. Setup WebSocket Subscription untuk monitoring_lab
-    if (!channelLab) {
+      // Setup WebSocket Subscription untuk monitoring_lab
+      if (!channelLab) {
       channelLab = supabase
         .channel('global_monitoring_lab')
         .on(
@@ -120,8 +97,8 @@ export const useMonitoringStore = create<MonitoringState>((set, get) => ({
         });
     }
 
-    // 4. Setup WebSocket Subscription untuk monitoring_heartbeat_log
-    if (!channelHeartbeat) {
+      // Setup WebSocket Subscription untuk monitoring_heartbeat_log
+      if (!channelHeartbeat) {
       channelHeartbeat = supabase
         .channel('global_monitoring_heartbeat')
         .on(
@@ -156,6 +133,9 @@ export const useMonitoringStore = create<MonitoringState>((set, get) => ({
           }
         });
     }
+    })();
+    
+    return initPromise;
   },
 
   cleanup: () => {
@@ -170,6 +150,7 @@ export const useMonitoringStore = create<MonitoringState>((set, get) => ({
       supabase.removeChannel(channelHeartbeat);
       channelHeartbeat = null;
     }
+    initPromise = null;
     set({ isInitialized: false });
   }
 }));
