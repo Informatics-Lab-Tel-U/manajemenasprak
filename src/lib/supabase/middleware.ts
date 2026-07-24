@@ -55,7 +55,6 @@ export async function updateSession(request: NextRequest) {
     supabase.from('system_config').select('value_bool').eq('key', 'maintenance_mode').single(),
   ]);
 
-  const { pathname } = request.nextUrl;
   const isMaintenanceMode = !!maintenanceConfig?.value_bool;
 
   // 1. Redirect away from /maintenance if mode is OFF
