@@ -13,6 +13,18 @@ export async function updateSession(request: NextRequest) {
     },
   });
 
+  const { pathname } = request.nextUrl;
+
+  // EARLY EXIT: Do not perform any DB/Auth checks for preflight requests
+  // or completely public machine-to-machine APIs (like monitoring heartbeat).
+  if (
+    request.method === 'OPTIONS' ||
+    pathname.startsWith('/api/monitoring/') ||
+    (pathname.startsWith('/api/praktikan/') && request.method === 'GET')
+  ) {
+    return supabaseResponse;
+  }
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -72,24 +84,8 @@ export async function updateSession(request: NextRequest) {
     }
   }
 
-  // Early exits — no pengguna query needed
+  // Early exits — non-public API paths
   if (pathname.startsWith('/api/')) {
-    // Allow external API-key flow for praktikan GET/OPTIONS.
-    // Route-level handler still enforces API key or session role.
-    if (
-      (pathname === '/api/praktikan' ||
-        pathname === '/api/praktikan/' ||
-        pathname.startsWith('/api/praktikan/')) &&
-      (request.method === 'GET' || request.method === 'OPTIONS')
-    ) {
-      return supabaseResponse;
-    }
-
-    // Allow generator-kursi to send heartbeat without auth
-    if (pathname.startsWith('/api/monitoring/')) {
-      return supabaseResponse;
-    }
-
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
