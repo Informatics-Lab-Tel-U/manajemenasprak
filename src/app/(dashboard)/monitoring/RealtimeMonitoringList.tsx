@@ -6,26 +6,27 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Activity, MonitorOff } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { id } from 'date-fns/locale';
-import { createClient } from '@/lib/supabase/client';
-import { useHeartbeatLogAll } from '@/hooks/useHeartbeatLog';
+import { useMonitoringStore, LabStatus } from '@/store/useMonitoringStore';
 import { ResponseTimeChart } from '@/components/monitoring/ResponseTimeChart';
-
-export type LabStatus = {
-  lab_id: string;
-  kelas: string;
-  status: string;
-  last_seen: string;
-};
 
 const POLL_INTERVAL_MS = 20_000;
 const RECONNECT_DELAY_MS = 5_000;
 const OFFLINE_THRESHOLD_S = 60;
 
 export default function RealtimeMonitoringList({ initialData }: { initialData: LabStatus[] }) {
-  const [monitoringData, setMonitoringData] = useState<LabStatus[]>(initialData);
+  const monitoringData = useMonitoringStore(s => s.labStatus);
+  const heartbeatHistory = useMonitoringStore(s => s.heartbeatData);
+  const init = useMonitoringStore(s => s.init);
+  const updateLabStatus = useMonitoringStore(s => s.updateLabStatus);
+  const setInitialLabStatus = useMonitoringStore(s => s.setInitialLabStatus);
+
   const [now, setNow] = useState(new Date());
-  const supabaseRef = useRef(createClient());
-  const heartbeatHistory = useHeartbeatLogAll('1h');
+
+  // Init store with SSR data
+  useEffect(() => {
+    setInitialLabStatus(initialData);
+    init();
+  }, [initialData, setInitialLabStatus, init]);
 
   // Clock tick for local TTL calculation
   useEffect(() => {
@@ -44,7 +45,7 @@ export default function RealtimeMonitoringList({ initialData }: { initialData: L
         if (!res.ok) return;
         const json = await res.json();
         if (Array.isArray(json.data) && json.data.length > 0) {
-          setMonitoringData(json.data as LabStatus[]);
+          updateLabStatus(json.data as LabStatus[]);
         }
       } catch {
         // network error — silently skip, Realtime will still handle updates
@@ -53,44 +54,7 @@ export default function RealtimeMonitoringList({ initialData }: { initialData: L
 
     const pollInterval = setInterval(poll, POLL_INTERVAL_MS);
     return () => clearInterval(pollInterval);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // === SUPABASE REALTIME (PRIMARY PUSH) ===
-  // Realtime delivers instant updates on INSERT/UPDATE.
-  // Supabase client automatically handles reconnection on errors/timeouts.
-  useEffect(() => {
-    const supabase = supabaseRef.current;
-
-    const channel = supabase
-      .channel('monitoring_updates_lab')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'monitoring_lab' },
-        (payload) => {
-          setMonitoringData((prev) => {
-            const updatedRow = payload.new as LabStatus;
-            const existingIndex = prev.findIndex((item) => item.lab_id === updatedRow.lab_id);
-            if (existingIndex !== -1) {
-              const newData = [...prev];
-              newData[existingIndex] = updatedRow;
-              return newData.sort((a, b) => a.lab_id.localeCompare(b.lab_id));
-            }
-            return [...prev, updatedRow].sort((a, b) => a.lab_id.localeCompare(b.lab_id));
-          });
-        }
-      )
-      .subscribe((status, err) => {
-        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-          console.warn('[Realtime:List] Channel issue:', status, err ?? '— Supabase will auto-reconnect');
-        } else if (status === 'SUBSCRIBED') {
-          console.log('[Realtime:List] Connected to Realtime');
-        }
-      });
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [updateLabStatus]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (monitoringData.length === 0) {
     return (
