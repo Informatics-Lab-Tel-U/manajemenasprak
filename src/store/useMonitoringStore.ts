@@ -57,48 +57,21 @@ export const useMonitoringStore = create<MonitoringState>((set, get) => ({
     initPromise = (async () => {
       set({ isInitialized: true });
 
-    // 1. Fetch data historis heartbeat
-    try {
-      const res = await fetch(`/api/monitoring/heartbeat-log?range=1h`);
-      if (res.ok) {
-        const { data } = await res.json();
-        if (data) {
-          const grouped: Record<string, HeartbeatPoint[]> = {};
-          data.forEach((log: any) => {
-            if (!grouped[log.lab_id]) grouped[log.lab_id] = [];
-            grouped[log.lab_id].push({
-              created_at: log.created_at,
-              response_time_ms: log.response_time_ms
-            });
-          });
-          // Trim to max points
-          Object.keys(grouped).forEach(labId => {
-            if (grouped[labId].length > MAX_POINTS) {
-              grouped[labId] = grouped[labId].slice(-MAX_POINTS);
+      // Fetch data lab status fallback (jika SSR belum mem-passing data via setInitialLabStatus)
+      if (get().labStatus.length === 0) {
+        try {
+          const res = await fetch('/api/monitoring/status');
+          if (res.ok) {
+            const json = await res.json();
+            if (Array.isArray(json.data) && json.data.length > 0) {
+              set({ labStatus: json.data });
             }
-          });
-          set({ heartbeatData: grouped });
-        }
-      }
-    } catch (err) {
-      console.error('Failed to fetch initial heartbeat logs:', err);
-    }
-
-    // 2. Fetch data lab status fallback (jika SSR belum mem-passing data)
-    if (get().labStatus.length === 0) {
-      try {
-        const res = await fetch('/api/monitoring/status');
-        if (res.ok) {
-          const json = await res.json();
-          if (Array.isArray(json.data) && json.data.length > 0) {
-            set({ labStatus: json.data });
           }
-        }
-      } catch (err) {}
-    }
+        } catch (err) {}
+      }
 
-    // 3. Setup WebSocket Subscription untuk monitoring_lab
-    if (!channelLab) {
+      // Setup WebSocket Subscription untuk monitoring_lab
+      if (!channelLab) {
       channelLab = supabase
         .channel('global_monitoring_lab')
         .on(
@@ -124,8 +97,8 @@ export const useMonitoringStore = create<MonitoringState>((set, get) => ({
         });
     }
 
-    // 4. Setup WebSocket Subscription untuk monitoring_heartbeat_log
-    if (!channelHeartbeat) {
+      // Setup WebSocket Subscription untuk monitoring_heartbeat_log
+      if (!channelHeartbeat) {
       channelHeartbeat = supabase
         .channel('global_monitoring_heartbeat')
         .on(

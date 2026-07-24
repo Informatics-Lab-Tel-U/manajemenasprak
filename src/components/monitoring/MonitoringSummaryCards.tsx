@@ -8,36 +8,50 @@ import { Activity, Computer, Users, AlertTriangle } from 'lucide-react';
 
 const OFFLINE_THRESHOLD_S = 60;
 
-export function MonitoringSummaryCards() {
+interface MonitoringSummaryCardsProps {
+  /** Data awal dari SSR — menghilangkan flash "0" di render pertama */
+  initialData?: LabStatus[];
+}
+
+export function MonitoringSummaryCards({ initialData = [] }: MonitoringSummaryCardsProps) {
   const monitoringData = useMonitoringStore((s) => s.labStatus);
   const heartbeatData = useMonitoringStore((s) => s.heartbeatData);
   const init = useMonitoringStore((s) => s.init);
+  const setInitialLabStatus = useMonitoringStore((s) => s.setInitialLabStatus);
   
   const [now, setNow] = useState(new Date());
 
+  // Populate store dengan data SSR SEBELUM init() async selesai,
+  // sehingga render pertama sudah memiliki data yang benar.
   useEffect(() => {
+    if (initialData.length > 0) {
+      setInitialLabStatus(initialData);
+    }
     init();
-  }, [init]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Timer lokal untuk menghitung berapa lama lab tidak mengirim sinyal.
-  // 10 detik sudah cukup — offline threshold adalah 60 detik, tidak perlu setiap detik.
+  // Timer untuk refresh offline-status calculation.
+  // 10 detik cukup — threshold offline adalah 60 detik.
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 10_000);
     return () => clearInterval(timer);
   }, []);
 
-
-  // Kalkulasi 4 Metrics (Diupdate otomatis jika ada perubahan data)
-  const metrics = useMemo(() => {
-    // 1. Total Lab Aktif
-    const activeLabs = monitoringData.filter(
+  // Memo 1: Bergantung pada monitoringData + now (aktif/offline).
+  // Hanya re-compute saat ada update Realtime ATAU setiap 10 detik (timer).
+  const { activeLabs, offlineLabs } = useMemo(() => {
+    const active = monitoringData.filter(
       (d) => (now.getTime() - new Date(d.last_seen).getTime()) / 1000 <= OFFLINE_THRESHOLD_S
     );
-    
-    // 2. Kelas Aktif (Unik)
-    const uniqueClasses = new Set(activeLabs.map(l => l.kelas).filter(k => k && k !== '-'));
+    const offline = monitoringData.filter(
+      (d) => (now.getTime() - new Date(d.last_seen).getTime()) / 1000 > OFFLINE_THRESHOLD_S
+    );
+    return { activeLabs: active, offlineLabs: offline };
+  }, [monitoringData, now]);
 
-    // 3 & 4. Latensi & Anomali
+  // Memo 2: Bergantung hanya pada heartbeatData.
+  // Re-compute HANYA saat ada heartbeat baru (WebSocket INSERT), tidak terpengaruh timer.
+  const { avgLatency, highestSpike, spikeLab } = useMemo(() => {
     let totalLatency = 0;
     let count = 0;
     let highestSpike = 0;
@@ -45,15 +59,13 @@ export function MonitoringSummaryCards() {
 
     Object.entries(heartbeatData).forEach(([labId, points]) => {
       if (points.length === 0) return;
-      
-      // Ambil latensi terbaru dari lab ini untuk rata-rata
+
       const lastPoint = points[points.length - 1];
       if (lastPoint.response_time_ms !== null) {
         totalLatency += lastPoint.response_time_ms;
         count++;
       }
 
-      // Cari spike tertinggi dari data historis
       points.forEach(p => {
         if (p.response_time_ms !== null && p.response_time_ms > highestSpike) {
           highestSpike = p.response_time_ms;
@@ -62,18 +74,21 @@ export function MonitoringSummaryCards() {
       });
     });
 
-    const avgLatency = count > 0 ? Math.round(totalLatency / count) : 0;
-    
-    // Cek lab yang offline
-    const offlineLabs = monitoringData.filter(
-      (d) => (now.getTime() - new Date(d.last_seen).getTime()) / 1000 > OFFLINE_THRESHOLD_S
-    );
+    return {
+      avgLatency: count > 0 ? Math.round(totalLatency / count) : 0,
+      highestSpike,
+      spikeLab,
+    };
+  }, [heartbeatData]);
+
+  // Memo 3: Gabungkan semua metric (sangat murah, hanya satu objek)
+  const metrics = useMemo(() => {
+    const uniqueClasses = new Set(activeLabs.map(l => l.kelas).filter(k => k && k !== '-'));
     const hasOffline = offlineLabs.length > 0;
-    
-    // Logika Status Anomali
+
     let anomalyText = "Semua koneksi stabil";
     let anomalyWarn = false;
-    
+
     if (hasOffline) {
       anomalyText = `${offlineLabs.length} Lab Disconnect!`;
       anomalyWarn = true;
@@ -88,9 +103,9 @@ export function MonitoringSummaryCards() {
       classCount: uniqueClasses.size,
       avgLatency,
       anomalyText,
-      anomalyWarn
+      anomalyWarn,
     };
-  }, [monitoringData, heartbeatData, now]);
+  }, [activeLabs, offlineLabs, avgLatency, highestSpike, spikeLab, monitoringData.length]);
 
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
