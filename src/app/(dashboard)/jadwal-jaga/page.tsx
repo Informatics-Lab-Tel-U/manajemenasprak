@@ -3,6 +3,8 @@ import JadwalJagaClient from './JadwalJagaClient';
 import { getCachedAvailableTerms } from '@/services/termService';
 import { requireAuth } from '@/lib/auth';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: 'Input Jadwal Jaga | Informatics Lab',
   description: 'Pengelolaan dan Input Jadwal Jaga Asisten Praktikum',
@@ -10,7 +12,12 @@ export const metadata = {
 
 export default async function JadwalJagaPage() {
   const user = await requireAuth();
-  const terms = await getCachedAvailableTerms();
+  let terms: string[] = [];
+  try {
+    terms = await getCachedAvailableTerms();
+  } catch (e) {
+    console.error('[JadwalJagaPage] SSR terms fetch failed:', e);
+  }
 
   return <JadwalJagaClient initialTerms={terms} userRole={user.pengguna.role} />;
 }

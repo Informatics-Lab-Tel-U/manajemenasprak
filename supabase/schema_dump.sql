@@ -104,6 +104,27 @@ CREATE TYPE "public"."asprak_roles" AS ENUM (
 ALTER TYPE "public"."asprak_roles" OWNER TO "postgres";
 
 
+CREATE TYPE "public"."blog_content_format" AS ENUM (
+    'markdown',
+    'tiptap_json',
+    'html'
+);
+
+
+ALTER TYPE "public"."blog_content_format" OWNER TO "postgres";
+
+
+CREATE TYPE "public"."blog_post_status" AS ENUM (
+    'draft',
+    'published',
+    'scheduled',
+    'archived'
+);
+
+
+ALTER TYPE "public"."blog_post_status" OWNER TO "postgres";
+
+
 CREATE TYPE "public"."roles" AS ENUM (
     'ADMIN',
     'ASLAB',
@@ -560,6 +581,66 @@ CREATE TABLE IF NOT EXISTS "public"."audit_log" (
 ALTER TABLE "public"."audit_log" OWNER TO "postgres";
 
 
+CREATE TABLE IF NOT EXISTS "public"."blog_categories" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "name" character varying NOT NULL,
+    "slug" character varying NOT NULL,
+    "description" "text",
+    "created_at" timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+);
+
+
+ALTER TABLE "public"."blog_categories" OWNER TO "postgres";
+
+
+CREATE TABLE IF NOT EXISTS "public"."blog_post_tags" (
+    "post_id" "uuid" NOT NULL,
+    "tag_id" "uuid" NOT NULL
+);
+
+
+ALTER TABLE "public"."blog_post_tags" OWNER TO "postgres";
+
+
+CREATE TABLE IF NOT EXISTS "public"."blog_posts" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "title" character varying NOT NULL,
+    "slug" character varying NOT NULL,
+    "excerpt" "text",
+    "content" "jsonb" NOT NULL,
+    "content_format" "public"."blog_content_format" DEFAULT 'tiptap_json'::"public"."blog_content_format" NOT NULL,
+    "cover_image_url" character varying,
+    "cover_image_alt" character varying,
+    "category_id" "uuid",
+    "author_id" "uuid" NOT NULL,
+    "status" "public"."blog_post_status" DEFAULT 'draft'::"public"."blog_post_status" NOT NULL,
+    "published_at" timestamp without time zone,
+    "meta_title" character varying,
+    "meta_description" "text",
+    "og_image_url" character varying,
+    "view_count" integer DEFAULT 0 NOT NULL,
+    "reading_time_minutes" integer,
+    "deleted_at" timestamp without time zone,
+    "created_at" timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+);
+
+
+ALTER TABLE "public"."blog_posts" OWNER TO "postgres";
+
+
+CREATE TABLE IF NOT EXISTS "public"."blog_tags" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "name" character varying NOT NULL,
+    "slug" character varying NOT NULL,
+    "created_at" timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+);
+
+
+ALTER TABLE "public"."blog_tags" OWNER TO "postgres";
+
+
 CREATE TABLE IF NOT EXISTS "public"."jadwal" (
     "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
     "id_mk" "uuid" NOT NULL,
@@ -666,7 +747,8 @@ CREATE TABLE IF NOT EXISTS "public"."monitoring_lab" (
     "lab_id" "text" NOT NULL,
     "kelas" "text" NOT NULL,
     "status" "text" DEFAULT 'online'::"text" NOT NULL,
-    "last_seen" timestamp with time zone DEFAULT "now"() NOT NULL
+    "last_seen" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "client_timestamp" bigint
 );
 
 
@@ -784,6 +866,41 @@ ALTER TABLE ONLY "public"."asprak_praktikum"
 
 ALTER TABLE ONLY "public"."audit_log"
     ADD CONSTRAINT "audit_log_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."blog_categories"
+    ADD CONSTRAINT "blog_categories_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."blog_categories"
+    ADD CONSTRAINT "blog_categories_slug_key" UNIQUE ("slug");
+
+
+
+ALTER TABLE ONLY "public"."blog_post_tags"
+    ADD CONSTRAINT "blog_post_tags_pkey" PRIMARY KEY ("post_id", "tag_id");
+
+
+
+ALTER TABLE ONLY "public"."blog_posts"
+    ADD CONSTRAINT "blog_posts_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."blog_posts"
+    ADD CONSTRAINT "blog_posts_slug_key" UNIQUE ("slug");
+
+
+
+ALTER TABLE ONLY "public"."blog_tags"
+    ADD CONSTRAINT "blog_tags_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."blog_tags"
+    ADD CONSTRAINT "blog_tags_slug_key" UNIQUE ("slug");
 
 
 
@@ -944,6 +1061,22 @@ CREATE OR REPLACE TRIGGER "audit_trigger_asprak_praktikum" AFTER INSERT OR DELET
 
 
 
+CREATE OR REPLACE TRIGGER "audit_trigger_blog_categories" AFTER INSERT OR DELETE OR UPDATE ON "public"."blog_categories" FOR EACH ROW EXECUTE FUNCTION "public"."fn_generic_audit_log"();
+
+
+
+CREATE OR REPLACE TRIGGER "audit_trigger_blog_post_tags" AFTER INSERT OR DELETE OR UPDATE ON "public"."blog_post_tags" FOR EACH ROW EXECUTE FUNCTION "public"."fn_generic_audit_log"();
+
+
+
+CREATE OR REPLACE TRIGGER "audit_trigger_blog_posts" AFTER INSERT OR DELETE OR UPDATE ON "public"."blog_posts" FOR EACH ROW EXECUTE FUNCTION "public"."fn_generic_audit_log"();
+
+
+
+CREATE OR REPLACE TRIGGER "audit_trigger_blog_tags" AFTER INSERT OR DELETE OR UPDATE ON "public"."blog_tags" FOR EACH ROW EXECUTE FUNCTION "public"."fn_generic_audit_log"();
+
+
+
 CREATE OR REPLACE TRIGGER "audit_trigger_jadwal" AFTER INSERT OR DELETE OR UPDATE ON "public"."jadwal" FOR EACH ROW EXECUTE FUNCTION "public"."fn_generic_audit_log"();
 
 
@@ -984,6 +1117,14 @@ CREATE OR REPLACE TRIGGER "tr_prevent_role_escalation" BEFORE UPDATE ON "public"
 
 
 
+CREATE OR REPLACE TRIGGER "update_blog_categories_updated_at" BEFORE UPDATE ON "public"."blog_categories" FOR EACH ROW EXECUTE FUNCTION "public"."update_updated_at_column"();
+
+
+
+CREATE OR REPLACE TRIGGER "update_blog_posts_updated_at" BEFORE UPDATE ON "public"."blog_posts" FOR EACH ROW EXECUTE FUNCTION "public"."update_updated_at_column"();
+
+
+
 ALTER TABLE ONLY "public"."asprak_koordinator"
     ADD CONSTRAINT "asprak_koordinator_id_pengguna_fkey" FOREIGN KEY ("id_pengguna") REFERENCES "public"."pengguna"("id");
 
@@ -1006,6 +1147,26 @@ ALTER TABLE ONLY "public"."asprak_praktikum"
 
 ALTER TABLE ONLY "public"."audit_log"
     ADD CONSTRAINT "audit_log_id_pengguna_fkey" FOREIGN KEY ("id_pengguna") REFERENCES "public"."pengguna"("id");
+
+
+
+ALTER TABLE ONLY "public"."blog_post_tags"
+    ADD CONSTRAINT "blog_post_tags_post_id_fkey" FOREIGN KEY ("post_id") REFERENCES "public"."blog_posts"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."blog_post_tags"
+    ADD CONSTRAINT "blog_post_tags_tag_id_fkey" FOREIGN KEY ("tag_id") REFERENCES "public"."blog_tags"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."blog_posts"
+    ADD CONSTRAINT "blog_posts_author_id_fkey" FOREIGN KEY ("author_id") REFERENCES "public"."pengguna"("id");
+
+
+
+ALTER TABLE ONLY "public"."blog_posts"
+    ADD CONSTRAINT "blog_posts_category_id_fkey" FOREIGN KEY ("category_id") REFERENCES "public"."blog_categories"("id");
 
 
 
@@ -1224,7 +1385,43 @@ CREATE POLICY "Authenticated user dapat melihat praktikum" ON "public"."praktiku
 
 
 
+CREATE POLICY "Enable read access for admins and aslab" ON "public"."blog_posts" FOR SELECT TO "authenticated" USING ("public"."is_admin_or_aslab"());
+
+
+
+CREATE POLICY "Enable read access for all users" ON "public"."blog_categories" FOR SELECT USING (true);
+
+
+
+CREATE POLICY "Enable read access for all users" ON "public"."blog_post_tags" FOR SELECT USING (true);
+
+
+
+CREATE POLICY "Enable read access for all users" ON "public"."blog_tags" FOR SELECT USING (true);
+
+
+
+CREATE POLICY "Enable read access for published posts" ON "public"."blog_posts" FOR SELECT USING ((("status" = 'published'::"public"."blog_post_status") AND ("deleted_at" IS NULL)));
+
+
+
 CREATE POLICY "Enable select for public" ON "public"."praktikan" FOR SELECT USING (true);
+
+
+
+CREATE POLICY "Enable write access for admins and aslab" ON "public"."blog_categories" TO "authenticated" USING ("public"."is_admin_or_aslab"()) WITH CHECK ("public"."is_admin_or_aslab"());
+
+
+
+CREATE POLICY "Enable write access for admins and aslab" ON "public"."blog_post_tags" TO "authenticated" USING ("public"."is_admin_or_aslab"()) WITH CHECK ("public"."is_admin_or_aslab"());
+
+
+
+CREATE POLICY "Enable write access for admins and aslab" ON "public"."blog_posts" TO "authenticated" USING ("public"."is_admin_or_aslab"()) WITH CHECK ("public"."is_admin_or_aslab"());
+
+
+
+CREATE POLICY "Enable write access for admins and aslab" ON "public"."blog_tags" TO "authenticated" USING ("public"."is_admin_or_aslab"()) WITH CHECK ("public"."is_admin_or_aslab"());
 
 
 
@@ -1274,6 +1471,18 @@ ALTER TABLE "public"."asprak_praktikum" ENABLE ROW LEVEL SECURITY;
 
 
 ALTER TABLE "public"."audit_log" ENABLE ROW LEVEL SECURITY;
+
+
+ALTER TABLE "public"."blog_categories" ENABLE ROW LEVEL SECURITY;
+
+
+ALTER TABLE "public"."blog_post_tags" ENABLE ROW LEVEL SECURITY;
+
+
+ALTER TABLE "public"."blog_posts" ENABLE ROW LEVEL SECURITY;
+
+
+ALTER TABLE "public"."blog_tags" ENABLE ROW LEVEL SECURITY;
 
 
 ALTER TABLE "public"."jadwal" ENABLE ROW LEVEL SECURITY;
@@ -1588,6 +1797,30 @@ GRANT ALL ON TABLE "public"."asprak_praktikum" TO "service_role";
 
 GRANT ALL ON TABLE "public"."audit_log" TO "authenticated";
 GRANT ALL ON TABLE "public"."audit_log" TO "service_role";
+
+
+
+GRANT ALL ON TABLE "public"."blog_categories" TO "anon";
+GRANT ALL ON TABLE "public"."blog_categories" TO "authenticated";
+GRANT ALL ON TABLE "public"."blog_categories" TO "service_role";
+
+
+
+GRANT ALL ON TABLE "public"."blog_post_tags" TO "anon";
+GRANT ALL ON TABLE "public"."blog_post_tags" TO "authenticated";
+GRANT ALL ON TABLE "public"."blog_post_tags" TO "service_role";
+
+
+
+GRANT ALL ON TABLE "public"."blog_posts" TO "anon";
+GRANT ALL ON TABLE "public"."blog_posts" TO "authenticated";
+GRANT ALL ON TABLE "public"."blog_posts" TO "service_role";
+
+
+
+GRANT ALL ON TABLE "public"."blog_tags" TO "anon";
+GRANT ALL ON TABLE "public"."blog_tags" TO "authenticated";
+GRANT ALL ON TABLE "public"."blog_tags" TO "service_role";
 
 
 

@@ -73,7 +73,7 @@ export async function updateSession(request: NextRequest) {
   // Single pengguna query to Hono backend
   let pengguna: any = null;
   let penggunaError: any = null;
-  
+
   if (token) {
     try {
       const meRes = await fetch(`${process.env.HONO_BACKEND_URL}/api/auth/me`, {

@@ -14,7 +14,7 @@ export async function forwardToHono(request: NextRequest, customPath?: string) {
     const headers: Record<string, string> = {};
     const authHeader = request.headers.get('authorization');
     if (authHeader) headers['authorization'] = authHeader;
-    
+
     const apiKey = request.headers.get('x-praktikan-api-key');
     if (apiKey) headers['x-praktikan-api-key'] = apiKey;
 
