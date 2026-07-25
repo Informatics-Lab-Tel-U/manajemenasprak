@@ -5,6 +5,7 @@ const BACKEND_URL = process.env.HONO_BACKEND_URL || 'https://manajemenasprak-bac
 
 export interface HonoFetchOptions extends RequestInit {
   authHeader?: string;
+  useServiceRole?: boolean;
 }
 
 /**
@@ -14,7 +15,7 @@ export async function honoFetch<T = any>(
   path: string,
   options: HonoFetchOptions = {}
 ): Promise<{ ok: boolean; data?: T; error?: string }> {
-  const { authHeader, headers: customHeaders, ...restOptions } = options;
+  const { authHeader, useServiceRole, headers: customHeaders, ...restOptions } = options;
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -25,7 +26,7 @@ export async function honoFetch<T = any>(
     headers['authorization'] = authHeader;
   }
 
-  if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  if (useServiceRole && process.env.SUPABASE_SERVICE_ROLE_KEY) {
     headers['x-service-role-key'] = process.env.SUPABASE_SERVICE_ROLE_KEY;
   }
 
