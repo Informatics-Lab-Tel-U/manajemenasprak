@@ -48,9 +48,9 @@ interface Props {
   userRole: Role;
 }
 
-export default function PelanggaranRekapClient({ initialTahunAjaranList }: Props) {
-  const { activeTerm } = useTermStore();
-  const tahunAjaran = activeTerm || '';
+export default function PelanggaranRekapClient({ initialTahunAjaranList, userRole }: Props) {
+  const { activeTerm, setActiveTerm } = useTermStore();
+  const effectiveTahunAjaran = activeTerm || initialTahunAjaranList[0] || '';
   const [modul, setModul] = React.useState<string>('all');
   const [minCount, setMinCount] = React.useState<number>(1);
   const [loading, setLoading] = React.useState(false);
@@ -60,12 +60,16 @@ export default function PelanggaranRekapClient({ initialTahunAjaranList }: Props
 
   React.useEffect(() => {
     setMounted(true);
-    if (initialTahunAjaranList[0]) {
-      handleFetch(initialTahunAjaranList[0], 'all', 1);
+    if (effectiveTahunAjaran) {
+      if (!activeTerm && initialTahunAjaranList[0]) {
+        setActiveTerm(initialTahunAjaranList[0]);
+      }
+      handleFetch(effectiveTahunAjaran, 'all', 1);
     }
-  }, [initialTahunAjaranList]);
+  }, [effectiveTahunAjaran, activeTerm, initialTahunAjaranList, setActiveTerm]);
 
   async function handleFetch(t: string, m: string, c: number) {
+    if (!t) return;
     setLoading(true);
     try {
       const modulVal = m === 'all' ? 0 : Number(m);
@@ -80,7 +84,7 @@ export default function PelanggaranRekapClient({ initialTahunAjaranList }: Props
     }
   }
 
-  const loadData = () => handleFetch(tahunAjaran, modul, minCount);
+  const loadData = () => handleFetch(effectiveTahunAjaran, modul, minCount);
 
   const flatViolations = React.useMemo(() => {
     return data.flatMap((entry) =>
@@ -199,6 +203,12 @@ export default function PelanggaranRekapClient({ initialTahunAjaranList }: Props
           </p>
         </div>
       </div>
+
+      {userRole !== 'ADMIN' && userRole !== 'ASLAB' && (
+        <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-amber-600 dark:text-amber-400 text-sm">
+          ⚠️ Halaman ini membutuhkan hak akses Admin atau Aslab untuk menampilkan rekapitulasi data agregat.
+        </div>
+      )}
 
       {/* Filters Accordion */}
       <Accordion type="single" collapsible defaultValue="filter" className="w-full">
