@@ -2,6 +2,16 @@ import type { NextConfig } from 'next';
 import withBundleAnalyzer from '@next/bundle-analyzer';
 
 const nextConfig: NextConfig = {
+  webpack: (config, { isServer, webpack }) => {
+    if (isServer) {
+      config.plugins.push(
+        new webpack.IgnorePlugin({
+          resourceRegExp: /^exceljs$|^xlsx$/,
+        })
+      );
+    }
+    return config;
+  },
   experimental: {
     optimizePackageImports: [
       'lucide-react',
