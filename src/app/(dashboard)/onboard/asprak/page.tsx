@@ -7,6 +7,8 @@ import {
 } from '@/services/asprakService.server';
 import AsprakOnboardClient from './AsprakOnboardClient';
 
+export const dynamic = 'force-dynamic';
+
 export default async function AsprakOnboardPage(props: {
   searchParams: Promise<{ term?: string }>;
 }) {
@@ -20,13 +22,21 @@ export default async function AsprakOnboardPage(props: {
   }
 
   // Fetch initial data for validation
-  const [existingCodes, allAsprak] = await Promise.all([
-    getExistingCodes(),
-    getCachedAllAsprak(),
-  ]);
+  let existingCodes: string[] = [];
+  let allAsprak: any[] = [];
+  try {
+    const res = await Promise.all([
+      getExistingCodes(),
+      getCachedAllAsprak(),
+    ]);
+    existingCodes = res[0] || [];
+    allAsprak = res[1] || [];
+  } catch (error) {
+    console.error('[AsprakOnboardPage] SSR fetch error:', error);
+  }
 
-  const initialExistingNims = allAsprak.map((a) => ({ nim: a.nim, role: a.role, kode: a.kode }));
-  const initialExistingAspraks = allAsprak.map((a) => ({
+  const initialExistingNims = (allAsprak || []).map((a) => ({ nim: a.nim, role: a.role, kode: a.kode }));
+  const initialExistingAspraks = (allAsprak || []).map((a) => ({
     nim: a.nim,
     kode: a.kode,
     angkatan: a.angkatan ?? 0,

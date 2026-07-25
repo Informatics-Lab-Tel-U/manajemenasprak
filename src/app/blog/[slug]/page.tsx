@@ -7,10 +7,17 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ChevronLeft } from 'lucide-react';
 
+export const dynamic = 'force-dynamic';
+
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   
-  const post = await blogService.getBlogPostBySlug(slug);
+  let post = null;
+  try {
+    post = await blogService.getBlogPostBySlug(slug);
+  } catch {
+    // Fallback metadata if fetch fails
+  }
 
   return {
     title: post ? `${post.title} | Portal Lab` : 'Post Not Found',
@@ -21,7 +28,12 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 export default async function BlogPostPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
 
-  const post = await blogService.getBlogPostBySlug(slug);
+  let post = null;
+  try {
+    post = await blogService.getBlogPostBySlug(slug);
+  } catch (error) {
+    console.error('[BlogPostPage] SSR fetch error:', error);
+  }
 
   if (!post) {
     notFound();

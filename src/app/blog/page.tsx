@@ -4,13 +4,20 @@ import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
 import Image from 'next/image';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: 'Blog Laboratorium',
   description: 'Pengumuman dan Artikel Laboratorium',
 };
 
 export default async function BlogPage() {
-  const posts = await blogService.getPublishedBlogPosts();
+  let posts: any[] = [];
+  try {
+    posts = (await blogService.getPublishedBlogPosts()) || [];
+  } catch (error) {
+    console.error('[BlogPage] SSR fetch error:', error);
+  }
 
   return (
     <div className="min-h-screen bg-background">
