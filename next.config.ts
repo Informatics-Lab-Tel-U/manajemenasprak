@@ -6,7 +6,7 @@ const nextConfig: NextConfig = {
     if (isServer) {
       config.plugins.push(
         new webpack.IgnorePlugin({
-          resourceRegExp: /^(exceljs|xlsx)$/,
+          resourceRegExp: /^(exceljs|xlsx|file-saver|papaparse|csv-parser|capsize-font-metrics\.json)$/,
         })
       );
     }
@@ -16,6 +16,8 @@ const nextConfig: NextConfig = {
     optimizePackageImports: [
       'lucide-react',
       'recharts',
+      '@tiptap/react',
+      '@stepperize/react',
       '@radix-ui/react-accordion',
       '@radix-ui/react-alert-dialog',
       '@radix-ui/react-checkbox',

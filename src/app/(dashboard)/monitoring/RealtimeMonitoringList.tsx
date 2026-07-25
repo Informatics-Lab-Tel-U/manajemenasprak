@@ -6,8 +6,16 @@ import { Activity, MonitorOff } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { id } from 'date-fns/locale';
 import { useMonitoringStore, LabStatus } from '@/store/useMonitoringStore';
-import { ResponseTimeChart } from '@/components/monitoring/ResponseTimeChart';
+import dynamic from 'next/dynamic';
 import { isLabOnline } from '@/lib/labStatus';
+
+const ResponseTimeChart = dynamic(
+  () => import('@/components/monitoring/ResponseTimeChart').then((mod) => mod.ResponseTimeChart),
+  {
+    ssr: false,
+    loading: () => <div className="h-10 w-full animate-pulse bg-muted/40 rounded"></div>,
+  }
+);
 
 export default function RealtimeMonitoringList({ initialData }: { initialData: LabStatus[] }) {
   const monitoringData = useMonitoringStore(s => s.labStatus);
