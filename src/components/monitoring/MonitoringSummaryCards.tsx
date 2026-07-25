@@ -44,16 +44,18 @@ export function MonitoringSummaryCards({ initialData = [] }: MonitoringSummaryCa
     return { activeLabs: active, offlineLabs: offline };
   }, [monitoringData, now]);
 
-  // Memo 2: Bergantung hanya pada heartbeatData.
-  // Re-compute HANYA saat ada heartbeat baru (WebSocket INSERT), tidak terpengaruh timer.
+  // Memo 2: Bergantung pada heartbeatData + activeLabs.
+  // Menghitung latensi HANYA untuk lab yang sedang ONLINE saat ini.
   const { avgLatency, highestSpike, spikeLab } = useMemo(() => {
     let totalLatency = 0;
     let count = 0;
     let highestSpike = 0;
     let spikeLab = "-";
 
+    const activeSet = new Set(activeLabs.map((l) => l.lab_id));
+
     Object.entries(heartbeatData).forEach(([labId, points]) => {
-      if (points.length === 0) return;
+      if (!activeSet.has(labId) || points.length === 0) return;
 
       const lastPoint = points[points.length - 1];
       if (lastPoint.response_time_ms !== null) {
@@ -61,7 +63,7 @@ export function MonitoringSummaryCards({ initialData = [] }: MonitoringSummaryCa
         count++;
       }
 
-      points.forEach(p => {
+      points.forEach((p) => {
         if (p.response_time_ms !== null && p.response_time_ms > highestSpike) {
           highestSpike = p.response_time_ms;
           spikeLab = labId;
@@ -74,7 +76,7 @@ export function MonitoringSummaryCards({ initialData = [] }: MonitoringSummaryCa
       highestSpike,
       spikeLab,
     };
-  }, [heartbeatData]);
+  }, [heartbeatData, activeLabs]);
 
   // Memo 3: Gabungkan semua metric (sangat murah, hanya satu objek)
   const metrics = useMemo(() => {
@@ -154,24 +156,43 @@ export function MonitoringSummaryCards({ initialData = [] }: MonitoringSummaryCa
         <CardHeader>
           <CardDescription>Rata-rata Ping</CardDescription>
           <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            {metrics.avgLatency} <span className="text-lg">ms</span>
+            {metrics.activeCount > 0 ? (
+              <>{metrics.avgLatency} <span className="text-lg">ms</span></>
+            ) : (
+              <span className="text-muted-foreground">- ms</span>
+            )}
           </CardTitle>
           <CardAction>
-            <Badge variant="outline" className={metrics.avgLatency < 500 ? "text-blue-500" : "text-orange-500"}>
+            <Badge
+              variant="outline"
+              className={
+                metrics.activeCount === 0
+                  ? "text-muted-foreground"
+                  : metrics.avgLatency < 500
+                  ? "text-blue-500"
+                  : "text-orange-500"
+              }
+            >
               <Activity />
-              {metrics.avgLatency < 500 ? "Good" : "Slow"}
+              {metrics.activeCount === 0 ? "Offline" : metrics.avgLatency < 500 ? "Good" : "Slow"}
             </Badge>
           </CardAction>
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
           <div className="line-clamp-1 flex gap-2 font-medium">
-            {metrics.avgLatency < 500 ? "Koneksi jaringan stabil" : "Koneksi jaringan melambat"} <Activity className="size-4" />
+            {metrics.activeCount === 0
+              ? "Tidak ada lab aktif"
+              : metrics.avgLatency < 500
+              ? "Koneksi jaringan stabil"
+              : "Koneksi jaringan melambat"}{" "}
+            <Activity className="size-4" />
           </div>
           <div className="text-muted-foreground">
-            Rata-rata dari ping terakhir
+            {metrics.activeCount === 0 ? "Menunggu koneksi lab" : "Rata-rata dari ping terakhir"}
           </div>
         </CardFooter>
       </Card>
+
 
       <Card className={`@container/card bg-card shadow-sm ${metrics.anomalyWarn ? 'border-destructive/50' : ''}`}>
         <CardHeader>
