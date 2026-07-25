@@ -16,6 +16,8 @@ const nextConfig: NextConfig = {
     optimizePackageImports: [
       'lucide-react',
       'recharts',
+      '@tiptap/react',
+      '@stepperize/react',
       '@radix-ui/react-accordion',
       '@radix-ui/react-alert-dialog',
       '@radix-ui/react-checkbox',
