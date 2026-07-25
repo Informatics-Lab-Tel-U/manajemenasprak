@@ -1,4 +1,4 @@
-import * as ExcelJS from 'exceljs';
+import type { BorderStyle } from 'exceljs';
 
 export const PRESENSI_THEMES = {
   BLUE: {
@@ -105,10 +105,10 @@ export type ThemeColors = {
 export const PRESENSI_STYLES = {
   COLORS: PRESENSI_THEMES.BLUE.colors, // Default / Fallback
   BORDERS: {
-    top: { style: 'thin' as ExcelJS.BorderStyle },
-    left: { style: 'thin' as ExcelJS.BorderStyle },
-    bottom: { style: 'thin' as ExcelJS.BorderStyle },
-    right: { style: 'thin' as ExcelJS.BorderStyle },
+    top: { style: 'thin' as BorderStyle },
+    left: { style: 'thin' as BorderStyle },
+    bottom: { style: 'thin' as BorderStyle },
+    right: { style: 'thin' as BorderStyle },
   },
 };
 
