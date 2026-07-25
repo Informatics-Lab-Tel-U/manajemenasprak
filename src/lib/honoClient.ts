@@ -1,5 +1,6 @@
 import 'server-only';
 import { logger } from '@/lib/logger';
+import { createClient } from '@/lib/supabase/server';
 
 const BACKEND_URL = process.env.HONO_BACKEND_URL || 'https://manajemenasprak-backend.workers.dev';
 
@@ -15,12 +16,26 @@ export async function honoFetch<T = any>(
   path: string,
   options: HonoFetchOptions = {}
 ): Promise<{ ok: boolean; data?: T; error?: string }> {
-  const { authHeader, useServiceRole, headers: customHeaders, ...restOptions } = options;
+  let { authHeader, useServiceRole, headers: customHeaders, ...restOptions } = options;
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(customHeaders as Record<string, string>),
   };
+
+  if (!authHeader && !useServiceRole) {
+    try {
+      const supabase = await createClient();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (session?.access_token) {
+        authHeader = `Bearer ${session.access_token}`;
+      }
+    } catch {
+      // Fallback if no active session
+    }
+  }
 
   if (authHeader) {
     headers['authorization'] = authHeader;
