@@ -5,15 +5,21 @@ import { getPraktikumByTerm } from '@/services/praktikumService';
 import PraktikumClientPage from './PraktikumClientPage';
 import PraktikumLoading from './loading';
 
+export const dynamic = 'force-dynamic';
+
 export default async function PraktikumPage() {
   await requireAuth();
 
-  // Fetch terms first to know what to load
-  const terms = await getAvailableTerms();
-  const selectedTerm = terms[0] || 'all';
+  let terms: string[] = [];
+  let initialPraktikumList: any[] = [];
 
-  // Fetch initial content for the latest term
-  const initialPraktikumList = await getPraktikumByTerm(selectedTerm);
+  try {
+    terms = (await getAvailableTerms()) || [];
+    const selectedTerm = terms[0] || 'all';
+    initialPraktikumList = (await getPraktikumByTerm(selectedTerm)) || [];
+  } catch (error) {
+    console.error('[PraktikumPage] SSR fetch error:', error);
+  }
 
   return (
     <Suspense fallback={<PraktikumLoading />}>

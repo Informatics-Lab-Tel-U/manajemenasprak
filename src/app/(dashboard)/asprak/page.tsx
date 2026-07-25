@@ -9,21 +9,33 @@ import {
 import AsprakClientPage from './AsprakClientPage';
 import AsprakLoading from './loading';
 
+export const dynamic = 'force-dynamic';
+
 export default async function AsprakPage() {
   await requireAuth();
 
-  // Parallelize all initial data fetching with cached versions for deduplication
-  const [terms, existingCodes, allAsprak] = await Promise.all([
-    getCachedAvailableTerms(),
-    getExistingCodes(),
-    getCachedAllAsprak(),
-  ]);
+  let terms: string[] = [];
+  let existingCodes: string[] = [];
+  let allAsprak: any[] = [];
+  let initialAsprakList: any[] = [];
 
-  // Fetch initial asprak list for the latest term
-  const initialAsprakList = await getCachedAspraksWithAssignments(terms[0] || 'all');
+  try {
+    const res = await Promise.all([
+      getCachedAvailableTerms(),
+      getExistingCodes(),
+      getCachedAllAsprak(),
+    ]);
+    terms = res[0] || [];
+    existingCodes = res[1] || [];
+    allAsprak = res[2] || [];
 
-  const initialExistingNims = allAsprak.map((a) => ({ nim: a.nim, role: a.role, kode: a.kode }));
-  const initialExistingAspraks = allAsprak.map((a) => ({
+    initialAsprakList = await getCachedAspraksWithAssignments(terms[0] || 'all');
+  } catch (error) {
+    console.error('[AsprakPage] SSR data fetch error:', error);
+  }
+
+  const initialExistingNims = (allAsprak || []).map((a) => ({ nim: a.nim, role: a.role, kode: a.kode }));
+  const initialExistingAspraks = (allAsprak || []).map((a) => ({
     nim: a.nim,
     kode: a.kode,
     angkatan: a.angkatan ?? 0,

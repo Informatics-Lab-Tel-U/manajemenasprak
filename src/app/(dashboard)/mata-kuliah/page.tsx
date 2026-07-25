@@ -6,22 +6,35 @@ import { getPraktikumByTerm, getUniquePraktikumNames } from '@/services/praktiku
 import MataKuliahClientPage from './MataKuliahClientPage';
 import MataKuliahLoading from './loading';
 
+export const dynamic = 'force-dynamic';
+
 export default async function MataKuliahPage() {
   await requireAuth();
 
-  // Parallelize initial data fetching
-  const [terms, praktikumNames] = await Promise.all([
-    getAvailableTerms(),
-    getUniquePraktikumNames(),
-  ]);
+  let terms: string[] = [];
+  let praktikumNames: any[] = [];
+  let initialGroupedData: any[] = [];
+  let initialValidPraktikums: any[] = [];
 
-  const selectedTerm = terms[0] || 'all';
+  try {
+    const res1 = await Promise.all([
+      getAvailableTerms(),
+      getUniquePraktikumNames(),
+    ]);
+    terms = res1[0] || [];
+    praktikumNames = res1[1] || [];
 
-  // Fetch initial content for the latest term
-  const [initialGroupedData, initialValidPraktikums] = await Promise.all([
-    getMataKuliahByTerm(selectedTerm),
-    getPraktikumByTerm(selectedTerm),
-  ]);
+    const selectedTerm = terms[0] || 'all';
+
+    const res2 = await Promise.all([
+      getMataKuliahByTerm(selectedTerm),
+      getPraktikumByTerm(selectedTerm),
+    ]);
+    initialGroupedData = res2[0] || [];
+    initialValidPraktikums = res2[1] || [];
+  } catch (error) {
+    console.error('[MataKuliahPage] SSR fetch error:', error);
+  }
 
   return (
     <Suspense fallback={<MataKuliahLoading />}>

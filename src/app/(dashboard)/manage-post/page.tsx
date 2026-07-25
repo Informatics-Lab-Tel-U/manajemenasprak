@@ -5,13 +5,23 @@ import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
 import { DeletePostButton } from '@/components/blog/DeletePostButton';
+import { requireRole } from '@/lib/auth';
+
+export const dynamic = 'force-dynamic';
 
 export const metadata = {
   title: 'Kelola Post Lab',
 };
 
 export default async function ManagePostPage() {
-  const posts = await blogService.getAllBlogPosts();
+  await requireRole(['ADMIN', 'ASLAB']);
+
+  let posts: any[] = [];
+  try {
+    posts = await blogService.getAllBlogPosts();
+  } catch (error) {
+    console.error('[ManagePostPage] SSR fetch error:', error);
+  }
 
   return (
     <div className="flex flex-col gap-6 p-6">

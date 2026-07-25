@@ -1,6 +1,9 @@
 import React from 'react';
 import RekapJagaClient from './RekapJagaClient';
 import { getCachedAvailableTerms } from '@/services/termService';
+import { requireAuth } from '@/lib/auth';
+
+export const dynamic = 'force-dynamic';
 
 export const metadata = {
   title: 'Rekap Jaga | Informatics Lab',
@@ -8,7 +11,14 @@ export const metadata = {
 };
 
 export default async function RekapJagaPage() {
-  const terms = await getCachedAvailableTerms();
+  await requireAuth();
+
+  let terms: string[] = [];
+  try {
+    terms = (await getCachedAvailableTerms()) || [];
+  } catch (e) {
+    console.error('[RekapJagaPage] SSR terms fetch failed:', e);
+  }
 
   return <RekapJagaClient initialTerms={terms} />;
 }

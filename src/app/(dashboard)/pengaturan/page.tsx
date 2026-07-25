@@ -4,9 +4,17 @@ import { getMaintenanceStatus } from '@/services/systemService.server';
 import PengaturanClientPage from './PengaturanClientPage';
 import PengaturanLoading from './loading';
 
+export const dynamic = 'force-dynamic';
+
 export default async function PengaturanPage() {
   const authUser = await requireAuth();
-  const isMaintenance = await getMaintenanceStatus();
+  let isMaintenance = false;
+
+  try {
+    isMaintenance = await getMaintenanceStatus();
+  } catch (error) {
+    console.error('[PengaturanPage] SSR fetch error:', error);
+  }
 
   return (
     <Suspense fallback={<PengaturanLoading />}>
