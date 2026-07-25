@@ -15,5 +15,5 @@ export async function OPTIONS() {
 }
 
 export async function POST(request: NextRequest) {
-  return forwardToHono(request, '/api/monitoring/heartbeat');
+  return forwardToHono(request, '/monitoring/heartbeat');
 }

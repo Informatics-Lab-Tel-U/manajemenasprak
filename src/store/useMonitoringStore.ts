@@ -33,6 +33,8 @@ let channelHeartbeat: ReturnType<typeof supabase.channel> | null = null;
 let initPromise: Promise<void> | null = null;
 
 
+let pollingTimer: NodeJS.Timeout | null = null;
+
 export const useMonitoringStore = create<MonitoringState>((set, get) => ({
   labStatus: [],
   heartbeatData: {},
@@ -57,8 +59,7 @@ export const useMonitoringStore = create<MonitoringState>((set, get) => ({
     initPromise = (async () => {
       set({ isInitialized: true });
 
-      // Fetch data lab status fallback (jika SSR belum mem-passing data via setInitialLabStatus)
-      if (get().labStatus.length === 0) {
+      const fetchStatus = async () => {
         try {
           const res = await fetch('/api/monitoring/status');
           if (res.ok) {
@@ -68,6 +69,16 @@ export const useMonitoringStore = create<MonitoringState>((set, get) => ({
             }
           }
         } catch (err) {}
+      };
+
+      // Initial fetch jika data masih kosong
+      if (get().labStatus.length === 0) {
+        await fetchStatus();
+      }
+
+      // Setup Polling Fallback setiap 15 detik (menjamin data selalu segar meski WebSocket delay)
+      if (!pollingTimer) {
+        pollingTimer = setInterval(fetchStatus, 15_000);
       }
 
       // Setup WebSocket Subscription untuk monitoring_lab
@@ -139,9 +150,10 @@ export const useMonitoringStore = create<MonitoringState>((set, get) => ({
   },
 
   cleanup: () => {
-    // Pada arsitektur SPA/Next.js, cleanup total channel bisa menyebabkan data stale 
-    // jika user navigasi maju-mundur antar halaman dengan cepat.
-    // Namun untuk kebersihan memori saat komponen inti di-unmount:
+    if (pollingTimer) {
+      clearInterval(pollingTimer);
+      pollingTimer = null;
+    }
     if (channelLab) {
       supabase.removeChannel(channelLab);
       channelLab = null;
