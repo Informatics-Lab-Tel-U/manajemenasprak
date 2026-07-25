@@ -4,5 +4,5 @@ import { NextRequest } from 'next/server';
 export const fetchCache = 'force-no-store';
 
 export async function GET(request: NextRequest) {
-  return forwardToHono(request, '/monitoring/heartbeat-log');
+  return forwardToHono(request, '/api/monitoring/heartbeat-log');
 }
