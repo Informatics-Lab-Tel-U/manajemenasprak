@@ -110,6 +110,17 @@ export default function DashboardCharts({
 
   const labStatus = useMonitoringStore((state) => state.labStatus);
 
+  // Determine active session based on current time
+  const currentHour = todayDate.getHours();
+  const currentMin = todayDate.getMinutes();
+  const timeValue = currentHour + currentMin / 60;
+  
+  let activeSessionNumber = 4;
+  if (timeValue >= 7.5 && timeValue < 10.5) activeSessionNumber = 1; // 07:30 - 10:30
+  else if (timeValue >= 10.5 && timeValue < 13.5) activeSessionNumber = 2; // 10:30 - 13:30
+  else if (timeValue >= 13.5 && timeValue < 16.5) activeSessionNumber = 3; // 13:30 - 16:30
+  else activeSessionNumber = 4; // 16:30 - 07:30 (next day)
+
   return (
     <div className="grid grid-cols-1 gap-6">
       {/* Schedule Visualization */}
@@ -308,9 +319,9 @@ export default function DashboardCharts({
                                 <div className="flex flex-col w-full h-full min-h-[60px]">
                                   {jadwals.map((jadwal) => {
                                     // Kelas dianggap sedang berjalan jika ruangan tersebut online 
-                                    // dan kelas yang sedang aktif di ruangan sama dengan jadwal.kelas ini.
-                                    // Ini menjamin indikator realtime 100% akurat sesuai aktivitas aktual di lab.
-                                    const isClassActive = isRoomOnline && roomStatus?.kelas === jadwal.kelas;
+                                    // dan sesi jadwal ini adalah sesi yang sedang berjalan SEKARANG berdasarkan jam.
+                                    // (Atau jika nama kelas cocok persis dengan yang dimasukkan asprak)
+                                    const isClassActive = isRoomOnline && (session.sesi === activeSessionNumber || roomStatus?.kelas === jadwal.kelas);
 
                                     return (
                                       <ScheduleCell
