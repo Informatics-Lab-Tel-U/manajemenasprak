@@ -57,3 +57,36 @@ export function downloadTemplate(type: string, format: 'csv' | 'xlsx' = 'csv') {
   link.click();
   link.remove();
 }
+
+export async function generatePresensiExcel(options: any) {
+  const response = await fetch('/api/util/presensi', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(options),
+  });
+
+  if (!response.ok) {
+    let errStr = 'Gagal men-generate file presensi';
+    try {
+      const errJson = await response.json();
+      errStr = errJson.error || errStr;
+    } catch {
+      // ignore
+    }
+    throw new Error(errStr);
+  }
+
+  const blob = await response.blob();
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  const filename = `${options.namaFile || 'presensi'}.xlsx`;
+  link.setAttribute('download', filename);
+  document.body.appendChild(link);
+  link.click();
+
+  link.remove();
+  setTimeout(() => window.URL.revokeObjectURL(url), 100);
+}
