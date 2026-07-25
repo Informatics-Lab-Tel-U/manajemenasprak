@@ -20,6 +20,7 @@ import React, { useMemo } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useJaga } from '@/hooks/useJaga';
 import { getJagaShiftsByDay } from '@/utils/jagaUtils';
+import { useMonitoringStore } from '@/store/useMonitoringStore';
 
 const chartConfigAsprak = {
   count: {
@@ -106,6 +107,19 @@ export default function DashboardCharts({
 
   const { jagaList } = useJaga(term, activeModul, currentDayName);
   const shiftInfos = getJagaShiftsByDay(currentDayName);
+
+  const labStatus = useMonitoringStore((state) => state.labStatus);
+
+  // Determine active session based on current time
+  const currentHour = todayDate.getHours();
+  const currentMin = todayDate.getMinutes();
+  const timeValue = currentHour + currentMin / 60;
+  
+  let activeSessionNumber = 4;
+  if (timeValue >= 7.5 && timeValue < 10.5) activeSessionNumber = 1; // 07:30 - 10:30
+  else if (timeValue >= 10.5 && timeValue < 13.5) activeSessionNumber = 2; // 10:30 - 13:30
+  else if (timeValue >= 13.5 && timeValue < 16.5) activeSessionNumber = 3; // 13:30 - 16:30
+  else activeSessionNumber = 4; // 16:30 - 07:30 (next day)
 
   return (
     <div className="grid grid-cols-1 gap-6">
@@ -290,19 +304,34 @@ export default function DashboardCharts({
                           </td>
                           {uniqueRooms.map((room) => {
                             const jadwals = scheduleMatrix[session.rowKey]?.[room] || [];
+                            
+                            // Cek status ruangan dari realtime monitoring
+                            const roomStatus = labStatus.find(
+                              (l) => l.lab_id.replace(/\s+/g, '').toUpperCase() === room.replace(/\s+/g, '').toUpperCase()
+                            );
+                            const isRoomOnline = roomStatus?.status === 'online';
+
                             return (
                               <td
                                 key={`${session.rowKey}-${room}`}
                                 className="p-0 border-r border-border h-[60px] w-[120px] relative align-top"
                               >
                                 <div className="flex flex-col w-full h-full min-h-[60px]">
-                                  {jadwals.map((jadwal) => (
-                                    <ScheduleCell
-                                      key={jadwal.id}
-                                      jadwal={jadwal}
-                                      showAsprakCount={true}
-                                    />
-                                  ))}
+                                  {jadwals.map((jadwal) => {
+                                    // Kelas dianggap sedang berjalan jika ruangan tersebut online 
+                                    // dan sesi jadwal ini adalah sesi yang sedang berjalan SEKARANG berdasarkan jam.
+                                    // (Atau jika nama kelas cocok persis dengan yang dimasukkan asprak)
+                                    const isClassActive = isRoomOnline && (session.sesi === activeSessionNumber || roomStatus?.kelas === jadwal.kelas);
+
+                                    return (
+                                      <ScheduleCell
+                                        key={jadwal.id}
+                                        jadwal={jadwal}
+                                        showAsprakCount={true}
+                                        isOnlineActive={isClassActive}
+                                      />
+                                    );
+                                  })}
                                 </div>
                               </td>
                             );
@@ -328,6 +357,10 @@ export default function DashboardCharts({
                 <div className="flex items-center gap-1.5">
                   <div className="w-4 h-4 rounded-sm bg-muted border border-border"></div>
                   <span>Jadwal Reguler</span>
+                </div>
+                <div className="flex items-center gap-1.5 ml-2">
+                  <div className="w-4 h-4 rounded-sm bg-muted ring-[3px] ring-green-500/90 ring-inset"></div>
+                  <span>Kelas Sedang Berjalan (Realtime)</span>
                 </div>
               </div>
             </>
