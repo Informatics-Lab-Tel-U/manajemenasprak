@@ -153,3 +153,53 @@ export type MonitoringHeartbeatLog = {
   response_time_ms: number | null;
   created_at: string;
 };
+
+export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
+
+export type BlogCategory = {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type BlogTag = {
+  id: string;
+  name: string;
+  slug: string;
+  created_at: string;
+};
+
+export type BlogPostStatus = 'draft' | 'published' | 'scheduled' | 'archived';
+export type BlogContentFormat = 'markdown' | 'tiptap_json' | 'html';
+
+export type BlogPost = {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt: string | null;
+  content: Json;
+  content_format: BlogContentFormat;
+  cover_image_url: string | null;
+  cover_image_alt: string | null;
+  category_id: string | null;
+  author_id: string;
+  status: BlogPostStatus;
+  published_at: string | null;
+  meta_title: string | null;
+  meta_description: string | null;
+  og_image_url: string | null;
+  view_count: number;
+  reading_time_minutes: number | null;
+  deleted_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type BlogPostWithRelations = BlogPost & {
+  category?: Pick<BlogCategory, 'id' | 'name' | 'slug'> | null;
+  tags?: Pick<BlogTag, 'id' | 'name' | 'slug'>[];
+  author?: Pick<Pengguna, 'id' | 'nama_lengkap'>;
+};

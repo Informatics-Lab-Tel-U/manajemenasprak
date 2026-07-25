@@ -19,6 +19,7 @@ import {
   PlusCircle,
   FileSpreadsheet,
   Monitor,
+  FileText,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -138,6 +139,20 @@ const ALL_NAV_GROUPS: NavGroup[] = [
       { label: 'Audit Logs', href: '/audit-logs', icon: Logs },
       { label: 'Panduan Sistem', href: '/panduan', icon: HelpCircle },
       { label: 'Pengaturan', href: '/pengaturan', icon: Settings },
+    ],
+  },
+  {
+    label: 'CMS / Blog',
+    items: [
+      {
+        label: 'Kelola Konten',
+        href: '#',
+        icon: FileText,
+        items: [
+          { label: 'Semua Post', href: '/manage-post' },
+          { label: 'Kategori & Tag', href: '/manage-post/taxonomy' },
+        ],
+      },
     ],
   }
 ];

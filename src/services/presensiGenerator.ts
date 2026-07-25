@@ -1,4 +1,4 @@
-import * as ExcelJS from 'exceljs';
+import type * as ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import { PresensiGeneratorOptions } from '@/types/presensi';
 import { addBase, createModul, formatRows } from './generators/kelasSheetGenerator';
@@ -15,7 +15,8 @@ export async function generatePresensiExcel(options: PresensiGeneratorOptions) {
     throw new Error('Kelas names tidak boleh kosong.');
   }
 
-  const workbook = new ExcelJS.Workbook();
+  const ExcelModule = await import('exceljs');
+  const workbook = new ExcelModule.Workbook();
   workbook.creator = 'Presensi Generator';
   workbook.created = new Date();
 
