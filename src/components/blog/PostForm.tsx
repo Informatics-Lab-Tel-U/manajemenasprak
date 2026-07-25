@@ -7,9 +7,21 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { TiptapEditor } from '@/components/tiptap/editor';
+import dynamic from 'next/dynamic';
 import { createBlogPost, updateBlogPost } from '@/app/actions/blog';
 import { toast } from 'sonner';
+
+const TiptapEditor = dynamic(
+  () => import('@/components/tiptap/editor').then((mod) => mod.TiptapEditor),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-64 w-full animate-pulse bg-muted/30 rounded-md border flex items-center justify-center text-xs text-muted-foreground">
+        Memuat Editor...
+      </div>
+    ),
+  }
+);
 
 type PostFormProps = {
   initialData?: any;
