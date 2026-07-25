@@ -23,6 +23,15 @@ export const ScheduleCell: React.FC<ScheduleCellProps> = ({
   const bgColor =
     jadwal.mata_kuliah?.warna || getCourseColor(jadwal.mata_kuliah?.nama_lengkap || '');
 
+  const contentStyle = isPengganti
+    ? {
+        background: `linear-gradient(${bgColor}, ${bgColor}) padding-box, repeating-linear-gradient(45deg, #facc15, #facc15 10px, #ffffff 10px, #ffffff 20px) border-box`,
+        border: '4px solid transparent',
+      }
+    : {
+        backgroundColor: bgColor,
+      };
+
   return (
     <div
       onClick={onClick}
@@ -34,30 +43,34 @@ export const ScheduleCell: React.FC<ScheduleCellProps> = ({
           onClick();
         }
       } : undefined}
-      className={`w-full flex-1 flex flex-col items-center justify-center p-1 transition-all overflow-hidden origin-center min-h-[60px] 2xl:min-h-[80px] ${
+      className={`relative w-full flex-1 flex flex-col items-center justify-center p-1 transition-all overflow-hidden origin-center min-h-[60px] 2xl:min-h-[80px] ${
         onClick
           ? 'cursor-pointer hover:brightness-110 hover:scale-105 hover:z-20 hover:shadow-lg'
           : ''
-      } ${isPengganti ? 'z-10' : ''} ${
-        isOnlineActive
-          ? 'ring-[3px] ring-green-500/90 dark:ring-green-400 ring-inset shadow-[0_0_15px_rgba(34,197,94,0.4)] z-20'
-          : ''
-      }`}
-      style={
-        isPengganti
-          ? {
-              background: `linear-gradient(${bgColor}, ${bgColor}) padding-box, repeating-linear-gradient(45deg, #facc15, #facc15 10px, #ffffff 10px, #ffffff 20px) border-box`,
-              border: '4px solid transparent',
-            }
-          : {
-              backgroundColor: bgColor,
-            }
-      }
+      } ${isPengganti ? 'z-10' : ''} ${isOnlineActive ? 'z-20' : ''}`}
+      style={contentStyle}
       title={
         onClick ? 'Click for details' : `${jadwal.mata_kuliah?.nama_lengkap} - ${jadwal.kelas}`
       }
     >
-      <div className="text-center leading-tight">
+      {isOnlineActive && (
+        <>
+          {/* Animated spinning background overlaying the outer border */}
+          <div 
+            className="absolute inset-[-150%] animate-[spin_2.5s_linear_infinite] z-20 pointer-events-none" 
+            style={{ background: 'conic-gradient(from 90deg at 50% 50%, transparent 60%, rgba(34,197,94,0.95) 100%)' }} 
+          />
+          {/* Inner content mask. 
+              If Pengganti (has 4px border), inset-0 covers padding box, leaving border exposed.
+              If Reguler (no border), inset-[3px] creates a 3px gap for the spinning gradient. */}
+          <div 
+            className={`absolute z-20 pointer-events-none ${isPengganti ? 'inset-0' : 'inset-[3px] rounded-sm'}`} 
+            style={{ backgroundColor: bgColor }} 
+          />
+        </>
+      )}
+
+      <div className="text-center leading-tight relative z-30">
         <div className="font-bold text-[10px] sm:text-xs 2xl:text-sm text-white drop-shadow-md truncate w-full px-1">
           {jadwal.mata_kuliah?.praktikum?.nama || jadwal.mata_kuliah?.nama_lengkap || 'Unknown'}
         </div>
