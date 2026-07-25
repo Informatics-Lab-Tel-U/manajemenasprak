@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
-const BACKEND_URL = process.env.HONO_BACKEND_URL || 'https://manajemenasprak-backend.workers.dev';
+const BACKEND_URL = process.env.HONO_BACKEND_URL || 'https://manajemenasprak-backend.iflabdev.workers.dev';
 
 /**
  * Standard Next.js Route Handler Proxy function to forward requests to Hono Backend.

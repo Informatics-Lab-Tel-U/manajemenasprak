@@ -9,7 +9,7 @@ import {
   praktikanOptionsResponse,
 } from '../_access';
 
-const backendUrl = process.env.HONO_BACKEND_URL || 'https://manajemenasprak-backend.workers.dev';
+const backendUrl = process.env.HONO_BACKEND_URL || 'https://manajemenasprak-backend.iflabdev.workers.dev';
 
 const getCachedMataKuliah = unstable_cache(
   async () => {

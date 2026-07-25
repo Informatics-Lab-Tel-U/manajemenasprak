@@ -9,6 +9,9 @@
     "nodejs_compat",
     "global_fetch_strictly_public"
   ],
+  "vars": {
+    "HONO_BACKEND_URL": "https://manajemenasprak-backend.iflabdev.workers.dev"
+  },
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS"

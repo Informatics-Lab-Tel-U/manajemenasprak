@@ -2,7 +2,7 @@ import 'server-only';
 import { logger } from '@/lib/logger';
 import { createClient } from '@/lib/supabase/server';
 
-const BACKEND_URL = process.env.HONO_BACKEND_URL || 'https://manajemenasprak-backend.workers.dev';
+const BACKEND_URL = process.env.HONO_BACKEND_URL || 'https://manajemenasprak-backend.iflabdev.workers.dev';
 
 export interface HonoFetchOptions extends RequestInit {
   authHeader?: string;
