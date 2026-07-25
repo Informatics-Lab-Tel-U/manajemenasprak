@@ -4,13 +4,24 @@ import { getTahunAjaranList } from '@/services/praktikumService';
 import PelanggaranRekapClient from './PelanggaranRekapClient';
 import { Skeleton } from '@/components/ui/skeleton';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: 'Rekap Pelanggaran | Informatics Lab',
   description: 'Rekapitulasi data pelanggaran asisten praktikum',
 };
 
 export default async function PelanggaranRekapPage() {
-  const [user, years] = await Promise.all([getCurrentUser(), getTahunAjaranList()]);
+  let user = null;
+  let years: string[] = [];
+
+  try {
+    const [fetchedUser, fetchedYears] = await Promise.all([getCurrentUser(), getTahunAjaranList()]);
+    user = fetchedUser;
+    years = fetchedYears;
+  } catch (error) {
+    console.error('Failed to load pelanggaran-rekap page SSR data:', error);
+  }
 
   if (!user) return null;
 

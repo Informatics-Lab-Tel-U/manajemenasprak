@@ -12,12 +12,21 @@ export default async function PelanggaranPage() {
   const isKoor = role === 'ASPRAK_KOOR';
 
   // ── Parallelize data fetching ──
-  const [praktikumList, countMap] = await Promise.all([
-    isKoor
-      ? pelanggaranService.getKoorPraktikumList(authUser.id)
-      : praktikumService.getAllPraktikum(),
-    pelanggaranService.getPelanggaranCountsByPraktikum(isKoor),
-  ]);
+  let praktikumList: any[] = [];
+  let countMap: any = {};
+
+  try {
+    const [pList, cMap] = await Promise.all([
+      isKoor
+        ? pelanggaranService.getKoorPraktikumList(authUser.id)
+        : praktikumService.getAllPraktikum(),
+      pelanggaranService.getPelanggaranCountsByPraktikum(isKoor),
+    ]);
+    praktikumList = pList || [];
+    countMap = cMap || {};
+  } catch (error) {
+    console.error('Failed to load pelanggaran page SSR data:', error);
+  }
 
   const tahunAjaranList: string[] = Array.from(new Set<string>(praktikumList.map((p: any) => p.tahun_ajaran as string)))
     .sort()

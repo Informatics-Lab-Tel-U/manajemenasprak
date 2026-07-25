@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
 
 const BACKEND_URL = process.env.HONO_BACKEND_URL || 'https://manajemenasprak-backend.workers.dev';
 
@@ -12,7 +13,22 @@ export async function forwardToHono(request: NextRequest, customPath?: string) {
     const targetUrl = new URL(`${BACKEND_URL}${path}${request.nextUrl.search}`);
 
     const headers: Record<string, string> = {};
-    const authHeader = request.headers.get('authorization');
+    let authHeader = request.headers.get('authorization');
+
+    if (!authHeader) {
+      try {
+        const supabase = await createClient();
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        if (session?.access_token) {
+          authHeader = `Bearer ${session.access_token}`;
+        }
+      } catch {
+        // Fallback for unauthenticated requests
+      }
+    }
+
     if (authHeader) headers['authorization'] = authHeader;
 
     const apiKey = request.headers.get('x-praktikan-api-key');
