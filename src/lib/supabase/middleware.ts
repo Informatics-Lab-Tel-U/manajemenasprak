@@ -51,7 +51,7 @@ export async function updateSession(request: NextRequest) {
     maintenanceRes,
   ] = await Promise.all([
     supabase.auth.getSession(),
-    fetch(`${process.env.HONO_BACKEND_URL}/api/system/maintenance`).catch((err) => {
+    fetch(`${process.env.HONO_BACKEND_URL}/api/system/maintenance`, { cache: 'no-store' }).catch((err) => {
       console.error('[Middleware] Failed to fetch maintenance status:', err);
       return null;
     }),
@@ -77,7 +77,8 @@ export async function updateSession(request: NextRequest) {
   if (token) {
     try {
       const meRes = await fetch(`${process.env.HONO_BACKEND_URL}/api/auth/me`, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
+        cache: 'no-store',
       });
       if (meRes.ok) {
         const meData = await meRes.json();

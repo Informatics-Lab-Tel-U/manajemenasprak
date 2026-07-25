@@ -18,10 +18,6 @@ export async function forwardToHono(request: NextRequest, customPath?: string) {
     const apiKey = request.headers.get('x-praktikan-api-key');
     if (apiKey) headers['x-praktikan-api-key'] = apiKey;
 
-    if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
-      headers['x-service-role-key'] = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    }
-
     const contentType = request.headers.get('content-type');
 
     let body: any = undefined;
