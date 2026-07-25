@@ -48,29 +48,24 @@ export const ScheduleCell: React.FC<ScheduleCellProps> = ({
           ? 'cursor-pointer hover:brightness-110 hover:scale-105 hover:z-20 hover:shadow-lg'
           : ''
       } ${isPengganti ? 'z-10' : ''} ${isOnlineActive ? 'z-20' : ''}`}
-      style={contentStyle}
+      style={isOnlineActive ? { backgroundColor: '#1f2937' } : contentStyle}
       title={
         onClick ? 'Click for details' : `${jadwal.mata_kuliah?.nama_lengkap} - ${jadwal.kelas}`
       }
     >
       {isOnlineActive && (
         <>
-          {/* Animated spinning background overlaying the outer border */}
+          {/* Animated spinning background */}
           <div 
-            className="absolute inset-[-150%] animate-[spin_2.5s_linear_infinite] z-20 pointer-events-none" 
-            style={{ background: 'conic-gradient(from 90deg at 50% 50%, transparent 60%, rgba(34,197,94,0.95) 100%)' }} 
+            className="absolute inset-[-150%] animate-[spin_2s_linear_infinite]" 
+            style={{ background: 'conic-gradient(from 90deg at 50% 50%, transparent 60%, #4ade80 100%)' }} 
           />
-          {/* Inner content mask. 
-              If Pengganti (has 4px border), inset-0 covers padding box, leaving border exposed.
-              If Reguler (no border), inset-[3px] creates a 3px gap for the spinning gradient. */}
-          <div 
-            className={`absolute z-20 pointer-events-none ${isPengganti ? 'inset-0' : 'inset-[3px] rounded-sm'}`} 
-            style={{ backgroundColor: bgColor }} 
-          />
+          {/* Inner content mask */}
+          <div className="absolute inset-[3px]" style={contentStyle} />
         </>
       )}
 
-      <div className="text-center leading-tight relative z-30">
+      <div className="text-center leading-tight relative z-10">
         <div className="font-bold text-[10px] sm:text-xs 2xl:text-sm text-white drop-shadow-md truncate w-full px-1">
           {jadwal.mata_kuliah?.praktikum?.nama || jadwal.mata_kuliah?.nama_lengkap || 'Unknown'}
         </div>
