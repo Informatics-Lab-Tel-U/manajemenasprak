@@ -71,10 +71,8 @@ export const useMonitoringStore = create<MonitoringState>((set, get) => ({
         } catch (err) {}
       };
 
-      // Initial fetch jika data masih kosong
-      if (get().labStatus.length === 0) {
-        await fetchStatus();
-      }
+      // Initial client fetch untuk menjamin data paling fresh tanpa bergantung jeda SSR/WebSocket
+      await fetchStatus();
 
       // Setup Polling Fallback setiap 15 detik (menjamin data selalu segar meski WebSocket delay)
       if (!pollingTimer) {
