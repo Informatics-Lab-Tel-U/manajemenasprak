@@ -64,6 +64,7 @@ import {
 import TermInput from '@/components/asprak/TermInput';
 import { buildTermString } from '@/utils/termHelpers';
 import { useTermStore } from '@/store/useTermStore';
+import { parseSpreadsheet, downloadTemplate } from '@/lib/spreadsheet';
 
 const steps = [
   { id: 'praktikum', title: 'Data Praktikum', description: 'Buat tahun ajaran', icon: <BookOpen /> },
@@ -73,28 +74,7 @@ const steps = [
 ];
 
 const handleDownloadTemplate = async (format: 'csv' | 'xlsx') => {
-  const data = [
-    { mk_singkat: 'ALPRO 1', nama_lengkap: 'ALGORITMA PEMROGRAMAN 1', program_studi: 'IF', dosen_koor: 'PEY' },
-    { mk_singkat: 'STD', nama_lengkap: 'STRUKTUR DATA', program_studi: 'SE-PJJ', dosen_koor: 'HUI' },
-  ];
-  if (format === 'csv') {
-    const Papa = (await import('papaparse')).default;
-    const csv = Papa.unparse(data);
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', 'template_matakuliah.csv');
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  } else {
-    const XLSX = await import('xlsx');
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Template');
-    XLSX.writeFile(wb, 'template_matakuliah.xlsx');
-  }
+  downloadTemplate('mata_kuliah', format);
 };
 
 export default function MatkulStep() {
@@ -157,81 +137,56 @@ export default function MatkulStep() {
     }
   };
 
-  const processCSV = useCallback(async (file: File) => {
+  const processSpreadsheet = useCallback(async (file: File) => {
     setUploadError(null);
-    const Papa = (await import('papaparse')).default;
-    Papa.parse<any>(file, {
-      header: true,
-      skipEmptyLines: true,
-      transformHeader: (header: string) => header.trim().toLowerCase().replace(/\s+/g, '_'),
-      complete: (results) => {
-        const { data, errors } = results;
-        if (errors.length > 0) {
-          setUploadError(`CSV parsing error: ${errors[0].message}`);
-          return;
-        }
-        if (data.length === 0) {
-          setUploadError('CSV kosong — tidak ada data yang ditemukan.');
-          return;
-        }
-        
-        const preview = validateMataKuliahData(data, validPraktikums, []);
-        const strictPreview = preview.map(r => {
-          if (!r.statusMessage?.includes('Praktikum baru akan dibuat otomatis')) return r;
-          return {
-            ...r,
-            status: 'error' as const,
-            statusMessage: 'Praktikum tidak ditemukan di Langkah 1',
-            selected: false
-          };
-        });
+    try {
+      const matrix = await parseSpreadsheet(file);
+      if (matrix.length < 2) {
+        setUploadError('File kosong — tidak ada data yang ditemukan.');
+        return;
+      }
+      
+      const rawHeaders = matrix[0];
+      const normalizeHeader = (header: string) => header.trim().toLowerCase().replace(/\s+/g, '_');
+      const normalizedHeaders = rawHeaders.map(normalizeHeader);
 
-        setPreviewRows(prev => [...prev, ...strictPreview]);
-      },
-      error: (err: Error) => setUploadError(`Failed to parse CSV: ${err.message}`),
-    });
+      const data = matrix.slice(1).reduce((acc: any[], row: string[]) => {
+        if (!row || !row.some(Boolean)) return acc;
+        const newRow: any = {};
+        normalizedHeaders.forEach((header: string, idx: number) => {
+          newRow[header] = row[idx] ?? '';
+        });
+        acc.push(newRow);
+        return acc;
+      }, []);
+
+      if (data.length === 0) {
+        setUploadError('File kosong — tidak ada data yang ditemukan.');
+        return;
+      }
+
+      const preview = validateMataKuliahData(data, validPraktikums, []);
+      const strictPreview = preview.map(r => {
+        if (!r.statusMessage?.includes('Praktikum baru akan dibuat otomatis')) return r;
+        return {
+          ...r,
+          status: 'error' as const,
+          statusMessage: 'Praktikum tidak ditemukan di Langkah 1',
+          selected: false
+        };
+      });
+
+      setPreviewRows(prev => [...prev, ...strictPreview]);
+    } catch (err: any) {
+      setUploadError(`Gagal membaca file: ${err.message}`);
+    }
   }, [validPraktikums]);
-  
+
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
     if (!file) return;
-
-    if (file.name.endsWith('.xlsx')) {
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        try {
-          const XLSX = await import('xlsx');
-          const data = e.target?.result;
-          const workbook = XLSX.read(data, { type: 'binary' });
-          const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-          const jsonData = XLSX.utils.sheet_to_json<any>(worksheet);
-          
-          if (jsonData.length === 0) {
-            setUploadError('File Excel kosong — tidak ada data yang ditemukan.');
-            return;
-          }
-
-          const preview = validateMataKuliahData(jsonData, validPraktikums, []);
-          const strictPreview = preview.map(r => {
-            if (!r.statusMessage?.includes('Praktikum baru akan dibuat otomatis')) return r;
-            return {
-              ...r,
-              status: 'error' as const,
-              statusMessage: 'Praktikum tidak ditemukan di Langkah 1',
-              selected: false
-            };
-          });
-
-          setPreviewRows(prev => [...prev, ...strictPreview]);
-        } catch (err: any) {
-          setUploadError(`Gagal membaca file Excel: ${err.message}`);
-        }
-      };
-      reader.readAsBinaryString(file);
-    } else {
-      processCSV(file);
-    }
-  }, [processCSV, validPraktikums]);
+    await processSpreadsheet(file);
+  }, [processSpreadsheet]);
   
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,

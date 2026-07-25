@@ -75,7 +75,7 @@ export default function OnboardHubPage() {
       .then(res => res.json())
       .then(data => {
         if (isMounted) {
-          setStatus(data);
+          setStatus(data?.data || null);
           setIsLoading(false);
         }
       })

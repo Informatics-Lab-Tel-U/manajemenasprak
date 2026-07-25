@@ -1,5 +1,5 @@
 import { LucideIcon } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardAction, CardFooter } from './card';
+import { Card, CardHeader, CardTitle, CardDescription, CardAction, CardFooter } from './card';
 import { Badge } from './badge';
 import { cn } from '@/lib/utils';
 import { Skeleton } from './skeleton';

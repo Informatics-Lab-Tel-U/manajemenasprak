@@ -37,37 +37,10 @@ import TermInput from '@/components/asprak/TermInput';
 import { buildTermString } from '@/utils/termHelpers';
 import { useTermStore } from '@/store/useTermStore';
 import { useSearchParams } from 'next/navigation';
+import { parseSpreadsheet, downloadTemplate } from '@/lib/spreadsheet';
 
 const handleDownloadTemplate = async (format: 'csv' | 'xlsx') => {
-  const data = [
-    {
-      nama: 'Konteks - Praktikum Contoh',
-      tahun_ajaran: '2425/1',
-    },
-    {
-      nama: 'Konteks - Praktikum Lain',
-      tahun_ajaran: '2425/1',
-    },
-  ];
-
-  if (format === 'csv') {
-    const Papa = (await import('papaparse')).default;
-    const csv = Papa.unparse(data);
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', 'template_praktikum.csv');
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  } else if (format === 'xlsx') {
-    const XLSX = await import('xlsx');
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Template');
-    XLSX.writeFile(wb, 'template_praktikum.xlsx');
-  }
+  downloadTemplate('praktikum', format);
 };
 
 export default function PraktikumStep() {
@@ -154,33 +127,44 @@ export default function PraktikumStep() {
   };
 
   // Handlers for CSV
-  const processCSV = useCallback(
+  const processSpreadsheet = useCallback(
     async (file: File) => {
       setUploadError(null);
-      const Papa = (await import('papaparse')).default;
-      Papa.parse<any>(file, {
-        header: true,
-        skipEmptyLines: true,
-        transformHeader: (header: string) => header.trim().toLowerCase().replace(/\s+/g, '_'),
-        complete: (results) => {
-          const { data, errors } = results;
-          if (errors.length > 0) {
-            setUploadError(`CSV parsing error: ${errors[0].message}`);
-            return;
-          }
-          if (data.length === 0) {
-            setUploadError('CSV kosong — tidak ada data yang ditemukan.');
-            return;
-          }
-          const preview = validatePraktikumData(data, praktikumNames.map((p) => ({ ...p, tahun_ajaran: '' })));
-          setPreviewRows((prev) => {
-            const existingNames = new Set(prev.map((r) => r.nama.toUpperCase()));
-            const newRows = preview.filter((r) => !existingNames.has(r.nama.toUpperCase()));
-            return [...prev, ...newRows];
+      try {
+        const matrix = await parseSpreadsheet(file);
+        if (matrix.length < 2) {
+          setUploadError('File kosong — tidak ada data yang ditemukan.');
+          return;
+        }
+
+        const rawHeaders = matrix[0];
+        const normalizeHeader = (header: string) => header.trim().toLowerCase().replace(/\s+/g, '_');
+        const normalizedHeaders = rawHeaders.map(normalizeHeader);
+
+        const data = matrix.slice(1).reduce((acc: any[], row: string[]) => {
+          if (!row || !row.some(Boolean)) return acc;
+          const newRow: any = {};
+          normalizedHeaders.forEach((header: string, idx: number) => {
+            newRow[header] = row[idx] ?? '';
           });
-        },
-        error: (err: Error) => setUploadError(`Failed to parse CSV: ${err.message}`),
-      });
+          acc.push(newRow);
+          return acc;
+        }, []);
+
+        if (data.length === 0) {
+          setUploadError('File kosong — tidak ada data yang ditemukan.');
+          return;
+        }
+
+        const preview = validatePraktikumData(data, praktikumNames.map((p) => ({ ...p, tahun_ajaran: '' })));
+        setPreviewRows((prev) => {
+          const existingNames = new Set(prev.map((r) => r.nama.toUpperCase()));
+          const newRows = preview.filter((r) => !existingNames.has(r.nama.toUpperCase()));
+          return [...prev, ...newRows];
+        });
+      } catch (err: any) {
+        setUploadError(`Gagal membaca file: ${err.message}`);
+      }
     },
     [praktikumNames]
   );
@@ -189,38 +173,9 @@ export default function PraktikumStep() {
     async (acceptedFiles: File[]) => {
       const file = acceptedFiles[0];
       if (!file) return;
-
-      if (file.name.endsWith('.xlsx')) {
-        const reader = new FileReader();
-        reader.onload = async (e) => {
-          try {
-            const XLSX = await import('xlsx');
-            const data = e.target?.result;
-            const workbook = XLSX.read(data, { type: 'binary' });
-            const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-            const jsonData = XLSX.utils.sheet_to_json<any>(worksheet);
-
-            if (jsonData.length === 0) {
-              setUploadError('File Excel kosong — tidak ada data yang ditemukan.');
-              return;
-            }
-
-            const preview = validatePraktikumData(jsonData, praktikumNames.map((p) => ({ ...p, tahun_ajaran: '' })));
-            setPreviewRows((prev) => {
-              const existingNames = new Set(prev.map((r) => r.nama.toUpperCase()));
-              const newRows = preview.filter((r) => !existingNames.has(r.nama.toUpperCase()));
-              return [...prev, ...newRows];
-            });
-          } catch (err: any) {
-            setUploadError(`Gagal membaca file Excel: ${err.message}`);
-          }
-        };
-        reader.readAsBinaryString(file);
-      } else {
-        processCSV(file);
-      }
+      await processSpreadsheet(file);
     },
-    [processCSV, praktikumNames]
+    [processSpreadsheet]
   );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({

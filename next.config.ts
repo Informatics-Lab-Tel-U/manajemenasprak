@@ -6,7 +6,7 @@ const nextConfig: NextConfig = {
     if (isServer) {
       config.plugins.push(
         new webpack.IgnorePlugin({
-          resourceRegExp: /^exceljs$/,
+          resourceRegExp: /^(exceljs|xlsx)$/,
         })
       );
     }

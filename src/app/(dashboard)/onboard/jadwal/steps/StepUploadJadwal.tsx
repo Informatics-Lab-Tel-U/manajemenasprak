@@ -13,6 +13,7 @@ import {
   validateJadwalConflicts,
   buildJadwalPreviewRows,
 } from '@/utils/validation/jadwalValidation';
+import { parseSpreadsheet, downloadTemplate } from '@/lib/spreadsheet';
 
 interface RawCSVRow {
   kelas?: string;
@@ -34,47 +35,7 @@ interface StepUploadJadwalProps {
 }
 
 const handleDownloadTemplate = async (format: 'csv' | 'xlsx') => {
-  const data = [
-    {
-      Kelas: 'IF-45-01',
-      'Nama Singkat': 'PBO',
-      Hari: 'SENIN',
-      Sesi: 1,
-      Jam: '06:30',
-      Ruangan: 'TULT 0612 & 0613',
-      'Total Asprak': 2,
-      Dosen: 'ABC',
-    },
-    {
-      Kelas: 'SE-45-02',
-      'Nama Singkat': 'ALPRO',
-      Hari: 'SELASA',
-      Sesi: 2,
-      Jam: '09:30',
-      Ruangan: 'TULT 0615',
-      'Total Asprak': 2,
-      Dosen: 'DEF',
-    },
-  ];
-
-  if (format === 'csv') {
-    const Papa = (await import('papaparse')).default;
-    const csv = Papa.unparse(data);
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', 'template_jadwal.csv');
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  } else {
-    const XLSX = await import('xlsx');
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Template');
-    XLSX.writeFile(wb, 'template_jadwal.xlsx');
-  }
+  downloadTemplate('jadwal', format);
 };
 
 export default function StepUploadJadwal({ term, mataKuliahList }: StepUploadJadwalProps) {
@@ -90,59 +51,58 @@ export default function StepUploadJadwal({ term, mataKuliahList }: StepUploadJad
       setIsLoading(true);
 
       try {
-        // Dynamic import for PapaParse to reduce initial bundle size
-        const Papa = (await import('papaparse')).default;
+        const matrix = await parseSpreadsheet(file);
+        if (matrix.length < 2) {
+          setError('File kosong — tidak ada data yang ditemukan.');
+          setIsLoading(false);
+          return;
+        }
 
-        Papa.parse<RawCSVRow>(file, {
-          header: true,
-          skipEmptyLines: true,
-          transformHeader: (header: string) => header.trim().toLowerCase().replace(/\s+/g, '_'),
-          complete: async (results) => {
-            const { data, errors } = results;
+        const rawHeaders = matrix[0];
+        const normalizeHeader = (header: string) => header.trim().toLowerCase().replace(/\s+/g, '_');
+        const normalizedHeaders = rawHeaders.map(normalizeHeader);
 
-            if (errors.length > 0) {
-              setError(`CSV parsing error: ${errors[0].message}`);
-              setIsLoading(false);
-              return;
-            }
+        const data = matrix.slice(1).reduce((acc: any[], row: string[]) => {
+          if (!row || !row.some(Boolean)) return acc;
+          const newRow: any = {};
+          normalizedHeaders.forEach((header: string, idx: number) => {
+            newRow[header] = row[idx] ?? '';
+          });
+          acc.push(newRow);
+          return acc;
+        }, []);
 
-            if (data.length === 0) {
-              setError('CSV kosong — tidak ada data yang ditemukan.');
-              setIsLoading(false);
-              return;
-            }
+        if (data.length === 0) {
+          setError('File kosong — tidak ada data yang ditemukan.');
+          setIsLoading(false);
+          return;
+        }
 
-            // Validate required columns
-            const firstRow = data[0];
-            const missingCols = REQUIRED_COLS.filter((col) => !(col in firstRow));
+        // Validate required columns
+        const firstRow = data[0];
+        const missingCols = REQUIRED_COLS.filter((col) => !(col in firstRow));
 
-            if (missingCols.length > 0) {
-              setError(
-                `Kolom wajib tidak ditemukan: ${missingCols.join(', ')}. \nFormat yang diharapkan: Kelas, Nama Singkat (Atau Mata Kuliah), Hari, Sesi, Jam, Ruangan, Total Asprak, Dosen`
-              );
-              setIsLoading(false);
-              return;
-            }
+        if (missingCols.length > 0) {
+          setError(
+            `Kolom wajib tidak ditemukan: ${missingCols.join(', ')}. \nFormat yang diharapkan: Kelas, Nama Singkat (Atau Mata Kuliah), Hari, Sesi, Jam, Ruangan, Total Asprak, Dosen`
+          );
+          setIsLoading(false);
+          return;
+        }
 
-            try {
-              const preview = buildJadwalPreviewRows(data, mataKuliahList, term);
-              const validatedRows = await validateJadwalConflicts(preview, term || '');
+        try {
+          const preview = buildJadwalPreviewRows(data, mataKuliahList, term);
+          const validatedRows = await validateJadwalConflicts(preview, term || '');
 
-              setJadwalRows(validatedRows);
-              setCurrentStep('preview');
-            } catch (err: any) {
-              setError(`Validasi gagal: ${err.message}`);
-            } finally {
-              setIsLoading(false);
-            }
-          },
-          error: (err: Error) => {
-            setError(`Failed to parse CSV: ${err.message}`);
-            setIsLoading(false);
-          },
-        });
+          setJadwalRows(validatedRows);
+          setCurrentStep('preview');
+        } catch (err: any) {
+          setError(`Validasi gagal: ${err.message}`);
+        } finally {
+          setIsLoading(false);
+        }
       } catch (err: any) {
-        setError(`Failed to load PapaParse: ${err.message}`);
+        setError(`Gagal membaca file: ${err.message}`);
         setIsLoading(false);
       }
     },

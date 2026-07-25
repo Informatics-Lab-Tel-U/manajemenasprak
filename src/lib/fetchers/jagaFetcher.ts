@@ -1,26 +1,15 @@
 import { JadwalJaga } from '@/types/database';
+import { apiFetch } from '@/lib/clientFetch';
 
 export async function fetchJadwalJaga(
   term: string,
   modul?: number,
   hari?: string
 ): Promise<{ data?: JadwalJaga[]; error?: string }> {
-  try {
-    const params = new URLSearchParams({ term });
-    if (modul) params.append('modul', modul.toString());
-    if (hari) params.append('hari', hari);
-
-    const res = await fetch(`/api/jaga?${params.toString()}`);
-    const data = await res.json();
-
-    if (!res.ok) {
-      throw new Error(data.error || 'Failed to fetch jadwal jaga');
-    }
-
-    return { data: data.data };
-  } catch (error: any) {
-    return { error: error.message };
-  }
+  const result = await apiFetch<JadwalJaga[]>('/api/jaga', {
+    params: { term, modul: modul ? String(modul) : undefined, hari },
+  });
+  return result.ok ? { data: result.data } : { error: result.error };
 }
 
 export async function addJadwalJaga(payload: {
@@ -30,43 +19,19 @@ export async function addJadwalJaga(payload: {
   hari: string;
   shift: number;
 }): Promise<{ success?: boolean; error?: string }> {
-  try {
-    const res = await fetch('/api/jaga', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      throw new Error(data.error || 'Failed to add jadwal jaga');
-    }
-
-    return { success: true };
-  } catch (error: any) {
-    return { error: error.message };
-  }
+  const result = await apiFetch('/api/jaga', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+  return result.ok ? { success: true } : { error: result.error };
 }
 
 export async function deleteJadwalJaga(id: string): Promise<{ success?: boolean; error?: string }> {
-  try {
-    const res = await fetch(`/api/jaga?id=${id}`, {
-      method: 'DELETE',
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      throw new Error(data.error || 'Failed to delete jadwal jaga');
-    }
-
-    return { success: true };
-  } catch (error: any) {
-    return { error: error.message };
-  }
+  const result = await apiFetch('/api/jaga', {
+    method: 'DELETE',
+    params: { id },
+  });
+  return result.ok ? { success: true } : { error: result.error };
 }
 
 export async function updateJadwalJaga(
@@ -79,25 +44,11 @@ export async function updateJadwalJaga(
     shift: number;
   }>
 ): Promise<{ success?: boolean; error?: string }> {
-  try {
-    const res = await fetch('/api/jaga', {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ id, ...payload }),
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      throw new Error(data.error || 'Failed to update jadwal jaga');
-    }
-
-    return { success: true };
-  } catch (error: any) {
-    return { error: error.message };
-  }
+  const result = await apiFetch('/api/jaga', {
+    method: 'PUT',
+    body: JSON.stringify({ id, ...payload }),
+  });
+  return result.ok ? { success: true } : { error: result.error };
 }
 
 export async function bulkAddJadwalJaga(payload: {
@@ -107,25 +58,11 @@ export async function bulkAddJadwalJaga(payload: {
   hari: string;
   shift: number;
 }): Promise<{ success?: boolean; error?: string }> {
-  try {
-    const res = await fetch('/api/jaga', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ action: 'bulk-upsert', ...payload }),
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      throw new Error(data.error || 'Failed to bulk add jadwal jaga');
-    }
-
-    return { success: true };
-  } catch (error: any) {
-    return { error: error.message };
-  }
+  const result = await apiFetch('/api/jaga', {
+    method: 'POST',
+    body: JSON.stringify({ action: 'bulk-upsert', ...payload }),
+  });
+  return result.ok ? { success: true } : { error: result.error };
 }
 
 export async function bulkDeleteJadwalJaga(payload: {
@@ -135,45 +72,25 @@ export async function bulkDeleteJadwalJaga(payload: {
   hari: string;
   shift: number;
 }): Promise<{ success?: boolean; error?: string }> {
-  try {
-    const params = new URLSearchParams({
+  const result = await apiFetch('/api/jaga', {
+    method: 'DELETE',
+    params: {
       action: 'bulk-delete',
       id_asprak: payload.id_asprak,
       tahun_ajaran: payload.tahun_ajaran,
       moduls: payload.moduls.join(','),
       hari: payload.hari,
-      shift: payload.shift.toString(),
-    });
-
-    const res = await fetch(`/api/jaga?${params.toString()}`, {
-      method: 'DELETE',
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      throw new Error(data.error || 'Failed to bulk delete jadwal jaga');
-    }
-
-    return { success: true };
-  } catch (error: any) {
-    return { error: error.message };
-  }
+      shift: String(payload.shift),
+    },
+  });
+  return result.ok ? { success: true } : { error: result.error };
 }
 
 export async function fetchRekapJagaAggregated(
   term: string
 ): Promise<{ data?: any[]; error?: string }> {
-  try {
-    const res = await fetch(`/api/jaga/rekap?term=${term}`);
-    const data = await res.json();
-
-    if (!res.ok) {
-      throw new Error(data.error || 'Failed to fetch rekap jaga');
-    }
-
-    return { data: data.data };
-  } catch (error: any) {
-    return { error: error.message };
-  }
+  const result = await apiFetch<any[]>('/api/jaga/rekap', {
+    params: { term },
+  });
+  return result.ok ? { data: result.data } : { error: result.error };
 }

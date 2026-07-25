@@ -93,10 +93,11 @@ export function ManajemenAkunClientPage({ users }: { users: UserWithEmail[] }) {
         accessorKey: 'role',
         header: 'Role',
         cell: ({ row }) => {
-          const badgeCfg = ROLE_BADGE[row.original.role];
-          const RoleIcon = ROLE_ICON[row.original.role];
+          const role = row.original.role;
+          const badgeCfg = ROLE_BADGE[role] || { label: role || 'Unknown', variant: 'outline' };
+          const RoleIcon = ROLE_ICON[role] || User;
           return (
-            <Badge variant={badgeCfg.variant} className="gap-1">
+            <Badge variant={badgeCfg.variant as any} className="gap-1">
               <RoleIcon className="h-3 w-3" />
               {badgeCfg.label}
             </Badge>

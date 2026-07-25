@@ -1,8 +1,7 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import type { RealtimeChannel } from '@supabase/supabase-js';
-import { Card, CardContent, CardTitle, CardDescription } from '@/components/ui/card';
+import { useEffect, useState } from 'react';
+import { Card, CardContent, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ROOMS } from '@/constants';
 import { useMonitoringStore, LabStatus } from '@/store/useMonitoringStore';
@@ -51,7 +50,7 @@ export default function RealtimeMonitoringWidget({ initialData }: { initialData:
 
     const pollInterval = setInterval(poll, POLL_INTERVAL_MS);
     return () => clearInterval(pollInterval);
-  }, [updateLabStatus]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [updateLabStatus]);  
 
   const activeLabsCount = monitoringData.filter((d) => isLabOnline(d, now)).length;
 

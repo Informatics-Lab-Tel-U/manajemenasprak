@@ -1,10 +1,5 @@
-/**
- * Import API Fetcher (Client-side)
- * Use this for Excel import from client components
- */
-
-import { logger } from '@/lib/logger';
 import { ServiceResult } from '@/types/api';
+import { apiFetch } from '@/lib/clientFetch';
 
 export interface ImportResult {
   ok: boolean;
@@ -30,7 +25,7 @@ export async function uploadExcel(
       body: formData,
     });
 
-    const data = await res.json();
+    const data = await res.json().catch(() => ({}));
 
     if (!res.ok) {
       return { ok: false, error: data.error };
@@ -38,23 +33,12 @@ export async function uploadExcel(
 
     return { ok: true, message: data.message };
   } catch (e: any) {
-    logger.error('Import error:', e);
     return { ok: false, error: e.message };
   }
 }
 
 export async function exportExcelDataset(term: string): Promise<ServiceResult<any>> {
-  try {
-    const res = await fetch(`/api/export?term=${term}`);
-    const data = await res.json();
-
-    if (!res.ok) {
-      return { ok: false, error: data.error };
-    }
-
-    return { ok: true, data: data.data };
-  } catch (e: any) {
-    logger.error('Export error:', e);
-    return { ok: false, error: e.message };
-  }
+  return apiFetch<any>('/api/export', {
+    params: { term },
+  });
 }

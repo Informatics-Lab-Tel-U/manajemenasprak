@@ -37,25 +37,33 @@ export const getCurrentUser = cache(async (): Promise<AuthUser | null> => {
   const supabase = await createClient();
 
   const {
-    data: { user },
+    data: { session },
     error: authError,
-  } = await supabase.auth.getUser();
+  } = await supabase.auth.getSession();
 
-  if (authError || !user) return null;
+  if (authError || !session?.user) return null;
 
-  const { data: pengguna, error: profileError } = await supabase
-    .from('pengguna')
-    .select('*')
-    .eq('id', user.id)
-    .single();
+  try {
+    const meRes = await fetch(`${process.env.HONO_BACKEND_URL}/api/auth/me`, {
+      headers: { Authorization: `Bearer ${session.access_token}` },
+    });
 
-  if (profileError || !pengguna || pengguna.deleted_at) return null;
+    if (!meRes.ok) return null;
 
-  return {
-    id: user.id,
-    email: user.email ?? '',
-    pengguna: pengguna as Pengguna,
-  };
+    const meData = await meRes.json();
+    const pengguna = meData.data?.pengguna;
+
+    if (!pengguna || pengguna.deleted_at) return null;
+
+    return {
+      id: session.user.id,
+      email: session.user.email ?? '',
+      pengguna: pengguna as Pengguna,
+    };
+  } catch (error) {
+    logger.error('Failed to fetch profile from Hono in auth.ts', { error });
+    return null;
+  }
 });
 
 /**

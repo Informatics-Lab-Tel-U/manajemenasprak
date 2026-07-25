@@ -1,4 +1,5 @@
 import type { ServiceResult } from '@/types/api';
+import { apiFetch } from '@/lib/clientFetch';
 
 export type ModulScheduleEntryDto = {
   modul: number;
@@ -8,32 +9,18 @@ export type ModulScheduleEntryDto = {
 export async function fetchModulSchedule(
   term: string
 ): Promise<ServiceResult<ModulScheduleEntryDto[]>> {
-  try {
-    const res = await fetch(`/api/modul-schedule?term=${encodeURIComponent(term)}`, {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
-      cache: 'no-store',
-    });
-    const result = await res.json();
-    return result;
-  } catch (error: any) {
-    return { ok: false, error: error.message };
-  }
+  return apiFetch<ModulScheduleEntryDto[]>('/api/modul-schedule', {
+    params: { term },
+    cache: 'no-store',
+  });
 }
 
 export async function saveModulSchedule(
   term: string,
   entries: ModulScheduleEntryDto[]
 ): Promise<ServiceResult<null>> {
-  try {
-    const res = await fetch('/api/modul-schedule', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ term, entries }),
-    });
-    const result = await res.json();
-    return result;
-  } catch (error: any) {
-    return { ok: false, error: error.message };
-  }
+  return apiFetch<null>('/api/modul-schedule', {
+    method: 'POST',
+    body: JSON.stringify({ term, entries }),
+  });
 }

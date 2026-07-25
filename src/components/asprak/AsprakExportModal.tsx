@@ -16,6 +16,7 @@ import TermInput from './TermInput';
 import { buildTermString } from '@/utils/termHelpers';
 import { fetchPlottingData } from '@/lib/fetchers/asprakFetcher';
 import { useTermStore } from '@/store/useTermStore';
+import { exportSpreadsheet } from '@/lib/spreadsheet';
 
 interface AsprakExportModalProps {
   onClose: () => void;
@@ -80,54 +81,20 @@ export default function AsprakExportModal({ onClose, open }: AsprakExportModalPr
 
       const termSuffix = isAllTerms ? 'All_Terms' : term;
 
-      const triggerDownload = (blob: Blob, filename: string) => {
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.setAttribute('download', filename);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-      };
-
       if (format === 'csv') {
-        const Papa = (await import('papaparse')).default;
-        const csvAsprak = Papa.unparse(dataAsprak);
-        triggerDownload(
-          new Blob([csvAsprak], { type: 'text/csv;charset=utf-8;' }),
-          `asprak_${termSuffix}.csv`
-        );
-
-        setTimeout(() => {
-          if (dataPlotting.length > 0 || isAllTerms) {
-            const csvPlotting = Papa.unparse(
-              dataPlotting.length > 0 ? dataPlotting : [{ kode_asprak: '', mk_singkat: '' }]
-            );
-            triggerDownload(
-              new Blob([csvPlotting], { type: 'text/csv;charset=utf-8;' }),
-              `asprak_praktikum_${termSuffix}.csv`
-            );
-          }
-        }, 500);
+        await exportSpreadsheet(dataAsprak, `asprak_${termSuffix}.csv`, 'Data Asprak', 'csv');
+        
+        if (dataPlotting.length > 0 || isAllTerms) {
+          const plottingToExport = dataPlotting.length > 0 ? dataPlotting : [{ kode_asprak: '', mk_singkat: '' }];
+          await exportSpreadsheet(plottingToExport, `asprak_praktikum_${termSuffix}.csv`, 'Data Plotting', 'csv');
+        }
       } else {
-        // Excel — load xlsx lazily on demand
-        const XLSX = await import('xlsx');
-        const wsAsprak = XLSX.utils.json_to_sheet(dataAsprak);
-        const wbAsprak = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wbAsprak, wsAsprak, 'Data Asprak');
-        XLSX.writeFile(wbAsprak, `asprak_${termSuffix}.xlsx`);
-
-        setTimeout(async () => {
-          if (dataPlotting.length > 0 || isAllTerms) {
-            const wsPlotting = XLSX.utils.json_to_sheet(
-              dataPlotting.length > 0 ? dataPlotting : [{ kode_asprak: '', mk_singkat: '' }]
-            );
-            const wbPlotting = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wbPlotting, wsPlotting, 'Data Plotting');
-            XLSX.writeFile(wbPlotting, `asprak_praktikum_${termSuffix}.xlsx`);
-          }
-        }, 500);
+        await exportSpreadsheet(dataAsprak, `asprak_${termSuffix}.xlsx`, 'Data Asprak', 'xlsx');
+        
+        if (dataPlotting.length > 0 || isAllTerms) {
+          const plottingToExport = dataPlotting.length > 0 ? dataPlotting : [{ kode_asprak: '', mk_singkat: '' }];
+          await exportSpreadsheet(plottingToExport, `asprak_praktikum_${termSuffix}.xlsx`, 'Data Plotting', 'xlsx');
+        }
       }
 
       toast.success(`Berhasil memproses export dua file ${format.toUpperCase()}`, {

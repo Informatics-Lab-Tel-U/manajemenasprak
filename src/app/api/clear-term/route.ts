@@ -1,27 +1,10 @@
-import { NextResponse } from 'next/server';
-import { clearDataByTerm } from '@/services/databaseService';
-import { requireRoleApi } from '@/lib/auth';
-import { apiErrorResponse } from '@/lib/api-error';
+import { forwardToHono } from '@/lib/apiProxy';
+import { NextRequest } from 'next/server';
 
-export async function POST(req: Request) {
-  try {
-    const guard = await requireRoleApi(['ADMIN']);
-    if (!guard.ok) return guard.response;
+export const fetchCache = 'force-no-store';
 
-    const body = await req.json();
-    const { term } = body;
-
-    if (!term || typeof term !== 'string') {
-      return NextResponse.json(
-        { ok: false, error: 'Parameter term tidak valid atau tidak ditemukan' },
-        { status: 400 }
-      );
-    }
-
-    await clearDataByTerm(term);
-
-    return NextResponse.json({ ok: true, message: `Berhasil menghapus seluruh data untuk tahun ajaran ${term}` });
-  } catch (err) {
-    return apiErrorResponse(err, 'POST /api/clear-term');
-  }
+export async function POST(request: NextRequest) {
+  const body = await request.clone().json().catch(() => ({}));
+  const { term } = body;
+  return forwardToHono(request, `/api/system/clear-term?term=${encodeURIComponent(term || '')}`);
 }

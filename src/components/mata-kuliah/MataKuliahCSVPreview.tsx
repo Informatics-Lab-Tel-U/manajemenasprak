@@ -1,7 +1,6 @@
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { CheckCircle, AlertTriangle, ArrowLeft, Save, X, Plus, Ban } from 'lucide-react';
+import { CheckCircle, AlertTriangle, X, Plus, Ban } from 'lucide-react';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import {
   Select,
@@ -11,7 +10,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import { cn } from '@/lib/utils';
 
 export interface MataKuliahCSVRow {
   mk_singkat: string;

@@ -1,43 +1,27 @@
 import 'server-only';
-import { SupabaseClient } from '@supabase/supabase-js';
-import { createClient } from '@/lib/supabase/server';
 import { logger } from '@/lib/logger';
 import { JadwalJaga } from '@/types/database';
+import { honoFetch } from '@/lib/honoClient';
 
 export async function getJadwalJaga(
   term: string,
   modul?: number,
-  hari?: string,
-  supabaseClient?: SupabaseClient
+  hari?: string
 ): Promise<JadwalJaga[]> {
-  const supabase = supabaseClient ?? (await createClient());
-
-  let query = supabase
-    .from('jadwal_jaga')
-    .select(
-      `
-      *,
-      asprak:asprak(nama_lengkap, nim, kode, role)
-    `
-    )
-    .eq('tahun_ajaran', term);
-
+  const params = new URLSearchParams({ term });
   if (typeof modul === 'number' && modul !== 0) {
-    query = query.eq('modul', modul);
+    params.append('modul', String(modul));
   }
-
   if (hari) {
-    query = query.eq('hari', hari);
+    params.append('hari', hari);
   }
 
-  const { data, error } = await query;
-
-  if (error) {
-    logger.error('Error fetching jadwal_jaga:', error);
-    throw new Error(`Gagal mengambil data jaga: ${error.message}`);
+  const result = await honoFetch<JadwalJaga[]>(`/api/jaga?${params.toString()}`);
+  if (!result.ok || !result.data) {
+    throw new Error(result.error || 'Gagal mengambil data jaga');
   }
 
-  return data as JadwalJaga[];
+  return result.data;
 }
 
 export interface UpsertJadwalJagaInput {
@@ -49,65 +33,40 @@ export interface UpsertJadwalJagaInput {
 }
 
 export async function upsertJadwalJaga(
-  input: UpsertJadwalJagaInput,
-  supabaseClient?: SupabaseClient
+  input: UpsertJadwalJagaInput
 ): Promise<void> {
-  const supabase = supabaseClient ?? (await createClient());
+  const result = await honoFetch('/api/jaga', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
 
-  const { data: created, error } = await supabase
-    .from('jadwal_jaga')
-    .insert(input)
-    .select()
-    .single();
-
-  if (error) {
-    logger.error('Error inserting jadwal_jaga:', error);
-    if (error.code === '23505') {
-      throw new Error(`Asisten ini sudah terdaftar pada shift tersebut.`);
-    }
-    throw new Error(`Gagal menambah jadwal jaga: ${error.message}`);
+  if (!result.ok) {
+    throw new Error(result.error || 'Gagal menambah jadwal jaga');
   }
-
-
 }
 
 export async function updateJadwalJaga(
   id: string,
-  input: Partial<UpsertJadwalJagaInput>,
-  supabaseClient?: SupabaseClient
+  input: Partial<UpsertJadwalJagaInput>
 ): Promise<void> {
-  const supabase = supabaseClient ?? (await createClient());
+  const result = await honoFetch('/api/jaga', {
+    method: 'PUT',
+    body: JSON.stringify({ id, ...input }),
+  });
 
-
-
-  const { data: updated, error } = await supabase
-    .from('jadwal_jaga')
-    .update(input)
-    .eq('id', id)
-    .select()
-    .single();
-
-  if (error) {
-    logger.error('Error updating jadwal_jaga:', error);
-    throw new Error(`Gagal mengubah jadwal jaga: ${error.message}`);
+  if (!result.ok) {
+    throw new Error(result.error || 'Gagal mengubah jadwal jaga');
   }
-
-
 }
 
-export async function deleteJadwalJaga(id: string, supabaseClient?: SupabaseClient): Promise<void> {
-  const supabase = supabaseClient ?? (await createClient());
+export async function deleteJadwalJaga(id: string): Promise<void> {
+  const result = await honoFetch(`/api/jaga?id=${id}`, {
+    method: 'DELETE',
+  });
 
-
-
-  const { error } = await supabase.from('jadwal_jaga').delete().eq('id', id);
-
-  if (error) {
-    logger.error('Error deleting jadwal_jaga:', error);
-    throw new Error(`Gagal menghapus jadwal jaga: ${error.message}`);
+  if (!result.ok) {
+    throw new Error(result.error || 'Gagal menghapus jadwal jaga');
   }
-
-
 }
 
 export async function bulkUpsertJadwalJaga(
@@ -115,30 +74,16 @@ export async function bulkUpsertJadwalJaga(
   tahun_ajaran: string,
   moduls: number[],
   hari: string,
-  shift: number,
-  supabaseClient?: SupabaseClient
+  shift: number
 ): Promise<void> {
-  const supabase = supabaseClient ?? (await createClient());
+  const result = await honoFetch('/api/jaga', {
+    method: 'POST',
+    body: JSON.stringify({ action: 'bulk-upsert', id_asprak, tahun_ajaran, moduls, hari, shift }),
+  });
 
-  const payloads = moduls.map((modul) => ({
-    id_asprak,
-    tahun_ajaran,
-    modul,
-    hari,
-    shift,
-  }));
-
-  const { data: created, error } = await supabase
-    .from('jadwal_jaga')
-    .upsert(payloads, { onConflict: 'id_asprak, tahun_ajaran, modul, hari, shift' })
-    .select();
-
-  if (error) {
-    logger.error('Error bulk upserting jadwal_jaga:', error);
-    throw new Error(`Gagal bulk input jaga: ${error.message}`);
+  if (!result.ok) {
+    throw new Error(result.error || 'Gagal bulk input jaga');
   }
-
-
 }
 
 export async function bulkDeleteJadwalJaga(
@@ -146,56 +91,31 @@ export async function bulkDeleteJadwalJaga(
   tahun_ajaran: string,
   moduls: number[],
   hari: string,
-  shift: number,
-  supabaseClient?: SupabaseClient
+  shift: number
 ): Promise<void> {
-  const supabase = supabaseClient ?? (await createClient());
+  const params = new URLSearchParams({
+    action: 'bulk-delete',
+    id_asprak,
+    tahun_ajaran,
+    moduls: moduls.join(','),
+    hari,
+    shift: String(shift),
+  });
 
-  const { data: toDelete, error: fetchError } = await supabase
-    .from('jadwal_jaga')
-    .select('*')
-    .eq('id_asprak', id_asprak)
-    .eq('tahun_ajaran', tahun_ajaran)
-    .eq('hari', hari)
-    .eq('shift', shift)
-    .in('modul', moduls);
+  const result = await honoFetch(`/api/jaga?${params.toString()}`, {
+    method: 'DELETE',
+  });
 
-  if (fetchError) {
-    logger.error('Error fetching for bulk delete:', fetchError);
-    throw new Error(`Gagal bulk delete: ${fetchError.message}`);
+  if (!result.ok) {
+    throw new Error(result.error || 'Gagal bulk delete');
   }
-
-  if (!toDelete || toDelete.length === 0) return;
-
-  const ids = toDelete.map((d) => d.id);
-  const { error } = await supabase.from('jadwal_jaga').delete().in('id', ids);
-
-  if (error) {
-    logger.error('Error bulk deleting jadwal_jaga:', error);
-    throw new Error(`Gagal bulk delete: ${error.message}`);
-  }
-
-
 }
 
-export async function getRekapJagaAggregated(term: string, supabaseClient?: SupabaseClient) {
-  const supabase = supabaseClient ?? (await createClient());
-
-  const { data, error } = await supabase
-    .from('jadwal_jaga')
-    .select(
-      `
-      modul,
-      id_asprak,
-      asprak:asprak(kode, nama_lengkap, role)
-    `
-    )
-    .eq('tahun_ajaran', term);
-
-  if (error) {
-    logger.error('Error fetching rekap_jaga:', error);
-    throw new Error(`Gagal mengambil data rekap jaga: ${error.message}`);
+export async function getRekapJagaAggregated(term: string) {
+  const result = await honoFetch<any[]>(`/api/jaga/rekap?term=${encodeURIComponent(term)}`);
+  if (!result.ok || !result.data) {
+    throw new Error(result.error || 'Gagal mengambil data rekap jaga');
   }
 
-  return data;
+  return result.data;
 }

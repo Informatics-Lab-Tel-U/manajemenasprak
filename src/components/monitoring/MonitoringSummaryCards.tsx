@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardAction, CardFooter } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardDescription, CardAction, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useMonitoringStore, LabStatus } from '@/store/useMonitoringStore';
 import { Activity, Computer, Users, AlertTriangle } from 'lucide-react';

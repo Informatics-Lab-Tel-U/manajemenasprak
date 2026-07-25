@@ -1,7 +1,5 @@
 import 'server-only';
-import { SupabaseClient } from '@supabase/supabase-js';
-import { createClient } from '@/lib/supabase/server';
-import { logger } from '@/lib/logger';
+import { honoFetch } from '@/lib/honoClient';
 
 export interface ModulScheduleEntry {
   modul: number;
@@ -11,63 +9,26 @@ export interface ModulScheduleEntry {
 const TOTAL_MODUL = 16;
 
 export async function getModulScheduleByTerm(
-  term: string,
-  supabaseClient?: SupabaseClient
+  term: string
 ): Promise<ModulScheduleEntry[]> {
-  const supabase = supabaseClient ?? (await createClient());
-
-  try {
-    const { data, error } = await supabase
-      .from('konfigurasi_modul')
-      .select('modul,tanggal_mulai')
-      .eq('tahun_ajaran', term)
-      .order('modul', { ascending: true });
-
-    if (error) {
-      logger.error('Error fetching modul schedule:', error);
-      return buildDefaultRows();
-    }
-
-    const existingMap = new Map<number, string | null>();
-    (data || []).forEach((row: any) => {
-      existingMap.set(row.modul as number, row.tanggal_mulai ?? null);
-    });
-
-    const rows: ModulScheduleEntry[] = [];
-    for (let i = 1; i <= TOTAL_MODUL; i += 1) {
-      rows.push({
-        modul: i,
-        tanggal_mulai: existingMap.get(i) ?? null,
-      });
-    }
-
-    return rows;
-  } catch (err) {
-    logger.error('Unexpected error fetching modul schedule:', err);
+  const result = await honoFetch<ModulScheduleEntry[]>(`/api/modul-schedule?term=${encodeURIComponent(term)}`);
+  if (!result.ok || !result.data) {
     return buildDefaultRows();
   }
+  return result.data;
 }
 
 export async function upsertModulScheduleForTerm(
   term: string,
-  entries: ModulScheduleEntry[],
-  supabaseClient?: SupabaseClient
+  entries: ModulScheduleEntry[]
 ): Promise<void> {
-  const supabase = supabaseClient ?? (await createClient());
-
-  const payload = entries.map((e) => ({
-    tahun_ajaran: term,
-    modul: e.modul,
-    tanggal_mulai: e.tanggal_mulai,
-  }));
-
-  const { error } = await supabase.from('konfigurasi_modul').upsert(payload, {
-    onConflict: 'tahun_ajaran,modul',
+  const result = await honoFetch('/api/modul-schedule', {
+    method: 'POST',
+    body: JSON.stringify({ term, entries }),
   });
 
-  if (error) {
-    logger.error('Error upserting modul schedule:', error);
-    throw new Error(`Gagal menyimpan tanggal modul: ${error.message}`);
+  if (!result.ok) {
+    throw new Error(result.error || 'Gagal menyimpan tanggal modul');
   }
 }
 

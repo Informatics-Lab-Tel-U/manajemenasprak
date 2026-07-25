@@ -8,8 +8,31 @@ import {
   jsonWithCors,
   praktikanOptionsResponse,
 } from '../_access';
-import { getPraktikanKelasByMataKuliah } from '@/services/praktikanService';
-import { createAdminClient } from '@/lib/supabase/admin';
+
+const backendUrl = process.env.HONO_BACKEND_URL || 'https://manajemenasprak-backend.workers.dev';
+
+const getCachedKelas = (mataKuliah: string | null) =>
+  unstable_cache(
+    async () => {
+      // Call backend with action=kelas-by-mk
+      const url = new URL(`${backendUrl}/api/praktikan`);
+      url.searchParams.set('action', 'kelas-by-mk');
+      if (mataKuliah) {
+        url.searchParams.set('mata_kuliah', mataKuliah);
+      }
+
+      const res = await fetch(url.toString(), {
+        headers: {
+          'x-service-role-key': process.env.SUPABASE_SERVICE_ROLE_KEY || '',
+        },
+      });
+
+      const json = await res.json();
+      return json.data || [];
+    },
+    ['praktikan-kelas-api', mataKuliah ?? 'all'],
+    { tags: ['praktikan'] }
+  )();
 
 function decodeQueryValue(value: string | null) {
   if (!value) return value;
@@ -20,12 +43,6 @@ function decodeQueryValue(value: string | null) {
     return value;
   }
 }
-
-const getCachedKelas = (mataKuliah: string | null) => unstable_cache(
-  async () => getPraktikanKelasByMataKuliah(mataKuliah, createAdminClient()),
-  ['praktikan-kelas-api', mataKuliah ?? 'all'],
-  { tags: ['praktikan'] }
-)();
 
 export async function OPTIONS(request: NextRequest) {
   return praktikanOptionsResponse(request);

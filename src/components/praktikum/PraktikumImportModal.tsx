@@ -15,6 +15,8 @@ import { cn } from '@/lib/utils';
 import PraktikumCSVPreview, { PraktikumPreviewRow } from './PraktikumCSVPreview';
 // Import Validation Logic
 import { validatePraktikumData } from '@/utils/validation/praktikumValidation';
+// Import Utility
+import { parseSpreadsheet, downloadTemplate } from '@/lib/spreadsheet';
 
 // We reuse TermInput to set the term globally?
 // Or do we read term from CSV?
@@ -33,31 +35,8 @@ interface PraktikumImportModalProps {
 
 type Step = 'upload' | 'preview';
 
-const handleDownloadTemplate = async (format: 'csv' | 'xlsx') => {
-  const data = [
-    { nama_singkat: 'PBO', tahun_ajaran: '2425-2' },
-    { nama_singkat: 'JARKOM', tahun_ajaran: '2425-2' },
-  ];
-
-  if (format === 'csv') {
-    const Papa = (await import('papaparse')).default;
-    const csv = Papa.unparse(data);
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', 'template_praktikum.csv');
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  } else {
-    // Load xlsx lazily — only when user requests XLSX template
-    const XLSX = await import('xlsx');
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Template');
-    XLSX.writeFile(wb, 'template_praktikum.xlsx');
-  }
+const handleDownloadTemplate = (format: 'csv' | 'xlsx') => {
+  downloadTemplate('praktikum', format);
 };
 
 export default function PraktikumImportModal({
@@ -71,43 +50,36 @@ export default function PraktikumImportModal({
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  // CSV Parsing
-  const processCSV = useCallback(
+  // File Parsing
+  const processFile = useCallback(
     async (file: File) => {
       setError(null);
-      const Papa = (await import('papaparse')).default;
+      try {
+        const matrix = await parseSpreadsheet(file);
+        
+        if (matrix.length < 2) {
+          setError('File kosong — tidak ada data yang ditemukan.');
+          return;
+        }
+        
+        // Convert matrix back to object array expected by validation
+        const headers = matrix[0].map((h: string) => h.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_'));
+        const data = matrix.slice(1).reduce((acc: any[], row: string[]) => {
+          if (!row || !row.some(Boolean)) return acc; // skip empty rows
+          const obj: any = {};
+          headers.forEach((h: string, idx: number) => {
+             obj[h] = row[idx] ?? '';
+          });
+          acc.push(obj);
+          return acc;
+        }, []);
 
-      Papa.parse<any>(file, {
-        header: true,
-        skipEmptyLines: true,
-        transformHeader: (header: string) => header.trim().toLowerCase().replace(/\s+/g, '_'),
-        complete: (results) => {
-          const { data, errors } = results;
-
-          if (errors.length > 0) {
-            setError(`CSV parsing error: ${errors[0].message}`);
-            return;
-          }
-
-          if (data.length === 0) {
-            setError('CSV kosong — tidak ada data yang ditemukan.');
-            return;
-          }
-
-          // Validate columns: nama_singkat (mapped to nama), tahun_ajaran
-          // Or just 'nama' and 'tahun_ajaran'?
-          // User said: "kolom nama_singkat, tahun_ajaran".
-          // I will look for 'nama_singkat' OR 'nama'.
-
-          const preview = validatePraktikumData(data, existingPraktikums);
-
-          setPreviewRows(preview);
-          setStep('preview');
-        },
-        error: (err: Error) => {
-          setError(`Failed to parse CSV: ${err.message}`);
-        },
-      });
+        const preview = validatePraktikumData(data, existingPraktikums);
+        setPreviewRows(preview);
+        setStep('preview');
+      } catch (err: any) {
+        setError(`Gagal memproses file: ${err.message}`);
+      }
     },
     [existingPraktikums]
   );
@@ -118,14 +90,18 @@ export default function PraktikumImportModal({
     (acceptedFiles: File[]) => {
       const file = acceptedFiles[0];
       if (!file) return;
-      processCSV(file);
+      processFile(file);
     },
-    [processCSV]
+    [processFile]
   );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
-    accept: { 'text/csv': ['.csv'] },
+    accept: {
+      'text/csv': ['.csv'],
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
+      'application/vnd.ms-excel': ['.xls'],
+    },
     maxFiles: 1,
   });
 

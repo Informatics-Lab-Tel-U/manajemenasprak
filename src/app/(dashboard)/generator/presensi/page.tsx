@@ -10,7 +10,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { format } from 'date-fns';
-import { CalendarIcon } from 'lucide-react';
+import { CalendarIcon, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PRESENSI_THEMES } from '@/constants/presensiConstants';
 import { usePresensi } from '@/hooks/usePresensi';
@@ -23,6 +23,8 @@ export default function PresensiPage() {
   const state = usePresensi();
   const data = state;
 
+  const [isGenerating, setIsGenerating] = React.useState(false);
+
   const handleGenerate = async () => {
     if (!state.selectedPraktikumId || state.kelasNames.length === 0) {
       toast.error('Silakan pilih Praktikum terlebih dahulu');
@@ -33,8 +35,9 @@ export default function PresensiPage() {
       return;
     }
 
+    setIsGenerating(true);
     try {
-      const { generatePresensiExcel } = await import('@/services/presensiGenerator');
+      const { generatePresensiExcel } = await import('@/lib/spreadsheet');
       await generatePresensiExcel({
         namaFile: state.namaFile,
         kelasNames: state.kelasNames,
@@ -49,6 +52,8 @@ export default function PresensiPage() {
     } catch (error: any) {
       console.error(error);
       toast.error(error.message || 'Gagal men-generate file presensi.');
+    } finally {
+      setIsGenerating(false);
     }
   };
 
@@ -269,8 +274,19 @@ export default function PresensiPage() {
             )}
           </CardContent>
           <CardFooter className="bg-muted/50 flex justify-end p-4 border-t">
-            <Button size="lg" onClick={handleGenerate} disabled={state.kelasNames.length === 0 || (!state.isWeightValid && state.totalWeight > 0)}>
-              Generate File Excel
+            <Button
+              size="lg"
+              onClick={handleGenerate}
+              disabled={isGenerating || state.kelasNames.length === 0 || (!state.isWeightValid && state.totalWeight > 0)}
+            >
+              {isGenerating ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Men-generate File...
+                </>
+              ) : (
+                'Generate File Excel'
+              )}
             </Button>
           </CardFooter>
         </Card>
