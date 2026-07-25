@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { generateHTML } from '@tiptap/react';
+import { generateHTML } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import { AttachmentNode } from './attachment';
 import { normalizeTiptapContent } from '@/lib/tiptap-utils';

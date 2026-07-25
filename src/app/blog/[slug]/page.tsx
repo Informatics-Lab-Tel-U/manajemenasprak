@@ -1,6 +1,6 @@
 import * as blogService from '@/services/blogService';
 import { notFound } from 'next/navigation';
-import { TiptapViewer } from '@/components/tiptap';
+import { TiptapViewer } from '@/components/tiptap/viewer';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
 import Image from 'next/image';
