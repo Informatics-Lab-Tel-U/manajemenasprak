@@ -11,7 +11,6 @@ import {
   CheckCircle,
   AlertTriangle,
   Sparkles,
-  ArrowLeft,
   Save,
   Copy,
   FileCheck,

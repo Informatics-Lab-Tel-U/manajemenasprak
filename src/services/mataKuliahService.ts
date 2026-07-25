@@ -1,8 +1,6 @@
 import 'server-only';
-import { SupabaseClient } from '@supabase/supabase-js';
-import { createClient } from '@/lib/supabase/server';
 import { MataKuliah } from '@/types/database';
-import { logger } from '@/lib/logger';
+import { honoFetch } from '@/lib/honoClient';
 
 export interface MataKuliahWithPraktikum extends MataKuliah {
   praktikum: {
@@ -19,47 +17,11 @@ export type MataKuliahGrouped = {
 };
 
 export async function getMataKuliahByTerm(
-  term: string | null,
-  supabaseClient?: SupabaseClient
+  term: string | null
 ): Promise<MataKuliahGrouped[]> {
-  const supabase = supabaseClient ?? (await createClient());
-  let query = supabase.from('mata_kuliah').select(`
-      *,
-      praktikum:praktikum!inner (
-        id,
-        nama,
-        tahun_ajaran
-      )
-    `);
-
-  if (term && term !== 'all') {
-    query = query.eq('praktikum.tahun_ajaran', term);
-  }
-
-  const { data, error } = await query.order('nama_lengkap');
-
-  if (error) {
-    logger.error('Error fetching mata kuliah for term ' + term + ':', error);
-    return [];
-  }
-
-  const rawData = data as unknown as MataKuliahWithPraktikum[];
-
-  const groupedMap: Record<string, MataKuliahGrouped> = {};
-
-  rawData.forEach((mk) => {
-    const mkSingkat = mk.praktikum.nama;
-    if (!groupedMap[mkSingkat]) {
-      groupedMap[mkSingkat] = {
-        mk_singkat: mkSingkat,
-        praktikum_id: mk.praktikum.id,
-        items: [],
-      };
-    }
-    groupedMap[mkSingkat].items.push(mk);
-  });
-
-  return Object.values(groupedMap).sort((a, b) => a.mk_singkat.localeCompare(b.mk_singkat));
+  const query = term && term !== 'all' ? `?term=${encodeURIComponent(term)}` : '';
+  const result = await honoFetch<MataKuliahGrouped[]>(`/api/mata-kuliah${query}`);
+  return result.ok && result.data ? result.data : [];
 }
 
 export interface CreateMataKuliahPayload {
@@ -71,18 +33,18 @@ export interface CreateMataKuliahPayload {
 }
 
 export async function createMataKuliah(
-  payload: CreateMataKuliahPayload,
-  supabaseClient?: SupabaseClient
+  payload: CreateMataKuliahPayload
 ): Promise<MataKuliah | null> {
-  const supabase = supabaseClient ?? (await createClient());
-  const { data, error } = await supabase.from('mata_kuliah').insert(payload).select().single();
+  const result = await honoFetch<MataKuliah>('/api/mata-kuliah', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
 
-  if (error) {
-    logger.error('Error creating mata kuliah:', error);
-    throw error;
+  if (!result.ok) {
+    throw new Error(result.error || 'Failed to create mata kuliah');
   }
 
-  return data;
+  return result.data || null;
 }
 
 export interface BulkImportMataKuliahResult {
@@ -91,83 +53,42 @@ export interface BulkImportMataKuliahResult {
 }
 
 export async function bulkCreateMataKuliah(
-  payloads: CreateMataKuliahPayload[],
-  supabaseClient?: SupabaseClient
+  payloads: CreateMataKuliahPayload[]
 ): Promise<BulkImportMataKuliahResult> {
-  const supabase = supabaseClient ?? (await createClient());
-  const result: BulkImportMataKuliahResult = { inserted: 0, errors: [] };
+  const result = await honoFetch<BulkImportMataKuliahResult>('/api/mata-kuliah', {
+    method: 'POST',
+    body: JSON.stringify({ action: 'bulk-create', payloads }),
+  });
 
-  if (payloads.length === 0) return result;
-
-  const uniquePayloads = [];
-  const seen = new Set();
-  for (const p of payloads) {
-    const key = `${p.id_praktikum}_${p.program_studi}`;
-    if (!seen.has(key)) {
-      seen.add(key);
-      uniquePayloads.push(p);
-    }
+  if (!result.ok || !result.data) {
+    return { inserted: 0, errors: [result.error || 'Bulk insert error'] };
   }
 
-  const { data, error } = await supabase.from('mata_kuliah').insert(uniquePayloads).select();
-
-  if (error) {
-    result.errors.push(`Bulk insert err: ${error.message}`);
-  } else {
-    result.inserted = data?.length || 0;
-  }
-
-  return result;
+  return result.data;
 }
 
 export async function checkMataKuliahExists(
   praktikumId: string,
-  programStudi: string,
-  supabaseClient?: SupabaseClient
+  programStudi: string
 ): Promise<boolean> {
-  const supabase = supabaseClient ?? (await createClient());
-  const { count, error } = await supabase
-    .from('mata_kuliah')
-    .select('*', { count: 'exact', head: true })
-    .eq('id_praktikum', praktikumId)
-    .eq('program_studi', programStudi);
-
-  if (error) {
-    console.error(error);
-    return false;
-  }
-
-  return (count || 0) > 0;
+  const result = await honoFetch<{ exists: boolean }>(
+    `/api/mata-kuliah?action=check-exists&praktikumId=${praktikumId}&programStudi=${encodeURIComponent(programStudi)}`
+  );
+  return result.ok && result.data ? !!result.data.exists : false;
 }
 
 export async function updateMataKuliahColorByPraktikumName(
   nama: string,
-  warna: string,
-  supabaseClient?: SupabaseClient
+  warna: string
 ): Promise<number> {
-  const supabase = supabaseClient ?? (await createClient());
+  const result = await honoFetch<{ count: number }>('/api/mata-kuliah', {
+    method: 'PUT',
+    body: JSON.stringify({ action: 'update-color', nama, warna }),
+  });
 
-  const { data: praktikums, error: pError } = await supabase
-    .from('praktikum')
-    .select('id')
-    .eq('nama', nama);
-
-  if (pError || !praktikums || praktikums.length === 0) {
-    return 0;
+  if (!result.ok) {
+    throw new Error(result.error || 'Failed to update color');
   }
 
-  const pIds = praktikums.map((p) => p.id);
-
-  const { data, error: mkError } = await supabase
-    .from('mata_kuliah')
-    .update({ warna })
-    .in('id_praktikum', pIds)
-    .select();
-
-  if (mkError) {
-    logger.error(`Error updating colors for praktikum ${nama}:`, mkError);
-    throw mkError;
-  }
-
-  return data?.length || 0;
+  return result.data?.count || 0;
 }

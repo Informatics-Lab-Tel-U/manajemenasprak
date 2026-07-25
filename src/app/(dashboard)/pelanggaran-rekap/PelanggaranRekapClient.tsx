@@ -84,7 +84,7 @@ export default function PelanggaranRekapClient({ initialTahunAjaranList }: Props
 
   const flatViolations = React.useMemo(() => {
     return data.flatMap((entry) =>
-      (entry.violations || []).map((v) => ({
+      (entry.violations || []).map((v: any) => ({
         ...v,
         _kode_asprak: entry.kode_asprak,
         _nama_asprak: entry.nama_asprak,

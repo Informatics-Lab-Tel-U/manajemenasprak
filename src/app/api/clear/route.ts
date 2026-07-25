@@ -1,17 +1,8 @@
-import { NextResponse } from 'next/server';
-import { clearAllData } from '@/services/databaseService';
-import { requireRoleApi } from '@/lib/auth';
-import { apiErrorResponse } from '@/lib/api-error';
+import { forwardToHono } from '@/lib/apiProxy';
+import { NextRequest } from 'next/server';
 
-export async function POST() {
-  try {
-    const guard = await requireRoleApi(['ADMIN']);
-    if (!guard.ok) return guard.response;
+export const fetchCache = 'force-no-store';
 
-    await clearAllData();
-
-    return NextResponse.json({ ok: true, message: 'Database cleared' });
-  } catch (err) {
-    return apiErrorResponse(err, 'POST /api/clear');
-  }
+export async function POST(request: NextRequest) {
+  return forwardToHono(request, '/api/system/clear-all');
 }

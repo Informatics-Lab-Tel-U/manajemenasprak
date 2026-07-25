@@ -47,16 +47,48 @@ export async function updateSession(request: NextRequest) {
   // IMPORTANT: Do not add any logic between createServerClient and getUser().
   // getUser + system_config are independent — run them in parallel.
   const [
-    {
-      data: { user },
-    },
-    { data: maintenanceConfig },
+    { data: { session } },
+    maintenanceRes,
   ] = await Promise.all([
-    supabase.auth.getUser(),
-    supabase.from('system_config').select('value_bool').eq('key', 'maintenance_mode').single(),
+    supabase.auth.getSession(),
+    fetch(`${process.env.HONO_BACKEND_URL}/api/system/maintenance`).catch((err) => {
+      console.error('[Middleware] Failed to fetch maintenance status:', err);
+      return null;
+    }),
   ]);
 
-  const isMaintenanceMode = !!maintenanceConfig?.value_bool;
+  const user = session?.user;
+  const token = session?.access_token;
+
+  let isMaintenanceMode = false;
+  if (maintenanceRes?.ok) {
+    try {
+      const data = await maintenanceRes.json();
+      isMaintenanceMode = !!data.active;
+    } catch (e) {
+      console.error('[Middleware] Failed to parse maintenance response', e);
+    }
+  }
+
+  // Single pengguna query to Hono backend
+  let pengguna: any = null;
+  let penggunaError: any = null;
+  
+  if (token) {
+    try {
+      const meRes = await fetch(`${process.env.HONO_BACKEND_URL}/api/auth/me`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (meRes.ok) {
+        const meData = await meRes.json();
+        pengguna = meData.data?.pengguna;
+      } else {
+        penggunaError = new Error(`Hono returned ${meRes.status}`);
+      }
+    } catch (error) {
+      penggunaError = error;
+    }
+  }
 
   // 1. Redirect away from /maintenance if mode is OFF
   if (!isMaintenanceMode && pathname === '/maintenance') {
@@ -67,15 +99,7 @@ export async function updateSession(request: NextRequest) {
 
   // 2. Redirect to /maintenance if mode is ON (except for ADMINs & login page)
   if (isMaintenanceMode && !pathname.startsWith('/api/auth')) {
-    let isAdmin = false;
-    if (user) {
-      const { data: pengguna } = await supabase
-        .from('pengguna')
-        .select('role')
-        .eq('id', user.id)
-        .single();
-      isAdmin = pengguna?.role === 'ADMIN';
-    }
+    const isAdmin = pengguna?.role === 'ADMIN';
 
     if (!isAdmin && pathname !== '/maintenance' && pathname !== '/login') {
       const url = request.nextUrl.clone();
@@ -86,7 +110,7 @@ export async function updateSession(request: NextRequest) {
 
   // Early exits — non-public API paths
   if (pathname.startsWith('/api/')) {
-    if (!user) {
+    if (!user || !pengguna) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     return supabaseResponse;
@@ -94,25 +118,22 @@ export async function updateSession(request: NextRequest) {
 
   if (isPublicPath(pathname)) {
     // Allow logged-in users visiting /login to fall through and get redirected
-    if (user && pathname === '/login') {
+    if (user && pengguna && pathname === '/login') {
       // fall through
     } else {
       return supabaseResponse;
     }
   }
 
-  if (!user) {
-    const loginUrl = request.nextUrl.clone();
-    loginUrl.pathname = '/login';
-    return NextResponse.redirect(loginUrl);
+  if (!user || !pengguna) {
+    // Only redirect if it's not already login
+    if (pathname !== '/login') {
+      const loginUrl = request.nextUrl.clone();
+      loginUrl.pathname = '/login';
+      return NextResponse.redirect(loginUrl);
+    }
+    return supabaseResponse;
   }
-
-  // Single pengguna query — Select ALL fields to pass downstream
-  const { data: pengguna, error: penggunaError } = await supabase
-    .from('pengguna')
-    .select('*')
-    .eq('id', user.id)
-    .maybeSingle();
 
   if (penggunaError) {
     console.error('[Middleware] Pengguna query failed:', penggunaError);

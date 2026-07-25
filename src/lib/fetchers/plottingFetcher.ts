@@ -1,5 +1,5 @@
-import { logger } from '@/lib/logger';
 import { ServiceResult } from '@/types/api';
+import { apiFetch } from '@/lib/clientFetch';
 
 export interface ValidatePlottingRow {
   kode_asprak: string;
@@ -23,35 +23,17 @@ export async function validatePlottingImport(
   term: string,
   pendingAspraks?: { kode: string; nama_lengkap: string; nim: string; angkatan: number }[]
 ): Promise<ServiceResult<ValidationResult>> {
-  try {
-    const res = await fetch('/api/plotting', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'validate-import', rows, term, pendingAspraks }),
-    });
-    const json = await res.json();
-    if (!res.ok) return { ok: false, error: json.error };
-    return { ok: true, data: json };
-  } catch (e: any) {
-    logger.error('Error validating plotting import:', e);
-    return { ok: false, error: e.message };
-  }
+  return apiFetch<ValidationResult>('/api/plotting', {
+    method: 'POST',
+    body: JSON.stringify({ action: 'validate-import', rows, term, pendingAspraks }),
+  });
 }
 
 export async function savePlotting(
   assignments: { asprak_id: string; praktikum_id: string }[]
 ): Promise<ServiceResult<void>> {
-  try {
-    const res = await fetch('/api/plotting', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'save-plotting', assignments }),
-    });
-    const json = await res.json();
-    if (!res.ok) return { ok: false, error: json.error };
-    return { ok: true, data: undefined };
-  } catch (e: any) {
-    logger.error('Error saving plotting:', e);
-    return { ok: false, error: e.message };
-  }
+  return apiFetch<void>('/api/plotting', {
+    method: 'POST',
+    body: JSON.stringify({ action: 'save-plotting', assignments }),
+  });
 }

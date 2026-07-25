@@ -1,28 +1,18 @@
 import 'server-only';
-import { createAdminClient } from '@/lib/supabase/admin';
 import { AuditLogWithUser } from '@/types/database';
+import { honoFetch } from '@/lib/honoClient';
 
 export async function getAuditLogs(
   page: number = 1,
   pageSize: number = 10
 ): Promise<{ logs: AuditLogWithUser[]; count: number }> {
-  const admin = createAdminClient();
-  const from = (page - 1) * pageSize;
-  const to = from + pageSize - 1;
+  const result = await honoFetch<{ logs: AuditLogWithUser[]; count: number }>(
+    `/api/system/audit-logs?page=${page}&pageSize=${pageSize}`
+  );
 
-  const { data, count, error } = await admin
-    .from('audit_log')
-    .select('*, pengguna(nama_lengkap, role)', { count: 'exact' })
-    .order('created_at', { ascending: false })
-    .range(from, to);
-
-  if (error) {
-    throw new Error(`Failed to fetch audit logs: ${error.message}`);
+  if (!result.ok || !result.data) {
+    throw new Error(result.error || 'Failed to fetch audit logs');
   }
 
-  return {
-    logs: (data || []) as AuditLogWithUser[],
-    count: count || 0,
-  };
+  return result.data;
 }
-

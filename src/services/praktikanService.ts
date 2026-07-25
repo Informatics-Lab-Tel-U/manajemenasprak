@@ -1,9 +1,5 @@
 import 'server-only';
-
-import type { SupabaseClient } from '@supabase/supabase-js';
-
-import { createClient } from '@/lib/supabase/server';
-import { logger } from '@/lib/logger';
+import { honoFetch } from '@/lib/honoClient';
 
 export type PraktikanId = string | number;
 
@@ -40,108 +36,15 @@ export type PraktikanOptions = {
   mata_kuliah: string[];
 };
 
-async function getClient(supabaseClient?: SupabaseClient) {
-  return supabaseClient ?? (await createClient());
-}
-
-function normalizeRequired(value: unknown, field: string) {
-  const normalized = String(value ?? '')
-    .trim()
-    .toUpperCase();
-
-  if (!normalized) {
-    throw new Error(`${field} wajib diisi`);
-  }
-
-  return normalized;
-}
-
-function normalizeOptional(value: unknown) {
-  const normalized = String(value ?? '')
-    .trim()
-    .toUpperCase();
-
-  return normalized || null;
-}
-
-function getMataKuliahSearchAliases(value: unknown) {
-  const normalized = normalizeRequired(value, 'mata_kuliah');
-  const aliases = [
-    normalized,
-    normalized.replace(/[\s_]+/g, '-'),
-    normalized.replace(/[-_]+/g, ' '),
-    normalized.replace(/[\s_-]+/g, ''),
-  ];
-
-  return Array.from(new Set(aliases.filter(Boolean)));
-}
-
-function buildMataKuliahLikeFilter(value: unknown) {
-  return getMataKuliahSearchAliases(value)
-    .map((alias) => `mata_kuliah.ilike.%${alias}%`)
-    .join(',');
-}
-
-function normalizeCreateInput(input: CreatePraktikanInput) {
-  return {
-    nama: normalizeRequired(input.nama, 'nama'),
-    kelas: normalizeRequired(input.kelas, 'kelas'),
-    mata_kuliah: normalizeRequired(input.mata_kuliah, 'mata_kuliah'),
-    kode_asprak: normalizeOptional(input.kode_asprak),
-  };
-}
-
-function normalizeUpdateInput(input: UpdatePraktikanInput) {
-  const payload: Partial<CreatePraktikanInput> = {};
-
-  if ('nama' in input) payload.nama = normalizeRequired(input.nama, 'nama');
-  if ('kelas' in input) payload.kelas = normalizeRequired(input.kelas, 'kelas');
-  if ('mata_kuliah' in input) {
-    payload.mata_kuliah = normalizeRequired(input.mata_kuliah, 'mata_kuliah');
-  }
-  if ('kode_asprak' in input) payload.kode_asprak = normalizeOptional(input.kode_asprak);
-
-  if (Object.keys(payload).length === 0) {
-    throw new Error('Tidak ada data yang diperbarui');
-  }
-
-  return payload;
-}
-
-function validateId(id: unknown): PraktikanId {
-  const normalized = String(id ?? '').trim();
-  if (!normalized) throw new Error('id praktikan wajib diisi');
-  return normalized;
-}
-
 export async function getPraktikanList(
-  filters: PraktikanFilters = {},
-  supabaseClient?: SupabaseClient
+  filters: PraktikanFilters = {}
 ): Promise<PraktikanRecord[]> {
-  const supabase = await getClient(supabaseClient);
+  const params = new URLSearchParams();
+  if (filters.kelas) params.append('kelas', filters.kelas);
+  if (filters.mata_kuliah) params.append('mata_kuliah', filters.mata_kuliah);
 
-  let query = supabase
-    .from('praktikan')
-    .select('id, created_at, nama, kelas, kode_asprak, mata_kuliah')
-    .order('kelas', { ascending: true })
-    .order('nama', { ascending: true });
-
-  if (filters.kelas) {
-    query = query.eq('kelas', filters.kelas.trim().toUpperCase());
-  }
-
-  if (filters.mata_kuliah) {
-    query = query.or(buildMataKuliahLikeFilter(filters.mata_kuliah));
-  }
-
-  const { data, error } = await query;
-
-  if (error) {
-    logger.error('Error fetching praktikan data:', error);
-    throw new Error(`Gagal mengambil data praktikan: ${error.message}`);
-  }
-
-  return (data ?? []) as PraktikanRecord[];
+  const result = await honoFetch<PraktikanRecord[]>(`/api/praktikan?${params.toString()}`);
+  return result.ok && result.data ? result.data : [];
 }
 
 export function getActiveTahunAjaran(date = new Date()) {
@@ -157,260 +60,89 @@ export function getActiveTahunAjaran(date = new Date()) {
   return `${startYear}${endYear}-${semester}`;
 }
 
-export async function getActivePraktikumMataKuliahOptions(
-  supabaseClient?: SupabaseClient
-): Promise<string[]> {
-  const supabase = await getClient(supabaseClient);
-  const activeTahunAjaran = getActiveTahunAjaran();
-
-  const { data, error } = await supabase
-    .from('praktikum')
-    .select('nama')
-    .ilike('tahun_ajaran', `%${activeTahunAjaran}%`)
-    .order('nama', { ascending: true });
-
-  if (error) {
-    logger.error(`Error fetching praktikum mata kuliah for ${activeTahunAjaran}:`, error);
-    throw new Error(`Gagal mengambil mata kuliah praktikum: ${error.message}`);
-  }
-
-  const seen = new Set<string>();
-  return (data ?? []).reduce((acc: string[], row: { nama?: string | null }) => {
-    const nama = String(row.nama ?? '').trim().toUpperCase();
-    if (nama && !seen.has(nama)) {
-      seen.add(nama);
-      acc.push(nama);
-    }
-    return acc;
-  }, []);
+export async function getActivePraktikumMataKuliahOptions(): Promise<string[]> {
+  const result = await honoFetch<string[]>('/api/praktikan?action=mata-kuliah-options');
+  return result.ok && result.data ? result.data : [];
 }
 
 export async function getPraktikanKelasByMataKuliah(
-  mataKuliah: string | null | undefined,
-  supabaseClient?: SupabaseClient
+  mataKuliah: string | null | undefined
 ): Promise<string[]> {
-  const supabase = await getClient(supabaseClient);
-
-  let query = supabase.from('praktikan').select('kelas').order('kelas', { ascending: true });
-
-  if (mataKuliah && mataKuliah.trim()) {
-    query = query.or(buildMataKuliahLikeFilter(mataKuliah.trim()));
-  }
-
-  const { data, error } = await query;
-
-  if (error) {
-    logger.error(`Error fetching praktikan kelas for ${mataKuliah}:`, error);
-    throw new Error(`Gagal mengambil kelas praktikan: ${error.message}`);
-  }
-
-  const seen = new Set<string>();
-  return (data ?? []).reduce((acc: string[], row: { kelas?: string | null }) => {
-    const kelas = String(row.kelas ?? '').trim().toUpperCase();
-    if (kelas && !seen.has(kelas)) {
-      seen.add(kelas);
-      acc.push(kelas);
-    }
-    return acc;
-  }, []);
+  const query = mataKuliah ? `?action=kelas-options&mata_kuliah=${encodeURIComponent(mataKuliah)}` : '?action=kelas-options';
+  const result = await honoFetch<string[]>(`/api/praktikan${query}`);
+  return result.ok && result.data ? result.data : [];
 }
 
-export async function getPraktikanOptions(
-  supabaseClient?: SupabaseClient
-): Promise<PraktikanOptions> {
-  const supabase = await getClient(supabaseClient);
-
-  const { data, error } = await supabase.rpc('get_praktikan_options').single();
-
-  if (error) {
-    logger.error('Error fetching praktikan options:', error);
-    throw new Error(`Gagal mengambil opsi data praktikan: ${error.message}`);
-  }
-
-  const options = data as PraktikanOptions | null;
-
-  return {
-    kelas: options?.kelas ?? [],
-    mata_kuliah: options?.mata_kuliah ?? [],
-  };
+export async function getPraktikanOptions(): Promise<PraktikanOptions> {
+  const result = await honoFetch<PraktikanOptions>('/api/praktikan?action=options');
+  return result.ok && result.data ? result.data : { kelas: [], mata_kuliah: [] };
 }
 
 export async function createPraktikan(
-  input: CreatePraktikanInput | CreatePraktikanInput[],
-  supabaseClient?: SupabaseClient
+  input: CreatePraktikanInput | CreatePraktikanInput[]
 ): Promise<CreatePraktikanResult> {
-  const supabase = await getClient(supabaseClient);
-  const rows = Array.isArray(input) ? input : [input];
-
-  // Deduplicate the payload itself based on unique key: nama + kelas + mata_kuliah
-  const uniquePayloadMap = new Map<string, CreatePraktikanInput>();
-  for (const row of rows) {
-    const normalized = normalizeCreateInput(row);
-    const key = `${normalized.nama}|${normalized.kelas}|${normalized.mata_kuliah}`;
-    uniquePayloadMap.set(key, normalized);
-  }
-  const payload = Array.from(uniquePayloadMap.values());
-
-  if (payload.length === 0) {
-    return { inserted: 0, data: [] };
-  }
-
-  // Optimize fetch by only querying affected classes
-  const kelasSet = new Set(payload.map(p => p.kelas));
-
-  const { data: existingData, error: fetchError } = await supabase
-    .from('praktikan')
-    .select('id, nama, kelas, mata_kuliah, kode_asprak')
-    .in('kelas', Array.from(kelasSet));
-
-  if (fetchError) {
-    logger.error('Error fetching existing praktikan data:', fetchError);
-    throw new Error(`Gagal mengecek duplikasi data: ${fetchError.message}`);
-  }
-
-  const existingMap = new Map<string, { id: string, kode_asprak: string | null }>();
-  for (const row of existingData ?? []) {
-    const key = `${row.nama}|${row.kelas}|${row.mata_kuliah}`;
-    existingMap.set(key, { id: String(row.id), kode_asprak: row.kode_asprak });
-  }
-
-  const toInsert: CreatePraktikanInput[] = [];
-  const updatesByKode = new Map<string | null, string[]>();
-
-  for (const row of payload) {
-    const key = `${row.nama}|${row.kelas}|${row.mata_kuliah}`;
-    const existing = existingMap.get(key);
-
-    if (existing) {
-      // Only update if kode_asprak is different and provided
-      if (row.kode_asprak !== undefined && row.kode_asprak !== existing.kode_asprak) {
-        const kode = row.kode_asprak || null;
-        if (!updatesByKode.has(kode)) updatesByKode.set(kode, []);
-        updatesByKode.get(kode)!.push(existing.id);
-      }
-    } else {
-      toInsert.push(row);
-    }
-  }
-
-  let totalInserted = 0;
-  const returnedData: PraktikanRecord[] = [];
-
-  // 1. Execute bulk insert for new students
-  if (toInsert.length > 0) {
-    const { data: insertedData, error: insertError } = await supabase
-      .from('praktikan')
-      .insert(toInsert)
-      .select('id, created_at, nama, kelas, kode_asprak, mata_kuliah');
-
-    if (insertError) {
-      logger.error('Error inserting praktikan data:', insertError);
-      throw new Error(`Gagal menyimpan data praktikan baru: ${insertError.message}`);
-    }
-
-    totalInserted = insertedData?.length || 0;
-    if (insertedData) returnedData.push(...(insertedData as PraktikanRecord[]));
-  }
-
-  // 2. Execute bulk updates grouping by kode_asprak for existing students
-  const updatePromises = Array.from(updatesByKode.entries()).map(async ([kode, ids]) => {
-    const { data: updatedData, error: updateError } = await supabase
-      .from('praktikan')
-      .update({ kode_asprak: kode })
-      .in('id', ids)
-      .select('id, created_at, nama, kelas, kode_asprak, mata_kuliah');
-
-    if (updateError) {
-      logger.error(`Error updating praktikan (kode_asprak: ${kode}):`, updateError);
-      throw new Error(`Gagal memperbarui data praktikan lama: ${updateError.message}`);
-    }
-
-    return updatedData;
+  const result = await honoFetch<CreatePraktikanResult>('/api/praktikan', {
+    method: 'POST',
+    body: JSON.stringify(input),
   });
 
-  const updateResults = await Promise.all(updatePromises);
-  for (const updatedData of updateResults) {
-    if (updatedData) returnedData.push(...(updatedData as PraktikanRecord[]));
+  if (!result.ok || !result.data) {
+    throw new Error(result.error || 'Gagal menyimpan data praktikan');
   }
 
-  return { inserted: totalInserted, data: returnedData };
+  return result.data;
 }
 
 export async function updatePraktikan(
   id: PraktikanId,
-  input: UpdatePraktikanInput,
-  supabaseClient?: SupabaseClient
+  input: UpdatePraktikanInput
 ): Promise<PraktikanRecord> {
-  const supabase = await getClient(supabaseClient);
-  const praktikanId = validateId(id);
-  const payload = normalizeUpdateInput(input);
+  const result = await honoFetch<PraktikanRecord>('/api/praktikan', {
+    method: 'PUT',
+    body: JSON.stringify({ id, ...input }),
+  });
 
-  const { data, error } = await supabase
-    .from('praktikan')
-    .update(payload)
-    .eq('id', praktikanId)
-    .select('id, created_at, nama, kelas, kode_asprak, mata_kuliah')
-    .single();
-
-  if (error) {
-    logger.error(`Error updating praktikan ${praktikanId}:`, error);
-    throw new Error(`Gagal memperbarui data praktikan: ${error.message}`);
+  if (!result.ok || !result.data) {
+    throw new Error(result.error || 'Gagal memperbarui data praktikan');
   }
 
-  return data as PraktikanRecord;
+  return result.data;
 }
 
 export async function deletePraktikan(
-  id: PraktikanId,
-  supabaseClient?: SupabaseClient
+  id: PraktikanId
 ): Promise<void> {
-  const supabase = await getClient(supabaseClient);
-  const praktikanId = validateId(id);
+  const result = await honoFetch(`/api/praktikan?id=${id}`, {
+    method: 'DELETE',
+  });
 
-  const { error } = await supabase.from('praktikan').delete().eq('id', praktikanId);
-
-  if (error) {
-    logger.error(`Error deleting praktikan ${praktikanId}:`, error);
-    throw new Error(`Gagal menghapus data praktikan: ${error.message}`);
+  if (!result.ok) {
+    throw new Error(result.error || 'Gagal menghapus data praktikan');
   }
 }
 
 export async function deletePraktikanByKelas(
-  kelas: string,
-  supabaseClient?: SupabaseClient
+  kelas: string
 ): Promise<{ deleted: number }> {
-  const supabase = await getClient(supabaseClient);
-  const normalizedKelas = normalizeRequired(kelas, 'kelas');
+  const result = await honoFetch<{ deleted: number }>(`/api/praktikan?kelas=${encodeURIComponent(kelas)}`, {
+    method: 'DELETE',
+  });
 
-  const { data, error } = await supabase
-    .from('praktikan')
-    .delete()
-    .eq('kelas', normalizedKelas)
-    .select('id');
-
-  if (error) {
-    logger.error(`Error deleting praktikan by kelas ${normalizedKelas}:`, error);
-    throw new Error(`Gagal menghapus data praktikan berdasarkan kelas: ${error.message}`);
+  if (!result.ok || !result.data) {
+    throw new Error(result.error || 'Gagal menghapus data praktikan berdasarkan kelas');
   }
 
-  return { deleted: data?.length ?? 0 };
+  return result.data;
 }
 
-export async function deleteAllPraktikan(
-  supabaseClient?: SupabaseClient
-): Promise<{ deleted: number }> {
-  const supabase = await getClient(supabaseClient);
+export async function deleteAllPraktikan(): Promise<{ deleted: number }> {
+  const result = await honoFetch<{ deleted: number }>('/api/praktikan?action=delete-all', {
+    method: 'DELETE',
+  });
 
-  const { data, error } = await supabase
-    .from('praktikan')
-    .delete()
-    .not('id', 'is', null)
-    .select('id');
-
-  if (error) {
-    logger.error('Error deleting all praktikan:', error);
-    throw new Error(`Gagal menghapus seluruh data praktikan: ${error.message}`);
+  if (!result.ok || !result.data) {
+    throw new Error(result.error || 'Gagal menghapus seluruh data praktikan');
   }
 
-  return { deleted: data?.length ?? 0 };
+  return result.data;
 }

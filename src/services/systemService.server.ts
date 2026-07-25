@@ -1,41 +1,18 @@
 import 'server-only';
-import { createClient } from '@/lib/supabase/server';
-import { logger } from '@/lib/logger';
+import { honoFetch } from '@/lib/honoClient';
 
 export async function getMaintenanceStatus(): Promise<boolean> {
-  try {
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .from('system_config')
-      .select('value_bool')
-      .eq('key', 'maintenance_mode')
-      .single();
-
-    if (error) {
-      if (error.code !== 'PGRST116') {
-        logger.error('Error fetching maintenance status:', error);
-      }
-      return false;
-    }
-
-    return !!data?.value_bool;
-  } catch (err) {
-    logger.error('Unexpected error fetching maintenance status:', err);
-    return false;
-  }
+  const result = await honoFetch<{ maintenance: boolean }>('/api/system/maintenance');
+  return result.ok && result.data ? !!result.data.maintenance : false;
 }
 
 export async function setMaintenanceStatus(active: boolean, userId: string): Promise<void> {
-  const supabase = await createClient();
-  const { error } = await supabase.from('system_config').upsert({
-    key: 'maintenance_mode',
-    value_bool: active,
-    updated_at: new Date().toISOString(),
-    updated_by: userId,
+  const result = await honoFetch('/api/system/maintenance', {
+    method: 'POST',
+    body: JSON.stringify({ active, userId }),
   });
 
-  if (error) {
-    logger.error('Error setting maintenance status:', error);
-    throw new Error(`Gagal mengubah status maintenance: ${error.message}`);
+  if (!result.ok) {
+    throw new Error(result.error || 'Gagal mengubah status maintenance');
   }
 }

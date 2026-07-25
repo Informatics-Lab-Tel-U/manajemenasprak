@@ -1,96 +1,55 @@
 import { Praktikum, MataKuliah } from '@/types/database';
 import { ServiceResult } from '@/types/api';
 import type { PraktikumWithStats, PraktikumDetails } from '@/services/praktikumService';
+import { apiFetch } from '@/lib/clientFetch';
 
 export async function fetchAllPraktikum(): Promise<ServiceResult<Praktikum[]>> {
-  try {
-    const res = await fetch('/api/praktikum?action=all', {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
-      cache: 'no-store',
-    });
-    const result = await res.json();
-    return result;
-  } catch (error: any) {
-    return { ok: false, error: error.message };
-  }
+  return apiFetch<Praktikum[]>('/api/praktikum', {
+    params: { action: 'all' },
+    cache: 'no-store',
+  });
 }
 
 export async function fetchPraktikumDetails(id: string): Promise<ServiceResult<PraktikumDetails>> {
-  try {
-    const res = await fetch(`/api/praktikum?action=details&id=${id}`, {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
-      cache: 'no-store',
-    });
-    const result = await res.json();
-    return result;
-  } catch (error: any) {
-    return { ok: false, error: error.message };
-  }
+  return apiFetch<PraktikumDetails>('/api/praktikum', {
+    params: { action: 'details', id },
+    cache: 'no-store',
+  });
 }
 
 export async function fetchUniquePraktikumNames(): Promise<
   ServiceResult<{ id: string; nama: string }[]>
 > {
-  try {
-    const res = await fetch('/api/praktikum?action=names', {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
-      cache: 'no-store',
-    });
-    const result = await res.json();
-    return result;
-  } catch (error: any) {
-    return { ok: false, error: error.message };
-  }
+  return apiFetch<{ id: string; nama: string }[]>('/api/praktikum', {
+    params: { action: 'names' },
+    cache: 'no-store',
+  });
 }
 
 export async function fetchOrCreatePraktikum(
   nama: string,
   tahunAjaran: string
 ): Promise<ServiceResult<Praktikum>> {
-  try {
-    const res = await fetch('/api/praktikum', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'get-or-create', nama, tahunAjaran }),
-    });
-    const result = await res.json();
-    return result;
-  } catch (error: any) {
-    return { ok: false, error: error.message };
-  }
+  return apiFetch<Praktikum>('/api/praktikum', {
+    method: 'POST',
+    body: JSON.stringify({ action: 'get-or-create', nama, tahunAjaran }),
+  });
 }
 
 export async function fetchMataKuliah(): Promise<ServiceResult<MataKuliah[]>> {
-  try {
-    const res = await fetch('/api/praktikum?action=mata-kuliah', {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
-      cache: 'no-store',
-    });
-    const result = await res.json();
-    return result;
-  } catch (error: any) {
-    return { ok: false, error: error.message };
-  }
+  return apiFetch<MataKuliah[]>('/api/praktikum', {
+    params: { action: 'mata-kuliah' },
+    cache: 'no-store',
+  });
 }
 
 export async function fetchPraktikumByTerm(
   term: string
 ): Promise<ServiceResult<PraktikumWithStats[]>> {
-  try {
-    const res = await fetch(`/api/praktikum?action=by-term&term=${encodeURIComponent(term)}`, {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
-      cache: 'no-store',
-    });
-    const result = await res.json();
-    return result;
-  } catch (error: any) {
-    return { ok: false, error: error.message };
-  }
+  return apiFetch<PraktikumWithStats[]>('/api/praktikum', {
+    params: { action: 'by-term', term },
+    cache: 'no-store',
+  });
 }
 
 interface BulkImportResult {
@@ -102,15 +61,8 @@ interface BulkImportResult {
 export async function bulkImportPraktikum(
   rows: { nama: string; tahun_ajaran: string }[]
 ): Promise<ServiceResult<BulkImportResult>> {
-  try {
-    const res = await fetch('/api/praktikum', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'bulk-import', rows }),
-    });
-    const result = await res.json();
-    return result;
-  } catch (error: any) {
-    return { ok: false, error: error.message };
-  }
+  return apiFetch<BulkImportResult>('/api/praktikum', {
+    method: 'POST',
+    body: JSON.stringify({ action: 'bulk-import', rows }),
+  });
 }

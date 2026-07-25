@@ -11,7 +11,6 @@ import RealtimeMonitoringWidget from '@/components/RealtimeMonitoringWidget';
 import type { DashboardStats } from '@/services/databaseService';
 import { Jadwal, JadwalPengganti } from '@/types/database';
 import { useDashboard } from '@/hooks/useDashboard';
-import { Skeleton } from './ui/skeleton';
 import { useScheduleData } from '@/hooks/useScheduleData';
 import React from 'react';
 import { format } from 'date-fns';

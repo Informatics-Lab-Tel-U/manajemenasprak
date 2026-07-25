@@ -1,7 +1,5 @@
 import 'server-only';
-import { SupabaseClient } from '@supabase/supabase-js';
-import { createClient } from '@/lib/supabase/server';
-import { logger } from '@/lib/logger';
+import { honoFetch } from '@/lib/honoClient';
 
 export interface PlottingItem {
   id: number;
@@ -27,47 +25,20 @@ export async function getPlottingList(
   page: number,
   limit: number,
   term?: string,
-  praktikumId?: string,
-  supabaseClient?: SupabaseClient
+  praktikumId?: string
 ): Promise<PlottingListResult> {
-  const supabase = supabaseClient ?? (await createClient());
-  const from = (page - 1) * limit;
-  const to = from + limit - 1;
+  const params = new URLSearchParams({
+    page: String(page),
+    limit: String(limit),
+  });
+  if (term && term !== 'all') params.append('term', term);
+  if (praktikumId && praktikumId !== 'all') params.append('praktikumId', praktikumId);
 
-  let query = supabase.from('asprak_praktikum').select(
-    `
-      id,
-      asprak:asprak!inner (
-        id, kode, nama_lengkap, nim
-      ),
-      praktikum:praktikum!inner (
-        id, nama, tahun_ajaran
-      )
-    `,
-    { count: 'exact' }
-  );
-
-  if (term && term !== 'all') {
-    query = query.eq('praktikum.tahun_ajaran', term);
+  const result = await honoFetch<PlottingListResult>(`/api/plotting?${params.toString()}`);
+  if (!result.ok || !result.data) {
+    return { data: [], total: 0 };
   }
-
-  if (praktikumId && praktikumId !== 'all') {
-    query = query.eq('id_praktikum', praktikumId);
-  }
-
-  query = query.range(from, to);
-
-  const { data, count, error } = await query;
-
-  if (error) {
-    logger.error('Error fetching plotting list:', error);
-    throw new Error(error.message);
-  }
-
-  return {
-    data: (data || []) as unknown as PlottingItem[],
-    total: count || 0,
-  };
+  return result.data;
 }
 
 export interface ValidatePlottingRow {
@@ -90,196 +61,38 @@ export interface ValidationResult {
 export async function validatePlottingImport(
   rows: ValidatePlottingRow[],
   term: string,
-  pendingAspraks?: { kode: string; nama_lengkap: string; nim: string; angkatan: number }[],
-  supabaseClient?: SupabaseClient
+  pendingAspraks?: { kode: string; nama_lengkap: string; nim: string; angkatan: number }[]
 ): Promise<ValidationResult> {
-  const supabase = supabaseClient ?? (await createClient());
-
-  const uniqueCodes = Array.from(new Set(rows.map((r) => r.kode_asprak.trim())));
-  const allAspraks: any[] = [];
-
-  if (pendingAspraks && pendingAspraks.length > 0) {
-    const pendingWithTempId = pendingAspraks.map(p => ({
-      ...p,
-      id: `pending_${p.kode}_${p.nim}` // unique local ID placeholder
-    }));
-    allAspraks.push(...pendingWithTempId);
-  }
-
-  const chunks = [];
-  const chunkSize = 500;
-  for (let i = 0; i < uniqueCodes.length; i += chunkSize) {
-    chunks.push(uniqueCodes.slice(i, i + chunkSize));
-  }
-
-  await Promise.all(
-    chunks.map(async (chunk) => {
-      const { data } = await supabase
-        .from('asprak')
-        .select('id, kode, nama_lengkap, nim, angkatan')
-        .in('kode', chunk);
-      
-      if (data) {
-        // filter out from DB if it is already in pending
-        const dataFiltered = data.filter(d => !allAspraks.some(a => a.kode === d.kode));
-        allAspraks.push(...dataFiltered);
-      }
-    })
-  );
-
-  const asprakMap = new Map<string, typeof allAspraks>();
-  allAspraks?.forEach((a) => {
-    const existing = asprakMap.get(a.kode) || [];
-    existing.push(a);
-    asprakMap.set(a.kode, existing);
+  const result = await honoFetch<ValidationResult>('/api/plotting', {
+    method: 'POST',
+    body: JSON.stringify({ action: 'validate-import', rows, term, pendingAspraks }),
   });
 
-  const { data: termPraktikums } = await supabase
-    .from('praktikum')
-    .select('id, nama')
-    .eq('tahun_ajaran', term);
-
-  const praktikumMap = new Map<string, string>();
-  termPraktikums?.forEach((p) => {
-    praktikumMap.set(p.nama.toUpperCase(), p.id);
-  });
-
-  const praktikumIds = Array.from(praktikumMap.values());
-  const existingAssignments = new Set<string>();
-  if (praktikumIds.length > 0) {
-    const { data: existingPlotting } = await supabase
-      .from('asprak_praktikum')
-      .select('id_asprak, id_praktikum')
-      .in('id_praktikum', praktikumIds);
-
-    existingPlotting?.forEach((p) => {
-      existingAssignments.add(`${p.id_asprak}_${p.id_praktikum}`);
-    });
+  if (!result.ok || !result.data) {
+    throw new Error(result.error || 'Validation failed');
   }
-
-  const result: ValidationResult = {
-    validRows: [],
-    ambiguousRows: [],
-    invalidRows: [],
-  };
-
-  for (const row of rows) {
-    const code = row.kode_asprak.trim();
-    const mkName = row.mk_singkat.trim().toUpperCase();
-
-    const praktikumId = praktikumMap.get(mkName);
-    if (!praktikumId) {
-      result.invalidRows.push({
-        original: row,
-        reason: `Praktikum '${mkName}' not found in term ${term}`,
-      });
-      continue;
-    }
-
-    if (row.selected_asprak_id) {
-      if (existingAssignments.has(`${row.selected_asprak_id}_${praktikumId}`)) {
-        result.invalidRows.push({ original: row, reason: `Sudah terdaftar di Praktikum ini` });
-      } else {
-        result.validRows.push({
-          asprak_id: row.selected_asprak_id,
-          praktikum_id: praktikumId,
-          original: row,
-        });
-      }
-      continue;
-    }
-
-    const candidates = asprakMap.get(code);
-
-    if (!candidates || candidates.length === 0) {
-      result.invalidRows.push({ original: row, reason: `Asprak code '${code}' not found` });
-    } else if (candidates.length === 1) {
-      const asprakId = candidates[0].id;
-      if (existingAssignments.has(`${asprakId}_${praktikumId}`)) {
-        result.invalidRows.push({ original: row, reason: `Sudah terdaftar di Praktikum ini` });
-      } else {
-        result.validRows.push({
-          asprak_id: asprakId,
-          praktikum_id: praktikumId,
-          original: row,
-        });
-      }
-    } else {
-      const availableCandidates = candidates.filter(
-        (c) => !existingAssignments.has(`${c.id}_${praktikumId}`)
-      );
-
-      if (availableCandidates.length === 0) {
-        result.invalidRows.push({
-          original: row,
-          reason: `Semua kandidat untuk kode '${code}' sudah terdaftar di Praktikum ini`,
-        });
-      } else if (availableCandidates.length === 1) {
-        result.validRows.push({
-          asprak_id: availableCandidates[0].id,
-          praktikum_id: praktikumId,
-          original: row,
-        });
-      } else {
-        result.ambiguousRows.push({
-          original: row,
-          candidates: availableCandidates,
-          reason: `Multiple aspraks found with code '${code}'`,
-          praktikum_id: praktikumId,
-        });
-      }
-    }
-  }
-
-  return result;
+  return result.data;
 }
 
 export async function savePlotting(
-  assignments: { asprak_id: string; praktikum_id: string }[],
-  supabaseClient?: SupabaseClient
+  assignments: { asprak_id: string; praktikum_id: string }[]
 ) {
   if (!assignments || assignments.length === 0) return;
-  const supabase = supabaseClient ?? (await createClient());
-
-  const uniqueAssignments = new Map<string, { id_asprak: string; id_praktikum: string }>();
-  assignments.forEach((a) => {
-    uniqueAssignments.set(`${a.asprak_id}_${a.praktikum_id}`, {
-      id_asprak: a.asprak_id,
-      id_praktikum: a.praktikum_id,
-    });
+  const result = await honoFetch('/api/plotting', {
+    method: 'POST',
+    body: JSON.stringify({ action: 'save-plotting', assignments }),
   });
-  const payloadRows = Array.from(uniqueAssignments.values());
 
-  const asprakIds = Array.from(new Set(payloadRows.map((row) => row.id_asprak)));
-
-  const { data: existing, error: fetchError } = await supabase
-    .from('asprak_praktikum')
-    .select('id_asprak, id_praktikum')
-    .in('id_asprak', asprakIds);
-
-  if (fetchError) {
-    logger.error('Error fetching existing plotting assignments:', fetchError);
-    throw new Error(fetchError.message);
-  }
-
-  const existingSet = new Set((existing || []).map((e) => `${e.id_asprak}_${e.id_praktikum}`));
-
-  const toInsert = payloadRows.filter(
-    (row) => !existingSet.has(`${row.id_asprak}_${row.id_praktikum}`)
-  );
-
-  if (toInsert.length > 0) {
-    const { error } = await supabase.from('asprak_praktikum').insert(toInsert);
-
-    if (error) {
-      logger.error('Error saving plotting assignments:', error);
-      throw new Error(error.message);
-    }
+  if (!result.ok) {
+    throw new Error(result.error || 'Failed to save plotting');
   }
 }
 
-export async function deletePlotting(id: number, supabaseClient?: SupabaseClient) {
-  const supabase = supabaseClient ?? (await createClient());
-  const { error } = await supabase.from('asprak_praktikum').delete().eq('id', id);
-  if (error) throw new Error(error.message);
+export async function deletePlotting(id: number) {
+  const result = await honoFetch(`/api/plotting/${id}`, {
+    method: 'DELETE',
+  });
+  if (!result.ok) {
+    throw new Error(result.error || 'Failed to delete plotting');
+  }
 }

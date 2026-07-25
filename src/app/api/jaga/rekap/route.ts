@@ -1,23 +1,8 @@
-import { NextResponse } from 'next/server';
-import { getRekapJagaAggregated } from '@/services/jagaService';
-import { requireRoleApi } from '@/lib/auth';
-import { apiErrorResponse } from '@/lib/api-error';
+import { NextRequest } from 'next/server';
+import { forwardToHono } from '@/lib/apiProxy';
 
-export async function GET(request: Request) {
-  try {
-    const guard = await requireRoleApi(['ADMIN', 'ASLAB']);
-    if (!guard.ok) return guard.response;
+export const fetchCache = 'force-no-store';
 
-    const { searchParams } = new URL(request.url);
-    const term = searchParams.get('term');
-
-    if (!term) {
-      return NextResponse.json({ error: 'Term parameter is required' }, { status: 400 });
-    }
-
-    const data = await getRekapJagaAggregated(term);
-    return NextResponse.json({ data });
-  } catch (err) {
-    return apiErrorResponse(err, 'GET /api/jaga/rekap');
-  }
+export async function GET(request: NextRequest) {
+  return forwardToHono(request, '/api/jaga/rekap');
 }

@@ -1,8 +1,6 @@
 import 'server-only';
-import { SupabaseClient } from '@supabase/supabase-js';
-import { createClient } from '@/lib/supabase/server';
 import { Praktikum, MataKuliah } from '@/types/database';
-import { logger } from '@/lib/logger';
+import { honoFetch } from '@/lib/honoClient';
 
 export interface PraktikumWithStats extends Praktikum {
   asprak_count: number;
@@ -21,152 +19,55 @@ export interface PraktikumDetails {
 }
 
 export async function getPraktikumById(
-  id: string,
-  supabaseClient?: SupabaseClient
+  id: string
 ): Promise<Praktikum | null> {
-  const supabase = supabaseClient ?? (await createClient());
-  const { data, error } = await supabase.from('praktikum').select('*').eq('id', id).single();
-  if (error) {
-    if (error.code !== 'PGRST116') {
-      logger.error(`Error fetching praktikum ${id}:`, error);
-    }
-    return null;
-  }
-  return data as Praktikum;
+  const result = await honoFetch<Praktikum>(`/api/praktikum?id=${id}`);
+  return result.ok && result.data ? result.data : null;
 }
 
-export async function getAllPraktikum(supabaseClient?: SupabaseClient): Promise<Praktikum[]> {
-  const supabase = supabaseClient ?? (await createClient());
-  const { data, error } = await supabase.from('praktikum').select('*').order('nama');
-
-  if (error) {
-    logger.error('Error fetching praktikum:', error);
-    return [];
-  }
-  return data as Praktikum[];
+export async function getAllPraktikum(): Promise<Praktikum[]> {
+  const result = await honoFetch<Praktikum[]>('/api/praktikum?action=all');
+  return result.ok && result.data ? result.data : [];
 }
 
-export async function getUniquePraktikumNames(
-  supabaseClient?: SupabaseClient
-): Promise<{ id: string; nama: string }[]> {
-  const supabase = supabaseClient ?? (await createClient());
-  const { data } = await supabase.from('praktikum').select('id, nama, tahun_ajaran').order('nama');
-  if (!data) return [];
-
-  const unique = Array.from(new Set(data.map((p) => p.nama))).map((name) => ({
-    id: name,
-    nama: name,
-  }));
-  return unique;
+export async function getUniquePraktikumNames(): Promise<{ id: string; nama: string }[]> {
+  const result = await honoFetch<{ id: string; nama: string }[]>('/api/praktikum?action=names');
+  return result.ok && result.data ? result.data : [];
 }
 
 export async function getPraktikumByTerm(
-  term?: string,
-  supabaseClient?: SupabaseClient
+  term?: string
 ): Promise<any[]> {
-  const supabase = supabaseClient ?? (await createClient());
-  let query = supabase.from('praktikum').select('*, asprak_praktikum(count)').order('nama');
-
-  if (term && term !== 'all') {
-    query = query.eq('tahun_ajaran', term);
-  }
-
-  const { data, error } = await query;
-
-  if (error) {
-    logger.error(`Error fetching praktikum for term ${term}:`, error);
-    return [];
-  }
-
-  return (data || []).map((item: any) => ({
-    ...item,
-    asprak_count: item.asprak_praktikum?.[0]?.count || 0,
-  }));
+  const query = term && term !== 'all' ? `?action=by-term&term=${encodeURIComponent(term)}` : '?action=all';
+  const result = await honoFetch<any[]>(`/api/praktikum${query}`);
+  return result.ok && result.data ? result.data : [];
 }
 
 export async function getPraktikumDetails(
-  praktikumId: string,
-  supabaseClient?: SupabaseClient
+  praktikumId: string
 ): Promise<PraktikumDetails> {
-  const supabase = supabaseClient ?? (await createClient());
-  const { data: mks, error: mkError } = await supabase
-    .from('mata_kuliah')
-    .select('id')
-    .eq('id_praktikum', praktikumId);
-
-  if (mkError || !mks || mks.length === 0) {
-    return { total_kelas: 0, classes: [] };
-  }
-
-  const mkIds = mks.map((m) => m.id);
-
-  const { data: jadwals, error: jadwalError } = await supabase
-    .from('jadwal')
-    .select('kelas, hari, jam, ruangan')
-    .in('id_mk', mkIds)
-    .order('kelas');
-
-  if (jadwalError || !jadwals) {
-    return { total_kelas: 0, classes: [] };
-  }
-
-  const grouped: Record<string, any[]> = {};
-  jadwals.forEach((j) => {
-    if (!grouped[j.kelas]) grouped[j.kelas] = [];
-    grouped[j.kelas].push({ hari: j.hari, jam: j.jam, ruangan: j.ruangan });
-  });
-
-  const classes = Object.keys(grouped).map((kelas) => ({
-    kelas,
-    jadwal: grouped[kelas],
-  }));
-
-  return {
-    total_kelas: classes.length,
-    classes,
-  };
+  const result = await honoFetch<PraktikumDetails>(`/api/praktikum?action=details&id=${praktikumId}`);
+  return result.ok && result.data ? result.data : { total_kelas: 0, classes: [] };
 }
 
 export async function getOrCreatePraktikum(
   nama: string,
-  tahunAjaran: string,
-  supabaseClient?: SupabaseClient
+  tahunAjaran: string
 ): Promise<Praktikum> {
-  const supabase = supabaseClient ?? (await createClient());
-  const { data: existing } = await supabase
-    .from('praktikum')
-    .select('*')
-    .eq('nama', nama)
-    .eq('tahun_ajaran', tahunAjaran)
-    .maybeSingle();
+  const result = await honoFetch<Praktikum>('/api/praktikum', {
+    method: 'POST',
+    body: JSON.stringify({ action: 'get-or-create', nama, tahunAjaran }),
+  });
 
-  if (existing) return existing;
-
-  const { data, error } = await supabase
-    .from('praktikum')
-    .insert({ nama, tahun_ajaran: tahunAjaran })
-    .select()
-    .single();
-
-  if (error) {
-    logger.error('Error creating praktikum:', error);
-    throw new Error(`Failed to create Praktikum: ${error.message}`);
+  if (!result.ok || !result.data) {
+    throw new Error(result.error || 'Failed to create Praktikum');
   }
-  return data;
+  return result.data;
 }
 
-export async function getAllMataKuliah(supabaseClient?: SupabaseClient): Promise<MataKuliah[]> {
-  const supabase = supabaseClient ?? (await createClient());
-  const { data, error } = await supabase
-    .from('mata_kuliah')
-    .select('*, praktikum:praktikum(nama, tahun_ajaran)')
-    .order('nama_lengkap');
-
-  if (error) {
-    logger.error('Error fetching mata kuliah:', error);
-    return [];
-  }
-  return data as MataKuliah[];
+export async function getAllMataKuliah(): Promise<MataKuliah[]> {
+  const result = await honoFetch<MataKuliah[]>('/api/praktikum?action=mata-kuliah');
+  return result.ok && result.data ? result.data : [];
 }
 
 export interface CreateMataKuliahInput {
@@ -177,44 +78,56 @@ export interface CreateMataKuliahInput {
 }
 
 export async function createMataKuliah(
-  input: CreateMataKuliahInput,
-  supabaseClient?: SupabaseClient
+  input: CreateMataKuliahInput
 ): Promise<MataKuliah> {
-  const supabase = supabaseClient ?? (await createClient());
-  const { data, error } = await supabase.from('mata_kuliah').insert(input).select().single();
+  const result = await honoFetch<MataKuliah>('/api/praktikum', {
+    method: 'POST',
+    body: JSON.stringify({ action: 'create-mk', ...input }),
+  });
 
-  if (error) {
-    logger.error('Error creating mata kuliah:', error);
-    throw new Error(`Failed to create MK: ${error.message}`);
+  if (!result.ok || !result.data) {
+    throw new Error(result.error || 'Failed to create MK');
   }
-  return data;
+  return result.data;
 }
 
 export async function deletePraktikumByIds(
-  ids: string[],
-  supabaseClient?: SupabaseClient
+  ids: string[]
 ): Promise<void> {
   if (ids.length === 0) return;
-  const supabase = supabaseClient ?? (await createClient());
-  await supabase.from('praktikum').delete().in('id', ids);
+  const result = await honoFetch('/api/praktikum?action=delete-ids', {
+    method: 'DELETE',
+    body: JSON.stringify({ ids }),
+  });
+  if (!result.ok) {
+    throw new Error(result.error || 'Failed to delete praktikum by IDs');
+  }
 }
 
 export async function deleteMataKuliahByIds(
-  ids: string[],
-  supabaseClient?: SupabaseClient
+  ids: string[]
 ): Promise<void> {
   if (ids.length === 0) return;
-  const supabase = supabaseClient ?? (await createClient());
-  await supabase.from('mata_kuliah').delete().in('id', ids);
+  const result = await honoFetch('/api/praktikum?action=delete-mk-ids', {
+    method: 'DELETE',
+    body: JSON.stringify({ ids }),
+  });
+  if (!result.ok) {
+    throw new Error(result.error || 'Failed to delete mata kuliah by IDs');
+  }
 }
 
 export async function deleteAsprakPraktikumByIds(
-  ids: number[],
-  supabaseClient?: SupabaseClient
+  ids: number[]
 ): Promise<void> {
   if (ids.length === 0) return;
-  const supabase = supabaseClient ?? (await createClient());
-  await supabase.from('asprak_praktikum').delete().in('id', ids);
+  const result = await honoFetch('/api/praktikum?action=delete-asprak-prak-ids', {
+    method: 'DELETE',
+    body: JSON.stringify({ ids }),
+  });
+  if (!result.ok) {
+    throw new Error(result.error || 'Failed to delete asprak praktikum by IDs');
+  }
 }
 
 export interface BulkImportPraktikumResult {
@@ -224,62 +137,21 @@ export interface BulkImportPraktikumResult {
 }
 
 export async function bulkUpsertPraktikum(
-  rows: { nama: string; tahun_ajaran: string }[],
-  supabaseClient?: SupabaseClient
+  rows: { nama: string; tahun_ajaran: string }[]
 ): Promise<BulkImportPraktikumResult> {
-  const supabase = supabaseClient ?? (await createClient());
-  const result: BulkImportPraktikumResult = { inserted: 0, skipped: 0, errors: [] };
+  const result = await honoFetch<BulkImportPraktikumResult>('/api/praktikum', {
+    method: 'POST',
+    body: JSON.stringify({ action: 'bulk-import', rows }),
+  });
 
-  if (rows.length === 0) return result;
-
-  try {
-    const terms = Array.from(new Set(rows.map((r) => r.tahun_ajaran)));
-
-    const { data: existing } = await supabase
-      .from('praktikum')
-      .select('nama, tahun_ajaran')
-      .in('tahun_ajaran', terms);
-
-    const existingSet = new Set((existing || []).map((e) => `${e.nama}_${e.tahun_ajaran}`));
-
-    const toInsert = rows.filter((r) => !existingSet.has(`${r.nama}_${r.tahun_ajaran}`));
-    result.skipped = rows.length - toInsert.length;
-
-    if (toInsert.length > 0) {
-      const uniquePayload = [];
-      const seen = new Set();
-      for (const row of toInsert) {
-        const key = `${row.nama}_${row.tahun_ajaran}`;
-        if (!seen.has(key)) {
-          seen.add(key);
-          uniquePayload.push(row);
-        }
-      }
-
-      result.skipped += toInsert.length - uniquePayload.length;
-
-      const { data, error } = await supabase.from('praktikum').insert(uniquePayload).select();
-
-      if (error) {
-        result.errors.push(`Bulk insert err: ${error.message}`);
-      } else {
-        result.inserted = data?.length || 0;
-      }
-    }
-  } catch (e: any) {
-    result.errors.push(`Process err: ${e.message}`);
+  if (!result.ok || !result.data) {
+    return { inserted: 0, skipped: 0, errors: [result.error || 'Bulk import error'] };
   }
 
-  return result;
+  return result.data;
 }
 
-export async function getTahunAjaranList(supabaseClient?: SupabaseClient): Promise<string[]> {
-  const supabase = supabaseClient ?? (await createClient());
-  const { data, error } = await supabase.from('praktikum').select('tahun_ajaran');
-  if (error) {
-    logger.error('Error fetching tahun ajaran list:', error);
-    return [];
-  }
-  const years = Array.from(new Set(data.map((p: any) => p.tahun_ajaran)));
-  return years.sort((a, b) => b.localeCompare(a));
+export async function getTahunAjaranList(): Promise<string[]> {
+  const result = await honoFetch<string[]>('/api/tahun-ajaran');
+  return result.ok && result.data ? result.data : [];
 }

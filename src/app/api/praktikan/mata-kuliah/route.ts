@@ -8,11 +8,24 @@ import {
   jsonWithCors,
   praktikanOptionsResponse,
 } from '../_access';
-import { getActivePraktikumMataKuliahOptions } from '@/services/praktikanService';
-import { createAdminClient } from '@/lib/supabase/admin';
+
+const backendUrl = process.env.HONO_BACKEND_URL || 'https://manajemenasprak-backend.workers.dev';
 
 const getCachedMataKuliah = unstable_cache(
-  async () => getActivePraktikumMataKuliahOptions(createAdminClient()),
+  async () => {
+    // Call backend with action=options to get mata_kuliah list
+    const url = new URL(`${backendUrl}/api/praktikan`);
+    url.searchParams.set('action', 'options');
+
+    const res = await fetch(url.toString(), {
+      headers: {
+        'x-service-role-key': process.env.SUPABASE_SERVICE_ROLE_KEY || '',
+      },
+    });
+
+    const json = await res.json();
+    return json.data?.mata_kuliah || [];
+  },
   ['praktikan-mata-kuliah-api'],
   { tags: ['praktikan'] }
 );

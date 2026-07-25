@@ -1,203 +1,107 @@
 import type { Pelanggaran, Praktikum, Jadwal } from '@/types/database';
 import type { ServiceResult, CreatePelanggaranInput } from '@/types/api';
 import type { PelanggaranCountMap, PelanggaranSummaryEntry } from '@/services/pelanggaranService';
+import { apiFetch } from '@/lib/clientFetch';
 
 export async function fetchAllPelanggaran(): Promise<ServiceResult<Pelanggaran[]>> {
-  try {
-    const res = await fetch('/api/pelanggaran', {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
-      cache: 'no-store',
-    });
-    const result = await res.json();
-    return result;
-  } catch (error: any) {
-    return { ok: false, error: error.message };
-  }
+  return apiFetch<Pelanggaran[]>('/api/pelanggaran', { cache: 'no-store' });
 }
 
 export async function fetchPelanggaranByFilter(
   idPraktikum?: string,
   tahunAjaran?: string
 ): Promise<ServiceResult<Pelanggaran[]>> {
-  try {
-    const url = new URL('/api/pelanggaran', window.location.origin);
-    if (idPraktikum) url.searchParams.append('idPraktikum', idPraktikum);
-    if (tahunAjaran) url.searchParams.append('tahunAjaran', tahunAjaran);
-
-    const res = await fetch(url.toString(), {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
-      cache: 'no-store',
-    });
-    const result = await res.json();
-    return result;
-  } catch (error: any) {
-    return { ok: false, error: error.message };
-  }
+  return apiFetch<Pelanggaran[]>('/api/pelanggaran', {
+    params: { idPraktikum, tahunAjaran },
+    cache: 'no-store',
+  });
 }
 
 export async function createPelanggaran(
   input: CreatePelanggaranInput
 ): Promise<ServiceResult<Pelanggaran | Pelanggaran[]>> {
-  try {
-    const res = await fetch('/api/pelanggaran', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(input),
-    });
-    const result = await res.json();
-    return result;
-  } catch (error: any) {
-    return { ok: false, error: error.message };
-  }
+  return apiFetch<Pelanggaran | Pelanggaran[]>('/api/pelanggaran', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
 }
 
 export async function deletePelanggaran(id: string): Promise<ServiceResult<void>> {
-  try {
-    const res = await fetch(`/api/pelanggaran?id=${id}`, {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-    });
-    const result = await res.json();
-    return result;
-  } catch (error: any) {
-    return { ok: false, error: error.message };
-  }
+  return apiFetch<void>('/api/pelanggaran', {
+    method: 'DELETE',
+    params: { id },
+  });
 }
 
 export async function fetchPelanggaranCounts(
   isKoor: boolean
 ): Promise<ServiceResult<PelanggaranCountMap>> {
-  try {
-    const res = await fetch(`/api/pelanggaran?action=counts&isKoor=${isKoor}`, {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
-      cache: 'no-store',
-    });
-    const result = await res.json();
-    return result;
-  } catch (error: any) {
-    return { ok: false, error: error.message };
-  }
+  return apiFetch<PelanggaranCountMap>('/api/pelanggaran', {
+    params: { action: 'counts', isKoor },
+    cache: 'no-store',
+  });
 }
 
 export async function fetchKoorPraktikumList(userId: string): Promise<ServiceResult<Praktikum[]>> {
-  try {
-    const res = await fetch(`/api/pelanggaran?action=praktikum-list&isKoor=true&userId=${userId}`, {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
-      cache: 'no-store',
-    });
-    const result = await res.json();
-    return result;
-  } catch (error: any) {
-    return { ok: false, error: error.message };
-  }
+  return apiFetch<Praktikum[]>('/api/pelanggaran', {
+    params: { action: 'praktikum-list', isKoor: true, userId },
+    cache: 'no-store',
+  });
 }
 
 export async function fetchJadwalForPelanggaran(): Promise<ServiceResult<Jadwal[]>> {
-  try {
-    const res = await fetch('/api/pelanggaran?action=jadwal-list', {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
-      cache: 'no-store',
-    });
-    const result = await res.json();
-    return result;
-  } catch (error: any) {
-    return { ok: false, error: error.message };
-  }
+  return apiFetch<Jadwal[]>('/api/pelanggaran', {
+    params: { action: 'jadwal-list' },
+    cache: 'no-store',
+  });
 }
 
 export async function finalizePelanggaran(idPraktikum: string): Promise<ServiceResult<void>> {
-  try {
-    const res = await fetch('/api/pelanggaran', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'finalize', id_praktikum: idPraktikum }),
-    });
-    const result = await res.json();
-    return result;
-  } catch (error: any) {
-    return { ok: false, error: error.message };
-  }
+  return apiFetch<void>('/api/pelanggaran', {
+    method: 'POST',
+    body: JSON.stringify({ action: 'finalize', id_praktikum: idPraktikum }),
+  });
 }
+
 export async function fetchPraktikumDetail(id: string): Promise<ServiceResult<Praktikum>> {
-  try {
-    const res = await fetch(`/api/pelanggaran?action=praktikum-detail&idPraktikum=${id}`, {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
-      cache: 'no-store',
-    });
-    const result = await res.json();
-    return result;
-  } catch (error: any) {
-    return { ok: false, error: error.message };
-  }
+  return apiFetch<Praktikum>('/api/pelanggaran', {
+    params: { action: 'praktikum-detail', idPraktikum: id },
+    cache: 'no-store',
+  });
 }
 
 export async function unfinalizePelanggaran(idPraktikum: string): Promise<ServiceResult<void>> {
-  try {
-    const res = await fetch('/api/pelanggaran', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'unfinalize', id_praktikum: idPraktikum }),
-    });
-    const result = await res.json();
-    return result;
-  } catch (error: any) {
-    return { ok: false, error: error.message };
-  }
+  return apiFetch<void>('/api/pelanggaran', {
+    method: 'POST',
+    body: JSON.stringify({ action: 'unfinalize', id_praktikum: idPraktikum }),
+  });
 }
 
 export async function fetchFinalizedModules(idPraktikum: string): Promise<ServiceResult<number[]>> {
-  try {
-    const res = await fetch(
-      `/api/pelanggaran?action=finalized-modules&idPraktikum=${idPraktikum}`,
-      {
-        cache: 'no-store',
-      }
-    );
-    const result = await res.json();
-    return result;
-  } catch (error: any) {
-    return { ok: false, error: error.message };
-  }
+  return apiFetch<number[]>('/api/pelanggaran', {
+    params: { action: 'finalized-modules', idPraktikum },
+    cache: 'no-store',
+  });
 }
 
 export async function finalizePelanggaranByModul(
   idPraktikum: string,
   modul: number
 ): Promise<ServiceResult<void>> {
-  try {
-    const res = await fetch('/api/pelanggaran', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'finalize-modul', id_praktikum: idPraktikum, modul }),
-    });
-    const result = await res.json();
-    return result;
-  } catch (error: any) {
-    return { ok: false, error: error.message };
-  }
+  return apiFetch<void>('/api/pelanggaran', {
+    method: 'POST',
+    body: JSON.stringify({ action: 'finalize-modul', id_praktikum: idPraktikum, modul }),
+  });
 }
 
 export async function unfinalizePelanggaranByModul(
   idPraktikum: string,
   modul: number
 ): Promise<ServiceResult<void>> {
-  try {
-    const res = await fetch('/api/pelanggaran', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'unfinalize-modul', id_praktikum: idPraktikum, modul }),
-    });
-    const result = await res.json();
-    return result;
-  } catch (error: any) {
-    return { ok: false, error: error.message };
-  }
+  return apiFetch<void>('/api/pelanggaran', {
+    method: 'POST',
+    body: JSON.stringify({ action: 'unfinalize-modul', id_praktikum: idPraktikum, modul }),
+  });
 }
 
 export async function fetchPelanggaranSummary(
@@ -205,21 +109,13 @@ export async function fetchPelanggaranSummary(
   modul?: number,
   minCount: number = 1
 ): Promise<ServiceResult<PelanggaranSummaryEntry[]>> {
-  try {
-    const url = new URL('/api/pelanggaran', window.location.origin);
-    url.searchParams.append('action', 'summary');
-    url.searchParams.append('tahunAjaran', tahunAjaran);
-    if (modul) url.searchParams.append('modul', String(modul));
-    if (minCount > 1) url.searchParams.append('minCount', String(minCount));
-
-    const res = await fetch(url.toString(), {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
-      cache: 'no-store',
-    });
-    const result = await res.json();
-    return result;
-  } catch (error: any) {
-    return { ok: false, error: error.message };
-  }
+  return apiFetch<PelanggaranSummaryEntry[]>('/api/pelanggaran', {
+    params: {
+      action: 'summary',
+      tahunAjaran,
+      modul: modul ? String(modul) : undefined,
+      minCount: minCount > 1 ? String(minCount) : undefined,
+    },
+    cache: 'no-store',
+  });
 }

@@ -3,7 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { NavButton } from '@/components/ui/nav-button';
 import { Label } from '@/components/ui/label';
-import { CheckCircle, ArrowLeft, Save, XCircle, HelpCircle } from 'lucide-react';
+import { CheckCircle, XCircle, HelpCircle } from 'lucide-react';
 
 export interface PlottingPreviewRow {
   index: number;

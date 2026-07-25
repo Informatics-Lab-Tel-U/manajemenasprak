@@ -1,139 +1,93 @@
 import 'server-only';
-import { SupabaseClient } from '@supabase/supabase-js';
-import { createClient } from '@/lib/supabase/server';
 import { logger } from '@/lib/logger';
+import { honoFetch } from '@/lib/honoClient';
 
-export async function getAllBlogPosts(supabaseClient?: SupabaseClient) {
-  const supabase = supabaseClient ?? (await createClient());
-  const { data, error } = await supabase
-    .from('blog_posts')
-    .select(`
-      id, title, slug, status, published_at, view_count, excerpt, content,
-      blog_categories (id, name, slug),
-      pengguna (id, nama_lengkap)
-    `)
-    .is('deleted_at', null)
-    .order('created_at', { ascending: false });
-
-  if (error) {
-    logger.error('Error fetching all blog posts:', error);
+export async function getAllBlogPosts() {
+  try {
+    const res = await honoFetch<any[]>('/api/blog/posts');
+    if (!res.ok || !res.data) return [];
+    return res.data;
+  } catch (error) {
+    logger.error('Error fetching all blog posts from Hono:', error);
     return [];
   }
-  return data;
 }
 
-export async function getPublishedBlogPosts(supabaseClient?: SupabaseClient) {
-  const supabase = supabaseClient ?? (await createClient());
-  const { data, error } = await supabase
-    .from('blog_posts')
-    .select(`
-      id, title, slug, excerpt, published_at, cover_image_url, cover_image_alt,
-      blog_categories (name),
-      pengguna (nama_lengkap)
-    `)
-    .eq('status', 'published')
-    .is('deleted_at', null)
-    .order('published_at', { ascending: false });
-
-  if (error) {
-    logger.error('Error fetching published blog posts:', error);
+export async function getPublishedBlogPosts() {
+  try {
+    const res = await honoFetch<any[]>('/api/blog/posts?status=published');
+    if (!res.ok || !res.data) return [];
+    return res.data;
+  } catch (error) {
+    logger.error('Error fetching published blog posts from Hono:', error);
     return [];
   }
-  return data;
 }
 
-export async function getBlogPostById(id: string, supabaseClient?: SupabaseClient) {
-  const supabase = supabaseClient ?? (await createClient());
-  const { data, error } = await supabase
-    .from('blog_posts')
-    .select('*, blog_post_tags(tag_id)')
-    .eq('id', id)
-    .single();
-
-  if (error) {
-    logger.error(`Error fetching blog post with ID ${id}:`, error);
+export async function getBlogPostById(id: string) {
+  try {
+    const res = await honoFetch<any>(`/api/blog/posts/${id}`);
+    if (!res.ok || !res.data) return null;
+    return res.data;
+  } catch (error) {
+    logger.error(`Error fetching blog post with ID ${id} from Hono:`, error);
     return null;
   }
-  return data;
 }
 
-export async function getBlogPostBySlug(slug: string, supabaseClient?: SupabaseClient) {
-  const supabase = supabaseClient ?? (await createClient());
-  const { data, error } = await supabase
-    .from('blog_posts')
-    .select(`
-      *,
-      blog_categories (name, slug),
-      pengguna (nama_lengkap)
-    `)
-    .eq('slug', slug)
-    .eq('status', 'published')
-    .is('deleted_at', null)
-    .single();
-
-  if (error) {
-    logger.error(`Error fetching blog post with slug ${slug}:`, error);
+export async function getBlogPostBySlug(slug: string) {
+  try {
+    const res = await honoFetch<any>(`/api/blog/posts/slug/${slug}`);
+    if (!res.ok || !res.data) return null;
+    return res.data;
+  } catch (error) {
+    logger.error(`Error fetching blog post with slug ${slug} from Hono:`, error);
     return null;
   }
-  return data;
 }
 
-export async function getAllBlogCategories(supabaseClient?: SupabaseClient) {
-  const supabase = supabaseClient ?? (await createClient());
-  const { data, error } = await supabase
-    .from('blog_categories')
-    .select('id, name, slug')
-    .order('name');
-
-  if (error) {
-    logger.error('Error fetching blog categories:', error);
+export async function getAllBlogCategories() {
+  try {
+    const res = await honoFetch<any[]>('/api/blog/categories');
+    if (!res.ok || !res.data) return [];
+    return res.data;
+  } catch (error) {
+    logger.error('Error fetching blog categories from Hono:', error);
     return [];
   }
-  return data;
 }
 
-export async function getAllBlogTags(supabaseClient?: SupabaseClient) {
-  const supabase = supabaseClient ?? (await createClient());
-  const { data, error } = await supabase
-    .from('blog_tags')
-    .select('id, name, slug')
-    .order('name');
-
-  if (error) {
-    logger.error('Error fetching blog tags:', error);
+export async function getAllBlogTags() {
+  try {
+    const res = await honoFetch<any[]>('/api/blog/tags');
+    if (!res.ok || !res.data) return [];
+    return res.data;
+  } catch (error) {
+    logger.error('Error fetching blog tags from Hono:', error);
     return [];
   }
-  return data;
 }
 
-export async function createBlogCategory(name: string, slug: string, supabaseClient?: SupabaseClient) {
-  const supabase = supabaseClient ?? (await createClient());
-  const { data, error } = await supabase
-    .from('blog_categories')
-    .insert({ name, slug })
-    .select()
-    .single();
-
-  if (error) {
-    logger.error('Error creating blog category:', error);
-    throw new Error(error.message);
+export async function createBlogCategory(name: string, slug: string) {
+  const res = await honoFetch<any>('/api/blog/categories', {
+    method: 'POST',
+    body: JSON.stringify({ name, slug }),
+  });
+  if (!res.ok || !res.data) {
+    throw new Error(res.error || 'Error creating blog category');
   }
-  return data;
+  return res.data;
 }
 
-export async function createBlogTag(name: string, slug: string, supabaseClient?: SupabaseClient) {
-  const supabase = supabaseClient ?? (await createClient());
-  const { data, error } = await supabase
-    .from('blog_tags')
-    .insert({ name, slug })
-    .select()
-    .single();
-
-  if (error) {
-    logger.error('Error creating blog tag:', error);
-    throw new Error(error.message);
+export async function createBlogTag(name: string, slug: string) {
+  const res = await honoFetch<any>('/api/blog/tags', {
+    method: 'POST',
+    body: JSON.stringify({ name, slug }),
+  });
+  if (!res.ok || !res.data) {
+    throw new Error(res.error || 'Error creating blog tag');
   }
-  return data;
+  return res.data;
 }
 
 export interface CreateBlogPostInput {
@@ -148,23 +102,15 @@ export interface CreateBlogPostInput {
   tags?: string[];
 }
 
-export async function createBlogPost(input: CreateBlogPostInput, supabaseClient?: SupabaseClient) {
-  const supabase = supabaseClient ?? (await createClient());
-  const { tags, ...postData } = input;
-  
-  const { data, error } = await supabase.from('blog_posts').insert(postData).select().single();
-
-  if (error) {
-    logger.error('Error creating blog post:', error);
-    throw new Error(error.message);
+export async function createBlogPost(input: CreateBlogPostInput) {
+  const res = await honoFetch<any>('/api/blog/posts', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+  if (!res.ok || !res.data) {
+    throw new Error(res.error || 'Error creating blog post');
   }
-  
-  if (tags && tags.length > 0) {
-    const tagInserts = tags.map((tagId) => ({ post_id: data.id, tag_id: tagId }));
-    await supabase.from('blog_post_tags').insert(tagInserts);
-  }
-  
-  return data;
+  return res.data;
 }
 
 export interface UpdateBlogPostInput {
@@ -177,55 +123,33 @@ export interface UpdateBlogPostInput {
   tags?: string[];
 }
 
-export async function updateBlogPost(id: string, input: UpdateBlogPostInput, supabaseClient?: SupabaseClient) {
-  const supabase = supabaseClient ?? (await createClient());
-  const { tags, ...postData } = input;
-  
-  const { data, error } = await supabase
-    .from('blog_posts')
-    .update(postData)
-    .eq('id', id)
-    .select()
-    .single();
-
-  if (error) {
-    logger.error('Error updating blog post:', error);
-    throw new Error(error.message);
+export async function updateBlogPost(id: string, input: UpdateBlogPostInput) {
+  const res = await honoFetch<any>(`/api/blog/posts/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(input),
+  });
+  if (!res.ok || !res.data) {
+    throw new Error(res.error || 'Error updating blog post');
   }
-  
-  if (tags !== undefined) {
-    await supabase.from('blog_post_tags').delete().eq('post_id', id);
-    if (tags.length > 0) {
-      const tagInserts = tags.map((tagId) => ({ post_id: id, tag_id: tagId }));
-      await supabase.from('blog_post_tags').insert(tagInserts);
-    }
-  }
-  
-  return data;
+  return res.data;
 }
 
-export async function incrementBlogViewCount(id: string, supabaseClient?: SupabaseClient) {
-  const supabase = supabaseClient ?? (await createClient());
-  // Assuming there is an RPC 'increment_view_count', otherwise we gracefully fallback or ignore
-  const { error } = await supabase.rpc('increment_view_count', { post_id: id });
-  if (error) {
-    // If RPC doesn't exist, we skip error to prevent crash on read, but log it
-    logger.error('Error incrementing view count (RPC might be missing):', error);
+export async function incrementBlogViewCount(id: string) {
+  try {
+    await honoFetch(`/api/blog/posts/${id}/view`, {
+      method: 'POST',
+    });
+  } catch (error) {
+    logger.error('Error incrementing view count:', error);
   }
 }
 
-export async function deleteBlogPost(id: string, supabaseClient?: SupabaseClient) {
-  const supabase = supabaseClient ?? (await createClient());
-  const { data, error } = await supabase
-    .from('blog_posts')
-    .update({ deleted_at: new Date().toISOString() })
-    .eq('id', id)
-    .select()
-    .single();
-
-  if (error) {
-    logger.error('Error deleting blog post:', error);
-    throw new Error(error.message);
+export async function deleteBlogPost(id: string) {
+  const res = await honoFetch<any>(`/api/blog/posts/${id}`, {
+    method: 'DELETE',
+  });
+  if (!res.ok || !res.data) {
+    throw new Error(res.error || 'Error deleting blog post');
   }
-  return data;
+  return res.data;
 }

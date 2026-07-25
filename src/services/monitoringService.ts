@@ -1,24 +1,8 @@
 import 'server-only';
-import { createAdminClient } from '@/lib/supabase/admin';
-import { logger } from '@/lib/logger';
 import { LabStatus } from '@/store/useMonitoringStore';
+import { honoFetch } from '@/lib/honoClient';
 
 export async function getMonitoringLabs(): Promise<LabStatus[]> {
-  try {
-    const supabaseAdmin = createAdminClient();
-    const { data, error } = await supabaseAdmin
-      .from('monitoring_lab')
-      .select('*')
-      .order('lab_id', { ascending: true });
-
-    if (error) {
-      logger.error('Error fetching monitoring labs:', error);
-      return [];
-    }
-
-    return (data || []) as LabStatus[];
-  } catch (error) {
-    logger.error('Exception fetching monitoring labs:', error);
-    return [];
-  }
+  const result = await honoFetch<LabStatus[]>('/api/monitoring/heartbeat');
+  return result.ok && result.data ? result.data : [];
 }
