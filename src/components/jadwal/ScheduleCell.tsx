@@ -9,6 +9,7 @@ interface ScheduleCellProps {
   onClick?: () => void;
   showLecturer?: boolean;
   showAsprakCount?: boolean;
+  isOnlineActive?: boolean;
 }
 
 export const ScheduleCell: React.FC<ScheduleCellProps> = ({
@@ -16,6 +17,7 @@ export const ScheduleCell: React.FC<ScheduleCellProps> = ({
   onClick,
   showLecturer = false,
   showAsprakCount = false,
+  isOnlineActive = false,
 }) => {
   const isPengganti = jadwal.is_pengganti;
   const bgColor =
@@ -36,7 +38,11 @@ export const ScheduleCell: React.FC<ScheduleCellProps> = ({
         onClick
           ? 'cursor-pointer hover:brightness-110 hover:scale-105 hover:z-20 hover:shadow-lg'
           : ''
-      } ${isPengganti ? 'z-10' : ''}`}
+      } ${isPengganti ? 'z-10' : ''} ${
+        isOnlineActive
+          ? 'ring-[3px] ring-green-500/90 dark:ring-green-400 ring-inset shadow-[0_0_15px_rgba(34,197,94,0.4)] z-20'
+          : ''
+      }`}
       style={
         isPengganti
           ? {

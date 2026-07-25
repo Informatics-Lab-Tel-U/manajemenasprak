@@ -20,6 +20,7 @@ import React, { useMemo } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useJaga } from '@/hooks/useJaga';
 import { getJagaShiftsByDay } from '@/utils/jagaUtils';
+import { useMonitoringStore } from '@/store/useMonitoringStore';
 
 const chartConfigAsprak = {
   count: {
@@ -106,6 +107,8 @@ export default function DashboardCharts({
 
   const { jagaList } = useJaga(term, activeModul, currentDayName);
   const shiftInfos = getJagaShiftsByDay(currentDayName);
+
+  const labStatus = useMonitoringStore((state) => state.labStatus);
 
   return (
     <div className="grid grid-cols-1 gap-6">
@@ -290,19 +293,34 @@ export default function DashboardCharts({
                           </td>
                           {uniqueRooms.map((room) => {
                             const jadwals = scheduleMatrix[session.rowKey]?.[room] || [];
+                            
+                            // Cek status ruangan dari realtime monitoring
+                            const roomStatus = labStatus.find(
+                              (l) => l.lab_id.replace(/\s+/g, '').toUpperCase() === room.replace(/\s+/g, '').toUpperCase()
+                            );
+                            const isRoomOnline = roomStatus?.status === 'online';
+
                             return (
                               <td
                                 key={`${session.rowKey}-${room}`}
                                 className="p-0 border-r border-border h-[60px] w-[120px] relative align-top"
                               >
                                 <div className="flex flex-col w-full h-full min-h-[60px]">
-                                  {jadwals.map((jadwal) => (
-                                    <ScheduleCell
-                                      key={jadwal.id}
-                                      jadwal={jadwal}
-                                      showAsprakCount={true}
-                                    />
-                                  ))}
+                                  {jadwals.map((jadwal) => {
+                                    // Kelas dianggap sedang berjalan jika ruangan tersebut online 
+                                    // dan kelas yang sedang aktif di ruangan sama dengan jadwal.kelas ini.
+                                    // Ini menjamin indikator realtime 100% akurat sesuai aktivitas aktual di lab.
+                                    const isClassActive = isRoomOnline && roomStatus?.kelas === jadwal.kelas;
+
+                                    return (
+                                      <ScheduleCell
+                                        key={jadwal.id}
+                                        jadwal={jadwal}
+                                        showAsprakCount={true}
+                                        isOnlineActive={isClassActive}
+                                      />
+                                    );
+                                  })}
                                 </div>
                               </td>
                             );
@@ -328,6 +346,10 @@ export default function DashboardCharts({
                 <div className="flex items-center gap-1.5">
                   <div className="w-4 h-4 rounded-sm bg-muted border border-border"></div>
                   <span>Jadwal Reguler</span>
+                </div>
+                <div className="flex items-center gap-1.5 ml-2">
+                  <div className="w-4 h-4 rounded-sm bg-muted ring-[3px] ring-green-500/90 ring-inset"></div>
+                  <span>Kelas Sedang Berjalan (Realtime)</span>
                 </div>
               </div>
             </>
