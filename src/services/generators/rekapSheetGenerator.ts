@@ -1,4 +1,4 @@
-import * as ExcelJS from 'exceljs';
+import type * as ExcelJS from 'exceljs';
 import { PRESENSI_STYLES, ThemeColors } from '@/constants/presensiConstants';
 import { PresensiGeneratorOptions } from '@/types/presensi';
 import { colNumToLetter, getRowDistribution } from './utils';

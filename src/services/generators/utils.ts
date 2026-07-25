@@ -1,4 +1,4 @@
-import * as ExcelJS from 'exceljs';
+import type * as ExcelJS from 'exceljs';
 import { PRESENSI_STYLES, ThemeColors } from '@/constants/presensiConstants';
 
 export function applyHeaderStyle(cell: ExcelJS.Cell, colors: ThemeColors = PRESENSI_STYLES.COLORS) {

@@ -1,4 +1,4 @@
-import * as ExcelJS from 'exceljs';
+import type * as ExcelJS from 'exceljs';
 import { addDays, format, startOfDay } from 'date-fns';
 import { PRESENSI_STYLES, PRESENSI_COLUMN_WIDTHS, PRESENSI_STRINGS, ThemeColors } from '@/constants/presensiConstants';
 import { PresensiGeneratorOptions } from '@/types/presensi';
@@ -101,7 +101,7 @@ export function createModul(
   for (let r = 1; r <= 3; r++) {
     for (let c = startCol; c < startCol + totalColsThisModule; c++) {
       const cell = sheet.getCell(r, c);
-      if (cell.type !== ExcelJS.ValueType.Merge || cell.address === sheet.getCell(r, c).master.address) {
+      if (cell.type !== 1 /* ValueType.Merge */ || cell.address === sheet.getCell(r, c).master.address) {
         applyHeaderStyle(cell, colors);
       } else {
         const mc = sheet.getCell(r, c);
