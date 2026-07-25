@@ -120,25 +120,20 @@ export default function DatabaseClientPage({
       }, 500);
 
       try {
-        const ab = await file.arrayBuffer();
-        const XLSX = await import('xlsx');
-        const wb = XLSX.read(ab);
+        const formData = new FormData();
+        formData.append('file', file);
 
-        const getSheetData = (name: string) => {
-          const sheet = wb.Sheets[name] || wb.Sheets[name.replace('_', ' ')] || null;
-          if (!sheet) return [];
-          return XLSX.utils.sheet_to_json(sheet);
-        };
+        const res = await fetch('/api/util/parse-dataset', {
+          method: 'POST',
+          body: formData,
+        });
 
-        const data = {
-          praktikum: getSheetData('praktikum'),
-          mataKuliah: getSheetData('mata_kuliah'),
-          asprak: getSheetData('asprak'),
-          jadwal: getSheetData('jadwal'),
-          plotting: getSheetData('asprak_praktikum'),
-        };
+        const resData = await res.json();
+        if (!res.ok || !resData.ok) {
+          throw new Error(resData.error || 'Gagal memproses file dataset');
+        }
 
-        setExcelData(data);
+        setExcelData(resData.data);
         setActiveTerm(term);
 
         clearInterval(interval);
@@ -274,25 +269,21 @@ export default function DatabaseClientPage({
     try {
       const result = await importFetcher.exportExcelDataset(exportTerm);
       if (result.ok && result.data) {
-        const XLSX = await import('xlsx');
-        const wb = XLSX.utils.book_new();
-
-        const wsPraktikum = XLSX.utils.json_to_sheet(result.data.praktikum);
-        XLSX.utils.book_append_sheet(wb, wsPraktikum, 'praktikum');
-
-        const wsMk = XLSX.utils.json_to_sheet(result.data.mata_kuliah);
-        XLSX.utils.book_append_sheet(wb, wsMk, 'mata_kuliah');
-
-        const wsAsprak = XLSX.utils.json_to_sheet(result.data.asprak);
-        XLSX.utils.book_append_sheet(wb, wsAsprak, 'asprak');
-
-        const wsJadwal = XLSX.utils.json_to_sheet(result.data.jadwal);
-        XLSX.utils.book_append_sheet(wb, wsJadwal, 'jadwal');
-
-        const wsPivot = XLSX.utils.json_to_sheet(result.data.asprak_praktikum);
-        XLSX.utils.book_append_sheet(wb, wsPivot, 'asprak_praktikum');
-
-        XLSX.writeFile(wb, `EXPORT_${exportTerm}.xlsx`);
+        const res = await fetch('/api/util/export-dataset', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ dataset: result.data, filename: `EXPORT_${exportTerm}.xlsx` }),
+        });
+        if (!res.ok) throw new Error('Ekspor dataset gagal');
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `EXPORT_${exportTerm}.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => window.URL.revokeObjectURL(url), 100);
         updateUiState({ status: { type: 'success', message: `Berhasil mengekspor data untuk ${exportTerm}!` } });
       } else {
         updateUiState({ status: { type: 'error', message: result.error || 'Ekspor gagal' } });
@@ -305,94 +296,23 @@ export default function DatabaseClientPage({
   };
 
   const handleDownloadTemplate = async () => {
-    const XLSX = await import('xlsx');
-    const wb = XLSX.utils.book_new();
     const startY = parseInt(termYear);
     const termStr = `${startY}${startY + 1}-${termSem}`;
-
-    const praktikumRows = [
-      { nama_singkat: 'PBO', tahun_ajaran: termStr },
-      { nama_singkat: 'ALPRO', tahun_ajaran: termStr },
-      { nama_singkat: 'JARKOM', tahun_ajaran: termStr },
-    ];
-    const wsPraktikum = XLSX.utils.json_to_sheet(praktikumRows);
-    XLSX.utils.book_append_sheet(wb, wsPraktikum, 'praktikum');
-
-    const mkRows = [
-      {
-        mk_singkat: 'PBO',
-        program_studi: 'IF',
-        nama_lengkap: 'Pemrograman Berorientasi Objek',
-        dosen_koor: 'ABC',
-      },
-      {
-        mk_singkat: 'ALPRO',
-        program_studi: 'SE',
-        nama_lengkap: 'Algoritma Pemrograman',
-        dosen_koor: 'DEF',
-      },
-      {
-        mk_singkat: 'JARKOM',
-        program_studi: 'IF',
-        nama_lengkap: 'Jaringan Komputer',
-        dosen_koor: 'GHI',
-      },
-    ];
-    const wsMk = XLSX.utils.json_to_sheet(mkRows);
-    XLSX.utils.book_append_sheet(wb, wsMk, 'mata_kuliah');
-
-    const asprakRows = [
-      { nim: '1201210001', nama_lengkap: 'Budi Santoso', kode: 'BDS', angkatan: '21' },
-      { nim: '1201210002', nama_lengkap: 'Siti Aminah', kode: 'SIT', angkatan: '21' },
-      { nim: '1201210003', nama_lengkap: 'Ahmad Dani', kode: 'ADM', angkatan: '21' },
-    ];
-    const wsAsprak = XLSX.utils.json_to_sheet(asprakRows);
-    XLSX.utils.book_append_sheet(wb, wsAsprak, 'asprak');
-
-    const jadwalRows = [
-      {
-        kelas: 'IF-45-01',
-        nama_singkat: 'PBO',
-        hari: 'SENIN',
-        sesi: 1,
-        jam: '06:30',
-        ruangan: 'TULT 0612',
-        total_asprak: 2,
-        dosen: 'ABC',
-      },
-      {
-        kelas: 'SE-45-02',
-        nama_singkat: 'ALPRO',
-        hari: 'SELASA',
-        sesi: 2,
-        jam: '08:30',
-        ruangan: 'GKU 0201',
-        total_asprak: 3,
-        dosen: 'DEF',
-      },
-      {
-        kelas: 'IF-45-03',
-        nama_singkat: 'JARKOM',
-        hari: 'RABU',
-        sesi: 3,
-        jam: '10:30',
-        ruangan: 'TULT 0505',
-        total_asprak: 2,
-        dosen: 'GHI',
-      },
-    ];
-    const wsJadwal = XLSX.utils.json_to_sheet(jadwalRows);
-    XLSX.utils.book_append_sheet(wb, wsJadwal, 'jadwal');
-
-    const pivotRows = [
-      { kode_asprak: 'BDS', mk_singkat: 'PBO' },
-      { kode_asprak: 'SIT', mk_singkat: 'ALPRO' },
-      { kode_asprak: 'ADM', mk_singkat: 'JARKOM' },
-    ];
-    const wsPivot = XLSX.utils.json_to_sheet(pivotRows);
-    XLSX.utils.book_append_sheet(wb, wsPivot, 'asprak_praktikum');
-
-    XLSX.writeFile(wb, `${termStr}_TEMPLATE.xlsx`);
+    try {
+      const res = await fetch(`/api/util/template?type=dataset&term=${encodeURIComponent(termStr)}&format=xlsx`);
+      if (!res.ok) throw new Error('Gagal mengunduh template');
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${termStr}_TEMPLATE.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => window.URL.revokeObjectURL(url), 100);
+    } catch (e: any) {
+      toast.error(e.message || 'Gagal mengunduh template');
+    }
   };
 
   const handleToggleMaintenance = async (checked: boolean) => {

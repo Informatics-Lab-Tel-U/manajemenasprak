@@ -1,11 +1,9 @@
 
 import fs from 'fs';
 import path from 'path';
-import csv from 'csv-parser';
 import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
 
-// Load environment variables
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -25,14 +23,24 @@ const supabase = createClient(supabaseUrl, supabaseKey, {
 const DATASET_ROOT = path.resolve(process.cwd(), '../');
 
 async function readCSV(filePath: string): Promise<any[]> {
+    if (!fs.existsSync(filePath)) return [];
+    const content = fs.readFileSync(filePath, 'utf8');
+    const lines = content.split(/\r?\n/).filter((line: string) => line.trim().length > 0);
+    if (lines.length === 0) return [];
+
+    const headers = lines[0].split(',').map((h: string) => h.trim().replace(/^["']|["']$/g, ''));
     const results: any[] = [];
-    return new Promise((resolve, reject) => {
-        fs.createReadStream(filePath)
-            .pipe(csv())
-            .on('data', (data) => results.push(data))
-            .on('end', () => resolve(results))
-            .on('error', (err) => reject(err));
-    });
+
+    for (let i = 1; i < lines.length; i++) {
+        const currentline = lines[i].split(',');
+        if (currentline.length < headers.length) continue;
+        const obj: Record<string, any> = {};
+        for (let j = 0; j < headers.length; j++) {
+            obj[headers[j]] = (currentline[j] || '').trim().replace(/^["']|["']$/g, '');
+        }
+        results.push(obj);
+    }
+    return results;
 }
 
 function getProdiFromKelas(kelas: string): string {
