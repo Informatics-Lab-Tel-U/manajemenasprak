@@ -8,7 +8,7 @@ export const metadata = {
   title: 'Edit Post',
 };
 
-export default async function EditPostPage({ params }: { params: { id: string } }) {
+export default async function EditPostPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
   const [post, categories, tags] = await Promise.all([
