@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Plus, Upload, Trash2, Download } from 'lucide-react';
 import { toast } from 'sonner';
+import { exportSpreadsheet } from '@/lib/spreadsheet';
 
 import { Button } from '@/components/ui/button';
 import { PraktikanRecord, PraktikanOptions } from './types';
@@ -240,8 +241,7 @@ export default function PraktikanClientPage() {
         return;
       }
 
-      const XLSX = await import('xlsx');
-      const exportData = dataToExport.map((row, index) => ({
+      const exportDataFormatted = dataToExport.map((row, index) => ({
         No: index + 1,
         'Nama Lengkap': row.nama,
         Kelas: row.kelas,
@@ -249,10 +249,11 @@ export default function PraktikanClientPage() {
         'Kode Asprak': row.kode_asprak || '-',
       }));
 
-      const ws = XLSX.utils.json_to_sheet(exportData);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, 'Data Praktikan');
-      XLSX.writeFile(wb, payload.action === 'kelas' ? `data_praktikan_${payload.kelas}.xlsx` : 'data_praktikan.xlsx');
+      await exportSpreadsheet(
+        exportDataFormatted, 
+        payload.action === 'kelas' ? `data_praktikan_${payload.kelas}.xlsx` : 'data_praktikan.xlsx',
+        'Data Praktikan'
+      );
       
       toast.success('Data praktikan berhasil diekspor');
       setShowExportModal(false);

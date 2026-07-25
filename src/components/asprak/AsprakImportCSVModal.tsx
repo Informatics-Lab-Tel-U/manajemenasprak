@@ -42,6 +42,7 @@ import {
   ExistingNimInfo,
 } from '@/utils/validation/asprakValidation';
 import { useTermStore } from '@/store/useTermStore';
+import { parseSpreadsheet, downloadTemplate } from '@/lib/spreadsheet';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -83,36 +84,8 @@ type Step = 'upload' | 'preview';
 
 const RECOMMENDED_COLS = ['kode', 'angkatan', 'role'];
 
-const handleDownloadTemplate = async (format: 'csv' | 'xlsx') => {
-  const data = [
-    {
-      nama_lengkap: 'Budi Santoso',
-      nim: '1301213001',
-      kode: 'BUS',
-      angkatan: 2021,
-      role: 'ASPRAK',
-    },
-    { nama_lengkap: 'Siti Aminah', nim: '1301213002', kode: '', angkatan: 2021, role: 'ASLAB' },
-  ];
-
-  if (format === 'csv') {
-    const Papa = (await import('papaparse')).default;
-    const csv = Papa.unparse(data);
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', 'template_asprak.csv');
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  } else if (format === 'xlsx') {
-    const XLSX = await import('xlsx');
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Template');
-    XLSX.writeFile(wb, 'template_asprak.xlsx');
-  }
+const handleDownloadTemplate = (format: 'csv' | 'xlsx') => {
+  downloadTemplate('asprak', format);
 };
 
 // ─── Component ───────────────────────────────────────────────────────────────
@@ -165,13 +138,31 @@ export default function AsprakImportCSVModal({
       return h.replace(/[^a-z0-9]/g, '_');
     };
 
-    const handleParsedData = (data: any[]) => {
+    try {
+      const matrix = await parseSpreadsheet(file);
+      if (matrix.length < 2) {
+        setError('File kosong — tidak ada data yang ditemukan.');
+        return;
+      }
+
+      const rawHeaders = matrix[0];
+      const normalizedHeaders = rawHeaders.map(normalizeHeader);
+
+      const data = matrix.slice(1).reduce((acc: any[], row: string[]) => {
+        if (!row || !row.some(Boolean)) return acc;
+        const newRow: any = {};
+        normalizedHeaders.forEach((header: string, idx: number) => {
+          newRow[header] = row[idx] ?? '';
+        });
+        acc.push(newRow);
+        return acc;
+      }, []);
+
       if (data.length === 0) {
         setError('File kosong — tidak ada data yang ditemukan.');
         return;
       }
 
-      // Validate required columns
       const firstRow = data[0];
       const requiredCols = ['nama_lengkap', 'nim'];
       const missingCols = requiredCols.filter((col) => !(col in firstRow));
@@ -182,59 +173,10 @@ export default function AsprakImportCSVModal({
         return;
       }
 
-      // Build preview rows with code generation
-      try {
-        setParsedData(data);
-        setStep('preview');
-      } catch (e: any) {
-        setError(`Error saat generate kode: ${e instanceof Error ? e.message : String(e)}`);
-      }
-    };
-
-    if (file.name.endsWith('.xlsx')) {
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        try {
-          const XLSX = await import('xlsx');
-          const data = e.target?.result;
-          const workbook = XLSX.read(data, { type: 'binary' });
-          const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-          const jsonData = XLSX.utils.sheet_to_json<any>(worksheet);
-
-          const normalizedData = jsonData.map((row: any) => {
-            const newRow: any = {};
-            Object.keys(row).forEach((key) => {
-              newRow[normalizeHeader(key)] = row[key];
-            });
-            return newRow;
-          });
-          
-          handleParsedData(normalizedData);
-        } catch (err: any) {
-          setError(`Gagal membaca file Excel: ${err.message}`);
-        }
-      };
-      reader.readAsBinaryString(file);
-    } else {
-      const Papa = (await import('papaparse')).default;
-      Papa.parse<RawCSVRow>(file, {
-        header: true,
-        skipEmptyLines: true,
-        transformHeader: normalizeHeader,
-        complete: (results) => {
-          const { data, errors } = results;
-
-          if (errors.length > 0) {
-            setError(`CSV parsing error: ${errors[0].message}`);
-            return;
-          }
-
-          handleParsedData(data);
-        },
-        error: (err: Error) => {
-          setError(`Failed to parse CSV: ${err.message}`);
-        },
-      });
+      setParsedData(data);
+      setStep('preview');
+    } catch (err: any) {
+      setError(`Gagal membaca file: ${err.message}`);
     }
   }, []);
 

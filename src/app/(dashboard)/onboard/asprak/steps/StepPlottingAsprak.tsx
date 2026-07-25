@@ -22,35 +22,14 @@ import {
 } from '@/utils/validation/plottingValidation';
 import { useAsprakOnboardStore } from '@/store/useAsprakOnboardStore';
 import { NavButton } from '@/components/ui/nav-button';
+import { parseSpreadsheet, downloadTemplate } from '@/lib/spreadsheet';
 
 interface StepPlottingAsprakProps {
   term: string;
 }
 
 const handleDownloadTemplate = async (format: 'csv' | 'xlsx') => {
-  const data = [
-    { kode_asprak: 'ARS', mk_singkat: 'PBO' },
-    { kode_asprak: 'ZZA', mk_singkat: 'STRUKDAT' },
-  ];
-
-  if (format === 'csv') {
-    const Papa = (await import('papaparse')).default;
-    const csv = Papa.unparse(data);
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', 'template_plotting.csv');
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  } else if (format === 'xlsx') {
-    const XLSX = await import('xlsx');
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Template');
-    XLSX.writeFile(wb, 'template_plotting.xlsx');
-  }
+  downloadTemplate('plotting', format);
 };
 
 export default function StepPlottingAsprak({ term }: StepPlottingAsprakProps) {
@@ -123,45 +102,31 @@ export default function StepPlottingAsprak({ term }: StepPlottingAsprakProps) {
       return h.replace(/[^a-z0-9]/g, '_');
     };
 
-    if (file.name.endsWith('.xlsx')) {
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        try {
-          const XLSX = await import('xlsx');
-          const data = e.target?.result;
-          const workbook = XLSX.read(data, { type: 'binary' });
-          const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-          const jsonData = XLSX.utils.sheet_to_json<any>(worksheet);
+    try {
+      const matrix = await parseSpreadsheet(file);
+      if (matrix.length < 2) {
+        setError('File kosong — tidak ada data yang ditemukan.');
+        setLoading(false);
+        return;
+      }
 
-          const normalizedData = jsonData.map((row: any) => {
-            const newRow: any = {};
-            Object.keys(row).forEach((key) => {
-              newRow[normalizeHeader(key)] = row[key];
-            });
-            return newRow;
-          });
-          
-          await handleParsedData(normalizedData);
-        } catch (err: any) {
-          setError(`Gagal membaca file Excel: ${err.message}`);
-          setLoading(false);
-        }
-      };
-      reader.readAsBinaryString(file);
-    } else {
-      const Papa = (await import('papaparse')).default;
-      Papa.parse(file, {
-        header: true,
-        skipEmptyLines: true,
-        transformHeader: normalizeHeader,
-        complete: async (results: any) => {
-          await handleParsedData(results.data);
-        },
-        error: (e) => {
-          setError(`CSV Error: ${e.message}`);
-          setLoading(false);
-        },
-      });
+      const rawHeaders = matrix[0];
+      const normalizedHeaders = rawHeaders.map(normalizeHeader);
+
+      const normalizedData = matrix.slice(1).reduce((acc: any[], row: string[]) => {
+        if (!row || !row.some(Boolean)) return acc;
+        const newRow: any = {};
+        normalizedHeaders.forEach((header: string, idx: number) => {
+          newRow[header] = row[idx] ?? '';
+        });
+        acc.push(newRow);
+        return acc;
+      }, []);
+
+      await handleParsedData(normalizedData);
+    } catch (err: any) {
+      setError(`Gagal membaca file: ${err.message}`);
+      setLoading(false);
     }
   };
 

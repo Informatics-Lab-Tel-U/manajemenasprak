@@ -26,6 +26,7 @@ import { toast } from 'sonner';
 import * as jadwalFetcher from '@/lib/fetchers/jadwalFetcher';
 import { JadwalPenggantiModal } from '@/components/jadwal/JadwalPenggantiModal';
 import { useTermStore } from '@/store/useTermStore';
+import { exportSpreadsheet } from '@/lib/spreadsheet';
 
 interface JadwalPenggantiClientPageProps {
   initialTerms: string[];
@@ -179,8 +180,7 @@ export default function JadwalPenggantiClientPage({
         return;
       }
 
-      const XLSX = await import('xlsx');
-      const exportData = dataToExport.map((row, index) => ({
+      const exportDataFormatted = dataToExport.map((row, index) => ({
         No: index + 1,
         'Mata Kuliah': row.jadwal?.mata_kuliah?.nama_lengkap || '-',
         'Kelas': row.jadwal?.kelas || '-',
@@ -190,10 +190,11 @@ export default function JadwalPenggantiClientPage({
         'Ruangan': row.ruangan || '-',
       }));
 
-      const ws = XLSX.utils.json_to_sheet(exportData);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, 'Jadwal Pengganti');
-      XLSX.writeFile(wb, payload.action === 'matakuliah' ? `jadwal_pengganti_${payload.mata_kuliah}.xlsx` : 'jadwal_pengganti.xlsx');
+      await exportSpreadsheet(
+        exportDataFormatted,
+        payload.action === 'matakuliah' ? `jadwal_pengganti_${payload.mata_kuliah}.xlsx` : 'jadwal_pengganti.xlsx',
+        'Jadwal Pengganti'
+      );
       
       toast.success('Data jadwal pengganti berhasil diekspor');
       setShowExportModal(false);

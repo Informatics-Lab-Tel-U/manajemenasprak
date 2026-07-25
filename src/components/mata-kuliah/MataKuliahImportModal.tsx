@@ -26,43 +26,11 @@ import { buildTermString } from '@/utils/termHelpers';
 import MataKuliahCSVPreview, { MataKuliahCSVRow } from './MataKuliahCSVPreview';
 import { validateMataKuliahData } from '@/utils/validation/mataKuliahValidation';
 import type { MataKuliahGrouped } from '@/services/mataKuliahService';
+import { parseSpreadsheet, downloadTemplate } from '@/lib/spreadsheet';
 
 
-const downloadTemplate = async (format: 'csv' | 'xlsx') => {
-  const data = [
-    {
-      mk_singkat: 'ALPRO 1',
-      nama_lengkap: 'ALGORITMA PEMROGRAMAN 1',
-      program_studi: 'IF',
-      dosen_koor: 'PEY',
-    },
-    {
-      mk_singkat: 'STD',
-      nama_lengkap: 'STRUKTUR DATA',
-      program_studi: 'SE-PJJ',
-      dosen_koor: 'HUI',
-    },
-  ];
-
-  if (format === 'csv') {
-    const Papa = (await import('papaparse')).default;
-    const csv = Papa.unparse(data);
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', 'template_matakuliah.csv');
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  } else {
-    // Load xlsx lazily
-    const XLSX = await import('xlsx');
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Template');
-    XLSX.writeFile(wb, 'template_matakuliah.xlsx');
-  }
+const handleDownloadTemplate = (format: 'csv' | 'xlsx') => {
+  downloadTemplate('mata-kuliah', format);
 };
 
 interface MataKuliahImportModalProps {
@@ -148,44 +116,52 @@ export default function MataKuliahImportModal({
     async (file: File) => {
       setError(null);
       setFileName(file.name);
-      const Papa = (await import('papaparse')).default;
 
-      Papa.parse(file, {
-        header: true,
-        skipEmptyLines: true,
-        transformHeader: (h) => h.trim().toLowerCase().replace(/\s+/g, '_'),
-        complete: (results) => {
-          const rows = results.data as any[];
+      try {
+        const matrix = await parseSpreadsheet(file);
+        if (matrix.length < 2) {
+          setError('File CSV/Excel kosong.');
+          return;
+        }
 
-          if (rows.length === 0) {
-            setError('File CSV kosong.');
-            return;
-          }
+        const rawHeaders = matrix[0];
+        const headers = rawHeaders.map((h: string) => h.trim().toLowerCase().replace(/\s+/g, '_'));
 
-          // Validate headers
-          const required = ['mk_singkat', 'nama_lengkap', 'program_studi', 'dosen_koor'];
-          const headers = Object.keys(rows[0]);
-          const missing = required.filter((r) => !headers.includes(r));
+        const rows = matrix.slice(1).reduce((acc: any[], row: string[]) => {
+          if (!row || !row.some(Boolean)) return acc;
+          const obj: any = {};
+          headers.forEach((h: string, idx: number) => {
+            obj[h] = row[idx] ?? '';
+          });
+          acc.push(obj);
+          return acc;
+        }, []);
 
-          if (missing.length > 0) {
-            setError(`Kolom wajib kurang: ${missing.join(', ')}`);
-            return;
-          }
+        if (rows.length === 0) {
+          setError('File CSV/Excel kosong.');
+          return;
+        }
 
-          const transformed = validateMataKuliahData(
-            rows,
-            localValidPraktikums,
-            existingMataKuliah
-          );
-          setParsedRows(transformed);
-          setStep('preview');
-        },
-        error: (err) => {
-          setError(`Error parsing CSV: ${err.message}`);
-        },
-      });
+        const required = ['mk_singkat', 'nama_lengkap', 'program_studi', 'dosen_koor'];
+        const firstRow = rows[0];
+        const missing = required.filter((r) => !(r in firstRow));
+
+        if (missing.length > 0) {
+          setError(`Kolom wajib kurang: ${missing.join(', ')}`);
+          return;
+        }
+
+        const transformed = validateMataKuliahData(
+          rows,
+          localValidPraktikums,
+          existingMataKuliah
+        );
+        setParsedRows(transformed);
+        setStep('preview');
+      } catch (err: any) {
+        setError(`Gagal membaca file: ${err.message}`);
+      }
     },
-    // eslint-disable-next-line react-doctor/exhaustive-deps
     [localValidPraktikums, existingMataKuliah]
   );
 
@@ -200,7 +176,11 @@ export default function MataKuliahImportModal({
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
-    accept: { 'text/csv': ['.csv'] },
+    accept: {
+      'text/csv': ['.csv'],
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
+      'application/vnd.ms-excel': ['.xls'],
+    },
     maxFiles: 1,
     disabled: !isTermValid,
   });
@@ -404,7 +384,7 @@ export default function MataKuliahImportModal({
                               variant="outline"
                               size="sm"
                               className="h-7 text-xs px-2 gap-1.5 bg-background"
-                              onClick={() => downloadTemplate('csv')}
+                              onClick={() => handleDownloadTemplate('csv')}
                             >
                               <FileText size={12} className="text-sky-500" /> CSV
                             </Button>
@@ -412,7 +392,7 @@ export default function MataKuliahImportModal({
                               variant="outline"
                               size="sm"
                               className="h-7 text-xs px-2 gap-1.5 bg-background"
-                              onClick={() => downloadTemplate('xlsx')}
+                              onClick={() => handleDownloadTemplate('xlsx')}
                             >
                               <FileSpreadsheet size={12} className="text-emerald-500" /> XLSX
                             </Button>

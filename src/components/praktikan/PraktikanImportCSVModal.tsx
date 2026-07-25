@@ -5,6 +5,7 @@ import { useDropzone } from 'react-dropzone';
 import { FileSpreadsheet, FileText, Download, Save } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { toast } from 'sonner';
+import { parseSpreadsheet, downloadTemplate } from '@/lib/spreadsheet';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -130,12 +131,9 @@ function rowsFromMatrix(
 }
 
 async function parseTextMatrix(value: string): Promise<SheetMatrix> {
-  const Papa = (await import('papaparse')).default;
-  const result = Papa.parse<string[]>(value, {
-    header: false,
-    skipEmptyLines: 'greedy',
-  });
-  return result.data as SheetMatrix;
+  // Convert pasted tab-separated string to matrix manually
+  const rows = value.split('\n').filter(Boolean);
+  return rows.map(row => row.split('\t').map(cell => cell.trim()));
 }
 
 function updatePreviewStatus(row: PreviewRow): PreviewRow {
@@ -222,34 +220,8 @@ interface PraktikanImportCSVModalProps {
   onImport: (rows: Omit<PraktikanRecord, 'id' | 'created_at'>[]) => Promise<void>;
 }
 
-const handleDownloadTemplate = async (format: 'csv' | 'xlsx') => {
-  const data = [
-    { nama: 'Budi Santoso', nim: '1301213001', kelas: 'IF-45-01', mata_kuliah: 'JARKOM', kode_asprak: 'BUS' },
-    { nama: 'Siti Aminah', nim: '1301213002', kelas: 'IF-45-01', mata_kuliah: 'JARKOM', kode_asprak: 'BUS' },
-  ];
-
-  if (format === 'csv') {
-    const Papa = (await import('papaparse')).default;
-    const csv = Papa.unparse(data);
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', 'template_praktikan.csv');
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  } else if (format === 'xlsx') {
-    try {
-      const XLSX = await import('xlsx');
-      const ws = XLSX.utils.json_to_sheet(data);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, 'Template');
-      XLSX.writeFile(wb, 'template_praktikan.xlsx');
-    } catch {
-      toast.error('Gagal membuat file XLSX');
-    }
-  }
+const handleDownloadTemplate = (format: 'csv' | 'xlsx') => {
+  downloadTemplate('praktikan', format);
 };
 
 export default function PraktikanImportCSVModal({
@@ -300,37 +272,12 @@ export default function PraktikanImportCSVModal({
     applyPreviewRows(await parseTextMatrix(pasteValue), 'paste');
   };
 
-  const parseCsvFile = useCallback(async (file: File) => {
-    const Papa = (await import('papaparse')).default;
-    Papa.parse<string[]>(file, {
-      header: false,
-      skipEmptyLines: 'greedy',
-      complete: (result) => {
-        applyPreviewRows(result.data as SheetMatrix, file.name);
-        setParsing(false);
-      },
-      error: (error: Error) => {
-        setParsing(false);
-        toast.error(`Gagal membaca CSV: ${error.message}`);
-      },
-    });
-  }, [applyPreviewRows]);
-
   const parseSpreadsheetFile = useCallback(async (file: File) => {
     try {
-      const XLSX = await import('xlsx');
-      const buffer = await file.arrayBuffer();
-      const workbook = XLSX.read(buffer);
-      const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-      const matrix = XLSX.utils.sheet_to_json<string[]>(firstSheet, {
-        header: 1,
-        defval: '',
-      }) as SheetMatrix;
-
+      const matrix = await parseSpreadsheet(file) as SheetMatrix;
       applyPreviewRows(matrix, file.name);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'File tidak bisa dibaca.';
-      toast.error(`Gagal membaca Excel: ${message}`);
+    } catch (error: any) {
+      toast.error(`Gagal memproses file: ${error.message}`);
     } finally {
       setParsing(false);
     }
@@ -343,16 +290,9 @@ export default function PraktikanImportCSVModal({
 
       setFileName(file.name);
       setParsing(true);
-
-      const ext = file.name.split('.').pop()?.toLowerCase();
-      if (ext === 'xlsx' || ext === 'xls') {
-        parseSpreadsheetFile(file);
-        return;
-      }
-
-      parseCsvFile(file);
+      parseSpreadsheetFile(file);
     },
-    [parseSpreadsheetFile, parseCsvFile]
+    [parseSpreadsheetFile]
   );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({

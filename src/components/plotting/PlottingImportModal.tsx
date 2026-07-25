@@ -22,6 +22,7 @@ import {
   handlePlottingResolve,
   ExtendedPreviewRow,
 } from '@/utils/validation/plottingValidation';
+import { parseSpreadsheet, downloadTemplate } from '@/lib/spreadsheet';
 
 interface PlottingImportModalProps {
   open: boolean;
@@ -30,31 +31,8 @@ interface PlottingImportModalProps {
   terms: string[];
 }
 
-const handleDownloadTemplate = async (format: 'csv' | 'xlsx') => {
-  const data = [
-    { kode_asprak: 'ARS', mk_singkat: 'PBO' },
-    { kode_asprak: 'ZZA', mk_singkat: 'STRUKDAT' },
-  ];
-
-  if (format === 'csv') {
-    const Papa = (await import('papaparse')).default;
-    const csv = Papa.unparse(data);
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', 'template_plotting.csv');
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  } else {
-    // Load xlsx lazily — only when user requests XLSX template
-    const XLSX = await import('xlsx');
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Template');
-    XLSX.writeFile(wb, 'template_plotting.xlsx');
-  }
+const handleDownloadTemplate = (format: 'csv' | 'xlsx') => {
+  downloadTemplate('plotting', format);
 };
 
 import { useTermStore } from '@/store/useTermStore';
@@ -77,49 +55,62 @@ export default function PlottingImportModal({
   const processCSV = async (file: File) => {
     setError(null);
     setLoading(true);
-    const Papa = (await import('papaparse')).default;
 
-    Papa.parse(file, {
-      header: true,
-      skipEmptyLines: true,
-      complete: async (results: any) => {
-        const rawRows = results.data.reduce((acc: any[], row: any) => {
-          const kode_asprak = row.kode_asprak || '';
-          const mk_singkat = row.mk_singkat || '';
-          if (kode_asprak && mk_singkat) {
-            acc.push({ kode_asprak, mk_singkat });
-          }
-          return acc;
-        }, []);
-
-        if (rawRows.length === 0) {
-          setError('CSV empty or missing columns (kode_asprak, mk_singkat)');
-          setLoading(false);
-          return;
-        }
-
-        // Validate via API
-        const res = await validatePlottingImport(rawRows, selectedTerm);
+    try {
+      const matrix = await parseSpreadsheet(file);
+      if (matrix.length < 2) {
+        setError('CSV/Excel empty or missing columns (kode_asprak, mk_singkat)');
         setLoading(false);
+        return;
+      }
 
-        if (res.ok && res.data) {
-          const mapped = mapPlottingValidationResponse(res.data);
+      const rawHeaders = matrix[0];
+      const headers = rawHeaders.map((h: string) => h.trim().toLowerCase().replace(/\s+/g, '_'));
 
-          setPreviewRows(mapped);
-          setStep('preview');
-        } else {
-          setError(res.error || 'Validation failed');
+      const rawRows = matrix.slice(1).reduce((acc: any[], row: string[]) => {
+        if (!row || !row.some(Boolean)) return acc;
+        const obj: any = {};
+        headers.forEach((h: string, idx: number) => {
+          obj[h] = row[idx] ?? '';
+        });
+
+        const kode_asprak = obj.kode_asprak || '';
+        const mk_singkat = obj.mk_singkat || '';
+        if (kode_asprak && mk_singkat) {
+          acc.push({ kode_asprak, mk_singkat });
         }
-      },
-      error: (e) => {
-        setError(`CSV Error: ${e.message}`);
+        return acc;
+      }, []);
+
+      if (rawRows.length === 0) {
+        setError('CSV empty or missing columns (kode_asprak, mk_singkat)');
         setLoading(false);
-      },
-    });
+        return;
+      }
+
+      // Validate via API
+      const res = await validatePlottingImport(rawRows, selectedTerm);
+      setLoading(false);
+
+      if (res.ok && res.data) {
+        const mapped = mapPlottingValidationResponse(res.data);
+        setPreviewRows(mapped);
+        setStep('preview');
+      } else {
+        setError(res.error || 'Validation failed');
+      }
+    } catch (e: any) {
+      setError(`Gagal memproses file: ${e.message}`);
+      setLoading(false);
+    }
   };
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    accept: { 'text/csv': ['.csv'] },
+    accept: {
+      'text/csv': ['.csv'],
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
+      'application/vnd.ms-excel': ['.xls'],
+    },
     maxFiles: 1,
     disabled: !selectedTerm,
     onDrop: (files) => files[0] && processCSV(files[0]),
