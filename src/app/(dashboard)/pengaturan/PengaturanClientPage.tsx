@@ -45,11 +45,13 @@ import { useTermStore } from '@/store/useTermStore';
 
 interface DatabaseClientPageProps {
   initialIsMaintenance: boolean;
+  initialMaintenanceStatuses?: { dashboard: boolean; informaticsweb: boolean; generator_kursi: boolean };
   initialUserRole: Role | null;
 }
 
 export default function DatabaseClientPage({
   initialIsMaintenance,
+  initialMaintenanceStatuses,
   initialUserRole,
 }: DatabaseClientPageProps) {
   const router = useRouter();
@@ -73,6 +75,12 @@ export default function DatabaseClientPage({
   // Maintenance Mode States
   const [isMaintenance, setIsMaintenance] = useState(initialIsMaintenance);
   const [loadingMaintenance, setLoadingMaintenance] = useState(false);
+  const [maintenanceStatuses, setMaintenanceStatuses] = useState({
+    dashboard: initialMaintenanceStatuses?.dashboard ?? initialIsMaintenance,
+    informaticsweb: initialMaintenanceStatuses?.informaticsweb ?? false,
+    generator_kursi: initialMaintenanceStatuses?.generator_kursi ?? false,
+  });
+  const [loadingMaintenanceApp, setLoadingMaintenanceApp] = useState<string | null>(null);
   const [userRole] = useState<Role | null>(initialUserRole);
 
   // Wizard States
@@ -322,11 +330,12 @@ export default function DatabaseClientPage({
       const res = await fetch('/api/system/maintenance', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ active: checked }),
+        body: JSON.stringify({ active: checked, app: 'dashboard' }),
       });
       const data = await res.json();
       if (data.ok) {
         setIsMaintenance(checked);
+        setMaintenanceStatuses((prev) => ({ ...prev, dashboard: checked }));
         toast.success(checked ? 'Maintenance Mode Diaktifkan' : 'Maintenance Mode Dimatikan');
       } else {
         throw new Error(data.error);
@@ -335,6 +344,29 @@ export default function DatabaseClientPage({
       toast.error(err.message || 'Gagal mengubah status maintenance');
     } finally {
       setLoadingMaintenance(false);
+    }
+  };
+
+  const handleToggleMaintenanceApp = async (app: string, checked: boolean, label: string) => {
+    setLoadingMaintenanceApp(app);
+    try {
+      const res = await fetch('/api/system/maintenance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ active: checked, app }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setMaintenanceStatuses((prev) => ({ ...prev, [app]: checked }));
+        if (app === 'dashboard') setIsMaintenance(checked);
+        toast.success(checked ? `Maintenance Mode (${label}) Diaktifkan` : `Maintenance Mode (${label}) Dimatikan`);
+      } else {
+        throw new Error(data.error);
+      }
+    } catch (err: any) {
+      toast.error(err.message || `Gagal mengubah status maintenance ${label}`);
+    } finally {
+      setLoadingMaintenanceApp(null);
     }
   };
 
@@ -684,26 +716,82 @@ export default function DatabaseClientPage({
               </p>
             </div>
 
-            {/* Maintenance Mode Toggle */}
-            <div className="flex items-center justify-between p-4 rounded-lg border border-border/60 bg-muted/10">
-              <div className="space-y-0.5">
-                <div className="flex items-center gap-2">
-                  <p className="text-sm font-medium">Maintenance Mode</p>
-                  {isMaintenance && (
-                    <Badge variant="destructive" className="animate-pulse text-[10px] px-1.5 py-0">
-                      ACTIVE
-                    </Badge>
-                  )}
+            {/* Maintenance Mode Toggles */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Dashboard & Portal Asisten */}
+              <div className="flex flex-col justify-between p-5 rounded-lg border border-border/60 bg-muted/10 space-y-4">
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-semibold">Dashboard Manajemen</p>
+                    {maintenanceStatuses.dashboard && (
+                      <Badge variant="destructive" className="animate-pulse text-[10px] px-1.5 py-0">
+                        ACTIVE
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Kunci akses publik & non-admin pada portal manajemen praktikum & asisten.
+                  </p>
                 </div>
-                <p className="text-xs text-muted-foreground max-w-xs">
-                  Kunci akses publik dan redirect user non-admin ke halaman pemeliharaan.
-                </p>
+                <div className="flex items-center justify-between pt-2 border-t border-border/30">
+                  <span className="text-xs font-medium text-muted-foreground">Status Pemeliharaan</span>
+                  <Switch
+                    checked={maintenanceStatuses.dashboard}
+                    onCheckedChange={(checked) => handleToggleMaintenanceApp('dashboard', checked, 'Dashboard')}
+                    disabled={loadingMaintenanceApp === 'dashboard'}
+                  />
+                </div>
               </div>
-              <Switch
-                checked={isMaintenance}
-                onCheckedChange={handleToggleMaintenance}
-                disabled={loadingMaintenance}
-              />
+
+              {/* Web Publik Informatics Web/Blog */}
+              <div className="flex flex-col justify-between p-5 rounded-lg border border-border/60 bg-muted/10 space-y-4">
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-semibold">Informatics Web / Blog</p>
+                    {maintenanceStatuses.informaticsweb && (
+                      <Badge variant="destructive" className="animate-pulse text-[10px] px-1.5 py-0">
+                        ACTIVE
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Tutup sementara akses blog, pengumuman, dan artikel publik laboratorium.
+                  </p>
+                </div>
+                <div className="flex items-center justify-between pt-2 border-t border-border/30">
+                  <span className="text-xs font-medium text-muted-foreground">Status Pemeliharaan</span>
+                  <Switch
+                    checked={maintenanceStatuses.informaticsweb}
+                    onCheckedChange={(checked) => handleToggleMaintenanceApp('informaticsweb', checked, 'Informatics Web')}
+                    disabled={loadingMaintenanceApp === 'informaticsweb'}
+                  />
+                </div>
+              </div>
+
+              {/* Generator Kursi V2 */}
+              <div className="flex flex-col justify-between p-5 rounded-lg border border-border/60 bg-muted/10 space-y-4">
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-semibold">Generator Kursi Praktikum</p>
+                    {maintenanceStatuses.generator_kursi && (
+                      <Badge variant="destructive" className="animate-pulse text-[10px] px-1.5 py-0">
+                        ACTIVE
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Kunci aplikasi pengacak nomor bangku & tempat duduk sesi laboratorium.
+                  </p>
+                </div>
+                <div className="flex items-center justify-between pt-2 border-t border-border/30">
+                  <span className="text-xs font-medium text-muted-foreground">Status Pemeliharaan</span>
+                  <Switch
+                    checked={maintenanceStatuses.generator_kursi}
+                    onCheckedChange={(checked) => handleToggleMaintenanceApp('generator_kursi', checked, 'Generator Kursi')}
+                    disabled={loadingMaintenanceApp === 'generator_kursi'}
+                  />
+                </div>
+              </div>
             </div>
           </section>
 
