@@ -43,7 +43,7 @@ export async function createBlogPost(formData: FormData, content: any) {
   }
 
   revalidatePath('/manage-post');
-  redirect('/manage-post');
+  return { success: true };
 }
 
 export async function updateBlogPost(id: string, formData: FormData, content: any) {
@@ -90,7 +90,7 @@ export async function updateBlogPost(id: string, formData: FormData, content: an
 
   revalidatePath('/manage-post');
   revalidatePath(`/manage-post/${id}/edit`);
-  redirect('/manage-post');
+  return { success: true };
 }
 
 export async function createCategory(formData: FormData) {
