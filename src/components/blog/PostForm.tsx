@@ -78,6 +78,8 @@ export function PostForm({ initialData, categories, tags = [] }: PostFormProps) 
           await createBlogPost(formData, latestContent);
           toast.success('Post berhasil dibuat');
         }
+        router.push('/manage-post');
+        router.refresh();
       } catch (error: any) {
         toast.error(error.message || 'Terjadi kesalahan');
       }
