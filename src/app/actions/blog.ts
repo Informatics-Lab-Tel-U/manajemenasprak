@@ -110,24 +110,80 @@ export async function updateBlogPost(id: string, formData: FormData, content: an
 }
 
 export async function createCategory(formData: FormData) {
+  const user = await requireAuth();
+  const authHeader = user.token ? `Bearer ${user.token}` : undefined;
   const name = formData.get('name') as string;
   const slug = formData.get('slug') as string;
   
   try {
-    await blogService.createBlogCategory(name, slug);
-    revalidatePath('/manage-post/taxonomy');
+    await blogService.createBlogCategory(name, slug, authHeader);
+    try { revalidatePath('/manage-post/taxonomy'); } catch {}
+  } catch (error: any) {
+    throw new Error(error.message);
+  }
+}
+
+export async function updateCategory(id: string, formData: FormData) {
+  const user = await requireAuth();
+  const authHeader = user.token ? `Bearer ${user.token}` : undefined;
+  const name = formData.get('name') as string;
+  const slug = formData.get('slug') as string;
+  
+  try {
+    await blogService.updateBlogCategory(id, name, slug, authHeader);
+    try { revalidatePath('/manage-post/taxonomy'); } catch {}
+  } catch (error: any) {
+    throw new Error(error.message);
+  }
+}
+
+export async function deleteCategory(id: string) {
+  const user = await requireAuth();
+  const authHeader = user.token ? `Bearer ${user.token}` : undefined;
+  
+  try {
+    await blogService.deleteBlogCategory(id, authHeader);
+    try { revalidatePath('/manage-post/taxonomy'); } catch {}
   } catch (error: any) {
     throw new Error(error.message);
   }
 }
 
 export async function createTag(formData: FormData) {
+  const user = await requireAuth();
+  const authHeader = user.token ? `Bearer ${user.token}` : undefined;
   const name = formData.get('name') as string;
   const slug = formData.get('slug') as string;
   
   try {
-    await blogService.createBlogTag(name, slug);
-    revalidatePath('/manage-post/taxonomy');
+    await blogService.createBlogTag(name, slug, authHeader);
+    try { revalidatePath('/manage-post/taxonomy'); } catch {}
+  } catch (error: any) {
+    throw new Error(error.message);
+  }
+}
+
+export async function updateTag(id: string, formData: FormData) {
+  const user = await requireAuth();
+  const authHeader = user.token ? `Bearer ${user.token}` : undefined;
+  const name = formData.get('name') as string;
+  const slug = formData.get('slug') as string;
+  
+  try {
+    await blogService.updateBlogTag(id, name, slug, authHeader);
+    try { revalidatePath('/manage-post/taxonomy'); } catch {}
+  } catch (error: any) {
+    throw new Error(error.message);
+  }
+}
+
+export async function deleteTag(id: string) {
+  const user = await requireAuth();
+  const authHeader = user.token ? `Bearer ${user.token}` : undefined;
+  
+  try {
+    await blogService.deleteBlogTag(id, authHeader);
+    try { revalidatePath('/manage-post/taxonomy'); } catch {}
   } catch (error: any) {
     throw new Error(error.message);
   }

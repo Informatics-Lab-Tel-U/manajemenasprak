@@ -81,6 +81,31 @@ export async function createBlogCategory(name: string, slug: string, authHeader?
   return res.data;
 }
 
+export async function updateBlogCategory(id: string, name: string, slug: string, authHeader?: string) {
+  console.log('[DEBUG blogService.ts] updateBlogCategory called for ID:', id);
+  const res = await honoFetch<any>(`/api/blog/categories/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ name, slug }),
+    authHeader,
+  });
+  if (!res.ok || !res.data) {
+    throw new Error(res.error || 'Error updating blog category');
+  }
+  return res.data;
+}
+
+export async function deleteBlogCategory(id: string, authHeader?: string) {
+  console.log('[DEBUG blogService.ts] deleteBlogCategory called for ID:', id);
+  const res = await honoFetch<any>(`/api/blog/categories/${id}`, {
+    method: 'DELETE',
+    authHeader,
+  });
+  if (!res.ok || !res.data) {
+    throw new Error(res.error || 'Error deleting blog category');
+  }
+  return res.data;
+}
+
 export async function createBlogTag(name: string, slug: string, authHeader?: string) {
   console.log('[DEBUG blogService.ts] createBlogTag called, authHeader:', !!authHeader);
   const res = await honoFetch<any>('/api/blog/tags', {
@@ -90,6 +115,31 @@ export async function createBlogTag(name: string, slug: string, authHeader?: str
   });
   if (!res.ok || !res.data) {
     throw new Error(res.error || 'Error creating blog tag');
+  }
+  return res.data;
+}
+
+export async function updateBlogTag(id: string, name: string, slug: string, authHeader?: string) {
+  console.log('[DEBUG blogService.ts] updateBlogTag called for ID:', id);
+  const res = await honoFetch<any>(`/api/blog/tags/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ name, slug }),
+    authHeader,
+  });
+  if (!res.ok || !res.data) {
+    throw new Error(res.error || 'Error updating blog tag');
+  }
+  return res.data;
+}
+
+export async function deleteBlogTag(id: string, authHeader?: string) {
+  console.log('[DEBUG blogService.ts] deleteBlogTag called for ID:', id);
+  const res = await honoFetch<any>(`/api/blog/tags/${id}`, {
+    method: 'DELETE',
+    authHeader,
+  });
+  if (!res.ok || !res.data) {
+    throw new Error(res.error || 'Error deleting blog tag');
   }
   return res.data;
 }
