@@ -105,7 +105,7 @@ export default function PraktikumClientPage({
 
   const checkExists = async (nama: string, tahunAjaran: string) => {
     const data = await getPraktikumByTerm(tahunAjaran);
-    return data.some((p) => p.nama === nama);
+    return data.some((p) => p.nama.toUpperCase().trim() === nama.toUpperCase().trim());
   };
 
   const isLoading = loadingList;

@@ -74,18 +74,20 @@ export function JadwalModal({
   // Filter available praktikum names based on the selected term
   const availablePraktikum = Array.from(
     new Set(
-      mataKuliahList.flatMap((mk) => 
-        (mk.praktikum?.tahun_ajaran === selectedTerm && mk.praktikum?.nama) 
-          ? [mk.praktikum.nama] 
-          : []
-      )
+      mataKuliahList.flatMap((mk: any) => {
+        const termMatch = !mk.praktikum?.tahun_ajaran || mk.praktikum?.tahun_ajaran === selectedTerm;
+        const name = mk.praktikum?.nama || mk.mk_singkat || mk.nama_singkat;
+        return termMatch && name ? [name] : [];
+      })
     )
-  ) as string[];
+  ).filter(Boolean) as string[];
 
   // Filter valid Mata Kuliah based on both term and praktikum name
-  const filteredMataKuliah = mataKuliahList.filter(
-    (mk) => mk.praktikum?.tahun_ajaran === selectedTerm && mk.praktikum?.nama === selectedPraktikum
-  );
+  const filteredMataKuliah = mataKuliahList.filter((mk: any) => {
+    const termMatch = !mk.praktikum?.tahun_ajaran || mk.praktikum?.tahun_ajaran === selectedTerm;
+    const prakName = mk.praktikum?.nama || mk.mk_singkat || mk.nama_singkat;
+    return termMatch && prakName === selectedPraktikum;
+  });
 
   // Reset form when modal opens or initialData changes
   useEffect(() => {

@@ -125,7 +125,7 @@ export default function MataKuliahImportModal({
         }
 
         const rawHeaders = matrix[0];
-        const headers = rawHeaders.map((h: string) => h.trim().toLowerCase().replace(/\s+/g, '_'));
+        const headers = rawHeaders.map((h: string) => h.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_'));
 
         const rows = matrix.slice(1).reduce((acc: any[], row: string[]) => {
           if (!row || !row.some(Boolean)) return acc;
@@ -139,15 +139,6 @@ export default function MataKuliahImportModal({
 
         if (rows.length === 0) {
           setError('File CSV/Excel kosong.');
-          return;
-        }
-
-        const required = ['mk_singkat', 'nama_lengkap', 'program_studi', 'dosen_koor'];
-        const firstRow = rows[0];
-        const missing = required.filter((r) => !(r in firstRow));
-
-        if (missing.length > 0) {
-          setError(`Kolom wajib kurang: ${missing.join(', ')}`);
           return;
         }
 
