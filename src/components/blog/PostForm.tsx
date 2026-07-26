@@ -33,9 +33,30 @@ export function PostForm({ initialData, categories, tags = [] }: PostFormProps) 
   const router = useRouter();
   const editorRef = React.useRef<any>(null);
   const [content, setContent] = React.useState<any>(initialData?.content || null);
-  const [selectedTags, setSelectedTags] = React.useState<string[]>(
-    initialData?.blog_post_tags?.map((t: any) => t.tag_id) || []
-  );
+
+  const extractTagIds = React.useCallback((data: any): string[] => {
+    if (!data) return [];
+    const rawTags = data.blog_post_tags || data.tags || data.blog_tags || [];
+    if (!Array.isArray(rawTags)) return [];
+    return rawTags
+      .map((t: any) => {
+        if (typeof t === 'string') return t;
+        if (t?.tag_id) return t.tag_id;
+        if (t?.id) return t.id;
+        if (t?.tag?.id) return t.tag.id;
+        return null;
+      })
+      .filter((tagId): tagId is string => typeof tagId === 'string' && tagId.length > 0);
+  }, []);
+
+  const [selectedTags, setSelectedTags] = React.useState<string[]>(() => extractTagIds(initialData));
+
+  React.useEffect(() => {
+    if (initialData) {
+      setSelectedTags(extractTagIds(initialData));
+    }
+  }, [initialData, extractTagIds]);
+
   const [isPending, startTransition] = React.useTransition();
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -104,6 +125,23 @@ export function PostForm({ initialData, categories, tags = [] }: PostFormProps) 
               <SelectItem value="archived">Archived</SelectItem>
             </SelectContent>
           </Select>
+        </div>
+
+        <div className="grid gap-2">
+          <Label htmlFor="published_at">Tanggal Publish (Opsional)</Label>
+          <Input
+            id="published_at"
+            name="published_at"
+            type="datetime-local"
+            defaultValue={
+              initialData?.published_at
+                ? new Date(initialData.published_at).toISOString().slice(0, 16)
+                : ''
+            }
+          />
+          <p className="text-xs text-muted-foreground">
+            Jika dikosongkan saat memilih status Published, sistem akan mengisi tanggal publish secara otomatis dengan waktu saat ini.
+          </p>
         </div>
 
         <div className="grid gap-2">

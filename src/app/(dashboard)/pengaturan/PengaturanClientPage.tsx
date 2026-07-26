@@ -199,6 +199,7 @@ export default function DatabaseClientPage({
       const result = await jadwalFetcher.deleteJadwalByTerm(deleteTerm);
       if (result.ok) {
         updateUiState({ status: { type: 'success', message: `Berhasil menghapus jadwal angkatan ${deleteTerm}!` } });
+        setDeleteTerm('');
         router.refresh();
       } else {
         throw new Error(result.error);

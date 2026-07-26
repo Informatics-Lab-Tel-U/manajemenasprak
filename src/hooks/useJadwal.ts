@@ -47,12 +47,20 @@ export function useJadwal(
   const [jadwalPengganti, setJadwalPengganti] = useState<any[]>([]);
 
   const fetchMataKuliah = useCallback(async () => {
-    if (mataKuliahList.length > 0) return;
-    const result = await praktikumFetcher.fetchMataKuliah();
-    if (result.ok && result.data) {
-      setMataKuliahList(result.data);
+    if (!selectedTerm) return;
+    try {
+      const res = await fetch(`/api/mata-kuliah?term=${selectedTerm}`);
+      if (res.ok) {
+        const json = await res.json();
+        if (json.ok && Array.isArray(json.data)) {
+          const flatMks = json.data.flatMap((group: any) => group.items || []);
+          setMataKuliahList(flatMks);
+        }
+      }
+    } catch (e: any) {
+      console.error('Failed to fetch mata kuliah list for term:', e);
     }
-  }, [mataKuliahList.length]);
+  }, [selectedTerm]);
 
   const fetchJadwal = useCallback(async () => {
     if (!selectedTerm) return;

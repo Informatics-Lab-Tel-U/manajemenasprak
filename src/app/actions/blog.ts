@@ -11,11 +11,19 @@ export async function createBlogPost(formData: FormData, content: any) {
   const title = formData.get('title') as string;
   const slug = formData.get('slug') as string;
   const excerpt = formData.get('excerpt') as string;
-  const category_id = formData.get('category_id') as string;
+  const categoryRaw = formData.get('category_id') as string;
+  const category_id = categoryRaw === 'none' || !categoryRaw ? null : categoryRaw;
   const status = formData.get('status') as string;
   const tagsStr = formData.get('tags') as string;
   const tags = tagsStr ? JSON.parse(tagsStr) : [];
-  const published_at = status === 'published' ? new Date().toISOString() : null;
+  const publishedAtInput = formData.get('published_at') as string;
+
+  let published_at: string | null = null;
+  if (publishedAtInput) {
+    published_at = new Date(publishedAtInput).toISOString();
+  } else if (status === 'published') {
+    published_at = new Date().toISOString();
+  }
 
   try {
     await blogService.createBlogPost({
@@ -23,7 +31,7 @@ export async function createBlogPost(formData: FormData, content: any) {
       slug,
       excerpt,
       content,
-      category_id: category_id || null,
+      category_id,
       status,
       published_at,
       author_id: user.id,
@@ -39,13 +47,30 @@ export async function createBlogPost(formData: FormData, content: any) {
 }
 
 export async function updateBlogPost(id: string, formData: FormData, content: any) {
+  await requireAuth();
+
   const title = formData.get('title') as string;
   const slug = formData.get('slug') as string;
   const excerpt = formData.get('excerpt') as string;
-  const category_id = formData.get('category_id') as string;
+  const categoryRaw = formData.get('category_id') as string;
+  const category_id = categoryRaw === 'none' || !categoryRaw ? null : categoryRaw;
   const status = formData.get('status') as string;
   const tagsStr = formData.get('tags') as string;
   const tags = tagsStr ? JSON.parse(tagsStr) : [];
+  const publishedAtInput = formData.get('published_at') as string;
+
+  let published_at: string | null = null;
+  if (publishedAtInput) {
+    published_at = new Date(publishedAtInput).toISOString();
+  } else {
+    // If no explicit datetime input, check existing post published_at
+    const existingPost = await blogService.getBlogPostById(id);
+    if (existingPost?.published_at) {
+      published_at = existingPost.published_at;
+    } else if (status === 'published') {
+      published_at = new Date().toISOString();
+    }
+  }
 
   try {
     await blogService.updateBlogPost(id, {
@@ -53,8 +78,9 @@ export async function updateBlogPost(id: string, formData: FormData, content: an
       slug,
       excerpt,
       content,
-      category_id: category_id || null,
+      category_id,
       status,
+      published_at,
       tags,
     });
   } catch (error: any) {

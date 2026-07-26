@@ -158,6 +158,7 @@ export function buildJadwalPreviewRows(
     }
 
     let ruanganClean = (row.ruangan || row.Ruangan || '').trim();
+    ruanganClean = ruanganClean.replace(/\s+dan\s+/gi, ' & ').replace(/[\/,]/g, ' & ');
     if (ruanganClean.includes('&')) {
       ruanganClean = ruanganClean.split('&')[0].trim();
     }

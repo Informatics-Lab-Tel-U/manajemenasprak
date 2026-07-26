@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { requireAuth } from '@/lib/auth';
 import { getAllMataKuliah } from '@/services/praktikumService';
 import JadwalOnboardClient from './JadwalOnboardClient';
+import { getCachedAvailableTerms } from '@/services/termService';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,7 +11,18 @@ export default async function JadwalOnboardPage(props: { searchParams: Promise<{
   await requireAuth();
 
   const searchParams = await props.searchParams;
-  const term = searchParams.term;
+  let term = searchParams.term;
+  if (!term) {
+    try {
+      const availableTerms = await getCachedAvailableTerms();
+      if (availableTerms && availableTerms.length > 0) {
+        term = availableTerms[0];
+      }
+    } catch {
+      // fallback
+    }
+  }
+
   if (!term) {
     redirect('/onboard');
   }

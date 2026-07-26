@@ -120,6 +120,7 @@ export interface UpdateBlogPostInput {
   content?: any;
   category_id?: string | null;
   status?: string;
+  published_at?: string | null;
   tags?: string[];
 }
 

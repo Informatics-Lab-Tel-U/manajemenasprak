@@ -74,9 +74,9 @@ export const useMonitoringStore = create<MonitoringState>((set, get) => ({
       // Initial client fetch untuk menjamin data paling fresh tanpa bergantung jeda SSR/WebSocket
       await fetchStatus();
 
-      // Setup Polling Fallback setiap 15 detik (menjamin data selalu segar meski WebSocket delay)
+      // Setup Polling Fallback setiap 60 detik (menghemat drastis kuota Cloudflare Workers)
       if (!pollingTimer) {
-        pollingTimer = setInterval(fetchStatus, 15_000);
+        pollingTimer = setInterval(fetchStatus, 60_000);
       }
 
       // Setup WebSocket Subscription untuk monitoring_lab

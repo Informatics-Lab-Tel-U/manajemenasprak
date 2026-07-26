@@ -99,8 +99,8 @@ export default function PraktikumManualModal({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <form onSubmit={handleSubmit}>
-        <DialogContent className="sm:max-w-md h-[500px] flex flex-col p-0 gap-0 overflow-hidden">
+      <DialogContent className="sm:max-w-md h-[500px] flex flex-col p-0 gap-0 overflow-hidden">
+        <form onSubmit={handleSubmit} className="flex flex-col h-full min-h-0">
           <DialogHeader className="px-6 py-4 border-b shrink-0">
             <DialogTitle>Input Manual Praktikum</DialogTitle>
           </DialogHeader>
@@ -176,8 +176,8 @@ export default function PraktikumManualModal({
               ) : 'Simpan'}
             </Button>
           </DialogFooter>
-        </DialogContent>
-      </form>
+        </form>
+      </DialogContent>
     </Dialog>
   );
 }

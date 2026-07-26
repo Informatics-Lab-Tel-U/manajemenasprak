@@ -41,11 +41,16 @@ export function GroupColorModal({ isOpen, onClose, mataKuliahList }: GroupColorM
   const [colors, setColors] = useState<Record<string, string>>({});
   const [initialColors, setInitialColors] = useState<Record<string, string>>({});
 
-  // Group by Praktikum Name globally
+  // Group by Praktikum Name globally with fallback for mk_singkat / nama_singkat
   const uniqueGroups = useMemo(
     () =>
       Array.from(
-        new Set(mataKuliahList.flatMap((mk) => mk.praktikum?.nama ? [mk.praktikum.nama] : []) as string[])
+        new Set(
+          mataKuliahList.flatMap((mk: any) => {
+            const name = mk.praktikum?.nama || mk.mk_singkat || mk.nama_singkat;
+            return name ? [name] : [];
+          })
+        )
       ).sort(),
     [mataKuliahList]
   );
@@ -57,9 +62,11 @@ export function GroupColorModal({ isOpen, onClose, mataKuliahList }: GroupColorM
     if (isOpen) {
       const dbColors: Record<string, string> = {};
       uniqueGroups.forEach((groupName) => {
-        // Find any MK in this group (across all terms) that has a color
+        // Find any MK in this group that has a color
         const mkWithColor = mataKuliahList.find(
-          (mk) => mk.praktikum?.nama === groupName && mk.warna
+          (mk: any) =>
+            (mk.praktikum?.nama === groupName || mk.mk_singkat === groupName || mk.nama_singkat === groupName) &&
+            mk.warna
         );
         dbColors[groupName] = mkWithColor?.warna || '#3a5edb';
       });

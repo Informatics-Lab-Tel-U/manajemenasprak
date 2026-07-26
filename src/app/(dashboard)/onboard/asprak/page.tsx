@@ -6,6 +6,7 @@ import {
   getCachedAllAsprak,
 } from '@/services/asprakService.server';
 import AsprakOnboardClient from './AsprakOnboardClient';
+import { getCachedAvailableTerms } from '@/services/termService';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,7 +16,18 @@ export default async function AsprakOnboardPage(props: {
   await requireAuth();
 
   const searchParams = await props.searchParams;
-  const term = searchParams.term;
+  let term = searchParams.term;
+
+  if (!term) {
+    try {
+      const availableTerms = await getCachedAvailableTerms();
+      if (availableTerms && availableTerms.length > 0) {
+        term = availableTerms[0];
+      }
+    } catch {
+      // fallback
+    }
+  }
 
   if (!term) {
     redirect('/onboard');
