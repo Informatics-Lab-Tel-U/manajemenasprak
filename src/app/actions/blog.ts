@@ -19,8 +19,6 @@ export async function createBlogPost(formData: FormData, content: any) {
   const tags = tagsStr ? JSON.parse(tagsStr) : [];
   const publishedAtInput = formData.get('published_at') as string;
 
-  console.log('[DEBUG actions/blog.ts] createBlogPost input:', { title, slug, category_id, status, tagsCount: tags.length, author_id: user.id, hasToken: !!user.token });
-
   let published_at: string | null = null;
   if (publishedAtInput) {
     published_at = new Date(publishedAtInput).toISOString();
@@ -40,17 +38,13 @@ export async function createBlogPost(formData: FormData, content: any) {
       author_id: user.id,
       tags,
     }, authHeader);
-    console.log('[DEBUG actions/blog.ts] createBlogPost SUCCESS');
   } catch (error: any) {
-    console.error('[DEBUG actions/blog.ts] Error creating post:', error);
     throw new Error(error.message);
   }
 
   try {
     revalidatePath('/manage-post');
-  } catch (e) {
-    console.warn('[DEBUG actions/blog.ts] revalidatePath warning:', e);
-  }
+  } catch (e) {}
   return { success: true };
 }
 
@@ -67,8 +61,6 @@ export async function updateBlogPost(id: string, formData: FormData, content: an
   const tagsStr = formData.get('tags') as string;
   const tags = tagsStr ? JSON.parse(tagsStr) : [];
   const publishedAtInput = formData.get('published_at') as string;
-
-  console.log('[DEBUG actions/blog.ts] updateBlogPost input:', { id, title, slug, category_id, status, tagsCount: tags.length, userId: user.id, hasToken: !!user.token });
 
   let published_at: string | null = null;
   if (publishedAtInput) {
@@ -94,18 +86,14 @@ export async function updateBlogPost(id: string, formData: FormData, content: an
       published_at,
       tags,
     }, authHeader);
-    console.log('[DEBUG actions/blog.ts] updateBlogPost SUCCESS');
   } catch (error: any) {
-    console.error('[DEBUG actions/blog.ts] Error updating post:', error);
     throw new Error(error.message);
   }
 
   try {
     revalidatePath('/manage-post');
     revalidatePath(`/manage-post/${id}/edit`);
-  } catch (e) {
-    console.warn('[DEBUG actions/blog.ts] revalidatePath warning:', e);
-  }
+  } catch (e) {}
   return { success: true };
 }
 
