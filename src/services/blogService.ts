@@ -69,7 +69,6 @@ export async function getAllBlogTags() {
 }
 
 export async function createBlogCategory(name: string, slug: string, authHeader?: string) {
-  console.log('[DEBUG blogService.ts] createBlogCategory called, authHeader:', !!authHeader);
   const res = await honoFetch<any>('/api/blog/categories', {
     method: 'POST',
     body: JSON.stringify({ name, slug }),
@@ -82,7 +81,6 @@ export async function createBlogCategory(name: string, slug: string, authHeader?
 }
 
 export async function updateBlogCategory(id: string, name: string, slug: string, authHeader?: string) {
-  console.log('[DEBUG blogService.ts] updateBlogCategory called for ID:', id);
   const res = await honoFetch<any>(`/api/blog/categories/${id}`, {
     method: 'PATCH',
     body: JSON.stringify({ name, slug }),
@@ -95,7 +93,6 @@ export async function updateBlogCategory(id: string, name: string, slug: string,
 }
 
 export async function deleteBlogCategory(id: string, authHeader?: string) {
-  console.log('[DEBUG blogService.ts] deleteBlogCategory called for ID:', id);
   const res = await honoFetch<any>(`/api/blog/categories/${id}`, {
     method: 'DELETE',
     authHeader,
@@ -107,7 +104,6 @@ export async function deleteBlogCategory(id: string, authHeader?: string) {
 }
 
 export async function createBlogTag(name: string, slug: string, authHeader?: string) {
-  console.log('[DEBUG blogService.ts] createBlogTag called, authHeader:', !!authHeader);
   const res = await honoFetch<any>('/api/blog/tags', {
     method: 'POST',
     body: JSON.stringify({ name, slug }),
@@ -120,7 +116,6 @@ export async function createBlogTag(name: string, slug: string, authHeader?: str
 }
 
 export async function updateBlogTag(id: string, name: string, slug: string, authHeader?: string) {
-  console.log('[DEBUG blogService.ts] updateBlogTag called for ID:', id);
   const res = await honoFetch<any>(`/api/blog/tags/${id}`, {
     method: 'PATCH',
     body: JSON.stringify({ name, slug }),
@@ -133,7 +128,6 @@ export async function updateBlogTag(id: string, name: string, slug: string, auth
 }
 
 export async function deleteBlogTag(id: string, authHeader?: string) {
-  console.log('[DEBUG blogService.ts] deleteBlogTag called for ID:', id);
   const res = await honoFetch<any>(`/api/blog/tags/${id}`, {
     method: 'DELETE',
     authHeader,
@@ -157,7 +151,6 @@ export interface CreateBlogPostInput {
 }
 
 export async function createBlogPost(input: CreateBlogPostInput, authHeader?: string) {
-  console.log('[DEBUG blogService.ts] createBlogPost called, authHeader:', !!authHeader);
   const res = await honoFetch<any>('/api/blog/posts', {
     method: 'POST',
     body: JSON.stringify(input),
@@ -181,7 +174,6 @@ export interface UpdateBlogPostInput {
 }
 
 export async function updateBlogPost(id: string, input: UpdateBlogPostInput, authHeader?: string) {
-  console.log('[DEBUG blogService.ts] updateBlogPost called for ID:', id, 'authHeader:', !!authHeader);
   const res = await honoFetch<any>(`/api/blog/posts/${id}`, {
     method: 'PATCH',
     body: JSON.stringify(input),
@@ -204,7 +196,6 @@ export async function incrementBlogViewCount(id: string) {
 }
 
 export async function deleteBlogPost(id: string, authHeader?: string) {
-  console.log('[DEBUG blogService.ts] deleteBlogPost called for ID:', id, 'authHeader:', !!authHeader);
   const res = await honoFetch<any>(`/api/blog/posts/${id}`, {
     method: 'DELETE',
     authHeader,
