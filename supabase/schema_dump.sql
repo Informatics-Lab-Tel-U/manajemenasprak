@@ -294,8 +294,11 @@ BEGIN
     COALESCE(
       to_jsonb(NEW) ->> 'id',
       to_jsonb(NEW) ->> 'key',
+      to_jsonb(NEW) ->> 'post_id',
       to_jsonb(OLD) ->> 'id',
-      to_jsonb(OLD) ->> 'key'
+      to_jsonb(OLD) ->> 'key',
+      to_jsonb(OLD) ->> 'post_id',
+      'unknown'
     ),
     TG_OP,
     -- old_values: NULL untuk INSERT, OLD untuk UPDATE/DELETE
