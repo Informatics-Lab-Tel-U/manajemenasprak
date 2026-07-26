@@ -68,10 +68,12 @@ export async function getAllBlogTags() {
   }
 }
 
-export async function createBlogCategory(name: string, slug: string) {
+export async function createBlogCategory(name: string, slug: string, authHeader?: string) {
+  console.log('[DEBUG blogService.ts] createBlogCategory called, authHeader:', !!authHeader);
   const res = await honoFetch<any>('/api/blog/categories', {
     method: 'POST',
     body: JSON.stringify({ name, slug }),
+    authHeader,
   });
   if (!res.ok || !res.data) {
     throw new Error(res.error || 'Error creating blog category');
@@ -79,10 +81,12 @@ export async function createBlogCategory(name: string, slug: string) {
   return res.data;
 }
 
-export async function createBlogTag(name: string, slug: string) {
+export async function createBlogTag(name: string, slug: string, authHeader?: string) {
+  console.log('[DEBUG blogService.ts] createBlogTag called, authHeader:', !!authHeader);
   const res = await honoFetch<any>('/api/blog/tags', {
     method: 'POST',
     body: JSON.stringify({ name, slug }),
+    authHeader,
   });
   if (!res.ok || !res.data) {
     throw new Error(res.error || 'Error creating blog tag');
@@ -102,10 +106,12 @@ export interface CreateBlogPostInput {
   tags?: string[];
 }
 
-export async function createBlogPost(input: CreateBlogPostInput) {
+export async function createBlogPost(input: CreateBlogPostInput, authHeader?: string) {
+  console.log('[DEBUG blogService.ts] createBlogPost called, authHeader:', !!authHeader);
   const res = await honoFetch<any>('/api/blog/posts', {
     method: 'POST',
     body: JSON.stringify(input),
+    authHeader,
   });
   if (!res.ok || !res.data) {
     throw new Error(res.error || 'Error creating blog post');
@@ -124,10 +130,12 @@ export interface UpdateBlogPostInput {
   tags?: string[];
 }
 
-export async function updateBlogPost(id: string, input: UpdateBlogPostInput) {
+export async function updateBlogPost(id: string, input: UpdateBlogPostInput, authHeader?: string) {
+  console.log('[DEBUG blogService.ts] updateBlogPost called for ID:', id, 'authHeader:', !!authHeader);
   const res = await honoFetch<any>(`/api/blog/posts/${id}`, {
     method: 'PATCH',
     body: JSON.stringify(input),
+    authHeader,
   });
   if (!res.ok || !res.data) {
     throw new Error(res.error || 'Error updating blog post');
@@ -145,9 +153,11 @@ export async function incrementBlogViewCount(id: string) {
   }
 }
 
-export async function deleteBlogPost(id: string) {
+export async function deleteBlogPost(id: string, authHeader?: string) {
+  console.log('[DEBUG blogService.ts] deleteBlogPost called for ID:', id, 'authHeader:', !!authHeader);
   const res = await honoFetch<any>(`/api/blog/posts/${id}`, {
     method: 'DELETE',
+    authHeader,
   });
   if (!res.ok || !res.data) {
     throw new Error(res.error || 'Error deleting blog post');

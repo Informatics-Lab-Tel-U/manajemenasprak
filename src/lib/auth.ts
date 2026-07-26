@@ -10,6 +10,7 @@ import type { Pengguna } from '@/types/database';
 export type AuthUser = {
   id: string;
   email: string;
+  token: string;
   pengguna: Pengguna;
 };
 
@@ -19,6 +20,7 @@ export type AuthUser = {
  * Wrapped with React.cache() so multiple calls in the same request share one DB query.
  */
 export const getCurrentUser = cache(async (): Promise<AuthUser | null> => {
+  console.log('[DEBUG auth.ts] getCurrentUser called');
   try {
     const headersList = await headers();
     const authUserHeader = headersList.get('x-auth-user');
@@ -27,6 +29,7 @@ export const getCurrentUser = cache(async (): Promise<AuthUser | null> => {
       const decodedStr = Buffer.from(authUserHeader, 'base64').toString('utf-8');
       const authUser = JSON.parse(decodedStr) as AuthUser;
       if (authUser?.id && authUser?.pengguna) {
+        console.log('[DEBUG auth.ts] User retrieved from x-auth-user header:', authUser.id, authUser.pengguna.role);
         return authUser;
       }
     }
@@ -41,23 +44,37 @@ export const getCurrentUser = cache(async (): Promise<AuthUser | null> => {
     error: authError,
   } = await supabase.auth.getSession();
 
-  if (authError || !session?.user) return null;
+  if (authError || !session?.user) {
+    console.log('[DEBUG auth.ts] No session or authError:', authError?.message);
+    return null;
+  }
+
+  console.log('[DEBUG auth.ts] Session found for user:', session.user.id, 'Has access_token:', !!session.access_token);
 
   try {
     const meRes = await fetch(`${process.env.HONO_BACKEND_URL}/api/auth/me`, {
       headers: { Authorization: `Bearer ${session.access_token}` },
     });
 
-    if (!meRes.ok) return null;
+    if (!meRes.ok) {
+      console.log('[DEBUG auth.ts] /api/auth/me returned not OK:', meRes.status);
+      return null;
+    }
 
     const meData = await meRes.json();
     const pengguna = meData.data?.pengguna;
 
-    if (!pengguna || pengguna.deleted_at) return null;
+    if (!pengguna || pengguna.deleted_at) {
+      console.log('[DEBUG auth.ts] No pengguna profile or deleted');
+      return null;
+    }
+
+    console.log('[DEBUG auth.ts] Successfully authenticated user:', session.user.id, 'Role:', pengguna.role);
 
     return {
       id: session.user.id,
       email: session.user.email ?? '',
+      token: session.access_token,
       pengguna: pengguna as Pengguna,
     };
   } catch (error) {
