@@ -598,6 +598,7 @@ ALTER TABLE "public"."blog_categories" OWNER TO "postgres";
 
 
 CREATE TABLE IF NOT EXISTS "public"."blog_post_tags" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
     "post_id" "uuid" NOT NULL,
     "tag_id" "uuid" NOT NULL
 );
@@ -883,7 +884,10 @@ ALTER TABLE ONLY "public"."blog_categories"
 
 
 ALTER TABLE ONLY "public"."blog_post_tags"
-    ADD CONSTRAINT "blog_post_tags_pkey" PRIMARY KEY ("post_id", "tag_id");
+    ADD CONSTRAINT "blog_post_tags_pkey" PRIMARY KEY ("id");
+
+ALTER TABLE ONLY "public"."blog_post_tags"
+    ADD CONSTRAINT "blog_post_tags_post_tag_unique" UNIQUE ("post_id", "tag_id");
 
 
 
