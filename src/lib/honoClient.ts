@@ -47,6 +47,8 @@ export async function honoFetch<T = any>(
 
   const targetUrl = path.startsWith('http') ? path : `${BACKEND_URL}${path.startsWith('/') ? path : `/${path}`}`;
 
+  console.log(`[DEBUG honoClient.ts] ${restOptions.method || 'GET'} -> ${targetUrl} | authHeader: ${!!authHeader} | useServiceRole: ${!!useServiceRole}`);
+
   try {
     const res = await fetch(targetUrl, {
       headers,
@@ -55,8 +57,10 @@ export async function honoFetch<T = any>(
     });
 
     const json = await res.json().catch(() => ({}));
+    console.log(`[DEBUG honoClient.ts] Response status: ${res.status} | ok: ${res.ok} | json.ok: ${json?.ok}`);
 
     if (!res.ok || json.ok === false) {
+      console.error(`[DEBUG honoClient.ts] Failed request to ${targetUrl}:`, json.error || `HTTP ${res.status}`);
       return {
         ok: false,
         error: json.error || `Hono Backend error: HTTP ${res.status}`,
@@ -69,6 +73,7 @@ export async function honoFetch<T = any>(
     };
   } catch (error: any) {
     logger.error(`[honoFetch Error] ${targetUrl}:`, error);
+    console.error(`[DEBUG honoClient.ts] Exception fetching ${targetUrl}:`, error);
     return {
       ok: false,
       error: error.message || 'Network / Proxy Error',

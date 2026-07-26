@@ -7,6 +7,7 @@ import * as blogService from '@/services/blogService';
 
 export async function createBlogPost(formData: FormData, content: any) {
   const user = await requireAuth();
+  const authHeader = user.token ? `Bearer ${user.token}` : undefined;
 
   const title = formData.get('title') as string;
   const slug = formData.get('slug') as string;
@@ -17,6 +18,8 @@ export async function createBlogPost(formData: FormData, content: any) {
   const tagsStr = formData.get('tags') as string;
   const tags = tagsStr ? JSON.parse(tagsStr) : [];
   const publishedAtInput = formData.get('published_at') as string;
+
+  console.log('[DEBUG actions/blog.ts] createBlogPost input:', { title, slug, category_id, status, tagsCount: tags.length, author_id: user.id, hasToken: !!user.token });
 
   let published_at: string | null = null;
   if (publishedAtInput) {
@@ -36,18 +39,24 @@ export async function createBlogPost(formData: FormData, content: any) {
       published_at,
       author_id: user.id,
       tags,
-    });
+    }, authHeader);
+    console.log('[DEBUG actions/blog.ts] createBlogPost SUCCESS');
   } catch (error: any) {
-    console.error('Error creating post', error);
+    console.error('[DEBUG actions/blog.ts] Error creating post:', error);
     throw new Error(error.message);
   }
 
-  revalidatePath('/manage-post');
+  try {
+    revalidatePath('/manage-post');
+  } catch (e) {
+    console.warn('[DEBUG actions/blog.ts] revalidatePath warning:', e);
+  }
   return { success: true };
 }
 
 export async function updateBlogPost(id: string, formData: FormData, content: any) {
-  await requireAuth();
+  const user = await requireAuth();
+  const authHeader = user.token ? `Bearer ${user.token}` : undefined;
 
   const title = formData.get('title') as string;
   const slug = formData.get('slug') as string;
@@ -58,6 +67,8 @@ export async function updateBlogPost(id: string, formData: FormData, content: an
   const tagsStr = formData.get('tags') as string;
   const tags = tagsStr ? JSON.parse(tagsStr) : [];
   const publishedAtInput = formData.get('published_at') as string;
+
+  console.log('[DEBUG actions/blog.ts] updateBlogPost input:', { id, title, slug, category_id, status, tagsCount: tags.length, userId: user.id, hasToken: !!user.token });
 
   let published_at: string | null = null;
   if (publishedAtInput) {
@@ -82,36 +93,97 @@ export async function updateBlogPost(id: string, formData: FormData, content: an
       status,
       published_at,
       tags,
-    });
+    }, authHeader);
+    console.log('[DEBUG actions/blog.ts] updateBlogPost SUCCESS');
   } catch (error: any) {
-    console.error('Error updating post', error);
+    console.error('[DEBUG actions/blog.ts] Error updating post:', error);
     throw new Error(error.message);
   }
 
-  revalidatePath('/manage-post');
-  revalidatePath(`/manage-post/${id}/edit`);
+  try {
+    revalidatePath('/manage-post');
+    revalidatePath(`/manage-post/${id}/edit`);
+  } catch (e) {
+    console.warn('[DEBUG actions/blog.ts] revalidatePath warning:', e);
+  }
   return { success: true };
 }
 
 export async function createCategory(formData: FormData) {
+  const user = await requireAuth();
+  const authHeader = user.token ? `Bearer ${user.token}` : undefined;
   const name = formData.get('name') as string;
   const slug = formData.get('slug') as string;
   
   try {
-    await blogService.createBlogCategory(name, slug);
-    revalidatePath('/manage-post/taxonomy');
+    await blogService.createBlogCategory(name, slug, authHeader);
+    try { revalidatePath('/manage-post/taxonomy'); } catch {}
+  } catch (error: any) {
+    throw new Error(error.message);
+  }
+}
+
+export async function updateCategory(id: string, formData: FormData) {
+  const user = await requireAuth();
+  const authHeader = user.token ? `Bearer ${user.token}` : undefined;
+  const name = formData.get('name') as string;
+  const slug = formData.get('slug') as string;
+  
+  try {
+    await blogService.updateBlogCategory(id, name, slug, authHeader);
+    try { revalidatePath('/manage-post/taxonomy'); } catch {}
+  } catch (error: any) {
+    throw new Error(error.message);
+  }
+}
+
+export async function deleteCategory(id: string) {
+  const user = await requireAuth();
+  const authHeader = user.token ? `Bearer ${user.token}` : undefined;
+  
+  try {
+    await blogService.deleteBlogCategory(id, authHeader);
+    try { revalidatePath('/manage-post/taxonomy'); } catch {}
   } catch (error: any) {
     throw new Error(error.message);
   }
 }
 
 export async function createTag(formData: FormData) {
+  const user = await requireAuth();
+  const authHeader = user.token ? `Bearer ${user.token}` : undefined;
   const name = formData.get('name') as string;
   const slug = formData.get('slug') as string;
   
   try {
-    await blogService.createBlogTag(name, slug);
-    revalidatePath('/manage-post/taxonomy');
+    await blogService.createBlogTag(name, slug, authHeader);
+    try { revalidatePath('/manage-post/taxonomy'); } catch {}
+  } catch (error: any) {
+    throw new Error(error.message);
+  }
+}
+
+export async function updateTag(id: string, formData: FormData) {
+  const user = await requireAuth();
+  const authHeader = user.token ? `Bearer ${user.token}` : undefined;
+  const name = formData.get('name') as string;
+  const slug = formData.get('slug') as string;
+  
+  try {
+    await blogService.updateBlogTag(id, name, slug, authHeader);
+    try { revalidatePath('/manage-post/taxonomy'); } catch {}
+  } catch (error: any) {
+    throw new Error(error.message);
+  }
+}
+
+export async function deleteTag(id: string) {
+  const user = await requireAuth();
+  const authHeader = user.token ? `Bearer ${user.token}` : undefined;
+  
+  try {
+    await blogService.deleteBlogTag(id, authHeader);
+    try { revalidatePath('/manage-post/taxonomy'); } catch {}
   } catch (error: any) {
     throw new Error(error.message);
   }
