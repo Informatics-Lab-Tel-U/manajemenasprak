@@ -1,7 +1,5 @@
 'use client';
 
-/* eslint-disable react-doctor/no-chain-state-updates, react-doctor/no-cascading-set-state, react-doctor/no-effect-chain, react-doctor/rendering-hydration-no-flicker */
-
 import { useState, useEffect } from 'react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { X, ArrowLeft, Save } from 'lucide-react';
@@ -33,7 +31,6 @@ export default function StepMataKuliah({
   const [localValidPraktikums, setLocalValidPraktikums] = useState<{ id: string; nama: string }[]>(
     []
   );
-  // eslint-disable-next-line react-doctor/rerender-state-only-in-handlers
   const [existingMataKuliah, setExistingMataKuliah] = useState<MataKuliahGrouped[]>([]);
 
   // Fetch valid praktikums AND existing MK for the term
@@ -44,7 +41,6 @@ export default function StepMataKuliah({
       if (!term || term.length < 6) return; // e.g., '2425-2'
 
       try {
-        // eslint-disable-next-line react-doctor/no-fetch-in-effect
         const [praktikumRes, mkRes] = await Promise.all([
           fetch(`/api/praktikum?action=by-term&term=${term}`, { signal: controller.signal }),
           fetch(`/api/mata-kuliah?term=${term}`, { signal: controller.signal }),
@@ -81,21 +77,18 @@ export default function StepMataKuliah({
   }, [term]);
 
   // Process data after fetch is complete (or updated)
-  const [prevDeps, setPrevDeps] = useState({ data, localValidPraktikums, existingMataKuliah });
+  useEffect(() => {
+    if (isFetching) return;
 
-  if (
-    data !== prevDeps.data ||
-    localValidPraktikums !== prevDeps.localValidPraktikums ||
-    existingMataKuliah !== prevDeps.existingMataKuliah
-  ) {
-    setPrevDeps({ data, localValidPraktikums, existingMataKuliah });
     if (!data || data.length === 0) {
       setError('Data Excel Mata Kuliah kosong.');
+      setParsedRows([]);
     } else {
+      setError(null);
       const transformed = validateMataKuliahData(data, localValidPraktikums, existingMataKuliah);
       setParsedRows(transformed);
     }
-  }
+  }, [data, localValidPraktikums, existingMataKuliah, isFetching]);
 
   const handleUpdateRow = (index: number, updates: Partial<MataKuliahCSVRow>) => {
     const newRows = [...parsedRows];

@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
+import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -100,33 +101,35 @@ export function PostForm({ initialData, categories, tags = [] }: PostFormProps) 
           <Input id="slug" name="slug" defaultValue={initialData?.slug} placeholder="contoh: pendaftaran-klinik-akademik" required />
         </div>
 
-        <div className="grid gap-2">
-          <Label htmlFor="category_id">Kategori</Label>
-          <Select name="category_id" defaultValue={initialData?.category_id || ''}>
-            <SelectTrigger>
-              <SelectValue placeholder="Pilih Kategori" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="none">Tanpa Kategori</SelectItem>
-              {categories.map((cat) => (
-                <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid gap-2">
+            <Label htmlFor="category_id">Kategori</Label>
+            <Select name="category_id" defaultValue={initialData?.category_id || ''}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Pilih Kategori" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Tanpa Kategori</SelectItem>
+                {categories.map((cat) => (
+                  <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-        <div className="grid gap-2">
-          <Label htmlFor="status">Status</Label>
-          <Select name="status" defaultValue={initialData?.status || 'draft'} required>
-            <SelectTrigger>
-              <SelectValue placeholder="Pilih Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="draft">Draft</SelectItem>
-              <SelectItem value="published">Published</SelectItem>
-              <SelectItem value="archived">Archived</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="grid gap-2">
+            <Label htmlFor="status">Status</Label>
+            <Select name="status" defaultValue={initialData?.status || 'draft'} required>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Pilih Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="draft">Draft</SelectItem>
+                <SelectItem value="published">Published</SelectItem>
+                <SelectItem value="archived">Archived</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         <div className="grid gap-2">
@@ -192,6 +195,7 @@ export function PostForm({ initialData, categories, tags = [] }: PostFormProps) 
           Batal
         </Button>
         <Button type="submit" disabled={isPending}>
+          {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           {isPending ? 'Menyimpan...' : initialData ? 'Simpan Perubahan' : 'Buat Post'}
         </Button>
       </div>
