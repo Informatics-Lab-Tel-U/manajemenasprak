@@ -56,9 +56,14 @@ export default function AsprakEditModal({
     const controller = new AbortController();
     if (open) {
       // Always fetch ALL praktikums to allow cross-term editing
-      getPraktikumByTerm('all').then((data) => {
-        if (!controller.signal.aborted) setAvailablePraktikums(data);
-      });
+      getPraktikumByTerm('all')
+        .then((data) => {
+          if (!controller.signal.aborted) setAvailablePraktikums(data);
+        })
+        .catch((err) => {
+          if (err.name !== 'AbortError') console.error(err);
+        });
+
       // eslint-disable-next-line react-doctor/no-fetch-in-effect
       fetch('/api/asprak?action=all-info', { signal: controller.signal })
         .then((res) => res.json())
@@ -66,6 +71,9 @@ export default function AsprakEditModal({
           if (!controller.signal.aborted && json.ok && json.data) {
             setExistingAspraks(json.data);
           }
+        })
+        .catch((err) => {
+          if (err.name !== 'AbortError') console.error(err);
         });
     }
     return () => controller.abort();
