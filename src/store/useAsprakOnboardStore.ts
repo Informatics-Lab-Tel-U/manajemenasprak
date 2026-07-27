@@ -89,6 +89,12 @@ export const useAsprakOnboardStore = create<AsprakOnboardState>()(
 
       syncWithTerm: (term, isAlreadyDone = false) => {
         const currentTargetTerm = get().targetTerm;
+        console.log('[ONBOARD-DEBUG][useAsprakOnboardStore] syncWithTerm called:', {
+          requestedTerm: term,
+          currentTargetTerm,
+          isAlreadyDone,
+          currentCompletedSteps: get().completedSteps,
+        });
         if (currentTargetTerm !== term) {
           set({
             ...INITIAL_STATE,

@@ -137,9 +137,18 @@ export const useOnboardingStore = create<OnboardingState>()(
         const isDifferentTerm = currentTargetTerm !== term;
         const isDraftEmpty = (state.draft.praktikumList?.length || 0) === 0;
 
+        console.log('[ONBOARD-DEBUG][useOnboardingStore] syncWithTerm called:', {
+          requestedTerm: term,
+          currentTargetTerm,
+          hasDbData,
+          isDifferentTerm,
+          isDraftEmpty,
+        });
+
         if (isDifferentTerm || (isDraftEmpty && hasDbData)) {
           const now = new Date().toISOString();
           if (hasDbData && dbPraktikums) {
+            console.log('[ONBOARD-DEBUG][useOnboardingStore] Hydrating store from DB data:', dbPraktikums.length, 'praktikum,', dbMataKuliah?.length || 0, 'matkul');
             const mappedPraktikum = dbPraktikums.map((p: any) => ({
               tempId: p.id || crypto.randomUUID(),
               id: p.id,
@@ -174,6 +183,7 @@ export const useOnboardingStore = create<OnboardingState>()(
               },
             });
           } else if (isDifferentTerm) {
+            console.log('[ONBOARD-DEBUG][useOnboardingStore] Resetting store for new term:', term);
             set({
               ...INITIAL_STATE,
               startedAt: now,

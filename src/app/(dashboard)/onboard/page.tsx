@@ -29,9 +29,12 @@ export default function OnboardHubPage() {
   const [isLoading, setIsLoading] = useState(false);
   const availableTerms = useRef<string[]>([]);
 
+  console.log('[ONBOARD-DEBUG][Hub] Render | currentTerm:', currentTerm, '| activeTerm:', activeTerm);
+
   // Sync with activeTerm once it hydrates from localStorage
   useEffect(() => {
     if (activeTerm && activeTerm.length >= 6) {
+      console.log('[ONBOARD-DEBUG][Hub] Hydrating term from useTermStore:', activeTerm);
       setTermYear(activeTerm.substring(0, 2));
       setTermSem(activeTerm.slice(-1) as '1' | '2');
     }
@@ -43,6 +46,7 @@ export default function OnboardHubPage() {
       .then((res) => res.json())
       .then((res) => {
         if (res.ok) {
+          console.log('[ONBOARD-DEBUG][Hub] Available terms fetched:', res.data);
           availableTerms.current = res.data;
         }
       })
@@ -77,6 +81,8 @@ export default function OnboardHubPage() {
     if (!term) return;
     setIsLoading(true);
     const timestamp = Date.now();
+    console.log('[ONBOARD-DEBUG][Hub] fetchStatus initiating -> term:', term, 'timestamp:', timestamp);
+    
     fetch(`/api/onboard/status?term=${term}&_t=${timestamp}`, {
       cache: 'no-store',
       headers: {
@@ -87,17 +93,19 @@ export default function OnboardHubPage() {
       .then(res => res.json())
       .then(data => {
         const resData = data?.data || null;
+        console.log('[ONBOARD-DEBUG][Hub] fetchStatus response payload:', data);
         setStatus(resData);
         setIsLoading(false);
 
         // Sync local stores against current DB ground truth
         if (resData) {
+          console.log('[ONBOARD-DEBUG][Hub] Syncing sub-stores with DB ground truth -> step2_done:', resData.step2_done, 'step3_done:', resData.step3_done);
           syncJadwalTerm(term, Boolean(resData.step2_done));
           syncAsprakTerm(term, Boolean(resData.step3_done));
         }
       })
       .catch((err) => {
-        console.error('[OnboardHub] Gagal memuat status DB:', err);
+        console.error('[ONBOARD-DEBUG][Hub] fetchStatus ERROR:', err);
         setIsLoading(false);
       });
   }, [syncJadwalTerm, syncAsprakTerm]);
@@ -105,6 +113,7 @@ export default function OnboardHubPage() {
   useEffect(() => {
     if (!currentTerm) return;
     
+    console.log('[ONBOARD-DEBUG][Hub] Effect currentTerm changed to:', currentTerm);
     // nativasi perpindahan term di semua store agar bersih dari sisa localStorage term lama
     syncOnboardTerm(currentTerm);
     syncJadwalTerm(currentTerm, false);
@@ -114,6 +123,7 @@ export default function OnboardHubPage() {
 
     // Otomatis re-fetch status tatkala pengelola kembali ke halaman hub dari sub-page / tab lain
     const handleFocus = () => {
+      console.log('[ONBOARD-DEBUG][Hub] Window focus event triggered -> re-fetching status for:', currentTerm);
       fetchStatus(currentTerm);
     };
 
@@ -133,6 +143,18 @@ export default function OnboardHubPage() {
   const isStep3Done = Boolean(
     status?.step3_done || (isStep2Done && asprakCompleted.includes('selesai'))
   );
+
+  console.log('[ONBOARD-DEBUG][Hub] Computed Steps Completion:', {
+    currentTerm,
+    dbStatus: status,
+    draftTargetTerm: draft.targetTerm,
+    onboardCompleted,
+    jadwalCompleted,
+    asprakCompleted,
+    isStep1Done,
+    isStep2Done,
+    isStep3Done,
+  });
 
   return (
     <div className="container mx-auto max-w-[2000px] space-y-8 2xl:px-8">
