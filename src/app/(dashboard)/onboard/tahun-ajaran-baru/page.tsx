@@ -32,7 +32,8 @@ export default async function TahunAjaranBaruPage(props: { searchParams: Promise
       ]);
       praktikumList = prakRes || [];
       const prakIds = new Set(praktikumList.map(p => p.id));
-      mataKuliahList = (mkRes || []).filter(mk => prakIds.has(mk.id_praktikum));
+      const rawMkList = (mkRes || []).flatMap((g: any) => (g.items ? g.items : [g]));
+      mataKuliahList = rawMkList.filter(mk => prakIds.has(mk.id_praktikum));
     } catch (error) {
       console.error('[TahunAjaranBaruPage] SSR fetch error:', error);
     }

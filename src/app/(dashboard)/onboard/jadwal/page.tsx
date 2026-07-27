@@ -36,7 +36,8 @@ export default async function JadwalOnboardPage(props: { searchParams: Promise<{
       getAllMataKuliah(),
       getJadwalByTerm(term)
     ]);
-    filteredMk = (allMk || []).filter((mk) => mk.praktikum?.tahun_ajaran === term);
+    const flatMk = (allMk || []).flatMap((g: any) => (g.items ? g.items : [g]));
+    filteredMk = flatMk.filter((mk) => mk.praktikum?.tahun_ajaran === term);
     isAlreadyDone = (existingJadwal || []).length > 0;
   } catch (error) {
     console.error('[JadwalOnboardPage] SSR fetch error:', error);
