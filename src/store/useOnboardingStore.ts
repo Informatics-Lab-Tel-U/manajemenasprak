@@ -137,6 +137,16 @@ export const useOnboardingStore = create<OnboardingState>()(
         const isDifferentTerm = currentTargetTerm !== term;
         const isDraftEmpty = (state.draft.praktikumList?.length || 0) === 0;
 
+        console.log('[DEBUG-MK][StoreSync]', {
+          requestedTerm: term,
+          currentTargetTerm,
+          hasDbData,
+          isDifferentTerm,
+          isDraftEmpty,
+          dbPraktikumsCount: dbPraktikums?.length,
+          dbMataKuliahCount: dbMataKuliah?.length,
+        });
+
         if (isDifferentTerm || (isDraftEmpty && hasDbData)) {
           const now = new Date().toISOString();
           if (hasDbData && dbPraktikums) {
@@ -159,6 +169,11 @@ export const useOnboardingStore = create<OnboardingState>()(
               dosen_koor: mk.dosen_koor || undefined,
               id_praktikum: mk.id_praktikum ? (praktikumIdMap.get(mk.id_praktikum) || mk.id_praktikum) : '',
             }));
+
+            console.log('[DEBUG-MK][StoreSync] Hydrating mappedMk:', {
+              mappedMkCount: mappedMk.length,
+              mappedMkSample: mappedMk.slice(0, 2),
+            });
 
             set({
               currentStep: 'praktikum',
