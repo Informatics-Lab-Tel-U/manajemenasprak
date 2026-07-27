@@ -20,6 +20,7 @@ export async function updateSession(request: NextRequest) {
   if (
     request.method === 'OPTIONS' ||
     (pathname === '/api/monitoring/heartbeat' && request.method === 'POST') ||
+    (pathname === '/api/monitoring/status' && request.method === 'GET') ||
     ((pathname === '/api/praktikan' || pathname.startsWith('/api/praktikan/')) &&
       request.method === 'GET')
   ) {
