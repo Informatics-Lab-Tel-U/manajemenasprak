@@ -15,7 +15,7 @@ interface JadwalOnboardState {
   markStepCompleted: (step: JadwalOnboardStep) => void;
   setJadwalRows: (rows: JadwalPreviewRow[]) => void;
   setTargetTerm: (term: string) => void;
-  syncWithTerm: (term: string, isAlreadyDone?: boolean) => void;
+  syncWithTerm: (term: string, isAlreadyDone?: boolean, dbJadwalList?: any[]) => void;
   resetProgress: () => void;
 }
 
@@ -43,18 +43,48 @@ export const useJadwalOnboardStore = create<JadwalOnboardState>()(
 
       setTargetTerm: (term) => set({ targetTerm: term }),
 
-      syncWithTerm: (term, isAlreadyDone = false) => {
+      syncWithTerm: (term, isAlreadyDone = false, dbJadwalList = []) => {
         const currentTargetTerm = get().targetTerm;
-        if (currentTargetTerm !== term) {
+        const isDifferentTerm = currentTargetTerm !== term;
+        const isRowsEmpty = get().jadwalRows.length === 0;
+
+        const mappedRows: JadwalPreviewRow[] = (dbJadwalList || []).map((j: any, index: number) => ({
+          id_mk: j.id_mk,
+          kelas: j.kelas,
+          hari: j.hari,
+          sesi: j.sesi,
+          jam: j.jam,
+          ruangan: j.ruangan,
+          total_asprak: j.total_asprak,
+          dosen: j.dosen || '',
+          status: 'ok',
+          statusMessage: 'Sudah tersimpan di DB',
+          mkName: j.mata_kuliah?.praktikum?.nama || j.mata_kuliah?.nama_lengkap || 'Mata Kuliah',
+          fromSystemLogic: false,
+          selected: true,
+          originalRow: index + 1,
+        }));
+
+        if (isDifferentTerm) {
           set({
-            ...INITIAL_STATE,
             targetTerm: term,
             completedSteps: isAlreadyDone ? ['upload', 'preview', 'selesai'] : [],
+            jadwalRows: isAlreadyDone ? mappedRows : [],
           });
-        } else if (isAlreadyDone && get().completedSteps.length === 0) {
-          set({
-            completedSteps: ['upload', 'preview', 'selesai'],
-          });
+        } else {
+          // If same term, sync completedSteps with DB ground truth isAlreadyDone
+          if (!isAlreadyDone) {
+            set({
+              completedSteps: [],
+              targetTerm: term,
+            });
+          } else {
+            set({
+              completedSteps: ['upload', 'preview', 'selesai'],
+              jadwalRows: isRowsEmpty && mappedRows.length > 0 ? mappedRows : get().jadwalRows,
+              targetTerm: term,
+            });
+          }
         }
       },
 

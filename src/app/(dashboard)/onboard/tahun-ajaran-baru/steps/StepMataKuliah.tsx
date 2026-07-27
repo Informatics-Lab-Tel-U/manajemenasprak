@@ -107,21 +107,20 @@ export default function MatkulStep() {
 
   useEffect(() => {
     if (previewRows.length === 0 && (draft.mataKuliahData?.length || 0) > 0) {
-      setPreviewRows(
-        draft.mataKuliahData!.map(m => {
-          const p = praktikumList.find(p => p.tempId === m.id_praktikum || (p as any).id === m.id_praktikum);
-          return {
-            mk_singkat: p?.nama || '',
-            originalMkSingkat: p?.nama || '',
-            nama_lengkap: m.nama_lengkap,
-            program_studi: m.program_studi,
-            dosen_koor: m.dosen_koor || '',
-            status: 'ok' as const,
-            selected: true,
-            mappedPraktikumId: p?.tempId || m.id_praktikum,
-          };
-        })
-      );
+      const generated = draft.mataKuliahData!.map(m => {
+        const p = praktikumList.find(p => p.tempId === m.id_praktikum || (p as any).id === m.id_praktikum);
+        return {
+          mk_singkat: p?.nama || '',
+          originalMkSingkat: p?.nama || '',
+          nama_lengkap: m.nama_lengkap,
+          program_studi: m.program_studi,
+          dosen_koor: m.dosen_koor || '',
+          status: 'ok' as const,
+          selected: true,
+          mappedPraktikumId: p?.tempId || m.id_praktikum,
+        };
+      });
+      setPreviewRows(generated);
     }
   }, [draft.mataKuliahData, praktikumList, previewRows.length]);
 

@@ -30,17 +30,20 @@ export default async function JadwalOnboardPage(props: { searchParams: Promise<{
 
   // Fetch only MKs and jadwal that belong to the current term
   let filteredMk: any[] = [];
+  let existingJadwal: any[] = [];
   let isAlreadyDone = false;
   try {
-    const [allMk, existingJadwal] = await Promise.all([
+    const [allMk, jadwalRes] = await Promise.all([
       getAllMataKuliah(),
       getJadwalByTerm(term)
     ]);
-    filteredMk = (allMk || []).filter((mk) => mk.praktikum?.tahun_ajaran === term);
-    isAlreadyDone = (existingJadwal || []).length > 0;
+    const flatMk = (allMk || []).flatMap((g: any) => (g.items ? g.items : [g]));
+    filteredMk = flatMk.filter((mk) => mk.praktikum?.tahun_ajaran === term);
+    existingJadwal = jadwalRes || [];
+    isAlreadyDone = existingJadwal.length > 0;
   } catch (error) {
     console.error('[JadwalOnboardPage] SSR fetch error:', error);
   }
 
-  return <JadwalOnboardClient term={term} mataKuliahList={filteredMk} isAlreadyDone={isAlreadyDone} />;
+  return <JadwalOnboardClient term={term} mataKuliahList={filteredMk} initialJadwalList={existingJadwal} isAlreadyDone={isAlreadyDone} />;
 }

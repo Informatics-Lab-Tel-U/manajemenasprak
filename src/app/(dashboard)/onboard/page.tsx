@@ -16,7 +16,7 @@ import { useAsprakOnboardStore } from '@/store/useAsprakOnboardStore';
 
 export default function OnboardHubPage() {
   const { activeTerm } = useTermStore();
-  const { syncWithTerm: syncOnboardTerm, completedSteps: onboardCompleted, draft } = useOnboardingStore();
+  const { syncWithTerm: syncOnboardTerm, completedSteps: onboardCompleted } = useOnboardingStore();
   const { syncWithTerm: syncJadwalTerm, completedSteps: jadwalCompleted } = useJadwalOnboardStore();
   const { syncWithTerm: syncAsprakTerm, completedSteps: asprakCompleted } = useAsprakOnboardStore();
 
@@ -57,16 +57,13 @@ export default function OnboardHubPage() {
       const newTermPrefix = `${newYear}${parseInt(newYear) + 1}`;
       const targetTerm = `${newTermPrefix}-${termSem}`;
       
-      // If the targeted term doesn't exist in the DB
       if (!availableTerms.current.includes(targetTerm)) {
         const otherSem = termSem === '1' ? '2' : '1';
         const otherTerm = `${newTermPrefix}-${otherSem}`;
         
-        // If the other semester exists, switch to it
         if (availableTerms.current.includes(otherTerm)) {
           setTermSem(otherSem);
         } else {
-          // If neither exists (brand new year), default to semester 1 (Ganjil)
           setTermSem('1');
         }
       }
@@ -76,8 +73,7 @@ export default function OnboardHubPage() {
   const fetchStatus = useCallback((term: string) => {
     if (!term) return;
     setIsLoading(true);
-    const timestamp = Date.now();
-    fetch(`/api/onboard/status?term=${term}&_t=${timestamp}`, {
+    fetch(`/api/onboard/status?term=${term}&_t=${Date.now()}`, {
       cache: 'no-store',
       headers: {
         'Pragma': 'no-cache',
@@ -105,34 +101,23 @@ export default function OnboardHubPage() {
   useEffect(() => {
     if (!currentTerm) return;
     
-    // nativasi perpindahan term di semua store agar bersih dari sisa localStorage term lama
+    // Nativasi perpindahan term di semua store agar bersih dari sisa localStorage term lama
     syncOnboardTerm(currentTerm);
     syncJadwalTerm(currentTerm, false);
     syncAsprakTerm(currentTerm, false);
 
     fetchStatus(currentTerm);
 
-    // Otomatis re-fetch status tatkala pengelola kembali ke halaman hub dari sub-page / tab lain
-    const handleFocus = () => {
-      fetchStatus(currentTerm);
-    };
-
+    // Otomatis re-fetch status tatkala pengelola kembali ke halaman hub dari tab lain
+    const handleFocus = () => fetchStatus(currentTerm);
     window.addEventListener('focus', handleFocus);
-    return () => {
-      window.removeEventListener('focus', handleFocus);
-    };
+    return () => window.removeEventListener('focus', handleFocus);
   }, [currentTerm, syncOnboardTerm, syncJadwalTerm, syncAsprakTerm, fetchStatus]);
 
-  // Ground truth database dipadukan dengan kesiapan state lokal (untuk ketahanan terhadap delay replikasi / cache)
-  const isStep1Done = Boolean(
-    status?.step1_done || (draft.targetTerm === currentTerm && onboardCompleted.includes('selesai'))
-  );
-  const isStep2Done = Boolean(
-    status?.step2_done || (isStep1Done && jadwalCompleted.includes('selesai'))
-  );
-  const isStep3Done = Boolean(
-    status?.step3_done || (isStep2Done && asprakCompleted.includes('selesai'))
-  );
+  // Kombinasi ground-truth server yang aktual dan instant response dari state store
+  const isStep1Done = Boolean(status?.step1_done || onboardCompleted.includes('selesai'));
+  const isStep2Done = Boolean(status?.step2_done || (isStep1Done && jadwalCompleted.includes('selesai')));
+  const isStep3Done = Boolean(status?.step3_done || (isStep2Done && asprakCompleted.includes('selesai')));
 
   return (
     <div className="container mx-auto max-w-[2000px] space-y-8 2xl:px-8">

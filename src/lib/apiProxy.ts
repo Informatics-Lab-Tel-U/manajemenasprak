@@ -10,7 +10,20 @@ const BACKEND_URL = process.env.HONO_BACKEND_URL || 'https://manajemenasprak-bac
 export async function forwardToHono(request: NextRequest, customPath?: string) {
   try {
     const path = customPath || request.nextUrl.pathname;
-    const targetUrl = new URL(`${BACKEND_URL}${path}${request.nextUrl.search}`);
+    const [pathWithoutSearch, customSearch] = path.split('?');
+    const targetUrl = new URL(`${BACKEND_URL}${pathWithoutSearch}`);
+
+    // Merge query params from the original incoming request
+    request.nextUrl.searchParams.forEach((value, key) => {
+      targetUrl.searchParams.set(key, value);
+    });
+
+    // Merge query params from customPath if any were passed
+    if (customSearch) {
+      new URLSearchParams(customSearch).forEach((value, key) => {
+        targetUrl.searchParams.set(key, value);
+      });
+    }
 
     const headers: Record<string, string> = {};
     let authHeader = request.headers.get('authorization');

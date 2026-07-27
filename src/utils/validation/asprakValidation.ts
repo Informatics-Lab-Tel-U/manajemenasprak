@@ -13,11 +13,16 @@ export function validateAsprakData(
   existingNims: ExistingNimInfo[],
   forceOverride: boolean = false
 ): PreviewRow[] {
-  const usedCodes = new Set(existingCodes.map((c) => c.toUpperCase()));
+  const usedCodes = new Set(
+    (existingCodes || [])
+      .map((c: any) => (typeof c === 'string' ? c : c?.kode))
+      .filter((k): k is string => typeof k === 'string' && k.length > 0)
+      .map((c) => c.toUpperCase())
+  );
   // We check uniqueness for NIM+Role combination
   const existingRecords = new Map<string, string>();
   existingNims.forEach((e) => {
-    if (e.kode) {
+    if (e.kode && typeof e.kode === 'string') {
       existingRecords.set(`${e.nim}_${e.role}`, e.kode.toUpperCase());
     }
   });
@@ -200,7 +205,7 @@ export function validateAsprakCodeEdit(
       !forceOverride &&
       existingAspraks.some((a) => {
         // Skip conflict check if it's the exact same user (by NIM)
-        if (a.nim === row.nim) return false;
+        if (a.nim === row.nim || !a.kode || typeof a.kode !== 'string') return false;
         if (a.kode.toUpperCase() !== uppercased) return false;
         const gap = row.angkatan - a.angkatan;
         return gap < CODE_RECYCLE_YEARS;

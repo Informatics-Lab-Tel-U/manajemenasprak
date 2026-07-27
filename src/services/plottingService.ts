@@ -34,11 +34,22 @@ export async function getPlottingList(
   if (term && term !== 'all') params.append('term', term);
   if (praktikumId && praktikumId !== 'all') params.append('praktikumId', praktikumId);
 
-  const result = await honoFetch<PlottingListResult>(`/api/plotting?${params.toString()}`);
+  const result = await honoFetch<any>(`/api/plotting?${params.toString()}`);
   if (!result.ok || !result.data) {
     return { data: [], total: 0 };
   }
-  return result.data;
+
+  if (Array.isArray(result.data)) {
+    return {
+      data: result.data,
+      total: result.data.length,
+    };
+  }
+
+  return {
+    data: Array.isArray(result.data.data) ? result.data.data : [],
+    total: typeof result.data.total === 'number' ? result.data.total : (result.data.data?.length || 0),
+  };
 }
 
 export interface ValidatePlottingRow {
