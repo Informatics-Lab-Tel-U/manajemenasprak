@@ -56,6 +56,7 @@ interface AsprakOnboardClientProps {
   initialExistingCodes: string[];
   initialExistingNims: ExistingNimInfo[];
   initialExistingAspraks: ExistingAsprakInfo[];
+  initialPlottingList?: any[];
   isAlreadyDone?: boolean;
 }
 
@@ -64,6 +65,7 @@ export default function AsprakOnboardClient({
   initialExistingCodes,
   initialExistingNims,
   initialExistingAspraks,
+  initialPlottingList = [],
   isAlreadyDone = false,
 }: AsprakOnboardClientProps) {
   const { currentStep, setCurrentStep, setTargetTerm, syncWithTerm, completedSteps } = useAsprakOnboardStore();
@@ -72,12 +74,12 @@ export default function AsprakOnboardClient({
 
   if (term !== prevTerm) {
     setPrevTerm(term);
-    syncWithTerm(term, isAlreadyDone);
+    syncWithTerm(term, isAlreadyDone, initialPlottingList);
   }
 
   useEffect(() => {
-    syncWithTerm(term, isAlreadyDone);
-  }, [term, isAlreadyDone, syncWithTerm]);
+    syncWithTerm(term, isAlreadyDone, initialPlottingList);
+  }, [term, isAlreadyDone, initialPlottingList, syncWithTerm]);
 
   // eslint-disable-next-line react-doctor/rendering-hydration-no-flicker
   useEffect(() => {

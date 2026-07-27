@@ -38,15 +38,18 @@ export default async function AsprakOnboardPage(props: {
   let existingCodes: string[] = [];
   let allAsprak: any[] = [];
   let isAlreadyDone = false;
+  let initialPlottingList: any[] = [];
   try {
     const res = await Promise.all([
       getExistingCodes(),
       getCachedAllAsprak(),
-      getPlottingList(1, 1, term),
+      getPlottingList(1, 1000, term),
     ]);
     existingCodes = res[0] || [];
     allAsprak = res[1] || [];
-    isAlreadyDone = (res[2]?.total || 0) > 0;
+    const plottingRes = res[2];
+    initialPlottingList = plottingRes?.data || [];
+    isAlreadyDone = (plottingRes?.total || 0) > 0;
   } catch (error) {
     console.error('[AsprakOnboardPage] SSR fetch error:', error);
   }
@@ -64,6 +67,7 @@ export default async function AsprakOnboardPage(props: {
       initialExistingCodes={existingCodes}
       initialExistingNims={initialExistingNims}
       initialExistingAspraks={initialExistingAspraks}
+      initialPlottingList={initialPlottingList}
       isAlreadyDone={isAlreadyDone}
     />
   );
