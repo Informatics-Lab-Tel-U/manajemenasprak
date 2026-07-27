@@ -9,7 +9,7 @@ import Link from 'next/link';
 
 import { isLabOnline } from '@/lib/labStatus';
 
-const POLL_INTERVAL_MS = 20_000;
+const POLL_INTERVAL_MS = 30_000;
 const RECONNECT_DELAY_MS = 5_000;
 
 export default function RealtimeMonitoringWidget({ initialData }: { initialData: LabStatus[] }) {
