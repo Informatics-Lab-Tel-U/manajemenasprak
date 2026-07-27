@@ -89,16 +89,27 @@ export const useAsprakOnboardStore = create<AsprakOnboardState>()(
 
       syncWithTerm: (term, isAlreadyDone = false) => {
         const currentTargetTerm = get().targetTerm;
-        if (currentTargetTerm !== term) {
+        const isDifferentTerm = currentTargetTerm !== term;
+
+        if (isDifferentTerm) {
           set({
             ...INITIAL_STATE,
             targetTerm: term,
             completedSteps: isAlreadyDone ? ['data_asprak', 'plotting', 'preview-final', 'selesai'] : [],
           });
-        } else if (isAlreadyDone && get().completedSteps.length === 0) {
-          set({
-            completedSteps: ['data_asprak', 'plotting', 'preview-final', 'selesai'],
-          });
+        } else {
+          // If same term, sync completedSteps with DB ground truth isAlreadyDone
+          if (!isAlreadyDone) {
+            set({
+              completedSteps: [],
+              targetTerm: term,
+            });
+          } else if (get().completedSteps.length === 0) {
+            set({
+              completedSteps: ['data_asprak', 'plotting', 'preview-final', 'selesai'],
+              targetTerm: term,
+            });
+          }
         }
       },
 
