@@ -46,22 +46,28 @@ const steps = [
 interface JadwalOnboardClientProps {
   term: string;
   mataKuliahList: MataKuliah[];
+  initialJadwalList?: any[];
   isAlreadyDone?: boolean;
 }
 
-export default function JadwalOnboardClient({ term, mataKuliahList, isAlreadyDone = false }: JadwalOnboardClientProps) {
+export default function JadwalOnboardClient({
+  term,
+  mataKuliahList,
+  initialJadwalList = [],
+  isAlreadyDone = false,
+}: JadwalOnboardClientProps) {
   const { currentStep, setCurrentStep, setTargetTerm, syncWithTerm, completedSteps } = useJadwalOnboardStore();
   const [mounted, setMounted] = useState(false);
   const [prevTerm, setPrevTerm] = useState(term);
 
   if (term !== prevTerm) {
     setPrevTerm(term);
-    syncWithTerm(term, isAlreadyDone);
+    syncWithTerm(term, isAlreadyDone, initialJadwalList);
   }
 
   useEffect(() => {
-    syncWithTerm(term, isAlreadyDone);
-  }, [term, isAlreadyDone, syncWithTerm]);
+    syncWithTerm(term, isAlreadyDone, initialJadwalList);
+  }, [term, isAlreadyDone, initialJadwalList, syncWithTerm]);
 
   // eslint-disable-next-line react-doctor/rendering-hydration-no-flicker
   useEffect(() => {
