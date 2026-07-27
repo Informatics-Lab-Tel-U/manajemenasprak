@@ -33,7 +33,6 @@ let channelHeartbeat: ReturnType<typeof supabase.channel> | null = null;
 let initPromise: Promise<void> | null = null;
 
 
-let pollingTimer: NodeJS.Timeout | null = null;
 
 export const useMonitoringStore = create<MonitoringState>((set, get) => ({
   labStatus: [],
@@ -73,11 +72,6 @@ export const useMonitoringStore = create<MonitoringState>((set, get) => ({
 
       // Initial client fetch untuk menjamin data paling fresh tanpa bergantung jeda SSR/WebSocket
       await fetchStatus();
-
-      // Setup Polling Fallback setiap 60 detik (menghemat drastis kuota Cloudflare Workers)
-      if (!pollingTimer) {
-        pollingTimer = setInterval(fetchStatus, 60_000);
-      }
 
       // Setup WebSocket Subscription untuk monitoring_lab
       if (!channelLab) {
@@ -148,10 +142,7 @@ export const useMonitoringStore = create<MonitoringState>((set, get) => ({
   },
 
   cleanup: () => {
-    if (pollingTimer) {
-      clearInterval(pollingTimer);
-      pollingTimer = null;
-    }
+
     if (channelLab) {
       supabase.removeChannel(channelLab);
       channelLab = null;

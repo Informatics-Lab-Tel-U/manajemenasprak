@@ -9,7 +9,6 @@ import Link from 'next/link';
 
 import { isLabOnline } from '@/lib/labStatus';
 
-const POLL_INTERVAL_MS = 30_000;
 const RECONNECT_DELAY_MS = 5_000;
 
 export default function RealtimeMonitoringWidget({ initialData }: { initialData: LabStatus[] }) {
@@ -32,25 +31,7 @@ export default function RealtimeMonitoringWidget({ initialData }: { initialData:
     return () => clearInterval(timer);
   }, []);
 
-  // === POLLING FALLBACK ===
-  // Fetch via our own API route (uses admin client server-side, bypasses RLS).
-  useEffect(() => {
-    const poll = async () => {
-      try {
-        const res = await fetch('/api/monitoring/status');
-        if (!res.ok) return;
-        const json = await res.json();
-        if (Array.isArray(json.data) && json.data.length > 0) {
-          updateLabStatus(json.data as LabStatus[]);
-        }
-      } catch {
-        // network error — silently skip, Realtime will still handle updates
-      }
-    };
 
-    const pollInterval = setInterval(poll, POLL_INTERVAL_MS);
-    return () => clearInterval(pollInterval);
-  }, [updateLabStatus]);  
 
   const activeLabsCount = monitoringData.filter((d) => isLabOnline(d, now)).length;
 
