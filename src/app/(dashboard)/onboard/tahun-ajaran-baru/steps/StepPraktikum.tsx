@@ -103,6 +103,19 @@ export default function PraktikumStep() {
     })) || [];
   });
 
+  useEffect(() => {
+    if (previewRows.length === 0 && (draft.praktikumList?.length || 0) > 0) {
+      setPreviewRows(
+        draft.praktikumList!.map((p) => ({
+          nama: p.nama,
+          tahun_ajaran: p.tahun_ajaran,
+          status: 'ok' as const,
+          selected: true,
+        }))
+      );
+    }
+  }, [draft.praktikumList, previewRows.length]);
+
   // Modal state (manual add tetap tersedia di kedua mode)
   const [isManualModalOpen, setIsManualModalOpen] = useState(false);
   const [manualInputName, setManualInputName] = useState('');

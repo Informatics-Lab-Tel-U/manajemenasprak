@@ -35,6 +35,7 @@ interface StepDataAsprakProps {
   existingCodes: string[];
   existingNims: ExistingNimInfo[];
   existingAspraks: ExistingAsprakInfo[];
+  isAlreadyDone?: boolean;
 }
 
 const handleDownloadTemplate = (format: 'csv' | 'xlsx') => {
@@ -46,6 +47,7 @@ export default function StepDataAsprak({
   existingCodes,
   existingNims,
   existingAspraks,
+  isAlreadyDone = false,
 }: StepDataAsprakProps) {
   const { asprakRows, setAsprakRows, setValidatedAsprakRows, setCurrentStep, markStepCompleted, unmarkStepCompleted, setPlottingPreviewRows, setValidatedPlottingRows } = useAsprakOnboardStore();
   const [error, setError] = useState<string | null>(null);
@@ -261,6 +263,13 @@ export default function StepDataAsprak({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
+        {isAlreadyDone && (
+          <Alert className="border-amber-500/50 bg-amber-500/10 text-amber-800 dark:text-amber-200">
+            <AlertDescription className="text-sm leading-relaxed">
+              ℹ️ Data asprak dan plotting untuk angkatan <strong className="font-bold">{term}</strong> sudah tersimpan di database. Mengunggah dan menyimpan file CSV baru di sini akan menimpa / memperbarui data yang sebelumnya.
+            </AlertDescription>
+          </Alert>
+        )}
         {error && (
           <Alert variant="destructive">
             <AlertDescription className="flex items-start gap-2 whitespace-pre-wrap">

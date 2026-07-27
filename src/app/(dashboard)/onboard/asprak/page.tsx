@@ -5,6 +5,7 @@ import {
   getExistingCodes,
   getCachedAllAsprak,
 } from '@/services/asprakService.server';
+import { getPlottingList } from '@/services/plottingService';
 import AsprakOnboardClient from './AsprakOnboardClient';
 import { getCachedAvailableTerms } from '@/services/termService';
 
@@ -36,13 +37,16 @@ export default async function AsprakOnboardPage(props: {
   // Fetch initial data for validation
   let existingCodes: string[] = [];
   let allAsprak: any[] = [];
+  let isAlreadyDone = false;
   try {
     const res = await Promise.all([
       getExistingCodes(),
       getCachedAllAsprak(),
+      getPlottingList(1, 1, term),
     ]);
     existingCodes = res[0] || [];
     allAsprak = res[1] || [];
+    isAlreadyDone = (res[2]?.total || 0) > 0;
   } catch (error) {
     console.error('[AsprakOnboardPage] SSR fetch error:', error);
   }
@@ -60,6 +64,7 @@ export default async function AsprakOnboardPage(props: {
       initialExistingCodes={existingCodes}
       initialExistingNims={initialExistingNims}
       initialExistingAspraks={initialExistingAspraks}
+      isAlreadyDone={isAlreadyDone}
     />
   );
 }

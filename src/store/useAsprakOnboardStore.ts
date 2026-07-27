@@ -45,6 +45,7 @@ interface AsprakOnboardState {
   setPlottingPreviewRows: (rows: ExtendedPreviewRow[]) => void;
   setValidatedPlottingRows: (rows: ValidatedPlottingRow[]) => void;
   setTargetTerm: (term: string) => void;
+  syncWithTerm: (term: string, isAlreadyDone?: boolean) => void;
   resetProgress: () => void;
 }
 
@@ -60,7 +61,7 @@ const INITIAL_STATE = {
 
 export const useAsprakOnboardStore = create<AsprakOnboardState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       ...INITIAL_STATE,
 
       setCurrentStep: (step) => set({ currentStep: step }),
@@ -85,6 +86,21 @@ export const useAsprakOnboardStore = create<AsprakOnboardState>()(
       setValidatedPlottingRows: (rows) => set({ validatedPlottingRows: rows }),
 
       setTargetTerm: (term) => set({ targetTerm: term }),
+
+      syncWithTerm: (term, isAlreadyDone = false) => {
+        const currentTargetTerm = get().targetTerm;
+        if (currentTargetTerm !== term) {
+          set({
+            ...INITIAL_STATE,
+            targetTerm: term,
+            completedSteps: isAlreadyDone ? ['data_asprak', 'plotting', 'preview-final', 'selesai'] : [],
+          });
+        } else if (isAlreadyDone && get().completedSteps.length === 0) {
+          set({
+            completedSteps: ['data_asprak', 'plotting', 'preview-final', 'selesai'],
+          });
+        }
+      },
 
       resetProgress: () => set({ ...INITIAL_STATE }),
     }),
