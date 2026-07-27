@@ -102,13 +102,6 @@ export default function TahunAjaranBaruClient({
   
   const { lastSaved, isDirty } = useAutosaveStatus();
 
-  console.log('[DEBUG-MK][ClientProps]', {
-    term,
-    initialPraktikumListCount: initialPraktikumList.length,
-    initialMataKuliahListCount: initialMataKuliahList.length,
-    initialMataKuliahListSample: initialMataKuliahList.slice(0, 2),
-  });
-
   const [prevTerm, setPrevTerm] = useState(term);
   if (term !== prevTerm) {
     setPrevTerm(term);

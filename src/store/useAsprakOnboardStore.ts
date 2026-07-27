@@ -109,17 +109,6 @@ export const useAsprakOnboardStore = create<AsprakOnboardState>()(
           mk_singkat: item.praktikum?.nama || '',
         }));
 
-        console.log('[DEBUG-ASPRAK][StoreSync]', {
-          term,
-          currentTargetTerm,
-          isDifferentTerm,
-          isAlreadyDone,
-          dbPlottingListLength: dbPlottingList.length,
-          isPlottingRowsEmpty,
-          mappedPlottingRowsLength: mappedPlottingRows.length,
-          currentStorePlottingRowsLength: get().plottingPreviewRows.length,
-        });
-
         if (isDifferentTerm) {
           set({
             ...INITIAL_STATE,

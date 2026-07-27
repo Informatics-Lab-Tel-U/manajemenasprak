@@ -50,15 +50,6 @@ export default async function AsprakOnboardPage(props: {
     const plottingRes = res[2];
     initialPlottingList = plottingRes?.data || [];
     isAlreadyDone = (plottingRes?.total || 0) > 0 || initialPlottingList.length > 0;
-    console.log('[DEBUG-ASPRAK][SSR]', {
-      term,
-      codesLength: existingCodes.length,
-      allAsprakLength: allAsprak.length,
-      plottingResTotal: plottingRes?.total,
-      initialPlottingListLength: initialPlottingList.length,
-      isAlreadyDone,
-      samplePlotting: initialPlottingList.slice(0, 2),
-    });
   } catch (error) {
     console.error('[AsprakOnboardPage] SSR fetch error:', error);
   }
