@@ -78,6 +78,12 @@ export default function AsprakOnboardClient({
   }
 
   useEffect(() => {
+    console.log('[DEBUG-ASPRAK][ClientProps]', {
+      term,
+      isAlreadyDone,
+      initialPlottingListLength: initialPlottingList.length,
+      samplePlotting: initialPlottingList.slice(0, 2),
+    });
     syncWithTerm(term, isAlreadyDone, initialPlottingList);
   }, [term, isAlreadyDone, initialPlottingList, syncWithTerm]);
 
