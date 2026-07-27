@@ -214,7 +214,7 @@ export default function DashboardCharts({
                 <table className="w-full border-collapse text-sm">
                   <thead>
                     <tr className="bg-muted/50 border-b border-border">
-                      <th className="p-2 border-r-0 text-center font-bold min-w-[120px] text-[10px] 2xl:text-xs uppercase text-muted-foreground bg-transparent leading-tight">
+                      <th className="p-2 border-r-0 text-center font-bold min-w-[120px] text-xs uppercase text-muted-foreground bg-transparent leading-tight">
                         Penjagaan
                         <br />
                         <span className="text-primary/70">(Modul {activeModul})</span>
@@ -255,7 +255,7 @@ export default function DashboardCharts({
                                     <Tooltip key={j.id}>
                                       <TooltipTrigger asChild>
                                         <div
-                                          className={`text-[10px] px-1.5 py-0.5 rounded-sm font-bold transition-all hover:scale-105 cursor-default ${
+                                          className={`text-xs px-1.5 py-0.5 rounded-sm font-bold transition-all hover:scale-105 cursor-default ${
                                             j.asprak?.role === 'ASLAB'
                                               ? 'bg-blue-100/80 text-blue-800 border border-blue-200 dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-800/50'
                                               : 'bg-slate-100/80 text-slate-800 border border-slate-200 dark:bg-slate-800/60 dark:text-slate-300 dark:border-slate-700/80'
@@ -270,7 +270,7 @@ export default function DashboardCharts({
                                       >
                                         <div className="flex items-center gap-2 border-b pb-1 mb-1 border-border/50">
                                           <span
-                                            className={`text-[9px] px-1 rounded-sm uppercase font-black ${j.asprak?.role === 'ASLAB' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-700'}`}
+                                            className={`text-[10px] px-1 rounded-sm uppercase font-black ${j.asprak?.role === 'ASLAB' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-700'}`}
                                           >
                                             {j.asprak?.role}
                                           </span>
@@ -281,7 +281,7 @@ export default function DashboardCharts({
                                         <div className="font-semibold text-xs">
                                           {j.asprak?.nama_lengkap}
                                         </div>
-                                        <div className="text-[10px] text-muted-foreground">
+                                        <div className="text-xs text-muted-foreground">
                                           {j.asprak?.nim}
                                         </div>
                                       </TooltipContent>
@@ -289,7 +289,7 @@ export default function DashboardCharts({
                                   ))}
                                 </TooltipProvider>
                               ) : (
-                                <span className="text-[10px] text-muted-foreground italic opacity-50">
+                                <span className="text-xs text-muted-foreground italic opacity-50">
                                   -
                                 </span>
                               )}
@@ -300,7 +300,7 @@ export default function DashboardCharts({
                             {session.sesi ? (
                               <div className="font-bold">Sesi {session.sesi}</div>
                             ) : null}
-                            <div className="text-[10px] 2xl:text-xs opacity-80">{session.jam}</div>
+                            <div className="text-xs opacity-80">{session.jam}</div>
                           </td>
                           {uniqueRooms.map((room) => {
                             const jadwals = scheduleMatrix[session.rowKey]?.[room] || [];

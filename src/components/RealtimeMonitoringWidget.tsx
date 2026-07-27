@@ -88,7 +88,7 @@ export default function RealtimeMonitoringWidget({ initialData }: { initialData:
                     <span className={`h-2 w-2 rounded-full shrink-0 ${isOnline ? 'bg-green-500' : 'bg-muted-foreground'}`} />
                     <span className="whitespace-nowrap">{room}</span>
                   </div>
-                  <span className="text-[10px] leading-none font-normal text-muted-foreground truncate w-full">
+                  <span className="text-xs leading-none font-normal text-muted-foreground truncate w-full">
                     {isOnline ? (data?.kelas || 'Tidak ada sesi') : 'Offline'}
                   </span>
                 </div>

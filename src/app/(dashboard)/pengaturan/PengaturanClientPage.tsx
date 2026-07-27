@@ -121,10 +121,12 @@ export default function DatabaseClientPage({
       updateUiState({ status: { type: 'info', message: `Memproses ${file.name}...` } });
 
       const interval = setInterval(() => {
-        updateUiState({ progress: (prev: number) => {
-          if (prev >= 90) return prev;
-          return prev + Math.floor(Math.random() * 10) + 5;
-        }});
+        updateUiState({
+          progress: (prev: number) => {
+            if (prev >= 90) return prev;
+            return prev + Math.floor(Math.random() * 10) + 5;
+          }
+        });
       }, 500);
 
       try {
@@ -238,10 +240,10 @@ export default function DatabaseClientPage({
         body: JSON.stringify({ term: deleteDataTerm })
       });
       const data = await res.json();
-      
+
       if (res.ok && data.ok) {
         updateUiState({ status: { type: 'success', message: `Berhasil menghapus semua data untuk angkatan ${deleteDataTerm}!` } });
-        
+
         // Check if universal active term was deleted
         if (deleteDataTerm === globalActiveTerm) {
           const newTerms = tahunAjaranList.filter(t => t !== deleteDataTerm);
@@ -251,10 +253,10 @@ export default function DatabaseClientPage({
             setGlobalActiveTerm('');
           }
         }
-        
+
         // Reset danger zone select state to force fallback to the new term
         setDeleteDataTerm('');
-        
+
         refetchTahunAjaran();
         router.refresh();
       } else {
@@ -465,7 +467,7 @@ export default function DatabaseClientPage({
                 <div className="space-y-1">
                   <p className="font-medium text-sm">Tarik & letakkan dataset .xlsx di sini</p>
                   <p className="text-sm text-muted-foreground">atau klik untuk memilih file</p>
-                  <p className="text-xs text-muted-foreground mt-3 opacity-60">
+                  <p className="text-xs text-muted-foreground mt-3">
                     Sheet: praktikum, mata_kuliah, asprak, jadwal, asprak_praktikum
                   </p>
                 </div>
@@ -568,7 +570,7 @@ export default function DatabaseClientPage({
               term={activeTerm}
               onNext={() => setWizardStep(5)}
               onPrev={() => setWizardStep(3)}
-              onSuccess={() => {}}
+              onSuccess={() => { }}
             />
           </div>
         )}
@@ -724,7 +726,7 @@ export default function DatabaseClientPage({
                   <div className="flex items-center justify-between">
                     <p className="text-sm font-semibold">Dashboard Manajemen</p>
                     {maintenanceStatuses.dashboard && (
-                      <Badge variant="destructive" className="animate-pulse text-[10px] px-1.5 py-0">
+                      <Badge variant="destructive" className="animate-pulse text-xs px-1.5 py-0">
                         ACTIVE
                       </Badge>
                     )}
@@ -749,7 +751,7 @@ export default function DatabaseClientPage({
                   <div className="flex items-center justify-between">
                     <p className="text-sm font-semibold">Informatics Web / Blog</p>
                     {maintenanceStatuses.informaticsweb && (
-                      <Badge variant="destructive" className="animate-pulse text-[10px] px-1.5 py-0">
+                      <Badge variant="destructive" className="animate-pulse text-xs px-1.5 py-0">
                         ACTIVE
                       </Badge>
                     )}
@@ -774,7 +776,7 @@ export default function DatabaseClientPage({
                   <div className="flex items-center justify-between">
                     <p className="text-sm font-semibold">Generator Kursi Praktikum</p>
                     {maintenanceStatuses.generator_kursi && (
-                      <Badge variant="destructive" className="animate-pulse text-[10px] px-1.5 py-0">
+                      <Badge variant="destructive" className="animate-pulse text-xs px-1.5 py-0">
                         ACTIVE
                       </Badge>
                     )}
