@@ -39,7 +39,7 @@ const handleDownloadTemplate = async (format: 'csv' | 'xlsx') => {
   downloadTemplate('jadwal', format);
 };
 
-export default function StepUploadJadwal({ term, mataKuliahList, isAlreadyDone = false }: StepUploadJadwalProps) {
+export default function StepUploadJadwal({ term, mataKuliahList }: StepUploadJadwalProps) {
   const { setJadwalRows, setCurrentStep } = useJadwalOnboardStore();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -128,13 +128,6 @@ export default function StepUploadJadwal({ term, mataKuliahList, isAlreadyDone =
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        {isAlreadyDone && (
-          <Alert className="border-amber-500/50 bg-amber-500/10 text-amber-800 dark:text-amber-200">
-            <AlertDescription className="text-sm leading-relaxed">
-              ℹ️ Data jadwal praktikum untuk angkatan <strong className="font-bold">{term}</strong> sudah tersimpan di database. Mengunggah dan menyimpan file CSV baru di sini akan menimpa / memperbarui data yang sebelumnya.
-            </AlertDescription>
-          </Alert>
-        )}
         {error && (
           <Alert className="border-destructive/50 text-destructive bg-destructive/10">
             <AlertDescription className="flex items-start gap-2">
