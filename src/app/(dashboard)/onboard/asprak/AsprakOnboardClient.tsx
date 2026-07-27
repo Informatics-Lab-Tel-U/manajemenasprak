@@ -56,6 +56,7 @@ interface AsprakOnboardClientProps {
   initialExistingCodes: string[];
   initialExistingNims: ExistingNimInfo[];
   initialExistingAspraks: ExistingAsprakInfo[];
+  isAlreadyDone?: boolean;
 }
 
 export default function AsprakOnboardClient({
@@ -63,15 +64,20 @@ export default function AsprakOnboardClient({
   initialExistingCodes,
   initialExistingNims,
   initialExistingAspraks,
+  isAlreadyDone = false,
 }: AsprakOnboardClientProps) {
-  const { currentStep, setCurrentStep, setTargetTerm, completedSteps } = useAsprakOnboardStore();
+  const { currentStep, setCurrentStep, setTargetTerm, syncWithTerm, completedSteps } = useAsprakOnboardStore();
   const [mounted, setMounted] = useState(false);
   const [prevTerm, setPrevTerm] = useState(term);
 
   if (term !== prevTerm) {
     setPrevTerm(term);
-    setTargetTerm(term);
+    syncWithTerm(term, isAlreadyDone);
   }
+
+  useEffect(() => {
+    syncWithTerm(term, isAlreadyDone);
+  }, [term, isAlreadyDone, syncWithTerm]);
 
   // eslint-disable-next-line react-doctor/rendering-hydration-no-flicker
   useEffect(() => {
@@ -79,8 +85,6 @@ export default function AsprakOnboardClient({
   }, []);
 
   if (!mounted) return null;
-
-
 
   return (
     <div className="container mx-auto max-w-[2000px] relative space-y-8 2xl:px-8">
@@ -96,12 +100,20 @@ export default function AsprakOnboardClient({
             <p className="text-sm 2xl:text-base text-muted-foreground mt-2">
               Ikuti alur ini untuk mengunggah dan memvalidasi data asisten praktikum secara berurutan.
             </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="text-sm text-muted-foreground text-right border rounded-md px-3 py-1.5 bg-muted/20">
-            Tahun Ajaran Target:{' '}
-            <span className="font-bold text-foreground">{term}</span>
+            <div className="flex flex-wrap items-center gap-2 mt-3">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
+                Target Tahun Ajaran: <strong className="font-bold">{term}</strong>
+              </span>
+              {isAlreadyDone ? (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                  Mode: Update / Edit Plotting Tersimpan
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                  Mode: Setup Baru
+                </span>
+              )}
+            </div>
           </div>
         </div>
       </header>
@@ -156,6 +168,7 @@ export default function AsprakOnboardClient({
               existingCodes={initialExistingCodes}
               existingNims={initialExistingNims}
               existingAspraks={initialExistingAspraks}
+              isAlreadyDone={isAlreadyDone}
             />
           </StepperContent>
           <StepperContent value="plotting">

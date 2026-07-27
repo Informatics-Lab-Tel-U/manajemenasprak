@@ -46,17 +46,22 @@ const steps = [
 interface JadwalOnboardClientProps {
   term: string;
   mataKuliahList: MataKuliah[];
+  isAlreadyDone?: boolean;
 }
 
-export default function JadwalOnboardClient({ term, mataKuliahList }: JadwalOnboardClientProps) {
-  const { currentStep, setCurrentStep, setTargetTerm, completedSteps } = useJadwalOnboardStore();
+export default function JadwalOnboardClient({ term, mataKuliahList, isAlreadyDone = false }: JadwalOnboardClientProps) {
+  const { currentStep, setCurrentStep, setTargetTerm, syncWithTerm, completedSteps } = useJadwalOnboardStore();
   const [mounted, setMounted] = useState(false);
   const [prevTerm, setPrevTerm] = useState(term);
 
   if (term !== prevTerm) {
     setPrevTerm(term);
-    setTargetTerm(term);
+    syncWithTerm(term, isAlreadyDone);
   }
+
+  useEffect(() => {
+    syncWithTerm(term, isAlreadyDone);
+  }, [term, isAlreadyDone, syncWithTerm]);
 
   // eslint-disable-next-line react-doctor/rendering-hydration-no-flicker
   useEffect(() => {
@@ -64,8 +69,6 @@ export default function JadwalOnboardClient({ term, mataKuliahList }: JadwalOnbo
   }, []);
 
   if (!mounted) return null;
-
-
 
   return (
     <div className="container mx-auto max-w-[2000px] relative space-y-8 2xl:px-8">
@@ -81,14 +84,20 @@ export default function JadwalOnboardClient({ term, mataKuliahList }: JadwalOnbo
             <p className="text-sm 2xl:text-base text-muted-foreground mt-2">
               Ikuti alur ini untuk mengunggah dan memvalidasi jadwal praktikum secara berurutan.
             </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="text-sm text-muted-foreground text-right border rounded-md px-3 py-1.5 bg-muted/20">
-            Tahun Ajaran Target:{' '}
-            <span className="font-bold text-foreground">
-              {term}
-            </span>
+            <div className="flex flex-wrap items-center gap-2 mt-3">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
+                Target Tahun Ajaran: <strong className="font-bold">{term}</strong>
+              </span>
+              {isAlreadyDone ? (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                  Mode: Update / Edit Jadwal Tersimpan
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                  Mode: Setup Baru
+                </span>
+              )}
+            </div>
           </div>
         </div>
       </header>
@@ -138,7 +147,7 @@ export default function JadwalOnboardClient({ term, mataKuliahList }: JadwalOnbo
 
         <div className="w-full">
           <StepperContent value="upload">
-            <StepUploadJadwal term={term} mataKuliahList={mataKuliahList} />
+            <StepUploadJadwal term={term} mataKuliahList={mataKuliahList} isAlreadyDone={isAlreadyDone} />
           </StepperContent>
           <StepperContent value="preview">
             <StepPreviewJadwal term={term} />

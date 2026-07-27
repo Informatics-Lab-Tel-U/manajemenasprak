@@ -80,16 +80,39 @@ const steps = [
   { id: 'selesai', title: 'Selesai', description: 'Setup berhasil', icon: <CheckCircle2 /> },
 ];
 
-export default function TahunAjaranBaruClient() {
+interface TahunAjaranBaruClientProps {
+  term?: string;
+  initialPraktikumList?: any[];
+  initialMataKuliahList?: any[];
+}
+
+export default function TahunAjaranBaruClient({
+  term = '',
+  initialPraktikumList = [],
+  initialMataKuliahList = [],
+}: TahunAjaranBaruClientProps = {}) {
   const { 
     currentStep, 
     setCurrentStep,
     completedSteps,
     draft,
-    resetProgress 
+    resetProgress,
+    syncWithTerm,
   } = useOnboardingStore();
   
   const { lastSaved, isDirty } = useAutosaveStatus();
+
+  const [prevTerm, setPrevTerm] = useState(term);
+  if (term !== prevTerm) {
+    setPrevTerm(term);
+    syncWithTerm(term, initialPraktikumList, initialMataKuliahList);
+  }
+
+  useEffect(() => {
+    if (term) {
+      syncWithTerm(term, initialPraktikumList, initialMataKuliahList);
+    }
+  }, [term, initialPraktikumList, initialMataKuliahList, syncWithTerm]);
 
   return (
     <div className="container mx-auto max-w-[2000px] relative space-y-8 2xl:px-8" suppressHydrationWarning>
@@ -105,6 +128,22 @@ export default function TahunAjaranBaruClient() {
             <p className="text-sm 2xl:text-base text-muted-foreground mt-2">
               Ikuti alur ini untuk menambahkan seluruh data semester baru secara berurutan agar sesuai dengan constraint sistem.
             </p>
+            {term && (
+              <div className="flex flex-wrap items-center gap-2 mt-3">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
+                  Target Tahun Ajaran: <strong className="font-bold">{term}</strong>
+                </span>
+                {initialPraktikumList.length > 0 ? (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                    Mode: Edit Data Eksisting DB
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                    Mode: Setup Baru
+                  </span>
+                )}
+              </div>
+            )}
           </div>
         </div>
         <div className="flex items-center gap-4">

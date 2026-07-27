@@ -2,6 +2,7 @@ import { Suspense } from 'react';
 import { redirect } from 'next/navigation';
 import { requireAuth } from '@/lib/auth';
 import { getAllMataKuliah } from '@/services/praktikumService';
+import { getJadwalByTerm } from '@/services/jadwalService';
 import JadwalOnboardClient from './JadwalOnboardClient';
 import { getCachedAvailableTerms } from '@/services/termService';
 
@@ -27,14 +28,19 @@ export default async function JadwalOnboardPage(props: { searchParams: Promise<{
     redirect('/onboard');
   }
 
-  // Fetch only MKs that belong to the current term
+  // Fetch only MKs and jadwal that belong to the current term
   let filteredMk: any[] = [];
+  let isAlreadyDone = false;
   try {
-    const allMk = await getAllMataKuliah();
+    const [allMk, existingJadwal] = await Promise.all([
+      getAllMataKuliah(),
+      getJadwalByTerm(term)
+    ]);
     filteredMk = (allMk || []).filter((mk) => mk.praktikum?.tahun_ajaran === term);
+    isAlreadyDone = (existingJadwal || []).length > 0;
   } catch (error) {
     console.error('[JadwalOnboardPage] SSR fetch error:', error);
   }
 
-  return <JadwalOnboardClient term={term} mataKuliahList={filteredMk} />;
+  return <JadwalOnboardClient term={term} mataKuliahList={filteredMk} isAlreadyDone={isAlreadyDone} />;
 }

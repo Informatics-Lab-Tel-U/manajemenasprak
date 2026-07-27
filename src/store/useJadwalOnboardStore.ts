@@ -15,6 +15,7 @@ interface JadwalOnboardState {
   markStepCompleted: (step: JadwalOnboardStep) => void;
   setJadwalRows: (rows: JadwalPreviewRow[]) => void;
   setTargetTerm: (term: string) => void;
+  syncWithTerm: (term: string, isAlreadyDone?: boolean) => void;
   resetProgress: () => void;
 }
 
@@ -27,7 +28,7 @@ const INITIAL_STATE = {
 
 export const useJadwalOnboardStore = create<JadwalOnboardState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       ...INITIAL_STATE,
 
       setCurrentStep: (step) => set({ currentStep: step }),
@@ -41,6 +42,21 @@ export const useJadwalOnboardStore = create<JadwalOnboardState>()(
       setJadwalRows: (rows) => set({ jadwalRows: rows }),
 
       setTargetTerm: (term) => set({ targetTerm: term }),
+
+      syncWithTerm: (term, isAlreadyDone = false) => {
+        const currentTargetTerm = get().targetTerm;
+        if (currentTargetTerm !== term) {
+          set({
+            ...INITIAL_STATE,
+            targetTerm: term,
+            completedSteps: isAlreadyDone ? ['upload', 'preview', 'selesai'] : [],
+          });
+        } else if (isAlreadyDone && get().completedSteps.length === 0) {
+          set({
+            completedSteps: ['upload', 'preview', 'selesai'],
+          });
+        }
+      },
 
       resetProgress: () => set({ ...INITIAL_STATE }),
     }),
