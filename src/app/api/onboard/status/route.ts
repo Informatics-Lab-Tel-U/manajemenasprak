@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
   const timeParam = url.searchParams.get('_t') || '';
   console.log(`[ONBOARD-DEBUG][NextAPI] GET /api/onboard/status received -> term: ${term}, _t: ${timeParam}`);
   
-  const response = await forwardToHono(request, `/api/tahun-ajaran/onboard/status?term=${encodeURIComponent(term)}`);
+  const response = await forwardToHono(request, '/api/tahun-ajaran/onboard/status');
   console.log(`[ONBOARD-DEBUG][NextAPI] Response forwarded from Hono -> status: ${response.status}`);
   return response;
 }
