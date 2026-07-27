@@ -66,7 +66,7 @@ export async function getOrCreatePraktikum(
 }
 
 export async function getAllMataKuliah(): Promise<MataKuliah[]> {
-  const result = await honoFetch<MataKuliah[]>('/api/praktikum?action=mata-kuliah');
+  const result = await honoFetch<MataKuliah[]>('/api/mata-kuliah');
   return result.ok && result.data ? result.data : [];
 }
 
