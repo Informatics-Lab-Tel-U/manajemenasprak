@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
 import { DeletePostButton } from '@/components/blog/DeletePostButton';
+import { TemplateSelectionModal } from '@/components/blog/TemplateSelectionModal';
 import { requireRole } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
@@ -30,12 +31,7 @@ export default async function ManagePostPage() {
           <h1 className="text-2xl font-bold tracking-tight">Kelola Post Lab</h1>
           <p className="text-muted-foreground">Manajemen konten artikel dan pengumuman lab.</p>
         </div>
-        <Button asChild>
-          <Link href="/manage-post/create">
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Buat Post
-          </Link>
-        </Button>
+        <TemplateSelectionModal />
       </div>
 
       <div className="rounded-md border bg-card overflow-x-auto">

@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Pencil } from 'lucide-react';
+import { PlusCircle, Pencil, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
@@ -127,6 +127,7 @@ export function TaxonomyDialog({ type, mode = 'create', initialData, trigger }: 
           </div>
           <DialogFooter>
             <Button type="submit" disabled={isPending}>
+              {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {isPending ? 'Menyimpan...' : 'Simpan'}
             </Button>
           </DialogFooter>

@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { deleteCategory, deleteTag } from '@/app/actions/blog';
 import { useRouter } from 'next/navigation';
@@ -68,6 +68,7 @@ export function TaxonomyDeleteButton({ type, id, name }: TaxonomyDeleteButtonPro
             disabled={isPending}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
+            {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {isPending ? 'Menghapus...' : 'Hapus'}
           </AlertDialogAction>
         </AlertDialogFooter>

@@ -21,6 +21,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Switch } from '@/components/ui/switch';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import type { Role } from '@/config/rbac';
 import { toast } from 'sonner';
@@ -721,79 +722,85 @@ export default function DatabaseClientPage({
             {/* Maintenance Mode Toggles */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Dashboard & Portal Asisten */}
-              <div className="flex flex-col justify-between p-5 rounded-lg border border-border/60 bg-muted/10 space-y-4">
-                <div className="space-y-1">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-semibold">Dashboard Manajemen</p>
+              <Card className="flex flex-col justify-between bg-muted/10 border-border/60 shadow-none">
+                <CardHeader className="p-5 pb-4">
+                  <CardTitle className="flex items-center justify-between text-sm font-semibold">
+                    Dashboard Manajemen
                     {maintenanceStatuses.dashboard && (
-                      <Badge variant="destructive" className="animate-pulse text-xs px-1.5 py-0">
+                      <Badge variant="destructive">
                         ACTIVE
                       </Badge>
                     )}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
+                  </CardTitle>
+                  <CardDescription className="text-xs">
                     Kunci akses publik & non-admin pada portal manajemen praktikum & asisten.
-                  </p>
-                </div>
-                <div className="flex items-center justify-between pt-2 border-t border-border/30">
-                  <span className="text-xs font-medium text-muted-foreground">Status Pemeliharaan</span>
-                  <Switch
-                    checked={maintenanceStatuses.dashboard}
-                    onCheckedChange={(checked) => handleToggleMaintenanceApp('dashboard', checked, 'Dashboard')}
-                    disabled={loadingMaintenanceApp === 'dashboard'}
-                  />
-                </div>
-              </div>
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="p-5 pt-0 mt-auto">
+                  <div className="flex items-center justify-between pt-4 border-t border-border/30">
+                    <span className="text-xs font-medium text-muted-foreground">Status Pemeliharaan</span>
+                    <Switch
+                      checked={maintenanceStatuses.dashboard}
+                      onCheckedChange={(checked) => handleToggleMaintenanceApp('dashboard', checked, 'Dashboard')}
+                      disabled={loadingMaintenanceApp === 'dashboard'}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
 
               {/* Web Publik Informatics Web/Blog */}
-              <div className="flex flex-col justify-between p-5 rounded-lg border border-border/60 bg-muted/10 space-y-4">
-                <div className="space-y-1">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-semibold">Informatics Web / Blog</p>
+              <Card className="flex flex-col justify-between bg-muted/10 border-border/60 shadow-none">
+                <CardHeader className="p-5 pb-4">
+                  <CardTitle className="flex items-center justify-between text-sm font-semibold">
+                    Informatics Web / Blog
                     {maintenanceStatuses.informaticsweb && (
-                      <Badge variant="destructive" className="animate-pulse text-xs px-1.5 py-0">
+                      <Badge variant="destructive">
                         ACTIVE
                       </Badge>
                     )}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
+                  </CardTitle>
+                  <CardDescription className="text-xs">
                     Tutup sementara akses blog, pengumuman, dan artikel publik laboratorium.
-                  </p>
-                </div>
-                <div className="flex items-center justify-between pt-2 border-t border-border/30">
-                  <span className="text-xs font-medium text-muted-foreground">Status Pemeliharaan</span>
-                  <Switch
-                    checked={maintenanceStatuses.informaticsweb}
-                    onCheckedChange={(checked) => handleToggleMaintenanceApp('informaticsweb', checked, 'Informatics Web')}
-                    disabled={loadingMaintenanceApp === 'informaticsweb'}
-                  />
-                </div>
-              </div>
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="p-5 pt-0 mt-auto">
+                  <div className="flex items-center justify-between pt-4 border-t border-border/30">
+                    <span className="text-xs font-medium text-muted-foreground">Status Pemeliharaan</span>
+                    <Switch
+                      checked={maintenanceStatuses.informaticsweb}
+                      onCheckedChange={(checked) => handleToggleMaintenanceApp('informaticsweb', checked, 'Informatics Web')}
+                      disabled={loadingMaintenanceApp === 'informaticsweb'}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
 
               {/* Generator Kursi V2 */}
-              <div className="flex flex-col justify-between p-5 rounded-lg border border-border/60 bg-muted/10 space-y-4">
-                <div className="space-y-1">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-semibold">Generator Kursi Praktikum</p>
+              <Card className="flex flex-col justify-between bg-muted/10 border-border/60 shadow-none">
+                <CardHeader className="p-5 pb-4">
+                  <CardTitle className="flex items-center justify-between text-sm font-semibold">
+                    Generator Kursi Praktikum
                     {maintenanceStatuses.generator_kursi && (
-                      <Badge variant="destructive" className="animate-pulse text-xs px-1.5 py-0">
+                      <Badge variant="destructive">
                         ACTIVE
                       </Badge>
                     )}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
+                  </CardTitle>
+                  <CardDescription className="text-xs">
                     Kunci aplikasi pengacak nomor bangku & tempat duduk sesi laboratorium.
-                  </p>
-                </div>
-                <div className="flex items-center justify-between pt-2 border-t border-border/30">
-                  <span className="text-xs font-medium text-muted-foreground">Status Pemeliharaan</span>
-                  <Switch
-                    checked={maintenanceStatuses.generator_kursi}
-                    onCheckedChange={(checked) => handleToggleMaintenanceApp('generator_kursi', checked, 'Generator Kursi')}
-                    disabled={loadingMaintenanceApp === 'generator_kursi'}
-                  />
-                </div>
-              </div>
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="p-5 pt-0 mt-auto">
+                  <div className="flex items-center justify-between pt-4 border-t border-border/30">
+                    <span className="text-xs font-medium text-muted-foreground">Status Pemeliharaan</span>
+                    <Switch
+                      checked={maintenanceStatuses.generator_kursi}
+                      onCheckedChange={(checked) => handleToggleMaintenanceApp('generator_kursi', checked, 'Generator Kursi')}
+                      disabled={loadingMaintenanceApp === 'generator_kursi'}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </section>
 
