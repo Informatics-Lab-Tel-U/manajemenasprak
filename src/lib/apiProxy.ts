@@ -25,8 +25,6 @@ export async function forwardToHono(request: NextRequest, customPath?: string) {
       });
     }
 
-    console.log(`[API-PROXY] Forwarding ${request.method} ${request.nextUrl.pathname} -> ${targetUrl.toString()}`);
-
     const headers: Record<string, string> = {};
     let authHeader = request.headers.get('authorization');
 

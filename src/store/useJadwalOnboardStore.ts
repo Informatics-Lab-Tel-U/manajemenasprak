@@ -45,12 +45,6 @@ export const useJadwalOnboardStore = create<JadwalOnboardState>()(
 
       syncWithTerm: (term, isAlreadyDone = false) => {
         const currentTargetTerm = get().targetTerm;
-        console.log('[ONBOARD-DEBUG][useJadwalOnboardStore] syncWithTerm called:', {
-          requestedTerm: term,
-          currentTargetTerm,
-          isAlreadyDone,
-          currentCompletedSteps: get().completedSteps,
-        });
         if (currentTargetTerm !== term) {
           set({
             ...INITIAL_STATE,
