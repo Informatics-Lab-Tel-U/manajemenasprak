@@ -95,16 +95,6 @@ export function PostForm({ initialData, categories, tags = [] }: PostFormProps) 
         .from('manajemenasprak')
         .getPublicUrl(filePath);
 
-      // Try to remove old image if exists
-      if (coverImageUrl) {
-        const { data: baseData } = supabase.storage.from('manajemenasprak').getPublicUrl('');
-        const supabaseUrlPrefix = baseData.publicUrl;
-        if (coverImageUrl.startsWith(supabaseUrlPrefix)) {
-          const oldFilePath = coverImageUrl.replace(supabaseUrlPrefix, '');
-          await supabase.storage.from('manajemenasprak').remove([oldFilePath]);
-        }
-      }
-
       setCoverImageUrl(publicUrlData.publicUrl);
       toast.success('Thumbnail berhasil diunggah!');
     } catch (error: any) {
@@ -116,26 +106,10 @@ export function PostForm({ initialData, categories, tags = [] }: PostFormProps) 
     }
   };
 
-  const handleRemoveCover = async () => {
+  const handleRemoveCover = () => {
     if (!coverImageUrl) return;
-    setIsUploadingCover(true);
-    try {
-      const supabase = createClient();
-      const { data: baseData } = supabase.storage.from('manajemenasprak').getPublicUrl('');
-      const supabaseUrlPrefix = baseData.publicUrl;
-
-      if (coverImageUrl.startsWith(supabaseUrlPrefix)) {
-        const oldFilePath = coverImageUrl.replace(supabaseUrlPrefix, '');
-        await supabase.storage.from('manajemenasprak').remove([oldFilePath]);
-      }
-      setCoverImageUrl(null);
-      toast.success('Thumbnail dihapus');
-    } catch (error) {
-      console.error('Error removing cover:', error);
-      toast.error('Gagal menghapus thumbnail');
-    } finally {
-      setIsUploadingCover(false);
-    }
+    setCoverImageUrl(null);
+    toast.success('Thumbnail dihapus (perubahan akan disimpan saat Anda klik Simpan)');
   };
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
