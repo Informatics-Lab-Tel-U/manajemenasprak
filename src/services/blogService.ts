@@ -148,6 +148,7 @@ export interface CreateBlogPostInput {
   published_at?: string | null;
   author_id: string;
   tags?: string[];
+  cover_image_url?: string | null;
 }
 
 export async function createBlogPost(input: CreateBlogPostInput, authHeader?: string) {
@@ -171,6 +172,7 @@ export interface UpdateBlogPostInput {
   status?: string;
   published_at?: string | null;
   tags?: string[];
+  cover_image_url?: string | null;
 }
 
 export async function updateBlogPost(id: string, input: UpdateBlogPostInput, authHeader?: string) {

@@ -151,6 +151,7 @@ const ALL_NAV_GROUPS: NavGroup[] = [
         items: [
           { label: 'Semua Post', href: '/manage-post' },
           { label: 'Kategori & Tag', href: '/manage-post/taxonomy' },
+          { label: 'Konfigurasi Web', href: '/manage-post/config' },
         ],
       },
     ],
