@@ -18,6 +18,7 @@ export async function createBlogPost(formData: FormData, content: any) {
   const tagsStr = formData.get('tags') as string;
   const tags = tagsStr ? JSON.parse(tagsStr) : [];
   const publishedAtInput = formData.get('published_at') as string;
+  const cover_image_url = formData.get('cover_image_url') as string | null;
 
   let published_at: string | null = null;
   if (publishedAtInput) {
@@ -37,6 +38,7 @@ export async function createBlogPost(formData: FormData, content: any) {
       published_at,
       author_id: user.id,
       tags,
+      cover_image_url,
     }, authHeader);
   } catch (error: any) {
     throw new Error(error.message);
@@ -61,6 +63,7 @@ export async function updateBlogPost(id: string, formData: FormData, content: an
   const tagsStr = formData.get('tags') as string;
   const tags = tagsStr ? JSON.parse(tagsStr) : [];
   const publishedAtInput = formData.get('published_at') as string;
+  const cover_image_url = formData.get('cover_image_url') as string | null;
 
   let published_at: string | null = null;
   if (publishedAtInput) {
@@ -85,6 +88,7 @@ export async function updateBlogPost(id: string, formData: FormData, content: an
       status,
       published_at,
       tags,
+      cover_image_url,
     }, authHeader);
   } catch (error: any) {
     throw new Error(error.message);
