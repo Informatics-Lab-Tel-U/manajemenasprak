@@ -36,7 +36,7 @@ export default async function BlogPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {posts.map((post: any) => (
-              <Link key={post.id} href={`/blog/${post.slug}`} className="group flex flex-col bg-card border rounded-lg overflow-hidden hover:shadow-md transition-shadow">
+              <Link prefetch={false} key={post.id} href={`/blog/${post.slug}`} className="group flex flex-col bg-card border rounded-lg overflow-hidden hover:shadow-md transition-shadow">
                 <div className="aspect-video relative bg-muted">
                   {post.cover_image_url ? (
                     <Image 

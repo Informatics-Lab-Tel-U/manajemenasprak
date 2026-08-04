@@ -205,7 +205,7 @@ export default function OnboardHubPage() {
                 </CardHeader>
                 <CardFooter>
                   <Button asChild className="w-full sm:w-auto" variant={isStep1Done ? "outline" : "default"}>
-                    <Link href={`/onboard/tahun-ajaran-baru?term=${currentTerm}`}>
+                    <Link prefetch={false} href={`/onboard/tahun-ajaran-baru?term=${currentTerm}`}>
                       {isStep1Done ? 'Edit Data' : 'Mulai Setup'}
                     </Link>
                   </Button>
@@ -238,7 +238,7 @@ export default function OnboardHubPage() {
                     className={`w-full sm:w-auto group ${!isStep2Done && isStep1Done ? 'hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 dark:hover:bg-blue-950/50 bg-blue-600 text-white' : ''}`}
                     disabled={!isStep1Done}
                   >
-                    <Link href={isStep1Done ? `/onboard/jadwal?term=${currentTerm}` : '#'}>
+                    <Link prefetch={false} href={isStep1Done ? `/onboard/jadwal?term=${currentTerm}` : '#'}>
                       {isStep2Done ? 'Edit Data' : isStep1Done ? 'Mulai Setup' : 'Terkunci'}
                     </Link>
                   </Button>
@@ -270,7 +270,7 @@ export default function OnboardHubPage() {
                     className={`w-full sm:w-auto group ${!isStep3Done && isStep2Done ? 'hover:bg-orange-50 hover:text-orange-600 hover:border-orange-200 dark:hover:bg-orange-950/50 bg-orange-600 text-white' : ''}`}
                     disabled={!isStep2Done}
                   >
-                    <Link href={isStep2Done ? `/onboard/asprak?term=${currentTerm}` : '#'}>
+                    <Link prefetch={false} href={isStep2Done ? `/onboard/asprak?term=${currentTerm}` : '#'}>
                       {isStep3Done ? 'Edit Data' : isStep2Done ? 'Mulai Setup' : 'Terkunci'}
                     </Link>
                   </Button>

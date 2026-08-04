@@ -187,7 +187,7 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <Link href="/">
+              <Link prefetch={false} href="/">
                 <div className="flex aspect-square bg-white p-0.5 size-10 items-center justify-center rounded-lg text-sidebar-primary-foreground">
                   <div className="relative w-full h-full overflow-hidden rounded-md">
                     <Image src="/iflab.png" alt="Logo" fill sizes="40px" className="object-contain" />
@@ -269,7 +269,7 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
                               return (
                                 <SidebarMenuSubItem key={subItem.href}>
                                   <SidebarMenuSubButton asChild isActive={isSubActive}>
-                                    <Link href={subItem.href}>
+                                    <Link prefetch={false} href={subItem.href}>
                                       <span>{subItem.label}</span>
                                     </Link>
                                   </SidebarMenuSubButton>
@@ -291,7 +291,7 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
                       tooltip={item.label}
                       className={item.isPrimary ? 'bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground data-[active=true]:bg-primary data-[active=true]:text-primary-foreground font-semibold shadow-sm' : ''}
                     >
-                      <Link href={item.href}>
+                      <Link prefetch={false} href={item.href}>
                         <Icon />
                         <span>{item.label}</span>
                       </Link>
