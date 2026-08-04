@@ -67,7 +67,7 @@ export default async function ManagePostPage() {
                 <td className="px-4 py-3 text-right">
                   <div className="flex items-center justify-end gap-2">
                     <Button variant="ghost" size="icon" asChild>
-                      <Link href={`/manage-post/${post.id}/edit`}>
+                      <Link prefetch={false} href={`/manage-post/${post.id}/edit`}>
                         <Pencil className="h-4 w-4" />
                       </Link>
                     </Button>

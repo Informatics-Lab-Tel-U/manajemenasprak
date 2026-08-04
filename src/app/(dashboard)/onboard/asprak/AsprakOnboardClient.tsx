@@ -93,7 +93,7 @@ export default function AsprakOnboardClient({
       <header className="mb-6 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
         <div className="flex items-start gap-4">
           <Button variant="ghost" size="icon" asChild className="shrink-0 mt-1">
-            <Link href="/onboard">
+            <Link prefetch={false} href="/onboard">
               <ArrowLeft className="w-5 h-5" />
             </Link>
           </Button>

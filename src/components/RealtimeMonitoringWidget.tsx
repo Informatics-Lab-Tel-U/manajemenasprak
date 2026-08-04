@@ -79,7 +79,7 @@ export default function RealtimeMonitoringWidget({ initialData }: { initialData:
         </div>
 
         <Button asChild variant="outline" size="sm" className="shrink-0 self-start sm:self-auto">
-          <Link href="/monitoring">Lihat Detail</Link>
+          <Link prefetch={false} href="/monitoring">Lihat Detail</Link>
         </Button>
       </CardContent>
     </Card>

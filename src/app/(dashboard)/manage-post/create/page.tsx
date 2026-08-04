@@ -21,7 +21,7 @@ export default async function CreatePostPage({ searchParams }: { searchParams: P
   return (
     <div className="flex flex-col gap-6 p-6">
       <div className="flex items-center gap-4">
-        <Link href="/manage-post" className="text-muted-foreground hover:text-foreground">
+        <Link prefetch={false} href="/manage-post" className="text-muted-foreground hover:text-foreground">
           <ChevronLeft className="h-5 w-5" />
         </Link>
         <div>

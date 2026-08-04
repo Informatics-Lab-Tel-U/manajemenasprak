@@ -46,7 +46,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
     <div className="min-h-screen bg-background pb-20">
       <header className="border-b bg-card">
         <div className="container mx-auto px-4 py-4 max-w-4xl">
-          <Link href="/blog" className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground">
+          <Link prefetch={false} href="/blog" className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground">
             <ChevronLeft className="mr-1 h-4 w-4" />
             Kembali ke Daftar
           </Link>
