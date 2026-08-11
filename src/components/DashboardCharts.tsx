@@ -21,6 +21,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useJaga } from '@/hooks/useJaga';
 import { getJagaShiftsByDay } from '@/utils/jagaUtils';
 import { useMonitoringStore } from '@/store/useMonitoringStore';
+import { isLabOnline } from '@/lib/labStatus';
 
 const chartConfigAsprak = {
   count: {
@@ -64,7 +65,13 @@ export default function DashboardCharts({
 
 
   // Schedule Matrix Logic
-  const todayDate = new Date();
+  const [todayDate, setTodayDate] = React.useState(new Date());
+
+  React.useEffect(() => {
+    // Memperbarui waktu setiap 10 detik agar deteksi kedaluwarsa (TTL) dan pergeseran sesi tetap sinkron
+    const timer = setInterval(() => setTodayDate(new Date()), 10000);
+    return () => clearInterval(timer);
+  }, []);
 
   const uniqueRooms = useMemo(() => {
     // We can use the global ROOMS constant or derive from today's schedule
@@ -309,7 +316,7 @@ export default function DashboardCharts({
                             const roomStatus = labStatus.find(
                               (l) => l.lab_id.replace(/\s+/g, '').toUpperCase() === room.replace(/\s+/g, '').toUpperCase()
                             );
-                            const isRoomOnline = roomStatus?.status === 'online';
+                            const isRoomOnline = roomStatus ? isLabOnline(roomStatus, todayDate) : false;
 
                             return (
                               <td
