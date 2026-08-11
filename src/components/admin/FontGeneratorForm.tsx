@@ -108,7 +108,7 @@ export default function FontGeneratorForm({
       <CardHeader>
         <CardTitle>Generator Font Fingerprint</CardTitle>
         <CardDescription>
-          Buat file TTF unik per ruangan untuk mendeteksi PC Lab secara akurat.
+          Pilih nama ruangan untuk mengunduh file font.
         </CardDescription>
       </CardHeader>
       <form onSubmit={handleGenerate}>
