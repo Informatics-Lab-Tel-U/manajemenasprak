@@ -273,23 +273,23 @@ export default function DashboardCharts({
                                       </TooltipTrigger>
                                       <TooltipContent
                                         side="right"
-                                        className="flex flex-col gap-1 p-2 bg-popover border border-border shadow-xl"
+                                        className="flex flex-col gap-1.5"
                                       >
-                                        <div className="flex items-center gap-2 border-b pb-1 mb-1 border-border/50">
-                                          <span
-                                            className={`text-[10px] px-1 rounded-sm uppercase font-black ${j.asprak?.role === 'ASLAB' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-700'}`}
-                                          >
+                                        <div className="flex items-center gap-2 border-b pb-1.5 border-background/20">
+                                          <span className="text-[10px] px-1.5 py-0.5 rounded-sm uppercase font-bold bg-primary text-primary-foreground">
                                             {j.asprak?.role}
                                           </span>
                                           <span className="font-bold text-xs">
                                             {j.asprak?.kode}
                                           </span>
                                         </div>
-                                        <div className="font-semibold text-xs">
-                                          {j.asprak?.nama_lengkap}
-                                        </div>
-                                        <div className="text-xs text-muted-foreground">
-                                          {j.asprak?.nim}
+                                        <div>
+                                          <div className="font-semibold text-xs leading-none mb-1">
+                                            {j.asprak?.nama_lengkap}
+                                          </div>
+                                          <div className="text-[10px] opacity-70 leading-none">
+                                            {j.asprak?.nim}
+                                          </div>
                                         </div>
                                       </TooltipContent>
                                     </Tooltip>

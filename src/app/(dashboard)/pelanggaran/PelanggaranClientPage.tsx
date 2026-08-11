@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { CheckCircle2, ArrowRight, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Card, CardHeader, CardTitle, CardDescription, CardAction, CardFooter } from '@/components/ui/card';
 
 
 import type { Praktikum } from '@/types/database';
@@ -126,65 +127,50 @@ export default function PelanggaranClientPage({
               finalized: false,
             };
             return (
-              <div
+              <Card
                 key={p.id}
-                className={cn(
-                  'relative overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1 group border backdrop-blur-sm',
-                  'bg-white/60 dark:bg-zinc-900/60 flex flex-col gap-4 rounded-xl',
-                  'border-primary/20 dark:border-primary/20'
-                )}
+                className="@container/card bg-card shadow-sm hover:shadow-md transition-all cursor-pointer group flex flex-col"
+                onClick={() => router.push(`/pelanggaran/${p.id}`)}
               >
-                {/* Dynamic Gradient Background Blob */}
-                <div
-                  className={cn(
-                    'absolute -top-10 -right-10 w-32 h-32 rounded-full blur-2xl opacity-40 dark:opacity-20 bg-gradient-to-br transition-opacity group-hover:opacity-60 dark:group-hover:opacity-30',
-                    'from-primary/20 to-blue-500/20'
-                  )}
-                />
-
-                <div className="p-5 flex flex-col h-full relative z-10">
-                  <div className="flex items-start justify-between gap-2 mb-4">
-                    <div>
-                      <h3 className="font-semibold text-base 2xl:text-lg leading-snug text-foreground/90 dark:text-foreground group-hover:text-foreground transition-colors">
-                        {p.nama}
-                      </h3>
-                      <p className="text-xs 2xl:text-sm text-muted-foreground mt-1 font-mono opacity-80">
-                        {p.tahun_ajaran}
-                      </p>
-                    </div>
-                    {info.finalized ? (
-                      <Badge className="gap-1 shrink-0 bg-primary/10 text-primary border-primary/20 dark:bg-primary/20 dark:text-primary-foreground/90 dark:border-primary/30 shadow-sm">
+                <CardHeader>
+                  <CardDescription>Praktikum</CardDescription>
+                  <CardTitle className="text-xl font-bold line-clamp-2 leading-tight transition-colors" title={p.nama}>
+                    {p.nama}
+                  </CardTitle>
+                  <CardAction className="flex flex-col gap-2 items-end">
+                    <Badge variant="outline" className="text-foreground/80">
+                      Term {p.tahun_ajaran}
+                    </Badge>
+                    {info.finalized && (
+                      <Badge className="gap-1 bg-primary/10 text-primary border-primary/20 dark:bg-primary/20 dark:text-primary-foreground/90 dark:border-primary/30 shadow-sm">
                         <CheckCircle2 className="h-3 w-3" />
                         Terfinalisasi
                       </Badge>
-                    ) : (
-                      <Badge variant="outline" className="shrink-0 bg-white/50 dark:bg-white/5">
-                        Aktif
-                      </Badge>
                     )}
-                  </div>
+                  </CardAction>
+                </CardHeader>
 
-                  <div className="flex items-center justify-between mt-auto">
-                    <div>
-                      <span className="text-2xl 2xl:text-4xl font-bold tracking-tight text-foreground">
-                        {info.total}
+                <CardFooter className="mt-auto flex items-end justify-between text-sm pt-4 border-t border-dashed">
+                  <div className="flex items-center gap-2 font-medium">
+                    <div className="flex flex-col">
+                      <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider leading-none mb-1">
+                        Total Pelanggaran
                       </span>
-                      <span className="text-[10px] 2xl:text-xs text-muted-foreground ml-1.5 font-medium uppercase tracking-wider">
-                        pelanggaran
+                      <span className="text-sm font-bold text-foreground leading-tight flex items-baseline">
+                        <span className="text-2xl font-black tracking-tight mr-1.5">{info.total}</span> Log
                       </span>
                     </div>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => router.push(`/pelanggaran/${p.id}`)}
-                      className="gap-1.5 hover:bg-primary/10 dark:hover:bg-primary/20 transition-colors"
-                    >
-                      Lihat
-                      <ArrowRight className="h-3.5 w-3.5" />
-                    </Button>
                   </div>
-                </div>
-              </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="gap-1.5 pointer-events-none group-hover:bg-primary/5 transition-colors"
+                  >
+                    Lihat
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </Button>
+                </CardFooter>
+              </Card>
             );
           })}
         </div>

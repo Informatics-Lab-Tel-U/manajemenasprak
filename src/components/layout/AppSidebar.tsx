@@ -132,16 +132,6 @@ const ALL_NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
-    label: 'Sistem',
-    items: [
-      { label: 'Monitoring Lab', href: '/monitoring', icon: Monitor },
-      { label: 'Manajemen Akun', href: '/manajemen-akun', icon: Notebook },
-      { label: 'Audit Logs', href: '/audit-logs', icon: Logs },
-      { label: 'Panduan Sistem', href: '/panduan', icon: HelpCircle },
-      { label: 'Pengaturan', href: '/pengaturan', icon: Settings },
-    ],
-  },
-  {
     label: 'CMS / Blog',
     items: [
       {
@@ -154,6 +144,16 @@ const ALL_NAV_GROUPS: NavGroup[] = [
           { label: 'Konfigurasi Web', href: '/manage-post/config' },
         ],
       },
+    ],
+  },
+  {
+    label: 'Sistem',
+    items: [
+      { label: 'Monitoring Lab', href: '/monitoring', icon: Monitor },
+      { label: 'Manajemen Akun', href: '/manajemen-akun', icon: Notebook },
+      { label: 'Audit Logs', href: '/audit-logs', icon: Logs },
+      { label: 'Panduan Sistem', href: '/panduan', icon: HelpCircle },
+      { label: 'Pengaturan', href: '/pengaturan', icon: Settings },
     ],
   }
 ];

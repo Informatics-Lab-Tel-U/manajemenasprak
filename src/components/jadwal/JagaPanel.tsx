@@ -144,7 +144,6 @@ export default function JagaPanel({
             >
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-primary" />
                   <span className="font-bold text-base 2xl:text-lg tracking-tight text-foreground/90">
                     Shift {shiftInfo.shift}
                   </span>
