@@ -25,12 +25,12 @@ export const ScheduleCell: React.FC<ScheduleCellProps> = ({
 
   const contentStyle = isPengganti
     ? {
-        background: `linear-gradient(${bgColor}, ${bgColor}) padding-box, repeating-linear-gradient(45deg, #facc15, #facc15 10px, #ffffff 10px, #ffffff 20px) border-box`,
-        border: '4px solid transparent',
-      }
+      background: `linear-gradient(${bgColor}, ${bgColor}) padding-box, repeating-linear-gradient(45deg, #facc15, #facc15 10px, #ffffff 10px, #ffffff 20px) border-box`,
+      border: '4px solid transparent',
+    }
     : {
-        backgroundColor: bgColor,
-      };
+      backgroundColor: bgColor,
+    };
 
   return (
     <div
@@ -47,21 +47,47 @@ export const ScheduleCell: React.FC<ScheduleCellProps> = ({
         onClick
           ? 'cursor-pointer hover:brightness-110 hover:scale-105 hover:z-20 hover:shadow-lg'
           : ''
-      } ${isPengganti ? 'z-10' : ''} ${isOnlineActive ? 'z-20' : ''}`}
-      style={isOnlineActive ? { backgroundColor: '#1f2937' } : contentStyle}
+      } ${isPengganti ? 'z-10' : ''} ${isOnlineActive ? 'z-20 bg-slate-200 dark:bg-slate-800' : ''}`}
+      style={isOnlineActive ? {} : contentStyle}
       title={
         onClick ? 'Click for details' : `${jadwal.mata_kuliah?.nama_lengkap} - ${jadwal.kelas}`
       }
     >
       {isOnlineActive && (
         <>
-          {/* Animated spinning background */}
-          <div 
-            className="absolute inset-[-150%] animate-[spin_2s_linear_infinite]" 
-            style={{ background: 'conic-gradient(from 90deg at 50% 50%, transparent 60%, #4ade80 100%)' }} 
-          />
-          {/* Inner content mask */}
-          <div className="absolute inset-[3px]" style={contentStyle} />
+          {/* Inner content mask (diletakkan di belakang ular) */}
+          <div className="absolute inset-[3px] z-0" style={contentStyle} />
+
+          <style>{`
+            @keyframes snake-crawl {
+              0% { stroke-dashoffset: 0; }
+              100% { stroke-dashoffset: -100; }
+            }
+          `}</style>
+          
+          {/* Efek grid dan ular bergaya retro game Snake */}
+          <svg className="absolute inset-0 w-full h-full pointer-events-none overflow-visible z-10">
+            {/* Rel Grid Latar Belakang (Kotak-kotak kosong) */}
+            <rect
+              className="stroke-green-700/25 dark:stroke-green-400/20"
+              x="0" y="0" width="100%" height="100%"
+              fill="none"
+              strokeWidth="6"
+              pathLength="100"
+              strokeDasharray="3 1"
+            />
+            
+            {/* Ular (Kotak-kotak menyala yang melompat sel per sel) */}
+            <rect
+              className="stroke-green-700 dark:stroke-green-400 drop-shadow-[0_1px_2px_rgba(0,0,0,0.4)] dark:drop-shadow-[0_0_4px_rgba(74,222,128,0.8)]"
+              x="0" y="0" width="100%" height="100%"
+              fill="none"
+              strokeWidth="6"
+              pathLength="100"
+              strokeDasharray="3 1 3 1 3 1 3 85"
+              style={{ animation: 'snake-crawl 2s steps(25) infinite' }}
+            />
+          </svg>
         </>
       )}
 

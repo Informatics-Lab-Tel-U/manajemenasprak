@@ -21,6 +21,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useJaga } from '@/hooks/useJaga';
 import { getJagaShiftsByDay } from '@/utils/jagaUtils';
 import { useMonitoringStore } from '@/store/useMonitoringStore';
+import { isLabOnline } from '@/lib/labStatus';
 
 const chartConfigAsprak = {
   count: {
@@ -64,7 +65,13 @@ export default function DashboardCharts({
 
 
   // Schedule Matrix Logic
-  const todayDate = new Date();
+  const [todayDate, setTodayDate] = React.useState(new Date());
+
+  React.useEffect(() => {
+    // Memperbarui waktu setiap 10 detik agar deteksi kedaluwarsa (TTL) dan pergeseran sesi tetap sinkron
+    const timer = setInterval(() => setTodayDate(new Date()), 10000);
+    return () => clearInterval(timer);
+  }, []);
 
   const uniqueRooms = useMemo(() => {
     // We can use the global ROOMS constant or derive from today's schedule
@@ -217,7 +224,7 @@ export default function DashboardCharts({
                       <th className="p-2 border-r-0 text-center font-bold min-w-[120px] text-xs uppercase text-muted-foreground bg-transparent leading-tight">
                         Penjagaan
                         <br />
-                        <span className="text-primary/70">(Modul {activeModul})</span>
+                        <span className="text-blue-700 dark:text-blue-300">(Modul {activeModul})</span>
                       </th>
                       <th className="w-4 bg-transparent border-none"></th>
                       <th className="p-2 border-r border-l border-border text-center font-bold min-w-[60px] text-xs 2xl:text-sm uppercase text-muted-foreground">
@@ -255,10 +262,10 @@ export default function DashboardCharts({
                                     <Tooltip key={j.id}>
                                       <TooltipTrigger asChild>
                                         <div
-                                          className={`text-xs px-1.5 py-0.5 rounded-sm font-bold transition-all hover:scale-105 cursor-default ${
+                                          className={`text-xs px-1.5 py-0.5 rounded-sm font-bold transition-all hover:scale-105 cursor-default border ${
                                             j.asprak?.role === 'ASLAB'
-                                              ? 'bg-blue-100/80 text-blue-800 border border-blue-200 dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-800/50'
-                                              : 'bg-slate-100/80 text-slate-800 border border-slate-200 dark:bg-slate-800/60 dark:text-slate-300 dark:border-slate-700/80'
+                                              ? 'bg-blue-50/50 text-blue-700 border-blue-200/60 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800/40'
+                                              : 'bg-slate-50/50 text-slate-700 border-slate-200/60 dark:bg-slate-800/40 dark:text-slate-300 dark:border-slate-700/60'
                                           }`}
                                         >
                                           {j.asprak?.kode || 'Unknown'}
@@ -266,23 +273,23 @@ export default function DashboardCharts({
                                       </TooltipTrigger>
                                       <TooltipContent
                                         side="right"
-                                        className="flex flex-col gap-1 p-2 bg-popover border border-border shadow-xl"
+                                        className="flex flex-col gap-1.5"
                                       >
-                                        <div className="flex items-center gap-2 border-b pb-1 mb-1 border-border/50">
-                                          <span
-                                            className={`text-[10px] px-1 rounded-sm uppercase font-black ${j.asprak?.role === 'ASLAB' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-700'}`}
-                                          >
+                                        <div className="flex items-center gap-2 border-b pb-1.5 border-background/20">
+                                          <span className="text-[10px] px-1.5 py-0.5 rounded-sm uppercase font-bold bg-primary text-primary-foreground">
                                             {j.asprak?.role}
                                           </span>
                                           <span className="font-bold text-xs">
                                             {j.asprak?.kode}
                                           </span>
                                         </div>
-                                        <div className="font-semibold text-xs">
-                                          {j.asprak?.nama_lengkap}
-                                        </div>
-                                        <div className="text-xs text-muted-foreground">
-                                          {j.asprak?.nim}
+                                        <div>
+                                          <div className="font-semibold text-xs leading-none mb-1">
+                                            {j.asprak?.nama_lengkap}
+                                          </div>
+                                          <div className="text-[10px] opacity-70 leading-none">
+                                            {j.asprak?.nim}
+                                          </div>
                                         </div>
                                       </TooltipContent>
                                     </Tooltip>
@@ -309,7 +316,7 @@ export default function DashboardCharts({
                             const roomStatus = labStatus.find(
                               (l) => l.lab_id.replace(/\s+/g, '').toUpperCase() === room.replace(/\s+/g, '').toUpperCase()
                             );
-                            const isRoomOnline = roomStatus?.status === 'online';
+                            const isRoomOnline = roomStatus ? isLabOnline(roomStatus, todayDate) : false;
 
                             return (
                               <td

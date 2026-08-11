@@ -38,7 +38,7 @@ export default async function WebConfigPage() {
         </div>
       }
     >
-      <div className="flex flex-col gap-6 p-6">
+      <div className="container mx-auto max-w-[2000px] 2xl:px-8 relative flex flex-col gap-6">
         <WebConfigClientPage 
           initialTerms={terms} 
           initialActiveTerm={activeTerm} 

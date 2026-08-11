@@ -4,7 +4,7 @@ import React, { useState, useTransition, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { updateAslabTeamData } from '@/services/webConfigService.server';
-import { Save, Plus, Trash2, Upload, Users, Loader2 } from 'lucide-react';
+import { Save, Plus, Trash2, Upload, Loader2 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 
 export interface AslabMember {
@@ -257,7 +257,6 @@ export default function AslabTeamManager({ initialData }: AslabTeamManagerProps)
       
       <div className="p-6 border-b border-border bg-muted/20">
         <div className="flex items-center gap-2">
-          <Users className="text-primary w-5 h-5" />
           <h2 className="text-lg font-semibold">Foto Tim Asisten Laboratorium</h2>
         </div>
         <p className="text-sm text-muted-foreground mt-1">
