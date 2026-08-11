@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { Eye, AlertTriangle, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import JadwalCSVPreview from '@/components/jadwal/JadwalCSVPreview';
 import { useJadwalOnboardStore } from '@/store/useJadwalOnboardStore';

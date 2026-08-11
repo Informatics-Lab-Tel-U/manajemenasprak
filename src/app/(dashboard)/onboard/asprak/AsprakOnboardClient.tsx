@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/stepper';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Upload, Eye, CheckCircle2, ArrowLeft } from 'lucide-react';
+import { Upload, CheckCircle2, ArrowLeft } from 'lucide-react';
 import { useAsprakOnboardStore, AsprakOnboardStep } from '@/store/useAsprakOnboardStore';
 import { ExistingNimInfo } from '@/utils/validation/asprakValidation';
 import { ExistingAsprakInfo } from '@/components/asprak/AsprakImportCSVModal';

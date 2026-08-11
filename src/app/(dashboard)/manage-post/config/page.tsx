@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
 import { requireAuth } from '@/lib/auth';
 import { getCachedAvailableTerms } from '@/services/jadwalService';
-import { getActiveScheduleTerm, getAslabTeamData } from '@/services/webConfigService.server';
+import { getActiveScheduleTerm, getAslabTeamData } from '@/services/webConfigService';
 import WebConfigClientPage from './WebConfigClientPage';
 import AslabTeamManager from './AslabTeamManager';
 import { Skeleton } from '@/components/ui/skeleton';

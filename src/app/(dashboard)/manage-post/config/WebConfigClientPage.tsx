@@ -10,8 +10,8 @@ import {
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { updateActiveScheduleTerm } from '@/services/webConfigService.server';
-import { Save, Globe, AlertCircle, Loader2 } from 'lucide-react';
+import { updateActiveScheduleTerm } from '@/services/webConfigService';
+import { Save, AlertCircle, Loader2 } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 interface WebConfigClientPageProps {

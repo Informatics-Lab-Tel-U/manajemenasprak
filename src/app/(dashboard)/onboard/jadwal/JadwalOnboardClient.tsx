@@ -12,7 +12,6 @@ import {
   StepperNav,
   StepperContent,
 } from '@/components/ui/stepper';
-import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Upload, Eye, CheckCircle2, ArrowLeft } from 'lucide-react';

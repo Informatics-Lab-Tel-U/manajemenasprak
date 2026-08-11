@@ -11,7 +11,6 @@ import { Card, CardHeader, CardTitle, CardDescription, CardAction, CardFooter } 
 
 
 import type { Praktikum } from '@/types/database';
-import { cn } from '@/lib/utils';
 import { usePelanggaran } from '@/hooks/usePelanggaran';
 import { PelanggaranCardSkeleton } from '@/components/pelanggaran/PelanggaranCardSkeleton';
 
