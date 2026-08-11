@@ -4,7 +4,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Jadwal, MataKuliah } from '@/types/database';
 import * as jadwalFetcher from '@/lib/fetchers/jadwalFetcher';
-import * as praktikumFetcher from '@/lib/fetchers/praktikumFetcher';
 import type { CreateJadwalInput, UpdateJadwalInput } from '@/services/jadwalService';
 import { useTermStore } from '@/store/useTermStore';
 

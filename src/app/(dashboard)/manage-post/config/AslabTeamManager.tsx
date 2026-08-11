@@ -3,7 +3,7 @@
 import React, { useState, useTransition, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { updateAslabTeamData } from '@/services/webConfigService.server';
+import { updateAslabTeamData } from '@/services/webConfigService';
 import { Save, Plus, Trash2, Upload, Loader2 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 

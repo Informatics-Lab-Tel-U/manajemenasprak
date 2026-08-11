@@ -1,5 +1,4 @@
 import 'server-only';
-import { logger } from '@/lib/logger';
 import { JadwalJaga } from '@/types/database';
 import { honoFetch } from '@/lib/honoClient';
 

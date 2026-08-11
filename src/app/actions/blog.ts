@@ -2,7 +2,6 @@
 
 import { requireAuth } from '@/lib/auth';
 import { revalidatePath } from 'next/cache';
-import { redirect } from 'next/navigation';
 import * as blogService from '@/services/blogService';
 
 export async function createBlogPost(formData: FormData, content: any) {

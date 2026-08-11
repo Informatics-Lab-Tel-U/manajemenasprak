@@ -4,7 +4,7 @@
 
 import Link from 'next/link';
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Stepper,
   StepperItem,
@@ -15,7 +15,6 @@ import {
   StepperDescription,
   StepperNav,
   StepperContent,
-  useStepper,
 } from '@/components/ui/stepper';
 
 import PraktikumStep from './steps/StepPraktikum';
@@ -23,25 +22,14 @@ import MatkulStep from './steps/StepMataKuliah';
 import PreviewStep from './steps/StepPreview';
 import SelesaiStep from './steps/StepSelesai';
 
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { BookOpen, CheckCircle2, FileSpreadsheet, Download, FileText, AlertCircle, Copy, Save, RefreshCw, Loader2, ArrowLeft } from 'lucide-react';
+import { BookOpen, CheckCircle2, Save, RefreshCw, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { useDropzone } from 'react-dropzone';
-import PraktikumCSVPreview, { PraktikumPreviewRow } from '@/components/praktikum/PraktikumCSVPreview';
-import { validatePraktikumData } from '@/utils/validation/praktikumValidation';
-import MataKuliahCSVPreview, { MataKuliahCSVRow } from '@/components/mata-kuliah/MataKuliahCSVPreview';
-import { validateMataKuliahData } from '@/utils/validation/mataKuliahValidation';
-import { usePraktikum } from '@/hooks/usePraktikum';
-import { cn } from '@/lib/utils';
 import { 
   useOnboardingStore, 
   useAutosaveStatus
 } from '@/store/useOnboardingStore';
-import { Field, FieldLabel, FieldContent } from '@/components/ui/field';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -53,25 +41,10 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import TermInput from '@/components/asprak/TermInput';
-import { buildTermString } from '@/utils/termHelpers';
-import { useTermStore } from '@/store/useTermStore';
+
+
+
+
 
 const steps = [
   { id: 'praktikum', title: 'Data Praktikum', description: 'Buat tahun ajaran', icon: <BookOpen /> },

@@ -1,7 +1,6 @@
 import 'server-only';
 import { cache } from 'react';
 import { Asprak } from '@/types/database';
-import type { Role } from '@/config/rbac';
 import { getCachedAvailableTerms as getCachedTerms } from './termService';
 import { honoFetch } from '@/lib/honoClient';
 

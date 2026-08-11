@@ -12,7 +12,7 @@ import dynamic from 'next/dynamic';
 import { createBlogPost, updateBlogPost } from '@/app/actions/blog';
 import { toast } from 'sonner';
 import { createClient } from '@/lib/supabase/client';
-import { Upload, Trash2, ImageIcon } from 'lucide-react';
+import { Trash2, ImageIcon } from 'lucide-react';
 import imageCompression from 'browser-image-compression';
 
 const TiptapEditor = dynamic(

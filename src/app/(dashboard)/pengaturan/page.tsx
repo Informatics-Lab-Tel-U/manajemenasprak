@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 import { requireAuth } from '@/lib/auth';
-import { getAllMaintenanceStatuses } from '@/services/systemService.server';
+import { getAllMaintenanceStatuses } from '@/services/systemService';
 import PengaturanClientPage from './PengaturanClientPage';
 import PengaturanLoading from './loading';
 

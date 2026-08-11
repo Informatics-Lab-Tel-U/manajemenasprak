@@ -1,10 +1,10 @@
-import React, { Suspense } from 'react';
+import React from 'react';
 import { requireAuth } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import {
   getExistingCodes,
   getCachedAllAsprak,
-} from '@/services/asprakService.server';
+} from '@/services/asprakService';
 import { getPlottingList } from '@/services/plottingService';
 import AsprakOnboardClient from './AsprakOnboardClient';
 import { getCachedAvailableTerms } from '@/services/termService';

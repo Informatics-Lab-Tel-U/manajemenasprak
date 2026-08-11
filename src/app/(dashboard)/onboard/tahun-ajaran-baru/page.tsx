@@ -1,4 +1,3 @@
-import { redirect } from 'next/navigation';
 import { requireAuth } from '@/lib/auth';
 import { getPraktikumByTerm, getAllMataKuliah } from '@/services/praktikumService';
 import { getCachedAvailableTerms } from '@/services/termService';

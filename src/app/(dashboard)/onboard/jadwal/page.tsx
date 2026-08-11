@@ -1,4 +1,3 @@
-import { Suspense } from 'react';
 import { redirect } from 'next/navigation';
 import { requireAuth } from '@/lib/auth';
 import { getAllMataKuliah } from '@/services/praktikumService';

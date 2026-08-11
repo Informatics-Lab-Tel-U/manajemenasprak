@@ -20,6 +20,7 @@ import {
   FileSpreadsheet,
   Monitor,
   FileText,
+  Fingerprint,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -96,6 +97,7 @@ const ALL_NAV_GROUPS: NavGroup[] = [
     label: 'Generator',
     items: [
       { label: 'Generate Presensi', href: '/generator/presensi', icon: FileSpreadsheet },
+      { label: 'Font Fingerprint', href: '/generator/font-generator', icon: Fingerprint },
     ],
   },
   {

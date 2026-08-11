@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { NavButton } from '@/components/ui/nav-button';
 import { Input } from '@/components/ui/input';
-import { BookOpen, FileSpreadsheet, Download, FileText, AlertCircle, Copy, Loader2, PencilLine, Trash2, Save } from 'lucide-react';
+import { BookOpen, FileSpreadsheet, Download, FileText, AlertCircle, Copy, Loader2, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { useDropzone } from 'react-dropzone';
