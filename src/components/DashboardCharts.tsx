@@ -224,7 +224,7 @@ export default function DashboardCharts({
                       <th className="p-2 border-r-0 text-center font-bold min-w-[120px] text-xs uppercase text-muted-foreground bg-transparent leading-tight">
                         Penjagaan
                         <br />
-                        <span className="text-primary/70">(Modul {activeModul})</span>
+                        <span className="text-blue-700 dark:text-blue-300">(Modul {activeModul})</span>
                       </th>
                       <th className="w-4 bg-transparent border-none"></th>
                       <th className="p-2 border-r border-l border-border text-center font-bold min-w-[60px] text-xs 2xl:text-sm uppercase text-muted-foreground">
@@ -262,10 +262,10 @@ export default function DashboardCharts({
                                     <Tooltip key={j.id}>
                                       <TooltipTrigger asChild>
                                         <div
-                                          className={`text-xs px-1.5 py-0.5 rounded-sm font-bold transition-all hover:scale-105 cursor-default ${
+                                          className={`text-xs px-1.5 py-0.5 rounded-sm font-bold transition-all hover:scale-105 cursor-default border ${
                                             j.asprak?.role === 'ASLAB'
-                                              ? 'bg-blue-100/80 text-blue-800 border border-blue-200 dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-800/50'
-                                              : 'bg-slate-100/80 text-slate-800 border border-slate-200 dark:bg-slate-800/60 dark:text-slate-300 dark:border-slate-700/80'
+                                              ? 'bg-blue-50/50 text-blue-700 border-blue-200/60 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800/40'
+                                              : 'bg-slate-50/50 text-slate-700 border-slate-200/60 dark:bg-slate-800/40 dark:text-slate-300 dark:border-slate-700/60'
                                           }`}
                                         >
                                           {j.asprak?.kode || 'Unknown'}
