@@ -26,7 +26,6 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useHeartbeatLogAll } from "@/hooks/useHeartbeatLog"
-import { COURSE_COLORS } from "@/utils/colorUtils"
 
 export function InteractiveHeartbeatChart() {
   const [timeRange, setTimeRange] = React.useState("1h")
@@ -70,13 +69,25 @@ export function InteractiveHeartbeatChart() {
       }
     };
     
-    const START_COLOR_INDEX = 5; // Start with blue (#3a5edb)
+    // Gunakan warna kontras yang berbeda-beda agar mudah dibedakan (Biru pertama)
+    const HIGH_CONTRAST_COLORS = [
+      '#3a5edb', // blue
+      '#0d9488', // teal (pengganti merah)
+      '#18a558', // green
+      '#e05a1f', // orange
+      '#c99a00', // yellow
+      '#d63384', // pink
+      '#0284c7', // sky
+      '#7c3aed', // violet
+      '#ea580c', // orange-vivid
+      '#65a30d', // lime
+    ];
 
     labs.forEach((labId, index) => {
       const safeKey = safeLabKeys[labId];
       config[safeKey] = {
         label: labId, // Display original label in tooltip
-        color: COURSE_COLORS[(index + START_COLOR_INDEX) % COURSE_COLORS.length]
+        color: HIGH_CONTRAST_COLORS[index % HIGH_CONTRAST_COLORS.length]
       };
     });
     
