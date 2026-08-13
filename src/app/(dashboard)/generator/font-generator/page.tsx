@@ -37,8 +37,7 @@ export default async function FontGeneratorPage() {
         <div>
           <h1 className="text-2xl 2xl:text-3xl font-bold tracking-tight">Font Fingerprint Generator</h1>
           <p className="text-sm 2xl:text-base text-muted-foreground mt-1">
-            Buat font rahasia (TTF) yang harus di-install di masing-masing komputer lab.
-            Sistem font fingerprinting akan membaca metadata font ini untuk memvalidasi asisten lab.
+            Generate file TTF khusus per ruangan untuk validasi perangkat PC Lab.
           </p>
         </div>
       </div>
