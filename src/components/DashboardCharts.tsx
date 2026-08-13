@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/chart';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Jadwal, JadwalPengganti } from '@/types/database';
-import { ROOMS } from '@/constants';
+import { ROOMS, STATIC_SESSIONS } from '@/constants';
 import { ScheduleCell } from '@/components/jadwal/ScheduleCell';
 import React, { useMemo } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -122,11 +122,17 @@ export default function DashboardCharts({
   const currentMin = todayDate.getMinutes();
   const timeValue = currentHour + currentMin / 60;
   
-  let activeSessionNumber = 4;
-  if (timeValue >= 7.5 && timeValue < 10.5) activeSessionNumber = 1; // 07:30 - 10:30
-  else if (timeValue >= 10.5 && timeValue < 13.5) activeSessionNumber = 2; // 10:30 - 13:30
-  else if (timeValue >= 13.5 && timeValue < 16.5) activeSessionNumber = 3; // 13:30 - 16:30
-  else activeSessionNumber = 4; // 16:30 - 07:30 (next day)
+  let activeSessionNumber = -1;
+  const daySessions = STATIC_SESSIONS[currentDayName] || STATIC_SESSIONS['SENIN'];
+  for (const s of daySessions) {
+    const [h, m] = s.jam.split(':').map(Number);
+    const startValue = h + m / 60;
+    const endValue = startValue + 3; // Asumsi durasi sesi 3 jam
+    if (timeValue >= startValue && timeValue < endValue) {
+      activeSessionNumber = s.sesi;
+      break;
+    }
+  }
 
   return (
     <div className="grid grid-cols-1 gap-6">
@@ -180,8 +186,8 @@ export default function DashboardCharts({
                       <th className="p-2 border-r border-l border-border min-w-[60px]">
                         <Skeleton className="h-4 w-8 mx-auto" />
                       </th>
-                      {Array.from({ length: 6 }).map((_, i) => (
-                        <th key={i} className="p-2 border-r border-border min-w-[120px]">
+                      {uniqueRooms.map((room) => (
+                        <th key={room} className="p-2 border-r border-border min-w-[120px]">
                           <Skeleton className="h-4 w-16 mx-auto" />
                         </th>
                       ))}
@@ -200,9 +206,9 @@ export default function DashboardCharts({
                             <Skeleton className="h-3 w-8 mx-auto" />
                           </div>
                         </td>
-                        {Array.from({ length: 6 }).map((_, j) => (
-                          <td key={j} className="p-1 border-r border-border align-top">
-                            {i % 2 === 0 && j % 2 === 0 && <Skeleton className="h-10 2xl:h-[72px] w-full" />}
+                        {uniqueRooms.map((room) => (
+                          <td key={room} className="p-1 border-r border-border align-top">
+                            <Skeleton className="h-10 2xl:h-[72px] w-full" />
                           </td>
                         ))}
                       </tr>
