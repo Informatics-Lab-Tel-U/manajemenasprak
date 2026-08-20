@@ -25,8 +25,6 @@ export default async function AsprakPage() {
       getExistingCodes(),
       getCachedAllAsprak(),
     ]);
-    terms = res[0] || [];
-    existingCodes = res[1] || [];
     allAsprak = res[2] || [];
 
     initialAsprakList = await getCachedAspraksWithAssignments(terms[0] || 'all');

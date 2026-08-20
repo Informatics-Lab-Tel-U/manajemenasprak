@@ -44,8 +44,11 @@ export async function forwardToHono(request: NextRequest, customPath?: string) {
 
     if (authHeader) headers['authorization'] = authHeader;
 
-    const apiKey = request.headers.get('x-praktikan-api-key');
-    if (apiKey) headers['x-praktikan-api-key'] = apiKey;
+    const praktikanApiKey = request.headers.get('x-praktikan-api-key');
+    if (praktikanApiKey) headers['x-praktikan-api-key'] = praktikanApiKey;
+
+    const xApiKey = request.headers.get('x-api-key');
+    if (xApiKey) headers['x-api-key'] = xApiKey;
 
     const contentType = request.headers.get('content-type');
 

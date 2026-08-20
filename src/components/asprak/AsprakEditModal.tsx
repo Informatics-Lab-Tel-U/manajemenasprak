@@ -21,7 +21,12 @@ import { Spinner } from '@/components/ui/spinner';
 interface AsprakEditModalProps {
   asprak: Asprak;
   assignments: string[]; // List of praktikum IDs currently assigned
-  onSave: (praktikumIds: string[], newKode: string, forceOverride: boolean) => Promise<void>;
+  onSave: (
+    praktikumIds: string[],
+    newKode: string,
+    forceOverride: boolean,
+    rfidUid?: string
+  ) => Promise<void>;
   onClose: () => void;
   open: boolean;
 }
@@ -37,6 +42,7 @@ export default function AsprakEditModal({
   const [availablePraktikums, setAvailablePraktikums] = useState<Praktikum[]>([]);
   const [selectedPraktikumIds, setSelectedPraktikumIds] = useState<string[]>([]);
   const [newKode, setNewKode] = useState<string>(asprak.kode);
+  const [rfidUid, setRfidUid] = useState<string>(asprak.rfid_uid || '');
   const [forceOverride, setForceOverride] = useState(false);
   const [saving, setSaving] = useState(false);
   const [existingAspraks, setExistingAspraks] = useState<{ kode: string; angkatan: number }[]>([]);
@@ -48,6 +54,7 @@ export default function AsprakEditModal({
     if (open) {
       setSelectedPraktikumIds(assignments);
       setNewKode(asprak.kode);
+      setRfidUid(asprak.rfid_uid || '');
       setForceOverride(false);
     }
   }
@@ -114,7 +121,7 @@ export default function AsprakEditModal({
     }
 
     setSaving(true);
-    await onSave(selectedPraktikumIds, newKode.toUpperCase(), forceOverride);
+    await onSave(selectedPraktikumIds, newKode.toUpperCase(), forceOverride, rfidUid);
     setSaving(false);
     onClose();
   };
@@ -144,9 +151,9 @@ export default function AsprakEditModal({
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-lg max-h-[85vh] flex flex-col p-0 gap-0">
         <DialogHeader className="px-6 py-4 border-b">
-          <DialogTitle>Edit Penugasan Asisten</DialogTitle>
+          <DialogTitle>Edit Data Asisten</DialogTitle>
           <DialogDescription className="sr-only">
-            Edit penugasan asisten praktikum.
+            Edit data dan penugasan asisten praktikum.
           </DialogDescription>
         </DialogHeader>
 
@@ -173,7 +180,7 @@ export default function AsprakEditModal({
               {kodeError && <p className="text-red-500 text-xs mt-1">{kodeError}</p>}
             </div>
           </div>
-          <div className="flex items-center space-x-2 mt-2 bg-muted/30 p-2 rounded-md border border-border/50">
+          <div className="flex items-center space-x-2 bg-muted/30 p-2 rounded-md border border-border/50">
             <Switch
               id="force-override"
               checked={forceOverride}
@@ -187,11 +194,26 @@ export default function AsprakEditModal({
               </p>
             </Label>
           </div>
-          <div>
-            <Label className="text-muted-foreground text-xs">Nama Lengkap</Label>
-            <div className="font-medium">{asprak.nama_lengkap}</div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label className="text-muted-foreground text-xs">Nama Lengkap</Label>
+              <div className="font-medium text-sm truncate">{asprak.nama_lengkap}</div>
+            </div>
+            <div>
+              <Label htmlFor="rfid_uid" className="text-muted-foreground text-xs">
+                Nomor UID Kartu RFID
+              </Label>
+              <Input
+                id="rfid_uid"
+                value={rfidUid}
+                onChange={(e) => setRfidUid(e.target.value.toUpperCase())}
+                className="font-mono uppercase transition-colors h-8 tracking-wider text-xs"
+                placeholder="Contoh: 04A1B2C3"
+              />
+            </div>
           </div>
         </div>
+
 
         <div className="px-6 py-2 flex-1 overflow-y-auto min-h-0 border-t">
           {loadingPraktikum ? (

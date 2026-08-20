@@ -1,11 +1,14 @@
 /* eslint-disable react-doctor/no-impure-state-updater */
 import React, { useState, useEffect } from 'react';
-import { AlertTriangle, Edit2, Shield, X } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Clock, Edit2, Shield, X } from 'lucide-react';
 import { useJaga } from '@/hooks/useJaga';
 import { getJagaShiftsByDay } from '@/utils/jagaUtils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { deleteJadwalJaga, bulkDeleteJadwalJaga } from '@/lib/fetchers/jagaFetcher';
+import { usePresensiJagaStore } from '@/store/usePresensiJagaStore';
+import { format } from 'date-fns';
+import { id } from 'date-fns/locale';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -49,6 +52,13 @@ export default function JagaPanel({
     isDefault ? undefined : modulNum,
     activeDay
   );
+
+  const todayPresensi = usePresensiJagaStore((s) => s.todayPresensi);
+  const initPresensi = usePresensiJagaStore((s) => s.init);
+
+  useEffect(() => {
+    initPresensi();
+  }, [initPresensi]);
 
   // Sync refresh with parent trigger
   useEffect(() => {
@@ -155,60 +165,97 @@ export default function JagaPanel({
 
               <div className="flex flex-wrap gap-2">
                 {shiftJaga.length > 0 ? (
-                  shiftJaga.map((j) => (
-                    <div
-                      key={j.id}
-                      className={`group relative flex items-center gap-1.5 text-xs 2xl:text-sm px-3 py-2 rounded-md font-semibold transition-all shadow-sm border
-                        ${
-                          j.asprak?.role === 'ASLAB'
-                            ? 'bg-blue-50/50 text-blue-700 border-blue-200/60 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800/40'
-                            : 'bg-slate-50/50 text-slate-700 border-slate-200/60 dark:bg-slate-800/40 dark:text-slate-300 dark:border-slate-700/60'
-                        }`}
-                      title={`${j.asprak?.nama_lengkap} (${j.asprak?.nim})`}
-                    >
-                      <span className="truncate max-w-[80px] 2xl:max-w-[100px]">{j.asprak?.kode || 'Unknown'}</span>
+                  shiftJaga.map((j) => {
+                    const presensi = todayPresensi.find(
+                      (p) =>
+                        p.id_asprak === j.id_asprak &&
+                        p.shift === j.shift &&
+                        p.hari.toUpperCase() === activeDay.toUpperCase() &&
+                        (!modulNum || p.modul === modulNum)
+                    );
+                    const isHadir = !!presensi;
+                    const hadirTime = presensi?.waktu_masuk
+                      ? format(new Date(presensi.waktu_masuk), 'HH:mm', { locale: id })
+                      : null;
+                    const isTerlambat = presensi?.status === 'TERLAMBAT';
 
-                      {/* Hover Actions */}
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-1 border-l pl-1 border-current/20">
-                        <button
-                          type="button"
-                          aria-label="Edit"
-                          onClick={() => {
-                            if (onEdit) {
-                              onEdit({
+                    return (
+                      <div
+                        key={j.id}
+                        className={`group relative flex items-center gap-1.5 text-xs 2xl:text-sm px-3 py-2 rounded-md font-semibold transition-all shadow-sm border
+                          ${
+                            isHadir
+                              ? isTerlambat
+                                ? 'bg-amber-50/80 text-amber-900 border-amber-300 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/60 ring-1 ring-amber-500/50'
+                                : 'bg-green-50/80 text-green-800 border-green-300 dark:bg-green-950/40 dark:text-green-300 dark:border-green-800/60 ring-1 ring-green-500/50'
+                              : j.asprak?.role === 'ASLAB'
+                              ? 'bg-blue-50/50 text-blue-700 border-blue-200/60 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800/40'
+                              : 'bg-slate-50/50 text-slate-700 border-slate-200/60 dark:bg-slate-800/40 dark:text-slate-300 dark:border-slate-700/60'
+                          }`}
+                        title={`${j.asprak?.nama_lengkap} (${j.asprak?.nim})${isHadir ? ` — ${isTerlambat ? 'Terlambat' : 'Hadir'} ${hadirTime}` : ''}`}
+                      >
+                        {isHadir ? (
+                          <CheckCircle2
+                            className={`w-3.5 h-3.5 shrink-0 animate-pulse ${
+                              isTerlambat ? 'text-amber-600 dark:text-amber-400' : 'text-green-600 dark:text-green-400'
+                            }`}
+                          />
+                        ) : null}
+                        <span className="truncate max-w-[80px] 2xl:max-w-[100px]">{j.asprak?.kode || 'Unknown'}</span>
+                        {isHadir && hadirTime ? (
+                          <span
+                            className={`text-[10px] font-normal px-1 py-0.2 rounded ${
+                              isTerlambat
+                                ? 'bg-amber-200/60 dark:bg-amber-900/60 text-amber-900 dark:text-amber-200'
+                                : 'bg-green-200/60 dark:bg-green-900/60 text-green-900 dark:text-green-200'
+                            }`}
+                          >
+                            {hadirTime}
+                          </span>
+                        ) : null}
+
+                        {/* Hover Actions */}
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-1 border-l pl-1 border-current/20">
+                          <button
+                            type="button"
+                            aria-label="Edit"
+                            onClick={() => {
+                              if (onEdit) {
+                                onEdit({
+                                  id: j.id,
+                                  id_asprak: j.id_asprak,
+                                  hari: j.hari,
+                                  shift: j.shift,
+                                });
+                              }
+                            }}
+                            className="hover:text-primary transition-colors p-0.5"
+                            title="Edit"
+                          >
+                            <Edit2 className="w-3 h-3" />
+                          </button>
+                          <button
+                            type="button"
+                            aria-label="Delete"
+                            title="Delete"
+                            onClick={() => {
+                              setDeletingItem({
                                 id: j.id,
+                                code: j.asprak?.kode || 'Asisten',
                                 id_asprak: j.id_asprak,
-                                hari: j.hari,
-                                shift: j.shift,
+                                shift: shiftInfo.shift,
                               });
-                            }
-                          }}
-                          className="hover:text-primary transition-colors p-0.5"
-                          title="Edit"
-                        >
-                          <Edit2 className="w-3 h-3" />
-                        </button>
-                        <button
-                          type="button"
-                          aria-label="Delete"
-                          title="Delete"
-                          onClick={() => {
-                            setDeletingItem({
-                              id: j.id,
-                              code: j.asprak?.kode || 'Asisten',
-                              id_asprak: j.id_asprak,
-                              shift: shiftInfo.shift,
-                            });
-                            setDeleteScope('single');
-                            setIsDeleteDialogOpen(true);
-                          }}
-                          className="hover:text-destructive transition-colors p-0.5"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
+                              setDeleteScope('single');
+                              setIsDeleteDialogOpen(true);
+                            }}
+                            className="hover:text-destructive transition-colors p-0.5"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  ))
+                    );
+                  })
                 ) : (
                   <div className="w-full py-4 flex flex-col items-center justify-center border border-dashed border-border/50 rounded-md bg-muted/5">
                     <span className="text-xs text-muted-foreground/60 italic">

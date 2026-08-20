@@ -94,3 +94,31 @@ export async function fetchRekapJagaAggregated(
   });
   return result.ok ? { data: result.data } : { error: result.error };
 }
+
+export async function assignRfidToAsprak(
+  id_asprak: string,
+  rfid_uid: string
+): Promise<{ success?: boolean; message?: string; error?: string }> {
+  const result = await apiFetch<any>('/api/jaga/rfid-assign', {
+    method: 'POST',
+    body: JSON.stringify({ id_asprak, rfid_uid }),
+  });
+  return result.ok ? { success: true, message: result.data?.message } : { error: result.error };
+}
+
+export async function submitManualPresensi(payload: {
+  idAsprak: string;
+  tahunAjaran: string;
+  modul: number;
+  hari: string;
+  shift: number;
+  status?: string;
+  waktuMasuk?: string;
+}): Promise<{ success?: boolean; message?: string; error?: string }> {
+  const result = await apiFetch<any>('/api/jaga/presensi/manual', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+  return result.ok ? { success: true, message: result.data?.message } : { error: result.error };
+}
+

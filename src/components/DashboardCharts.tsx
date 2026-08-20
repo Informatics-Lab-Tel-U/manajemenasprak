@@ -16,12 +16,14 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Jadwal, JadwalPengganti } from '@/types/database';
 import { ROOMS, STATIC_SESSIONS } from '@/constants';
 import { ScheduleCell } from '@/components/jadwal/ScheduleCell';
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useJaga } from '@/hooks/useJaga';
 import { getJagaShiftsByDay } from '@/utils/jagaUtils';
 import { useMonitoringStore } from '@/store/useMonitoringStore';
+import { usePresensiJagaStore } from '@/store/usePresensiJagaStore';
 import { isLabOnline } from '@/lib/labStatus';
+import { CheckCircle2 } from 'lucide-react';
 
 const chartConfigAsprak = {
   count: {
@@ -116,6 +118,12 @@ export default function DashboardCharts({
   const shiftInfos = getJagaShiftsByDay(currentDayName);
 
   const labStatus = useMonitoringStore((state) => state.labStatus);
+  const todayPresensi = usePresensiJagaStore((state) => state.todayPresensi);
+  const initPresensi = usePresensiJagaStore((state) => state.init);
+
+  React.useEffect(() => {
+    initPresensi();
+  }, [initPresensi]);
 
   // Determine active session based on current time
   const currentHour = todayDate.getHours();
@@ -264,42 +272,66 @@ export default function DashboardCharts({
                             <div className="flex flex-wrap gap-1 justify-center max-w-[120px] mx-auto min-h-[40px] items-center">
                               {shiftJaga.length > 0 ? (
                                 <TooltipProvider>
-                                  {shiftJaga.map((j) => (
-                                    <Tooltip key={j.id}>
-                                      <TooltipTrigger asChild>
-                                        <div
-                                          className={`text-xs px-1.5 py-0.5 rounded-sm font-bold transition-all hover:scale-105 cursor-default border ${
-                                            j.asprak?.role === 'ASLAB'
-                                              ? 'bg-blue-50/50 text-blue-700 border-blue-200/60 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800/40'
-                                              : 'bg-slate-50/50 text-slate-700 border-slate-200/60 dark:bg-slate-800/40 dark:text-slate-300 dark:border-slate-700/60'
-                                          }`}
+                                  {shiftJaga.map((j) => {
+                                    const presensi = todayPresensi.find(
+                                      (p) =>
+                                        p.id_asprak === j.id_asprak &&
+                                        p.shift === j.shift &&
+                                        p.hari.toUpperCase() === currentDayName.toUpperCase() &&
+                                        p.modul === activeModul
+                                    );
+                                    const isHadir = !!presensi;
+                                    const hadirTime = presensi?.waktu_masuk
+                                      ? format(new Date(presensi.waktu_masuk), 'HH:mm', { locale: id })
+                                      : null;
+
+                                    return (
+                                      <Tooltip key={j.id}>
+                                        <TooltipTrigger asChild>
+                                          <div
+                                            className={`text-xs px-1.5 py-0.5 rounded-sm font-bold transition-all hover:scale-105 cursor-default border flex items-center gap-1 ${
+                                              isHadir
+                                                ? 'bg-green-50/90 text-green-800 border-green-400 ring-2 ring-green-500/70 shadow-sm dark:bg-green-950/60 dark:text-green-300 dark:border-green-700'
+                                                : j.asprak?.role === 'ASLAB'
+                                                ? 'bg-blue-50/50 text-blue-700 border-blue-200/60 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800/40'
+                                                : 'bg-slate-50/50 text-slate-700 border-slate-200/60 dark:bg-slate-800/40 dark:text-slate-300 dark:border-slate-700/60'
+                                            }`}
+                                          >
+                                            {isHadir ? (
+                                              <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse shrink-0" />
+                                            ) : null}
+                                            {j.asprak?.kode || 'Unknown'}
+                                          </div>
+                                        </TooltipTrigger>
+                                        <TooltipContent
+                                          side="right"
+                                          className="flex flex-col gap-1.5"
                                         >
-                                          {j.asprak?.kode || 'Unknown'}
-                                        </div>
-                                      </TooltipTrigger>
-                                      <TooltipContent
-                                        side="right"
-                                        className="flex flex-col gap-1.5"
-                                      >
-                                        <div className="flex items-center gap-2 border-b pb-1.5 border-background/20">
-                                          <span className="text-[10px] px-1.5 py-0.5 rounded-sm uppercase font-bold bg-primary text-primary-foreground">
-                                            {j.asprak?.role}
-                                          </span>
-                                          <span className="font-bold text-xs">
-                                            {j.asprak?.kode}
-                                          </span>
-                                        </div>
-                                        <div>
-                                          <div className="font-semibold text-xs leading-none mb-1">
-                                            {j.asprak?.nama_lengkap}
+                                          <div className="flex items-center gap-2 border-b pb-1.5 border-background/20">
+                                            <span className="text-[10px] px-1.5 py-0.5 rounded-sm uppercase font-bold bg-primary text-primary-foreground">
+                                              {j.asprak?.role}
+                                            </span>
+                                            <span className="font-bold text-xs">
+                                              {j.asprak?.kode}
+                                            </span>
+                                            {isHadir ? (
+                                              <span className="text-[10px] px-1.5 py-0.5 rounded-sm uppercase font-bold bg-green-600 text-white">
+                                                HADIR {hadirTime}
+                                              </span>
+                                            ) : null}
                                           </div>
-                                          <div className="text-[10px] opacity-70 leading-none">
-                                            {j.asprak?.nim}
+                                          <div>
+                                            <div className="font-semibold text-xs leading-none mb-1">
+                                              {j.asprak?.nama_lengkap}
+                                            </div>
+                                            <div className="text-[10px] opacity-70 leading-none">
+                                              {j.asprak?.nim}
+                                            </div>
                                           </div>
-                                        </div>
-                                      </TooltipContent>
-                                    </Tooltip>
-                                  ))}
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    );
+                                  })}
                                 </TooltipProvider>
                               ) : (
                                 <span className="text-xs text-muted-foreground italic opacity-50">
@@ -356,7 +388,7 @@ export default function DashboardCharts({
                 </table>
               </div>
               {/* Legend */}
-              <div className="mt-4 flex items-center gap-4 text-xs text-muted-foreground border-t border-border/50 pt-3">
+              <div className="mt-4 flex flex-wrap items-center gap-4 text-xs text-muted-foreground border-t border-border/50 pt-3">
                 <div className="flex items-center gap-1.5">
                   <div
                     className="w-4 h-4 bg-muted rounded-[2px]"
@@ -374,6 +406,12 @@ export default function DashboardCharts({
                 <div className="flex items-center gap-1.5 ml-2">
                   <div className="w-4 h-4 rounded-sm bg-muted ring-[3px] ring-green-500/90 ring-inset"></div>
                   <span>Kelas Sedang Berjalan (Realtime)</span>
+                </div>
+                <div className="flex items-center gap-1.5 ml-2">
+                  <div className="px-1.5 py-0.5 rounded-sm text-[10px] font-bold bg-green-100 text-green-800 border border-green-400 ring-2 ring-green-500/50">
+                    JD
+                  </div>
+                  <span>Asisten Hadir Jaga (RFID)</span>
                 </div>
               </div>
             </>

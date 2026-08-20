@@ -1,22 +1,10 @@
+import { getJagaShiftList } from '@/constants/jagaConfig';
+
 export const getJagaShiftsByDay = (hari: string) => {
-  const upperDay = (hari || 'SENIN').toUpperCase();
-  const isJumatSabtu = upperDay === 'JUMAT' || upperDay === 'SABTU';
-
-  if (isJumatSabtu) {
-    return [
-      { shift: 1, jam: '06:30 - 09:30' },
-      { shift: 2, jam: '09:30 - 12:30' },
-      { shift: 3, jam: '12:30 - 15:30' },
-      { shift: 4, jam: '15:30 - 18:30' },
-    ];
-  }
-
-  return [
-    { shift: 1, jam: '06:00 - 09:00' },
-    { shift: 2, jam: '09:00 - 12:00' },
-    { shift: 3, jam: '12:00 - 15:00' },
-    { shift: 4, jam: '15:00 - 18:00' },
-  ];
+  return getJagaShiftList(hari).map((s) => ({
+    shift: s.shift,
+    jam: s.jam,
+  }));
 };
 
 export const getShiftTimeString = (hari: string, shift: number) => {

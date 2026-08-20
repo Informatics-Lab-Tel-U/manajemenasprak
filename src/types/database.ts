@@ -29,6 +29,7 @@ export type Asprak = {
   kode: string;
   role: Role;
   angkatan?: number;
+  rfid_uid?: string;
   created_at: string;
   updated_at: string;
 };
@@ -126,6 +127,22 @@ export type JadwalJaga = {
   created_at: string;
   updated_at: string;
   asprak?: Pick<Asprak, 'nama_lengkap' | 'nim' | 'kode' | 'role'>;
+};
+
+export type PresensiJaga = {
+  id: string;
+  id_asprak: string;
+  tahun_ajaran: string;
+  modul: number;
+  hari: string;
+  shift: number;
+  tanggal: string;
+  waktu_masuk: string;
+  waktu_keluar?: string;
+  status: 'HADIR' | 'TERLAMBAT' | 'PENGGANTI' | 'TIDAK_TERJADWAL' | string;
+  device_id?: string;
+  created_at: string;
+  asprak?: Pick<Asprak, 'id' | 'nama_lengkap' | 'nim' | 'kode' | 'role'>;
 };
 
 export type Praktikan = {
