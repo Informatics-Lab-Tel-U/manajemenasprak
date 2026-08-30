@@ -11,7 +11,7 @@ export default function MataKuliahCard({ mk }: MataKuliahCardProps) {
   const isPJJ = mk.program_studi.includes('PJJ');
 
   return (
-    <Card className="@container/card bg-card shadow-sm hover:shadow-md transition-all group">
+    <Card className="@container/card bg-card shadow-sm hover:shadow-md transition-shadow group flex flex-col">
       <CardHeader>
         <CardDescription className="line-clamp-1">{mk.praktikum.nama}</CardDescription>
         <CardTitle className="text-lg 2xl:text-xl font-bold line-clamp-2 leading-tight transition-colors" title={mk.nama_lengkap}>
@@ -30,15 +30,11 @@ export default function MataKuliahCard({ mk }: MataKuliahCardProps) {
         </CardAction>
       </CardHeader>
 
-      <CardFooter className="flex-col items-start gap-1.5 text-sm pt-4 border-t border-dashed">
-        <div className="flex items-center gap-2 font-medium">
-          <UserCircle className="size-5 text-muted-foreground" />
-          <div className="flex flex-col">
-            <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider leading-none mb-1">
-              Koordinator
-            </span>
-            <span className="text-sm font-bold text-foreground leading-tight">{mk.dosen_koor}</span>
-          </div>
+      <CardFooter className="mt-auto flex items-center gap-2 text-sm pt-4 border-t border-border/50">
+        <UserCircle className="size-4 text-muted-foreground shrink-0" />
+        <div className="flex flex-col gap-0.5">
+          <span className="text-xs text-muted-foreground">Koordinator</span>
+          <span className="text-sm font-semibold text-foreground">{mk.dosen_koor}</span>
         </div>
       </CardFooter>
     </Card>

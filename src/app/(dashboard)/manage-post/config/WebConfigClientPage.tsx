@@ -11,7 +11,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { updateActiveScheduleTerm } from '@/services/webConfigService';
-import { Save, AlertCircle, Loader2 } from 'lucide-react';
+import { Save, TriangleAlert, Loader2 } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 interface WebConfigClientPageProps {
@@ -55,10 +55,10 @@ export default function WebConfigClientPage({
         </div>
       </div>
 
-      <Alert>
-        <AlertCircle className="h-4 w-4" />
-        <AlertTitle>Perhatian</AlertTitle>
-        <AlertDescription>
+      <Alert className="border-yellow-500/50 bg-yellow-500/5 text-yellow-700 dark:text-yellow-400 [&>svg]:text-yellow-500">
+        <TriangleAlert className="h-4 w-4" />
+        <AlertTitle className="font-semibold">Perhatian</AlertTitle>
+        <AlertDescription className="text-yellow-700/80 dark:text-yellow-400/80">
           Perubahan pada halaman ini akan langsung berdampak pada website publik. Pastikan jadwal untuk Tahun Ajaran yang dipilih sudah final.
         </AlertDescription>
       </Alert>

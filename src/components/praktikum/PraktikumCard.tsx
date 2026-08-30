@@ -11,7 +11,7 @@ interface PraktikumCardProps {
 export default function PraktikumCard({ praktikum, onClick }: PraktikumCardProps) {
   return (
     <Card
-      className="@container/card bg-card shadow-sm hover:shadow-md transition-all cursor-pointer group"
+      className="@container/card bg-card shadow-sm hover:shadow-md transition-shadow cursor-pointer group flex flex-col"
       onClick={() => onClick(praktikum)}
     >
       <CardHeader>
@@ -27,17 +27,13 @@ export default function PraktikumCard({ praktikum, onClick }: PraktikumCardProps
         </CardAction>
       </CardHeader>
 
-      <CardFooter className="flex-col items-start gap-1.5 text-sm pt-4 border-t border-dashed">
-        <div className="flex items-center gap-2 font-medium">
-          <Users className="size-5 text-muted-foreground" />
-          <div className="flex flex-col">
-            <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider leading-none mb-1">
-              Total Asprak
-            </span>
-            <span className="text-sm font-bold text-foreground leading-tight">
-              {praktikum.asprak_count} Orang
-            </span>
-          </div>
+      <CardFooter className="mt-auto flex items-center gap-2 text-sm pt-4 border-t border-border/50">
+        <Users className="size-4 text-muted-foreground shrink-0" />
+        <div className="flex flex-col gap-0.5">
+          <span className="text-xs text-muted-foreground">Total Asprak</span>
+          <span className="text-sm font-semibold text-foreground">
+            {praktikum.asprak_count} Orang
+          </span>
         </div>
       </CardFooter>
     </Card>

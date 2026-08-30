@@ -137,7 +137,7 @@ export default function MataKuliahClientPage({
         </div>
       </div>
 
-      <div className="card glass p-4">
+      <div className="bg-card/50 rounded-xl border border-border/50 p-4">
         <AsprakFilters
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}

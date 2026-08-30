@@ -158,7 +158,7 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
           <div className="relative flex items-center justify-center">
             <div className="border-t border-border/60 w-full" />
             <span className="bg-card px-3 text-xs text-muted-foreground uppercase tracking-wider shrink-0">
-              atau masuk dengan email
+              atau masuk dengan
             </span>
             <div className="border-t border-border/60 w-full" />
           </div>
@@ -185,6 +185,7 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
                 <Input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
+                  placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
