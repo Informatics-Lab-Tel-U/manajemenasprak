@@ -4,6 +4,7 @@ import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronsUpDown, LogOut } from 'lucide-react';
 import { logout } from '@/app/actions/auth';
+import { createClient } from '@/lib/supabase/client';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,12 +37,16 @@ export function AccountSwitcher({
   async function handleLogout() {
     setIsLoading(true);
     try {
+      // 1. Revoke all server-side sessions (scope: 'global')
       await logout();
-      router.push('/login');
-      router.refresh();
+      // 2. Clear client-side tokens (localStorage/cookies managed by supabase-js)
+      const supabase = createClient();
+      await supabase.auth.signOut({ scope: 'local' });
     } catch (err) {
       console.error('Logout error:', err);
-      setIsLoading(false);
+    } finally {
+      // 3. Hard navigate — forces full page reload, clearing all in-memory React state
+      window.location.href = '/login';
     }
   }
 
