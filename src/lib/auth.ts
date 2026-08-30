@@ -82,6 +82,21 @@ export const getCurrentUser = cache(async (): Promise<AuthUser | null> => {
 export async function requireAuth(redirectTo = '/login'): Promise<AuthUser> {
   const user = await getCurrentUser();
   if (!user) redirect(redirectTo);
+
+  // Enforce MFA for active users at Server Component level (zero-bypass protection)
+  if (user.pengguna.status === 'ACTIVE') {
+    const supabase = await createClient();
+    const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+
+    if (aalData?.currentLevel === 'aal1' && aalData?.nextLevel === 'aal2') {
+      redirect('/verify-2fa');
+    }
+
+    if (user.pengguna.role === 'ADMIN' && aalData?.nextLevel !== 'aal2') {
+      redirect('/setup-2fa');
+    }
+  }
+
   return user;
 }
 
@@ -135,6 +150,21 @@ export async function requireRoleApi(
       ok: false,
       response: NextResponse.json({ ok: false, error: forbiddenMessage }, { status: 403 }),
     };
+  }
+
+  // Enforce MFA AAL2 for ADMIN users at route handler level (defense-in-depth)
+  if (user.pengguna.role === 'ADMIN') {
+    const supabase = await createClient();
+    const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (aalData?.currentLevel !== 'aal2') {
+      return {
+        ok: false,
+        response: NextResponse.json(
+          { ok: false, error: 'Two-Factor Authentication (AAL2) diperlukan untuk aksi ini.' },
+          { status: 403 }
+        ),
+      };
+    }
   }
 
   return { ok: true, user };

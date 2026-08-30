@@ -43,7 +43,7 @@ export async function login(email: string, password: string, turnstileToken: str
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword({
+  const { data: authData, error } = await supabase.auth.signInWithPassword({
     email,
     password,
   });
@@ -51,5 +51,35 @@ export async function login(email: string, password: string, turnstileToken: str
   if (error) {
     return { error: error.message };
   }
-  return { success: true };
+
+  let redirectTo = '/';
+
+  if (authData.user) {
+    try {
+      // Check MFA Assurance Level
+      const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+
+      // Check Pengguna Role via Hono Backend API
+      const meRes = await fetch(`${process.env.HONO_BACKEND_URL}/api/auth/me`, {
+        headers: { Authorization: `Bearer ${authData.session?.access_token}` },
+        cache: 'no-store',
+      });
+
+      let role: string | undefined;
+      if (meRes.ok) {
+        const meData = await meRes.json();
+        role = meData.data?.pengguna?.role;
+      }
+
+      if (aalData?.currentLevel === 'aal1' && aalData?.nextLevel === 'aal2') {
+        redirectTo = '/verify-2fa';
+      } else if (role === 'ADMIN' && aalData?.nextLevel !== 'aal2') {
+        redirectTo = '/setup-2fa';
+      }
+    } catch (err) {
+      console.error('[Login Action] Error checking MFA state:', err);
+    }
+  }
+
+  return { success: true, redirectTo };
 }

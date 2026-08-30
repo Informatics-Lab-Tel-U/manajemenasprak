@@ -61,7 +61,7 @@ export default function RealtimeMonitoringList({ initialData }: { initialData: L
         const isSpike = lastResponseTime !== null && lastResponseTime > 800;
 
         return (
-          <Card key={data.lab_id} className={`overflow-hidden transition-all duration-200 ${isOnline ? 'border-green-500/50 shadow-sm shadow-green-100 dark:shadow-none' : 'opacity-70'}`}>
+          <Card key={data.lab_id} className={`overflow-hidden transition-colors ${isOnline ? 'border-green-500/50 shadow-sm' : 'opacity-70'}`}>
             <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
               <CardTitle className="text-xl font-bold">{data.lab_id}</CardTitle>
               <Activity className={`h-5 w-5 ${isOnline ? 'text-green-500 animate-pulse' : 'text-muted-foreground'}`} />

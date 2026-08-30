@@ -46,11 +46,16 @@ export async function updateSession(request: NextRequest) {
   );
 
   // IMPORTANT: Do not add any logic between createServerClient and getUser().
-  // getUser + system_config are independent — run them in parallel.
+  // getUser() performs server-side JWT verification (unlike getSession() which only
+  // validates locally). getSession() is still called for the access_token needed
+  // to forward to the Hono backend.
+  // Both run in parallel with maintenance fetch to avoid sequential latency.
   const [
+    { data: { user } },
     { data: { session } },
     maintenanceRes,
   ] = await Promise.all([
+    supabase.auth.getUser(),
     supabase.auth.getSession(),
     fetch(`${process.env.HONO_BACKEND_URL}/api/system/maintenance`, { cache: 'no-store' }).catch((err) => {
       console.error('[Middleware] Failed to fetch maintenance status:', err);
@@ -58,7 +63,6 @@ export async function updateSession(request: NextRequest) {
     }),
   ]);
 
-  const user = session?.user;
   const token = session?.access_token;
 
   let isMaintenanceMode = false;
@@ -119,11 +123,15 @@ export async function updateSession(request: NextRequest) {
   }
 
   if (isPublicPath(pathname)) {
-    // Allow logged-in users visiting /login, /pending-approval, or /rejected to fall through and get redirected based on status
+    // Allow logged-in users visiting auth flow pages to fall through and get routed based on status & MFA level
     if (
       user &&
       pengguna &&
-      (pathname === '/login' || pathname === '/pending-approval' || pathname === '/rejected')
+      (pathname === '/login' ||
+        pathname === '/pending-approval' ||
+        pathname === '/rejected' ||
+        pathname === '/verify-2fa' ||
+        pathname === '/setup-2fa')
     ) {
       // fall through
     } else {
@@ -132,8 +140,8 @@ export async function updateSession(request: NextRequest) {
   }
 
   if (!user || !pengguna) {
-    // Only redirect if it's not already login
-    if (pathname !== '/login') {
+    // Only redirect if it's not already login or public
+    if (pathname !== '/login' && !isPublicPath(pathname)) {
       const loginUrl = request.nextUrl.clone();
       loginUrl.pathname = '/login';
       return NextResponse.redirect(loginUrl);
@@ -168,7 +176,43 @@ export async function updateSession(request: NextRequest) {
     return supabaseResponse;
   }
 
-  // 3. For ACTIVE users visiting pending/rejected pages, redirect to home
+  // 3. MFA (TOTP) Security Enforcement for ACTIVE users
+  if (status === 'ACTIVE') {
+    const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+
+    // A. User has enrolled 2FA and needs to complete AAL2 challenge
+    if (aalData?.currentLevel === 'aal1' && aalData?.nextLevel === 'aal2') {
+      if (pathname !== '/verify-2fa') {
+        const verifyUrl = request.nextUrl.clone();
+        verifyUrl.pathname = '/verify-2fa';
+        return NextResponse.redirect(verifyUrl);
+      }
+      return supabaseResponse;
+    }
+
+    // B. Admin role MUST enroll in 2FA if not yet enrolled
+    if (role === 'ADMIN' && aalData?.nextLevel !== 'aal2') {
+      if (pathname !== '/setup-2fa') {
+        const setupUrl = request.nextUrl.clone();
+        setupUrl.pathname = '/setup-2fa';
+        return NextResponse.redirect(setupUrl);
+      }
+      return supabaseResponse;
+    }
+
+    // C. User visiting 2FA pages while already fully authenticated (AAL2 or non-enrolled non-admin)
+    if (
+      (pathname === '/verify-2fa' || pathname === '/setup-2fa') &&
+      aalData?.currentLevel === 'aal2'
+    ) {
+      const destination = role ? ROLE_DEFAULT_REDIRECT[role] : '/';
+      const redirectUrl = request.nextUrl.clone();
+      redirectUrl.pathname = destination;
+      return NextResponse.redirect(redirectUrl);
+    }
+  }
+
+  // 4. For ACTIVE users visiting pending/rejected pages, redirect to home
   if (status === 'ACTIVE' && (pathname === '/pending-approval' || pathname === '/rejected')) {
     const destination = role ? ROLE_DEFAULT_REDIRECT[role] : '/';
     const redirectUrl = request.nextUrl.clone();

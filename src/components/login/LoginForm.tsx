@@ -109,8 +109,9 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
         return;
       }
 
-      router.refresh();
-      router.push('/');
+      // Hard navigate to eliminate client router/bfcache stale states
+      window.location.href = res.redirectTo || '/';
+      return;
     } catch (err: unknown) {
       console.error('Login error:', err);
       setError('Terjadi kesalahan koneksi. Silakan coba lagi.');
@@ -144,7 +145,7 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
             variant="outline"
             onClick={handleMicrosoftLogin}
             disabled={isLoading || isOAuthLoading}
-            className="w-full h-11 border-border/80 hover:bg-muted/50 font-medium flex items-center justify-center gap-3 transition-all"
+            className="w-full h-11 border-border/80 hover:bg-muted/50 font-medium flex items-center justify-center gap-3 transition-colors"
           >
             {isOAuthLoading ? (
               <>

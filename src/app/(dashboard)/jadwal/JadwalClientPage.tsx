@@ -238,7 +238,7 @@ export default function JadwalClientPage({
               variant="ghost"
               size="sm"
               onClick={() => setProgramType('REGULER')}
-              className={`rounded-md text-sm font-medium transition-all ${
+              className={`rounded-md text-sm font-medium transition-colors ${
                 programType === 'REGULER'
                   ? 'bg-background shadow-sm text-foreground hover:bg-background'
                   : 'text-muted-foreground hover:bg-background/50 hover:text-foreground'
@@ -250,7 +250,7 @@ export default function JadwalClientPage({
               variant="ghost"
               size="sm"
               onClick={() => setProgramType('PJJ')}
-              className={`rounded-md text-sm font-medium transition-all ${
+              className={`rounded-md text-sm font-medium transition-colors ${
                 programType === 'PJJ'
                   ? 'bg-background shadow-sm text-foreground hover:bg-background'
                   : 'text-muted-foreground hover:bg-background/50 hover:text-foreground'
