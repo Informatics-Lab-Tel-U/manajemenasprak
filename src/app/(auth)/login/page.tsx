@@ -27,7 +27,7 @@ export default function Page() {
           <Card className="bg-card/60 backdrop-blur-md border-border/50 shadow-2xl">
             <CardHeader className="pb-4 pt-6 px-6">
               <div className="flex items-center gap-4">
-                <div className="relative size-12 shrink-0">
+                <div className="relative size-16 shrink-0">
                   <Image
                     src="/iflab.png"
                     alt="Informatics Laboratory"
