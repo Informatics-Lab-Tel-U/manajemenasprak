@@ -128,7 +128,7 @@ export default function PelanggaranClientPage({
             return (
               <Card
                 key={p.id}
-                className="@container/card bg-card shadow-sm hover:shadow-md transition-all cursor-pointer group flex flex-col"
+                className="@container/card bg-card shadow-sm hover:shadow-md transition-shadow cursor-pointer group flex flex-col"
                 onClick={() => router.push(`/pelanggaran/${p.id}`)}
               >
                 <CardHeader>
@@ -149,21 +149,15 @@ export default function PelanggaranClientPage({
                   </CardAction>
                 </CardHeader>
 
-                <CardFooter className="mt-auto flex items-end justify-between text-sm pt-4 border-t border-dashed">
-                  <div className="flex items-center gap-2 font-medium">
-                    <div className="flex flex-col">
-                      <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider leading-none mb-1">
-                        Total Pelanggaran
-                      </span>
-                      <span className="text-sm font-bold text-foreground leading-tight flex items-baseline">
-                        <span className="text-2xl font-black tracking-tight mr-1.5">{info.total}</span> Log
-                      </span>
-                    </div>
+                <CardFooter className="mt-auto flex items-center justify-between pt-4 border-t border-border/50">
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-xs text-muted-foreground">Total Pelanggaran</span>
+                    <span className="text-sm font-semibold text-foreground">{info.total} Log</span>
                   </div>
                   <Button
                     size="sm"
-                    variant="outline"
-                    className="gap-1.5 pointer-events-none group-hover:bg-primary/5 transition-colors"
+                    variant="ghost"
+                    className="gap-1.5 text-muted-foreground group-hover:text-foreground transition-colors"
                   >
                     Lihat
                     <ArrowRight className="h-3.5 w-3.5" />
