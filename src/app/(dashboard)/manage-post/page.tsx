@@ -1,10 +1,11 @@
 import * as blogService from '@/services/blogService';
 import Link from 'next/link';
-import { PlusCircle, Pencil } from 'lucide-react';
+import { Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
 import { DeletePostButton } from '@/components/blog/DeletePostButton';
+import { TemplateSelectionModal } from '@/components/blog/TemplateSelectionModal';
 import { requireRole } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
@@ -24,22 +25,21 @@ export default async function ManagePostPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6 p-6">
-      <div className="flex items-center justify-between">
+    <div className="container mx-auto max-w-[2000px] 2xl:px-8 relative">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Kelola Post Lab</h1>
-          <p className="text-muted-foreground">Manajemen konten artikel dan pengumuman lab.</p>
+          <h1 className="text-2xl 2xl:text-3xl font-bold tracking-tight">Kelola Post Lab</h1>
+          <p className="text-sm 2xl:text-base text-muted-foreground mt-1">Manajemen konten artikel dan pengumuman lab.</p>
         </div>
-        <Button asChild>
-          <Link href="/manage-post/create">
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Buat Post
-          </Link>
-        </Button>
+        <div className="flex flex-wrap gap-2 md:gap-3 items-center w-full md:w-auto">
+          <TemplateSelectionModal />
+        </div>
       </div>
 
-      <div className="rounded-md border bg-card overflow-x-auto">
-        <table className="w-full text-sm text-left">
+      <div className="w-full">
+        <div className="card glass p-6 flex flex-col gap-6 border border-border/50">
+          <div className="rounded-md border bg-card overflow-x-auto">
+            <table className="w-full text-sm text-left">
           <thead className="text-xs text-muted-foreground bg-muted/50 border-b">
             <tr>
               <th className="px-4 py-3 font-medium">Judul</th>
@@ -71,7 +71,7 @@ export default async function ManagePostPage() {
                 <td className="px-4 py-3 text-right">
                   <div className="flex items-center justify-end gap-2">
                     <Button variant="ghost" size="icon" asChild>
-                      <Link href={`/manage-post/${post.id}/edit`}>
+                      <Link prefetch={false} href={`/manage-post/${post.id}/edit`}>
                         <Pencil className="h-4 w-4" />
                       </Link>
                     </Button>
@@ -89,6 +89,8 @@ export default async function ManagePostPage() {
             )}
           </tbody>
         </table>
+      </div>
+        </div>
       </div>
     </div>
   );

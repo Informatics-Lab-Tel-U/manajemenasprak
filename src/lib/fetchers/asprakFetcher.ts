@@ -8,11 +8,13 @@ import { Asprak } from '@/types/database';
 import { ServiceResult } from '@/types/api';
 
 export interface UpsertAsprakInput {
+  id?: string;
   nim: string;
   nama_lengkap: string;
   kode: string;
   role: 'ASPRAK' | 'ASLAB';
   angkatan: number;
+  rfid_uid?: string | null;
   assignments: {
     term: string;
     praktikumNames: string[];
@@ -103,7 +105,8 @@ export async function updateAssignments(
   praktikumIds: string[],
   newKode?: string,
   nim?: string,
-  forceOverride?: boolean
+  forceOverride?: boolean,
+  rfid_uid?: string | null
 ): Promise<ServiceResult<void>> {
   try {
     const res = await fetch('/api/asprak', {
@@ -117,6 +120,7 @@ export async function updateAssignments(
         newKode,
         nim,
         forceOverride,
+        rfid_uid,
       }),
     });
 

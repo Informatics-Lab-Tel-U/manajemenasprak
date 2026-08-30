@@ -139,7 +139,12 @@ export default function PelanggaranForm({
   const filteredAsprak = useMemo(() => {
     let list = asprakList;
     if (selectedPraktikumId) {
-      list = list.filter((a) => a.praktikum_ids?.includes(selectedPraktikumId));
+      const assigned = list.filter(
+        (a) => a.praktikum_ids && a.praktikum_ids.length > 0 && a.praktikum_ids.includes(selectedPraktikumId)
+      );
+      if (assigned.length > 0) {
+        list = assigned;
+      }
     }
     if (asprakSearch.trim()) {
       const q = asprakSearch.toLowerCase();

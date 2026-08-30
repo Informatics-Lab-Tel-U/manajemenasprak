@@ -2,17 +2,24 @@
 
 /* eslint-disable react-doctor/no-fetch-in-effect, react-doctor/nextjs-no-client-fetch-for-server-data */
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Calendar, BookOpen, Users, Check, Lock, Target } from 'lucide-react';
+import { Check, Lock, Target } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import TermInput from '@/components/asprak/TermInput';
 import { useTermStore } from '@/store/useTermStore';
+import { useOnboardingStore } from '@/store/useOnboardingStore';
+import { useJadwalOnboardStore } from '@/store/useJadwalOnboardStore';
+import { useAsprakOnboardStore } from '@/store/useAsprakOnboardStore';
 
 export default function OnboardHubPage() {
   const { activeTerm } = useTermStore();
+  const { syncWithTerm: syncOnboardTerm, completedSteps: onboardCompleted } = useOnboardingStore();
+  const { syncWithTerm: syncJadwalTerm, completedSteps: jadwalCompleted } = useJadwalOnboardStore();
+  const { syncWithTerm: syncAsprakTerm, completedSteps: asprakCompleted } = useAsprakOnboardStore();
+
   const [termYear, setTermYear] = useState(activeTerm ? activeTerm.substring(0, 2) : '24');
   const [termSem, setTermSem] = useState<'1' | '2'>(activeTerm ? (activeTerm.slice(-1) as '1'|'2') : '2');
   
@@ -50,43 +57,67 @@ export default function OnboardHubPage() {
       const newTermPrefix = `${newYear}${parseInt(newYear) + 1}`;
       const targetTerm = `${newTermPrefix}-${termSem}`;
       
-      // If the targeted term doesn't exist in the DB
       if (!availableTerms.current.includes(targetTerm)) {
         const otherSem = termSem === '1' ? '2' : '1';
         const otherTerm = `${newTermPrefix}-${otherSem}`;
         
-        // If the other semester exists, switch to it
         if (availableTerms.current.includes(otherTerm)) {
           setTermSem(otherSem);
         } else {
-          // If neither exists (brand new year), default to semester 1 (Ganjil)
           setTermSem('1');
         }
       }
     }
   };
 
-  useEffect(() => {
-    if (!currentTerm) return;
-    let isMounted = true;
+  const fetchStatus = useCallback((term: string) => {
+    if (!term) return;
     setIsLoading(true);
-    
-    fetch(`/api/onboard/status?term=${currentTerm}`)
+    fetch(`/api/onboard/status?term=${term}&_t=${Date.now()}`, {
+      cache: 'no-store',
+      headers: {
+        'Pragma': 'no-cache',
+        'Cache-Control': 'no-cache',
+      },
+    })
       .then(res => res.json())
       .then(data => {
-        if (isMounted) {
-          setStatus(data?.data || null);
-          setIsLoading(false);
+        const resData = data?.data || null;
+        setStatus(resData);
+        setIsLoading(false);
+
+        // Sync local stores against current DB ground truth
+        if (resData) {
+          syncJadwalTerm(term, Boolean(resData.step2_done));
+          syncAsprakTerm(term, Boolean(resData.step3_done));
         }
       })
-      .catch(() => {
-        if (isMounted) setIsLoading(false);
+      .catch((err) => {
+        console.error('[OnboardHub] Gagal memuat status DB:', err);
+        setIsLoading(false);
       });
+  }, [syncJadwalTerm, syncAsprakTerm]);
 
-    return () => {
-      isMounted = false;
-    };
-  }, [currentTerm]);
+  useEffect(() => {
+    if (!currentTerm) return;
+    
+    // Nativasi perpindahan term di semua store agar bersih dari sisa localStorage term lama
+    syncOnboardTerm(currentTerm);
+    syncJadwalTerm(currentTerm, false);
+    syncAsprakTerm(currentTerm, false);
+
+    fetchStatus(currentTerm);
+
+    // Otomatis re-fetch status tatkala pengelola kembali ke halaman hub dari tab lain
+    const handleFocus = () => fetchStatus(currentTerm);
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [currentTerm, syncOnboardTerm, syncJadwalTerm, syncAsprakTerm, fetchStatus]);
+
+  // Kombinasi ground-truth server yang aktual dan instant response dari state store
+  const isStep1Done = Boolean(status?.step1_done || onboardCompleted.includes('selesai'));
+  const isStep2Done = Boolean(status?.step2_done || (isStep1Done && jadwalCompleted.includes('selesai')));
+  const isStep3Done = Boolean(status?.step3_done || (isStep2Done && asprakCompleted.includes('selesai')));
 
   return (
     <div className="container mx-auto max-w-[2000px] space-y-8 2xl:px-8">
@@ -98,8 +129,6 @@ export default function OnboardHubPage() {
       </div>
 
       <div className="relative mt-12 space-y-8 max-w-6xl mx-auto">
-        {/* Timeline Connecting Line dihapus, dipindah ke masing-masing step */}
-
         {isLoading ? (
           <div className="space-y-8">
             {[0, 1, 2, 3].map((i) => (
@@ -160,24 +189,24 @@ export default function OnboardHubPage() {
 
             {/* Card 1: Tahun Ajaran & Praktikum */}
             <div className="relative flex flex-col md:flex-row gap-6 items-stretch md:items-start group">
-              <div className={`absolute top-10 bottom-[-32px] left-[19px] w-0.5 hidden md:block transition-colors duration-500 ${status?.step1_done ? 'bg-primary' : 'bg-border'}`}></div>
-              <div className={`hidden md:flex relative z-10 size-10 shrink-0 items-center justify-center overflow-hidden rounded-md text-base font-medium transition-all duration-300 border-[3px] border-background shadow-sm bg-primary text-primary-foreground ${!status?.step1_done ? 'ring-primary/30 ring-2 ring-offset-2 ring-offset-background' : ''}`}>
-                {status?.step1_done ? <Check className="w-5 h-5" strokeWidth={3} /> : '1'}
+              <div className={`absolute top-10 bottom-[-32px] left-[19px] w-0.5 hidden md:block transition-colors duration-500 ${isStep1Done ? 'bg-primary' : 'bg-border'}`}></div>
+              <div className={`hidden md:flex relative z-10 size-10 shrink-0 items-center justify-center overflow-hidden rounded-md text-base font-medium transition-all duration-300 border-[3px] border-background shadow-sm bg-primary text-primary-foreground ${!isStep1Done ? 'ring-primary/30 ring-2 ring-offset-2 ring-offset-background' : ''}`}>
+                {isStep1Done ? <Check className="w-5 h-5" strokeWidth={3} /> : '1'}
               </div>
-              <Card className={`flex-1 flex flex-col transition-all duration-300 shadow-sm min-h-[200px] ${status?.step1_done ? 'border-border bg-card' : 'border-primary ring-1 ring-primary shadow-md bg-card'}`}>
+              <Card className={`flex-1 flex flex-col transition-all duration-300 shadow-sm min-h-[200px] ${isStep1Done ? 'border-border bg-card' : 'border-primary ring-1 ring-primary shadow-md bg-card'}`}>
                 <CardHeader className="flex-grow">
                   <div className="flex items-start justify-between gap-4">
                     <CardTitle className="text-xl">Langkah 1: Tahun Ajaran & Praktikum</CardTitle>
-                    {status?.step1_done && <Check className="w-5 h-5 text-primary md:hidden shrink-0 mt-0.5" strokeWidth={3} />}
+                    {isStep1Done && <Check className="w-5 h-5 text-primary md:hidden shrink-0 mt-0.5" strokeWidth={3} />}
                   </div>
                   <CardDescription className="text-base">
                     Inisialisasi tahun ajaran baru, daftar praktikum, dan referensi mata kuliah.
                   </CardDescription>
                 </CardHeader>
                 <CardFooter>
-                  <Button asChild className="w-full sm:w-auto" variant={status?.step1_done ? "outline" : "default"}>
-                    <Link href={`/onboard/tahun-ajaran-baru?term=${currentTerm}`}>
-                      {status?.step1_done ? 'Edit Data' : 'Mulai Setup'}
+                  <Button asChild className="w-full sm:w-auto" variant={isStep1Done ? "outline" : "default"}>
+                    <Link prefetch={false} href={`/onboard/tahun-ajaran-baru?term=${currentTerm}`}>
+                      {isStep1Done ? 'Edit Data' : 'Mulai Setup'}
                     </Link>
                   </Button>
                 </CardFooter>
@@ -186,16 +215,16 @@ export default function OnboardHubPage() {
 
             {/* Card 2: Jadwal Praktikum */}
             <div className="relative flex flex-col md:flex-row gap-6 items-stretch md:items-start group">
-              <div className={`absolute top-10 bottom-[-32px] left-[19px] w-0.5 hidden md:block transition-colors duration-500 ${status?.step2_done ? 'bg-primary' : 'bg-border'}`}></div>
-              <div className={`hidden md:flex relative z-10 size-10 shrink-0 items-center justify-center overflow-hidden rounded-md text-base font-medium transition-all duration-300 border-[3px] border-background shadow-sm ${status?.step2_done || status?.step1_done ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'} ${!status?.step2_done && status?.step1_done ? 'ring-primary/30 ring-2 ring-offset-2 ring-offset-background' : ''}`}>
-                {status?.step2_done ? <Check className="w-5 h-5" strokeWidth={3} /> : !status?.step1_done ? <Lock className="w-4 h-4" /> : '2'}
+              <div className={`absolute top-10 bottom-[-32px] left-[19px] w-0.5 hidden md:block transition-colors duration-500 ${isStep2Done ? 'bg-primary' : 'bg-border'}`}></div>
+              <div className={`hidden md:flex relative z-10 size-10 shrink-0 items-center justify-center overflow-hidden rounded-md text-base font-medium transition-all duration-300 border-[3px] border-background shadow-sm ${isStep2Done || isStep1Done ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'} ${!isStep2Done && isStep1Done ? 'ring-primary/30 ring-2 ring-offset-2 ring-offset-background' : ''}`}>
+                {isStep2Done ? <Check className="w-5 h-5" strokeWidth={3} /> : !isStep1Done ? <Lock className="w-4 h-4" /> : '2'}
               </div>
-              <Card className={`flex-1 flex flex-col transition-all duration-300 shadow-sm min-h-[200px] ${status?.step2_done ? 'border-border bg-card' : status?.step1_done ? 'border-primary ring-1 ring-primary shadow-md bg-card' : 'opacity-70 bg-muted/30 border-border'}`}>
+              <Card className={`flex-1 flex flex-col transition-all duration-300 shadow-sm min-h-[200px] ${isStep2Done ? 'border-border bg-card' : isStep1Done ? 'border-primary ring-1 ring-primary shadow-md bg-card' : 'opacity-70 bg-muted/30 border-border'}`}>
                 <CardHeader className="flex-grow">
                   <div className="flex items-start justify-between gap-4">
                     <CardTitle className="text-xl">Langkah 2: Jadwal Praktikum</CardTitle>
                     <div className="md:hidden shrink-0 mt-0.5">
-                      {status?.step2_done ? <Check className="w-5 h-5 text-primary" strokeWidth={3} /> : (!status?.step1_done && !isLoading && <Lock className="w-4 h-4 text-muted-foreground" />)}
+                      {isStep2Done ? <Check className="w-5 h-5 text-primary" strokeWidth={3} /> : (!isStep1Done && !isLoading && <Lock className="w-4 h-4 text-muted-foreground" />)}
                     </div>
                   </div>
                   <CardDescription className="text-base">
@@ -205,12 +234,12 @@ export default function OnboardHubPage() {
                 <CardFooter>
                   <Button 
                     asChild 
-                    variant={status?.step2_done ? "outline" : "default"} 
-                    className={`w-full sm:w-auto group ${!status?.step2_done && status?.step1_done ? 'hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 dark:hover:bg-blue-950/50 bg-blue-600 text-white' : ''}`}
-                    disabled={!status?.step1_done}
+                    variant={isStep2Done ? "outline" : "default"} 
+                    className={`w-full sm:w-auto group ${!isStep2Done && isStep1Done ? 'hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 dark:hover:bg-blue-950/50 bg-blue-600 text-white' : ''}`}
+                    disabled={!isStep1Done}
                   >
-                    <Link href={status?.step1_done ? `/onboard/jadwal?term=${currentTerm}` : '#'}>
-                      {status?.step2_done ? 'Edit Data' : status?.step1_done ? 'Mulai Setup' : 'Terkunci'}
+                    <Link prefetch={false} href={isStep1Done ? `/onboard/jadwal?term=${currentTerm}` : '#'}>
+                      {isStep2Done ? 'Edit Data' : isStep1Done ? 'Mulai Setup' : 'Terkunci'}
                     </Link>
                   </Button>
                 </CardFooter>
@@ -219,15 +248,15 @@ export default function OnboardHubPage() {
 
             {/* Card 3: Data Asprak */}
             <div className="relative flex flex-col md:flex-row gap-6 items-stretch md:items-start group">
-              <div className={`hidden md:flex relative z-10 size-10 shrink-0 items-center justify-center overflow-hidden rounded-md text-base font-medium transition-all duration-300 border-[3px] border-background shadow-sm ${status?.step3_done || status?.step2_done ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'} ${!status?.step3_done && status?.step2_done ? 'ring-primary/30 ring-2 ring-offset-2 ring-offset-background' : ''}`}>
-                {status?.step3_done ? <Check className="w-5 h-5" strokeWidth={3} /> : !status?.step2_done ? <Lock className="w-4 h-4" /> : '3'}
+              <div className={`hidden md:flex relative z-10 size-10 shrink-0 items-center justify-center overflow-hidden rounded-md text-base font-medium transition-all duration-300 border-[3px] border-background shadow-sm ${isStep3Done || isStep2Done ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'} ${!isStep3Done && isStep2Done ? 'ring-primary/30 ring-2 ring-offset-2 ring-offset-background' : ''}`}>
+                {isStep3Done ? <Check className="w-5 h-5" strokeWidth={3} /> : !isStep2Done ? <Lock className="w-4 h-4" /> : '3'}
               </div>
-              <Card className={`flex-1 flex flex-col transition-all duration-300 shadow-sm min-h-[200px] ${status?.step3_done ? 'border-border bg-card' : status?.step2_done ? 'border-primary ring-1 ring-primary shadow-md bg-card' : 'opacity-70 bg-muted/30 border-border'}`}>
+              <Card className={`flex-1 flex flex-col transition-all duration-300 shadow-sm min-h-[200px] ${isStep3Done ? 'border-border bg-card' : isStep2Done ? 'border-primary ring-1 ring-primary shadow-md bg-card' : 'opacity-70 bg-muted/30 border-border'}`}>
                 <CardHeader className="flex-grow">
                   <div className="flex items-start justify-between gap-4">
                     <CardTitle className="text-xl">Langkah 3: Data Asprak</CardTitle>
                     <div className="md:hidden shrink-0 mt-0.5">
-                      {status?.step3_done ? <Check className="w-5 h-5 text-primary" strokeWidth={3} /> : (!status?.step2_done && !isLoading && <Lock className="w-4 h-4 text-muted-foreground" />)}
+                      {isStep3Done ? <Check className="w-5 h-5 text-primary" strokeWidth={3} /> : (!isStep2Done && !isLoading && <Lock className="w-4 h-4 text-muted-foreground" />)}
                     </div>
                   </div>
                   <CardDescription className="text-base">
@@ -237,12 +266,12 @@ export default function OnboardHubPage() {
                 <CardFooter>
                   <Button 
                     asChild 
-                    variant={status?.step3_done ? "outline" : "default"} 
-                    className={`w-full sm:w-auto group ${!status?.step3_done && status?.step2_done ? 'hover:bg-orange-50 hover:text-orange-600 hover:border-orange-200 dark:hover:bg-orange-950/50 bg-orange-600 text-white' : ''}`}
-                    disabled={!status?.step2_done}
+                    variant={isStep3Done ? "outline" : "default"} 
+                    className={`w-full sm:w-auto group ${!isStep3Done && isStep2Done ? 'hover:bg-orange-50 hover:text-orange-600 hover:border-orange-200 dark:hover:bg-orange-950/50 bg-orange-600 text-white' : ''}`}
+                    disabled={!isStep2Done}
                   >
-                    <Link href={status?.step2_done ? `/onboard/asprak?term=${currentTerm}` : '#'}>
-                      {status?.step3_done ? 'Edit Data' : status?.step2_done ? 'Mulai Setup' : 'Terkunci'}
+                    <Link prefetch={false} href={isStep2Done ? `/onboard/asprak?term=${currentTerm}` : '#'}>
+                      {isStep3Done ? 'Edit Data' : isStep2Done ? 'Mulai Setup' : 'Terkunci'}
                     </Link>
                   </Button>
                 </CardFooter>

@@ -45,6 +45,7 @@ interface AsprakOnboardState {
   setPlottingPreviewRows: (rows: ExtendedPreviewRow[]) => void;
   setValidatedPlottingRows: (rows: ValidatedPlottingRow[]) => void;
   setTargetTerm: (term: string) => void;
+  syncWithTerm: (term: string, isAlreadyDone?: boolean, dbPlottingList?: any[]) => void;
   resetProgress: () => void;
 }
 
@@ -60,7 +61,7 @@ const INITIAL_STATE = {
 
 export const useAsprakOnboardStore = create<AsprakOnboardState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       ...INITIAL_STATE,
 
       setCurrentStep: (step) => set({ currentStep: step }),
@@ -85,6 +86,54 @@ export const useAsprakOnboardStore = create<AsprakOnboardState>()(
       setValidatedPlottingRows: (rows) => set({ validatedPlottingRows: rows }),
 
       setTargetTerm: (term) => set({ targetTerm: term }),
+
+      syncWithTerm: (term, isAlreadyDone = false, dbPlottingList = []) => {
+        const currentTargetTerm = get().targetTerm;
+        const isDifferentTerm = currentTargetTerm !== term;
+        const isPlottingRowsEmpty = get().plottingPreviewRows.length === 0;
+
+        const mappedPlottingRows: ExtendedPreviewRow[] = (dbPlottingList || []).map((item: any, idx: number) => ({
+          index: idx,
+          kode_asprak: item.asprak?.kode || '???',
+          mk_singkat: item.praktikum?.nama || '???',
+          status: 'valid',
+          selected: true,
+          asprakId: item.asprak?.id,
+          praktikumId: item.praktikum?.id,
+        }));
+
+        const mappedValidatedPlotting: ValidatedPlottingRow[] = (dbPlottingList || []).map((item: any) => ({
+          asprak_id: item.asprak?.id,
+          kode_asprak: item.asprak?.kode || '',
+          praktikum_id: item.praktikum?.id,
+          mk_singkat: item.praktikum?.nama || '',
+        }));
+
+        if (isDifferentTerm) {
+          set({
+            ...INITIAL_STATE,
+            targetTerm: term,
+            completedSteps: isAlreadyDone ? ['data_asprak', 'plotting', 'preview-final', 'selesai'] : [],
+            plottingPreviewRows: isAlreadyDone ? mappedPlottingRows : [],
+            validatedPlottingRows: isAlreadyDone ? mappedValidatedPlotting : [],
+          });
+        } else {
+          // If same term, sync completedSteps with DB ground truth isAlreadyDone
+          if (!isAlreadyDone) {
+            set({
+              completedSteps: [],
+              targetTerm: term,
+            });
+          } else {
+            set({
+              completedSteps: ['data_asprak', 'plotting', 'preview-final', 'selesai'],
+              targetTerm: term,
+              plottingPreviewRows: isPlottingRowsEmpty && mappedPlottingRows.length > 0 ? mappedPlottingRows : get().plottingPreviewRows,
+              validatedPlottingRows: isPlottingRowsEmpty && mappedValidatedPlotting.length > 0 ? mappedValidatedPlotting : get().validatedPlottingRows,
+            });
+          }
+        }
+      },
 
       resetProgress: () => set({ ...INITIAL_STATE }),
     }),

@@ -20,6 +20,7 @@ import {
   FileSpreadsheet,
   Monitor,
   FileText,
+  Fingerprint,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -96,6 +97,7 @@ const ALL_NAV_GROUPS: NavGroup[] = [
     label: 'Generator',
     items: [
       { label: 'Generate Presensi', href: '/generator/presensi', icon: FileSpreadsheet },
+      { label: 'Font Fingerprint', href: '/generator/font-generator', icon: Fingerprint },
     ],
   },
   {
@@ -132,16 +134,6 @@ const ALL_NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
-    label: 'Sistem',
-    items: [
-      { label: 'Monitoring Lab', href: '/monitoring', icon: Monitor },
-      { label: 'Manajemen Akun', href: '/manajemen-akun', icon: Notebook },
-      { label: 'Audit Logs', href: '/audit-logs', icon: Logs },
-      { label: 'Panduan Sistem', href: '/panduan', icon: HelpCircle },
-      { label: 'Pengaturan', href: '/pengaturan', icon: Settings },
-    ],
-  },
-  {
     label: 'CMS / Blog',
     items: [
       {
@@ -151,8 +143,19 @@ const ALL_NAV_GROUPS: NavGroup[] = [
         items: [
           { label: 'Semua Post', href: '/manage-post' },
           { label: 'Kategori & Tag', href: '/manage-post/taxonomy' },
+          { label: 'Konfigurasi Web', href: '/manage-post/config' },
         ],
       },
+    ],
+  },
+  {
+    label: 'Sistem',
+    items: [
+      { label: 'Monitoring Lab', href: '/monitoring', icon: Monitor },
+      { label: 'Manajemen Akun', href: '/manajemen-akun', icon: Notebook },
+      { label: 'Audit Logs', href: '/audit-logs', icon: Logs },
+      { label: 'Panduan Sistem', href: '/panduan', icon: HelpCircle },
+      { label: 'Pengaturan', href: '/pengaturan', icon: Settings },
     ],
   }
 ];
@@ -186,7 +189,7 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <Link href="/">
+              <Link prefetch={false} href="/">
                 <div className="flex aspect-square bg-white p-0.5 size-10 items-center justify-center rounded-lg text-sidebar-primary-foreground">
                   <div className="relative w-full h-full overflow-hidden rounded-md">
                     <Image src="/iflab.png" alt="Logo" fill sizes="40px" className="object-contain" />
@@ -268,7 +271,7 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
                               return (
                                 <SidebarMenuSubItem key={subItem.href}>
                                   <SidebarMenuSubButton asChild isActive={isSubActive}>
-                                    <Link href={subItem.href}>
+                                    <Link prefetch={false} href={subItem.href}>
                                       <span>{subItem.label}</span>
                                     </Link>
                                   </SidebarMenuSubButton>
@@ -290,7 +293,7 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
                       tooltip={item.label}
                       className={item.isPrimary ? 'bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground data-[active=true]:bg-primary data-[active=true]:text-primary-foreground font-semibold shadow-sm' : ''}
                     >
-                      <Link href={item.href}>
+                      <Link prefetch={false} href={item.href}>
                         <Icon />
                         <span>{item.label}</span>
                       </Link>

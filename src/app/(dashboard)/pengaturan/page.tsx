@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 import { requireAuth } from '@/lib/auth';
-import { getMaintenanceStatus } from '@/services/systemService.server';
+import { getAllMaintenanceStatuses } from '@/services/systemService';
 import PengaturanClientPage from './PengaturanClientPage';
 import PengaturanLoading from './loading';
 
@@ -8,17 +8,21 @@ export const dynamic = 'force-dynamic';
 
 export default async function PengaturanPage() {
   const authUser = await requireAuth();
-  let isMaintenance = false;
+  let initialMaintenanceStatuses = { dashboard: false, informaticsweb: false, generator_kursi: false };
 
   try {
-    isMaintenance = await getMaintenanceStatus();
+    initialMaintenanceStatuses = await getAllMaintenanceStatuses();
   } catch (error) {
     console.error('[PengaturanPage] SSR fetch error:', error);
   }
 
   return (
     <Suspense fallback={<PengaturanLoading />}>
-      <PengaturanClientPage initialIsMaintenance={isMaintenance} initialUserRole={authUser.pengguna.role} />
+      <PengaturanClientPage
+        initialIsMaintenance={initialMaintenanceStatuses.dashboard}
+        initialMaintenanceStatuses={initialMaintenanceStatuses}
+        initialUserRole={authUser.pengguna.role}
+      />
     </Suspense>
   );
 }

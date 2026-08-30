@@ -214,7 +214,8 @@ export default function AsprakClientPage({
   const handleSaveEdit = async (
     praktikumIds: string[],
     newKode: string,
-    forceOverride: boolean
+    forceOverride: boolean,
+    rfidUid?: string
   ) => {
     if (!editTarget) return;
 
@@ -225,11 +226,12 @@ export default function AsprakClientPage({
       praktikumIds,
       newKode,
       editTarget.asprak.nim,
-      forceOverride
+      forceOverride,
+      rfidUid
     );
 
     if (result.ok) {
-      toast.success('Penugasan berhasil diperbarui');
+      toast.success('Data asisten berhasil diperbarui');
       fetchAsprak(); // Refresh list
     } else {
       toast.error(`Gagal memperbarui: ${result.error}`);

@@ -14,12 +14,16 @@ import {
 } from '@/components/ui/chart';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Jadwal, JadwalPengganti } from '@/types/database';
-import { ROOMS } from '@/constants';
+import { ROOMS, STATIC_SESSIONS } from '@/constants';
 import { ScheduleCell } from '@/components/jadwal/ScheduleCell';
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useJaga } from '@/hooks/useJaga';
 import { getJagaShiftsByDay } from '@/utils/jagaUtils';
+import { useMonitoringStore } from '@/store/useMonitoringStore';
+import { usePresensiJagaStore } from '@/store/usePresensiJagaStore';
+import { isLabOnline } from '@/lib/labStatus';
+import { CheckCircle2 } from 'lucide-react';
 
 const chartConfigAsprak = {
   count: {
@@ -63,7 +67,13 @@ export default function DashboardCharts({
 
 
   // Schedule Matrix Logic
-  const todayDate = new Date();
+  const [todayDate, setTodayDate] = React.useState(new Date());
+
+  React.useEffect(() => {
+    // Memperbarui waktu setiap 10 detik agar deteksi kedaluwarsa (TTL) dan pergeseran sesi tetap sinkron
+    const timer = setInterval(() => setTodayDate(new Date()), 10000);
+    return () => clearInterval(timer);
+  }, []);
 
   const uniqueRooms = useMemo(() => {
     // We can use the global ROOMS constant or derive from today's schedule
@@ -106,6 +116,31 @@ export default function DashboardCharts({
 
   const { jagaList } = useJaga(term, activeModul, currentDayName);
   const shiftInfos = getJagaShiftsByDay(currentDayName);
+
+  const labStatus = useMonitoringStore((state) => state.labStatus);
+  const todayPresensi = usePresensiJagaStore((state) => state.todayPresensi);
+  const initPresensi = usePresensiJagaStore((state) => state.init);
+
+  React.useEffect(() => {
+    initPresensi();
+  }, [initPresensi]);
+
+  // Determine active session based on current time
+  const currentHour = todayDate.getHours();
+  const currentMin = todayDate.getMinutes();
+  const timeValue = currentHour + currentMin / 60;
+  
+  let activeSessionNumber = -1;
+  const daySessions = STATIC_SESSIONS[currentDayName] || STATIC_SESSIONS['SENIN'];
+  for (const s of daySessions) {
+    const [h, m] = s.jam.split(':').map(Number);
+    const startValue = h + m / 60;
+    const endValue = startValue + 3; // Asumsi durasi sesi 3 jam
+    if (timeValue >= startValue && timeValue < endValue) {
+      activeSessionNumber = s.sesi;
+      break;
+    }
+  }
 
   return (
     <div className="grid grid-cols-1 gap-6">
@@ -159,8 +194,8 @@ export default function DashboardCharts({
                       <th className="p-2 border-r border-l border-border min-w-[60px]">
                         <Skeleton className="h-4 w-8 mx-auto" />
                       </th>
-                      {Array.from({ length: 6 }).map((_, i) => (
-                        <th key={i} className="p-2 border-r border-border min-w-[120px]">
+                      {uniqueRooms.map((room) => (
+                        <th key={room} className="p-2 border-r border-border min-w-[120px]">
                           <Skeleton className="h-4 w-16 mx-auto" />
                         </th>
                       ))}
@@ -179,9 +214,9 @@ export default function DashboardCharts({
                             <Skeleton className="h-3 w-8 mx-auto" />
                           </div>
                         </td>
-                        {Array.from({ length: 6 }).map((_, j) => (
-                          <td key={j} className="p-1 border-r border-border align-top">
-                            {i % 2 === 0 && j % 2 === 0 && <Skeleton className="h-10 2xl:h-[72px] w-full" />}
+                        {uniqueRooms.map((room) => (
+                          <td key={room} className="p-1 border-r border-border align-top">
+                            <Skeleton className="h-10 2xl:h-[72px] w-full" />
                           </td>
                         ))}
                       </tr>
@@ -200,10 +235,10 @@ export default function DashboardCharts({
                 <table className="w-full border-collapse text-sm">
                   <thead>
                     <tr className="bg-muted/50 border-b border-border">
-                      <th className="p-2 border-r-0 text-center font-bold min-w-[120px] text-[10px] 2xl:text-xs uppercase text-muted-foreground bg-transparent leading-tight">
+                      <th className="p-2 border-r-0 text-center font-bold min-w-[120px] text-xs uppercase text-muted-foreground bg-transparent leading-tight">
                         Penjagaan
                         <br />
-                        <span className="text-primary/70">(Modul {activeModul})</span>
+                        <span className="text-blue-700 dark:text-blue-300">(Modul {activeModul})</span>
                       </th>
                       <th className="w-4 bg-transparent border-none"></th>
                       <th className="p-2 border-r border-l border-border text-center font-bold min-w-[60px] text-xs 2xl:text-sm uppercase text-muted-foreground">
@@ -237,45 +272,69 @@ export default function DashboardCharts({
                             <div className="flex flex-wrap gap-1 justify-center max-w-[120px] mx-auto min-h-[40px] items-center">
                               {shiftJaga.length > 0 ? (
                                 <TooltipProvider>
-                                  {shiftJaga.map((j) => (
-                                    <Tooltip key={j.id}>
-                                      <TooltipTrigger asChild>
-                                        <div
-                                          className={`text-[10px] px-1.5 py-0.5 rounded-sm font-bold transition-all hover:scale-105 cursor-default ${
-                                            j.asprak?.role === 'ASLAB'
-                                              ? 'bg-blue-100/80 text-blue-800 border border-blue-200 dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-800/50'
-                                              : 'bg-slate-100/80 text-slate-800 border border-slate-200 dark:bg-slate-800/60 dark:text-slate-300 dark:border-slate-700/80'
-                                          }`}
-                                        >
-                                          {j.asprak?.kode || 'Unknown'}
-                                        </div>
-                                      </TooltipTrigger>
-                                      <TooltipContent
-                                        side="right"
-                                        className="flex flex-col gap-1 p-2 bg-popover border border-border shadow-xl"
-                                      >
-                                        <div className="flex items-center gap-2 border-b pb-1 mb-1 border-border/50">
-                                          <span
-                                            className={`text-[9px] px-1 rounded-sm uppercase font-black ${j.asprak?.role === 'ASLAB' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-700'}`}
+                                  {shiftJaga.map((j) => {
+                                    const presensi = todayPresensi.find(
+                                      (p) =>
+                                        p.id_asprak === j.id_asprak &&
+                                        p.shift === j.shift &&
+                                        p.hari.toUpperCase() === currentDayName.toUpperCase() &&
+                                        p.modul === activeModul
+                                    );
+                                    const isHadir = !!presensi;
+                                    const hadirTime = presensi?.waktu_masuk
+                                      ? format(new Date(presensi.waktu_masuk), 'HH:mm', { locale: id })
+                                      : null;
+
+                                    return (
+                                      <Tooltip key={j.id}>
+                                        <TooltipTrigger asChild>
+                                          <div
+                                            className={`text-xs px-1.5 py-0.5 rounded-sm font-bold transition-all hover:scale-105 cursor-default border flex items-center gap-1 ${
+                                              isHadir
+                                                ? 'bg-green-50/90 text-green-800 border-green-400 ring-2 ring-green-500/70 shadow-sm dark:bg-green-950/60 dark:text-green-300 dark:border-green-700'
+                                                : j.asprak?.role === 'ASLAB'
+                                                ? 'bg-blue-50/50 text-blue-700 border-blue-200/60 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800/40'
+                                                : 'bg-slate-50/50 text-slate-700 border-slate-200/60 dark:bg-slate-800/40 dark:text-slate-300 dark:border-slate-700/60'
+                                            }`}
                                           >
-                                            {j.asprak?.role}
-                                          </span>
-                                          <span className="font-bold text-xs">
-                                            {j.asprak?.kode}
-                                          </span>
-                                        </div>
-                                        <div className="font-semibold text-xs">
-                                          {j.asprak?.nama_lengkap}
-                                        </div>
-                                        <div className="text-[10px] text-muted-foreground">
-                                          {j.asprak?.nim}
-                                        </div>
-                                      </TooltipContent>
-                                    </Tooltip>
-                                  ))}
+                                            {isHadir ? (
+                                              <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse shrink-0" />
+                                            ) : null}
+                                            {j.asprak?.kode || 'Unknown'}
+                                          </div>
+                                        </TooltipTrigger>
+                                        <TooltipContent
+                                          side="right"
+                                          className="flex flex-col gap-1.5"
+                                        >
+                                          <div className="flex items-center gap-2 border-b pb-1.5 border-background/20">
+                                            <span className="text-[10px] px-1.5 py-0.5 rounded-sm uppercase font-bold bg-primary text-primary-foreground">
+                                              {j.asprak?.role}
+                                            </span>
+                                            <span className="font-bold text-xs">
+                                              {j.asprak?.kode}
+                                            </span>
+                                            {isHadir ? (
+                                              <span className="text-[10px] px-1.5 py-0.5 rounded-sm uppercase font-bold bg-green-600 text-white">
+                                                HADIR {hadirTime}
+                                              </span>
+                                            ) : null}
+                                          </div>
+                                          <div>
+                                            <div className="font-semibold text-xs leading-none mb-1">
+                                              {j.asprak?.nama_lengkap}
+                                            </div>
+                                            <div className="text-[10px] opacity-70 leading-none">
+                                              {j.asprak?.nim}
+                                            </div>
+                                          </div>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    );
+                                  })}
                                 </TooltipProvider>
                               ) : (
-                                <span className="text-[10px] text-muted-foreground italic opacity-50">
+                                <span className="text-xs text-muted-foreground italic opacity-50">
                                   -
                                 </span>
                               )}
@@ -286,23 +345,38 @@ export default function DashboardCharts({
                             {session.sesi ? (
                               <div className="font-bold">Sesi {session.sesi}</div>
                             ) : null}
-                            <div className="text-[10px] 2xl:text-xs opacity-80">{session.jam}</div>
+                            <div className="text-xs opacity-80">{session.jam}</div>
                           </td>
                           {uniqueRooms.map((room) => {
                             const jadwals = scheduleMatrix[session.rowKey]?.[room] || [];
+                            
+                            // Cek status ruangan dari realtime monitoring
+                            const roomStatus = labStatus.find(
+                              (l) => l.lab_id.replace(/\s+/g, '').toUpperCase() === room.replace(/\s+/g, '').toUpperCase()
+                            );
+                            const isRoomOnline = roomStatus ? isLabOnline(roomStatus, todayDate) : false;
+
                             return (
                               <td
                                 key={`${session.rowKey}-${room}`}
                                 className="p-0 border-r border-border h-[60px] w-[120px] relative align-top"
                               >
                                 <div className="flex flex-col w-full h-full min-h-[60px]">
-                                  {jadwals.map((jadwal) => (
-                                    <ScheduleCell
-                                      key={jadwal.id}
-                                      jadwal={jadwal}
-                                      showAsprakCount={true}
-                                    />
-                                  ))}
+                                  {jadwals.map((jadwal) => {
+                                    // Kelas dianggap sedang berjalan jika ruangan tersebut online 
+                                    // dan sesi jadwal ini adalah sesi yang sedang berjalan SEKARANG berdasarkan jam.
+                                    // (Atau jika nama kelas cocok persis dengan yang dimasukkan asprak)
+                                    const isClassActive = isRoomOnline && (session.sesi === activeSessionNumber || roomStatus?.kelas === jadwal.kelas);
+
+                                    return (
+                                      <ScheduleCell
+                                        key={jadwal.id}
+                                        jadwal={jadwal}
+                                        showAsprakCount={true}
+                                        isOnlineActive={isClassActive}
+                                      />
+                                    );
+                                  })}
                                 </div>
                               </td>
                             );
@@ -314,7 +388,7 @@ export default function DashboardCharts({
                 </table>
               </div>
               {/* Legend */}
-              <div className="mt-4 flex items-center gap-4 text-xs text-muted-foreground border-t border-border/50 pt-3">
+              <div className="mt-4 flex flex-wrap items-center gap-4 text-xs text-muted-foreground border-t border-border/50 pt-3">
                 <div className="flex items-center gap-1.5">
                   <div
                     className="w-4 h-4 bg-muted rounded-[2px]"
@@ -328,6 +402,16 @@ export default function DashboardCharts({
                 <div className="flex items-center gap-1.5">
                   <div className="w-4 h-4 rounded-sm bg-muted border border-border"></div>
                   <span>Jadwal Reguler</span>
+                </div>
+                <div className="flex items-center gap-1.5 ml-2">
+                  <div className="w-4 h-4 rounded-sm bg-muted ring-[3px] ring-green-500/90 ring-inset"></div>
+                  <span>Kelas Sedang Berjalan (Realtime)</span>
+                </div>
+                <div className="flex items-center gap-1.5 ml-2">
+                  <div className="px-1.5 py-0.5 rounded-sm text-[10px] font-bold bg-green-100 text-green-800 border border-green-400 ring-2 ring-green-500/50">
+                    JD
+                  </div>
+                  <span>Asisten Hadir Jaga (RFID)</span>
                 </div>
               </div>
             </>

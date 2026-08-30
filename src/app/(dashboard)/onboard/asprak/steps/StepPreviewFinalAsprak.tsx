@@ -2,9 +2,8 @@
 
 import { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { X, Loader2, CheckCircle2, ArrowRight } from 'lucide-react';
+import { X } from 'lucide-react';
 import { NavButton } from '@/components/ui/nav-button';
 import { toast } from 'sonner';
 import { useAsprakOnboardStore } from '@/store/useAsprakOnboardStore';

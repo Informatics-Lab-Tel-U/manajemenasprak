@@ -80,7 +80,7 @@ export default function JadwalImportCSVModal({
         }
 
         const rawHeaders = matrix[0];
-        const normalizedHeaders = rawHeaders.map((h: string) => h.trim().toLowerCase().replace(/\s+/g, '_'));
+        const normalizedHeaders = rawHeaders.map((h: string) => h.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_'));
 
         const data = matrix.slice(1).reduce((acc: any[], row: string[]) => {
           if (!row || !row.some(Boolean)) return acc;
@@ -94,16 +94,6 @@ export default function JadwalImportCSVModal({
 
         if (data.length === 0) {
           setError('CSV kosong — tidak ada data yang ditemukan.');
-          return;
-        }
-
-        const firstRow = data[0];
-        const missingCols = REQUIRED_COLS.filter((col) => !(col in firstRow));
-
-        if (missingCols.length > 0) {
-          setError(
-            `Kolom wajib tidak ditemukan: ${missingCols.join(', ')}. \nFormat yang diharapkan: Kelas, Nama Singkat (Atau Mata Kuliah), Hari, Sesi, Jam, Ruangan, Total Asprak, Dosen`
-          );
           return;
         }
 
@@ -279,7 +269,7 @@ export default function JadwalImportCSVModal({
                       </div>
                       <p className="text-[10px] text-muted-foreground/60 mb-3">
                         * Nama Singkat (Atau Mata Kuliah) harus sesuai detail praktikum (contoh:
-                        "PBO"). Ruangan akan dipotong otomatis jika ada "&".
+                        "PBO"). Ruangan akan dipotong otomatis jika ada "&" atau "dan" (contoh: "TULT 0602 dan 0604" → "TULT 0602").
                       </p>
 
                       <div className="flex items-center gap-3 pt-2 border-t border-border/50">

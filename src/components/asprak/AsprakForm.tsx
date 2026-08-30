@@ -53,6 +53,7 @@ export default function AsprakForm({ onSubmit, onCancel }: AsprakFormProps) {
   const [nim, setNim] = useState('');
   const [kode, setKode] = useState('');
   const [angkatan, setAngkatan] = useState<string>('2023');
+  const [rfidUid, setRfidUid] = useState('');
   const [forceOverride, setForceOverride] = useState(false);
   const [isManualCode, setIsManualCode] = useState(false);
 
@@ -299,6 +300,7 @@ export default function AsprakForm({ onSubmit, onCancel }: AsprakFormProps) {
         kode,
         role: 'ASPRAK',
         angkatan: parseInt(angkatan),
+        rfid_uid: rfidUid ? rfidUid.trim().toUpperCase() : undefined,
         assignments: assignments.flatMap((a) =>
           a.term && a.selectedCourseNames.length > 0
             ? [{ term: a.term, praktikumNames: a.selectedCourseNames }]
@@ -445,20 +447,34 @@ export default function AsprakForm({ onSubmit, onCancel }: AsprakFormProps) {
           </div>
         </div>
 
-        {/* Angkatan */}
-        <div className="space-y-1.5">
-          <Label htmlFor="angkatan">Angkatan</Label>
-          <Input
-            id="angkatan"
-            type="number"
-            value={angkatan || ''}
-            onChange={(e) => setAngkatan(e.target.value)}
-            min={2000}
-            max={2099}
-            required
-            className="h-9"
-          />
-          <p className="text-[10px] text-muted-foreground">Format 4 digit (YYYY)</p>
+        {/* Angkatan & RFID */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label htmlFor="angkatan">Angkatan</Label>
+            <Input
+              id="angkatan"
+              type="number"
+              value={angkatan || ''}
+              onChange={(e) => setAngkatan(e.target.value)}
+              min={2000}
+              max={2099}
+              required
+              className="h-9"
+            />
+            <p className="text-[10px] text-muted-foreground">Format 4 digit (YYYY)</p>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="rfid_uid">Nomor UID Kartu RFID (Opsional)</Label>
+            <Input
+              id="rfid_uid"
+              value={rfidUid}
+              onChange={(e) => setRfidUid(e.target.value.toUpperCase())}
+              className="h-9 font-mono uppercase tracking-wider text-xs"
+              placeholder="Contoh: 04A1B2C3"
+            />
+            <p className="text-[10px] text-muted-foreground">Bisa diisi manual / scan nanti</p>
+          </div>
         </div>
       </div>
 

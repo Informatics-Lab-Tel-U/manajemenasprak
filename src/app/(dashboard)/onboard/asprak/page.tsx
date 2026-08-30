@@ -1,11 +1,13 @@
-import React, { Suspense } from 'react';
+import React from 'react';
 import { requireAuth } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import {
   getExistingCodes,
   getCachedAllAsprak,
-} from '@/services/asprakService.server';
+} from '@/services/asprakService';
+import { getPlottingList } from '@/services/plottingService';
 import AsprakOnboardClient from './AsprakOnboardClient';
+import { getCachedAvailableTerms } from '@/services/termService';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,7 +17,18 @@ export default async function AsprakOnboardPage(props: {
   await requireAuth();
 
   const searchParams = await props.searchParams;
-  const term = searchParams.term;
+  let term = searchParams.term;
+
+  if (!term) {
+    try {
+      const availableTerms = await getCachedAvailableTerms();
+      if (availableTerms && availableTerms.length > 0) {
+        term = availableTerms[0];
+      }
+    } catch {
+      // fallback
+    }
+  }
 
   if (!term) {
     redirect('/onboard');
@@ -24,13 +37,19 @@ export default async function AsprakOnboardPage(props: {
   // Fetch initial data for validation
   let existingCodes: string[] = [];
   let allAsprak: any[] = [];
+  let isAlreadyDone = false;
+  let initialPlottingList: any[] = [];
   try {
     const res = await Promise.all([
       getExistingCodes(),
       getCachedAllAsprak(),
+      getPlottingList(1, 1000, term),
     ]);
     existingCodes = res[0] || [];
     allAsprak = res[1] || [];
+    const plottingRes = res[2];
+    initialPlottingList = plottingRes?.data || [];
+    isAlreadyDone = (plottingRes?.total || 0) > 0 || initialPlottingList.length > 0;
   } catch (error) {
     console.error('[AsprakOnboardPage] SSR fetch error:', error);
   }
@@ -48,6 +67,8 @@ export default async function AsprakOnboardPage(props: {
       initialExistingCodes={existingCodes}
       initialExistingNims={initialExistingNims}
       initialExistingAspraks={initialExistingAspraks}
+      initialPlottingList={initialPlottingList}
+      isAlreadyDone={isAlreadyDone}
     />
   );
 }

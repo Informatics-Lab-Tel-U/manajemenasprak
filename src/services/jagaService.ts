@@ -1,5 +1,4 @@
 import 'server-only';
-import { logger } from '@/lib/logger';
 import { JadwalJaga } from '@/types/database';
 import { honoFetch } from '@/lib/honoClient';
 
@@ -119,3 +118,17 @@ export async function getRekapJagaAggregated(term: string) {
 
   return result.data;
 }
+
+export async function getTodayPresensi(term?: string, tanggal?: string) {
+  const params = new URLSearchParams();
+  if (term) params.append('term', term);
+  if (tanggal) params.append('tanggal', tanggal);
+
+  const result = await honoFetch<any[]>(`/api/jaga/presensi/today?${params.toString()}`);
+  if (!result.ok || !result.data) {
+    return [];
+  }
+
+  return result.data;
+}
+

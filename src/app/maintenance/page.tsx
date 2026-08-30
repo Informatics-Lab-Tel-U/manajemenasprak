@@ -49,7 +49,7 @@ export default function MaintenancePage() {
         </div>
 
         <div className="pt-8">
-          <Link href="/login">
+          <Link prefetch={false} href="/login">
             <Button variant="ghost" className="text-muted-foreground hover:text-foreground">
               Login sebagai Admin
             </Button>

@@ -219,7 +219,7 @@ export function OptionsToggles({
             <p className="text-xs text-muted-foreground leading-relaxed">
               Menambahkan 2 sheet tambahan:{' '}
               <strong>ASPRAK BELUM NILAI</strong> (daftar asprak sebagai Excel Table) dan{' '}
-              <strong>REKAP</strong> (tracking kelengkapan nilai per asprak per modul dengan formula otomatis).
+              <strong>REKAP</strong>.
             </p>
           </div>
         </div>

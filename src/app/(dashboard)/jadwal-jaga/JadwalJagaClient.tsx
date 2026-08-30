@@ -12,8 +12,9 @@ import {
 } from '@/components/ui/select';
 import JagaPanel from '@/components/jadwal/JagaPanel';
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
+import { CreditCard, Plus } from 'lucide-react';
 import JagaInputModal from '@/components/jadwal/JagaInputModal';
+import JagaRfidModal from '@/components/jadwal/JagaRfidModal';
 import { useTermStore } from '@/store/useTermStore';
 
 export default function JadwalJagaClient({
@@ -27,6 +28,7 @@ export default function JadwalJagaClient({
   const selectedTerm = activeTerm || '';
   const [selectedModul, setSelectedModul] = useState('Modul 1');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isRfidModalOpen, setIsRfidModalOpen] = useState(false);
   const [editingData, setEditingData] = useState<any>(null);
   const [konfigurasiModul, setKonfigurasiModul] = useState<any[]>([]);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -89,7 +91,16 @@ export default function JadwalJagaClient({
             </SelectContent>
           </Select>
 
-
+          {userRole === 'ADMIN' && (
+            <Button
+              variant="outline"
+              onClick={() => setIsRfidModalOpen(true)}
+              className="flex-1 sm:flex-none min-w-0 md:whitespace-nowrap rounded-lg shadow-sm border-border/80 bg-background/80 hover:bg-accent"
+            >
+              <CreditCard size={18} className="flex-shrink-0 text-primary" />
+              <span className="hidden sm:inline ml-2 font-medium">Presensi & RFID</span>
+            </Button>
+          )}
 
           <Button
             onClick={handleAdd}
@@ -127,6 +138,16 @@ export default function JadwalJagaClient({
           handleRefresh();
           setIsModalOpen(false);
           setEditingData(null);
+        }}
+      />
+
+      <JagaRfidModal
+        isOpen={isRfidModalOpen}
+        onClose={() => setIsRfidModalOpen(false)}
+        term={selectedTerm}
+        selectedModul={modulNum}
+        onSuccess={() => {
+          handleRefresh();
         }}
       />
     </div>

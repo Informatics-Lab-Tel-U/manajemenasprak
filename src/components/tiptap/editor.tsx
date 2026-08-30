@@ -3,6 +3,8 @@
 import * as React from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
+import Image from '@tiptap/extension-image';
+import Dropcursor from '@tiptap/extension-dropcursor';
 import {
   Bold,
   Italic,
@@ -18,6 +20,8 @@ import {
   Link as LinkIcon,
   Unlink,
   Paperclip,
+  Image as ImageIcon,
+  Loader2,
 } from 'lucide-react';
 import { Toggle } from '@/components/ui/toggle';
 import { Separator } from '@/components/ui/separator';
@@ -25,6 +29,7 @@ import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Input } from '@/components/ui/input';
 import { AttachmentNode } from './attachment';
+import imageCompression from 'browser-image-compression';
 
 type TiptapEditorProps = {
   value: Record<string, any> | null;
@@ -36,10 +41,50 @@ type TiptapEditorProps = {
 const MenuBar = ({ editor }: { editor: any }) => {
   const [isLinkOpen, setIsLinkOpen] = React.useState(false);
   const [linkUrl, setLinkUrl] = React.useState('');
+  const [isUploadingImage, setIsUploadingImage] = React.useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   if (!editor) {
     return null;
   }
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    const rawFile = e.target.files[0];
+    
+    setIsUploadingImage(true);
+    try {
+      const options = {
+        maxSizeMB: 1,
+        maxWidthOrHeight: 1920,
+        useWebWorker: true,
+      };
+      
+      const file = await imageCompression(rawFile, options);
+      const { createClient } = await import('@/lib/supabase/client');
+      const supabase = createClient();
+      const fileExt = file.name.split('.').pop();
+      const fileName = `content-${Date.now()}.${fileExt}`;
+      const filePath = `blog/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('manajemenasprak')
+        .upload(filePath, file, { upsert: false });
+
+      if (uploadError) throw uploadError;
+
+      const { data: publicUrlData } = supabase.storage
+        .from('manajemenasprak')
+        .getPublicUrl(filePath);
+
+      editor.chain().focus().setImage({ src: publicUrlData.publicUrl }).run();
+    } catch (error) {
+      console.error('Error uploading image to tiptap:', error);
+    } finally {
+      setIsUploadingImage(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
 
   const setLink = (e?: React.SyntheticEvent) => {
     if (e) e.preventDefault();
@@ -209,6 +254,25 @@ const MenuBar = ({ editor }: { editor: any }) => {
         <Paperclip className="h-4 w-4" />
       </Button>
 
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        onClick={() => !isUploadingImage && fileInputRef.current?.click()}
+        title="Sisipkan Gambar"
+        disabled={isUploadingImage}
+      >
+        {isUploadingImage ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImageIcon className="h-4 w-4" />}
+      </Button>
+      <input
+        type="file"
+        accept="image/*"
+        className="hidden"
+        ref={fileInputRef}
+        onChange={handleImageUpload}
+        disabled={isUploadingImage}
+      />
+
       <Separator orientation="vertical" className="h-6 mx-1" />
 
       <Toggle
@@ -258,6 +322,12 @@ export function TiptapEditor({ value, onChange, onCreated, editable = true }: Ti
         },
       }),
       AttachmentNode,
+      Image.configure({
+        HTMLAttributes: {
+          class: 'rounded-md border shadow-sm max-w-full my-4',
+        },
+      }),
+      Dropcursor,
     ],
     content: parsedContent,
     editable,

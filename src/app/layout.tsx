@@ -5,7 +5,10 @@ import './globals.css';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Manajemen Asisten Praktikum',
+  title: {
+    default: 'Manajemen Asisten Praktikum',
+    template: '%s | Manajemen Asisten Praktikum',
+  },
   description: 'Sistem Manajemen Asisten Praktikum',
   icons: {
     icon: [

@@ -327,12 +327,12 @@ export default function AsprakCSVPreview({
                           value={row.role}
                           onValueChange={(value) => onRoleEdit(idx, value as 'ASPRAK' | 'ASLAB')}
                         >
-                          <SelectTrigger className="h-[20px] w-[72px] text-[10px] leading-none font-mono mx-auto bg-background/50 px-1.5 py-0 [&_svg]:size-3 gap-1 min-h-0">
+                          <SelectTrigger className="h-[24px] w-[80px] text-xs leading-none font-mono mx-auto bg-background/50 px-1.5 py-0 [&_svg]:size-3 gap-1 min-h-0">
                             <SelectValue placeholder="Role" />
                           </SelectTrigger>
                           <SelectContent className="min-w-[72px]">
-                            <SelectItem value="ASPRAK" className="text-[10px] font-mono py-1 px-2">ASPRAK</SelectItem>
-                            <SelectItem value="ASLAB" className="text-[10px] font-mono py-1 px-2">ASLAB</SelectItem>
+                            <SelectItem value="ASPRAK" className="text-xs font-mono py-1 px-2">ASPRAK</SelectItem>
+                            <SelectItem value="ASLAB" className="text-xs font-mono py-1 px-2">ASLAB</SelectItem>
                           </SelectContent>
                         </Select>
                       ) : (

@@ -2,11 +2,12 @@
 
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, Pencil, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { createCategory, createTag } from '@/app/actions/blog';
+import { createCategory, updateCategory, createTag, updateTag } from '@/app/actions/blog';
+import { useRouter } from 'next/navigation';
 import {
   Dialog,
   DialogContent,
@@ -19,13 +20,31 @@ import {
 
 interface TaxonomyDialogProps {
   type: 'category' | 'tag';
+  mode?: 'create' | 'edit';
+  initialData?: {
+    id: string;
+    name: string;
+    slug: string;
+  };
+  trigger?: React.ReactNode;
 }
 
-export function TaxonomyDialog({ type }: TaxonomyDialogProps) {
+export function TaxonomyDialog({ type, mode = 'create', initialData, trigger }: TaxonomyDialogProps) {
   const [open, setOpen] = React.useState(false);
   const [isPending, startTransition] = React.useTransition();
+  const [name, setName] = React.useState(initialData?.name || '');
+  const [slug, setSlug] = React.useState(initialData?.slug || '');
+  const router = useRouter();
+
+  React.useEffect(() => {
+    if (initialData) {
+      setName(initialData.name);
+      setSlug(initialData.slug);
+    }
+  }, [initialData]);
 
   const title = type === 'category' ? 'Kategori' : 'Tag';
+  const isEdit = mode === 'edit';
   
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -34,12 +53,24 @@ export function TaxonomyDialog({ type }: TaxonomyDialogProps) {
     startTransition(async () => {
       try {
         if (type === 'category') {
-          await createCategory(formData);
+          if (isEdit && initialData?.id) {
+            await updateCategory(initialData.id, formData);
+            toast.success(`Kategori berhasil diperbarui`);
+          } else {
+            await createCategory(formData);
+            toast.success(`Kategori berhasil ditambahkan`);
+          }
         } else {
-          await createTag(formData);
+          if (isEdit && initialData?.id) {
+            await updateTag(initialData.id, formData);
+            toast.success(`Tag berhasil diperbarui`);
+          } else {
+            await createTag(formData);
+            toast.success(`Tag berhasil ditambahkan`);
+          }
         }
-        toast.success(`${title} berhasil ditambahkan`);
         setOpen(false);
+        router.refresh();
       } catch (error: any) {
         toast.error(error.message || 'Terjadi kesalahan');
       }
@@ -49,17 +80,19 @@ export function TaxonomyDialog({ type }: TaxonomyDialogProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" variant="outline">
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Tambah
-        </Button>
+        {trigger || (
+          <Button size="sm" variant="outline">
+            {isEdit ? <Pencil className="mr-2 h-3.5 w-3.5" /> : <PlusCircle className="mr-2 h-4 w-4" />}
+            {isEdit ? 'Edit' : 'Tambah'}
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>Tambah {title}</DialogTitle>
+            <DialogTitle>{isEdit ? 'Edit' : 'Tambah'} {title}</DialogTitle>
             <DialogDescription>
-              Buat {title.toLowerCase()} baru untuk dihubungkan ke artikel.
+              {isEdit ? `Perbarui data ${title.toLowerCase()}` : `Buat ${title.toLowerCase()} baru untuk dihubungkan ke artikel.`}
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-4 py-4">
@@ -70,6 +103,8 @@ export function TaxonomyDialog({ type }: TaxonomyDialogProps) {
               <Input
                 id="name"
                 name="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
                 placeholder={`Contoh: ${type === 'category' ? 'Tutorial' : 'PBO'}`}
                 className="w-full"
                 required
@@ -82,6 +117,8 @@ export function TaxonomyDialog({ type }: TaxonomyDialogProps) {
               <Input
                 id="slug"
                 name="slug"
+                value={slug}
+                onChange={(e) => setSlug(e.target.value)}
                 placeholder={`Contoh: ${type === 'category' ? 'tutorial' : 'pbo'}`}
                 className="w-full"
                 required
@@ -90,6 +127,7 @@ export function TaxonomyDialog({ type }: TaxonomyDialogProps) {
           </div>
           <DialogFooter>
             <Button type="submit" disabled={isPending}>
+              {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {isPending ? 'Menyimpan...' : 'Simpan'}
             </Button>
           </DialogFooter>

@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { deleteBlogPost } from '@/app/actions/blog';
 import { toast } from 'sonner';
@@ -68,6 +68,7 @@ export function DeletePostButton({ id, title }: DeletePostButtonProps) {
               variant="destructive"
               disabled={isDeleting}
             >
+              {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {isDeleting ? 'Menghapus...' : 'Hapus'}
             </AlertDialogAction>
           </AlertDialogFooter>

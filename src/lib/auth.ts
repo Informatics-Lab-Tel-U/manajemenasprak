@@ -10,6 +10,7 @@ import type { Pengguna } from '@/types/database';
 export type AuthUser = {
   id: string;
   email: string;
+  token: string;
   pengguna: Pengguna;
 };
 
@@ -41,23 +42,30 @@ export const getCurrentUser = cache(async (): Promise<AuthUser | null> => {
     error: authError,
   } = await supabase.auth.getSession();
 
-  if (authError || !session?.user) return null;
+  if (authError || !session?.user) {
+    return null;
+  }
 
   try {
     const meRes = await fetch(`${process.env.HONO_BACKEND_URL}/api/auth/me`, {
       headers: { Authorization: `Bearer ${session.access_token}` },
     });
 
-    if (!meRes.ok) return null;
+    if (!meRes.ok) {
+      return null;
+    }
 
     const meData = await meRes.json();
     const pengguna = meData.data?.pengguna;
 
-    if (!pengguna || pengguna.deleted_at) return null;
+    if (!pengguna || pengguna.deleted_at) {
+      return null;
+    }
 
     return {
       id: session.user.id,
       email: session.user.email ?? '',
+      token: session.access_token,
       pengguna: pengguna as Pengguna,
     };
   } catch (error) {

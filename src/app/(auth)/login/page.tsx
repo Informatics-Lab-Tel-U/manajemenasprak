@@ -1,99 +1,75 @@
 import { Suspense } from 'react';
-import { LightWavesBackground } from '@/components/login/LightWavesBackground';
+import { GradientWave } from '@/components/ui/gradient-wave';
 import { LoginForm } from '@/components/login/LoginForm';
 import Image from 'next/image';
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { Instagram } from 'lucide-react';
 import packageInfo from '../../../../package.json';
 
 export default function Page() {
   return (
-    <div className="relative flex flex-col md:flex-row min-h-svh w-full ">
+    <div className="relative flex flex-col md:flex-row min-h-svh w-full">
       {/* Left panel (Branding) */}
       <div className="w-full md:w-[52%] lg:w-[60%] flex-1 md:h-dvh relative min-h-[280px] md:min-h-0 flex flex-col">
         <div className="absolute inset-0 z-0">
-          <LightWavesBackground />
+          <GradientWave />
         </div>
 
-        {/* Informatics Laboratory Title */}
-        <div className="relative md:absolute md:top-0 md:left-0 z-20 w-full">
-          <div className="max-w-4xl w-full mx-auto px-4 md:px-8 pt-6 md:pt-8 pb-2">
-            <h2 className="text-xl md:text-2xl font-semibold">
-              Informatics Laboratory
-            </h2>
-          </div>
+        {/* Top-left lab label */}
+        <div className="relative z-10 px-6 pt-6 md:px-10 md:pt-8">
+          <p className="text-xl font-semibold text-white/80 tracking-tight">
+            Informatics Laboratory
+          </p>
         </div>
 
-        <div className="relative z-10 flex flex-col flex-1 max-w-4xl w-full mx-auto justify-center px-4 py-6 md:px-8 md:pb-8">
-          <Card className="glass shadow-2xl overflow-hidden border-border/50">
-            <CardHeader className="pb-4">
+        <div className="relative z-10 flex flex-col flex-1 max-w-2xl w-full mx-auto justify-center px-6 py-8 md:px-10">
+          <Card className="bg-card/60 backdrop-blur-md border-border/50 shadow-2xl">
+            <CardHeader className="pb-4 pt-6 px-6">
               <div className="flex items-center gap-4">
-                <div className="relative size-16 md:size-20 lg:size-24 shrink-0">
+                <div className="relative size-12 shrink-0">
                   <Image
                     src="/iflab.png"
                     alt="Informatics Laboratory"
                     fill
-                    sizes="(max-width: 768px) 64px, (max-width: 1024px) 80px, 96px"
                     priority
-                    className="object-contain drop-shadow-md"
+                    className="object-contain"
                   />
                 </div>
                 <div>
-                  <CardTitle className="text-xl md:text-2xl font-bold tracking-tight">
-                    Manajemen
-                    <br className="hidden sm:block" /> Asisten Praktikum
+                  <CardTitle className="text-2xl font-bold tracking-tight">
+                    Manajemen Asisten Praktikum
                   </CardTitle>
+                  <CardDescription className="text-sm mt-0.5">
+                    Laboratorium Informatika, Telkom University
+                  </CardDescription>
                 </div>
               </div>
             </CardHeader>
 
             <Separator className="bg-border/50" />
 
-            <CardContent className="pt-6 grid grid-cols-1 md:grid-cols-2 gap-8 text-sm md:text-base">
-              {/* Bahasa Indonesia */}
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 font-semibold text-lg">
-                  <span className="text-xl">🇮🇩</span> Bahasa
-                </div>
-                <ul className="space-y-3 text-muted-foreground list-disc pl-5">
-                  <li>
-                    Akses dibatasi hanya untuk <span className="font-medium text-foreground">Asisten Laboratorium, Asisten Praktikum Koordinator, dan Laboran</span> Laboratorium Informatika.
-                  </li>
-                  <li>
-                    Silakan masuk menggunakan kredensial yang telah terdaftar pada sistem Manajemen Asisten Praktikum.
-                  </li>
-                  <li>
-                    Bila Anda mengalami kendala saat masuk, silakan hubungi administrator laboratorium.
-                  </li>
-                </ul>
-              </div>
-
-              {/* English */}
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 font-semibold text-lg">
-                  <span className="text-xl">🇬🇧</span> English
-                </div>
-                <ul className="space-y-3 text-muted-foreground list-disc pl-5">
-                  <li>
-                    Access is restricted only to <span className="font-medium text-foreground">Laboratory Assistants, Practicum Assistant Coordinators, and Laboratory Technicians</span> of Informatics Laboratory.
-                  </li>
-                  <li>
-                    Please log in using the credentials registered in the Practicum Assistant Management system.
-                  </li>
-                  <li>
-                    If you experience login issues, please contact the laboratory administrator.
-                  </li>
-                </ul>
-              </div>
+            <CardContent className="pt-5 pb-5 px-6 space-y-3 text-sm text-muted-foreground leading-relaxed">
+              <p>
+                Sistem ini hanya dapat diakses oleh <span className="text-foreground font-medium">Asisten Laboratorium, Koordinator Asisten Praktikum, dan Laboran</span> yang telah terdaftar.
+              </p>
+              <p>
+                Gunakan akun Microsoft SSO Telkom University atau kredensial yang telah didaftarkan oleh administrator.
+              </p>
             </CardContent>
 
             <Separator className="bg-border/50" />
 
-            <CardFooter className="bg-muted/30 py-4 flex flex-col items-center justify-center text-center gap-2">
-              <p className="text-sm font-medium">Informasi lebih lanjut dapat menghubungi:</p>
-              <div className="text-sm text-muted-foreground font-medium flex flex-col xl:flex-row gap-2 xl:gap-6">
-                <span>Instagram: @informaticslab_telu</span>
-              </div>
+            <CardFooter className="pt-4 pb-4 px-6">
+              <a
+                href="https://instagram.com/informaticslab_telu"
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <Instagram className="size-3.5" />
+                <span>@informaticslab_telu</span>
+              </a>
             </CardFooter>
           </Card>
         </div>

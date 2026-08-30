@@ -51,12 +51,23 @@ export default function AsprakDetailsModal({
           <ScrollArea className="flex max-h-full flex-col overflow-hidden">
             <div className="px-6 py-4 space-y-6">
               {/* Asprak Info */}
-              <div className="">
-                <div className="">{asprak.kode}</div>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-lg text-primary bg-primary/10 px-2 py-0.5 rounded font-mono">
+                    {asprak.kode}
+                  </span>
+                  {asprak.rfid_uid ? (
+                    <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-300 font-mono">
+                      RFID: {asprak.rfid_uid}
+                    </Badge>
+                  ) : (
+                    <span className="text-xs text-muted-foreground/60 italic">Belum ada RFID</span>
+                  )}
+                </div>
                 <div className="space-y-1">
                   <h3 className="text-2xl font-bold">{asprak.nama_lengkap}</h3>
                   <p className="text-sm text-muted-foreground">
-                    {asprak.nim} • Angkatan {asprak.angkatan}
+                    {asprak.nim} • Angkatan {asprak.angkatan} • {asprak.role}
                   </p>
                 </div>
               </div>

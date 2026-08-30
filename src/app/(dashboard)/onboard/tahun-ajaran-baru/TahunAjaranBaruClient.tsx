@@ -4,7 +4,7 @@
 
 import Link from 'next/link';
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Stepper,
   StepperItem,
@@ -15,7 +15,6 @@ import {
   StepperDescription,
   StepperNav,
   StepperContent,
-  useStepper,
 } from '@/components/ui/stepper';
 
 import PraktikumStep from './steps/StepPraktikum';
@@ -23,25 +22,14 @@ import MatkulStep from './steps/StepMataKuliah';
 import PreviewStep from './steps/StepPreview';
 import SelesaiStep from './steps/StepSelesai';
 
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { BookOpen, CheckCircle2, FileSpreadsheet, Download, FileText, AlertCircle, Copy, Save, RefreshCw, Loader2, ArrowLeft } from 'lucide-react';
+import { BookOpen, CheckCircle2, Save, RefreshCw, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { useDropzone } from 'react-dropzone';
-import PraktikumCSVPreview, { PraktikumPreviewRow } from '@/components/praktikum/PraktikumCSVPreview';
-import { validatePraktikumData } from '@/utils/validation/praktikumValidation';
-import MataKuliahCSVPreview, { MataKuliahCSVRow } from '@/components/mata-kuliah/MataKuliahCSVPreview';
-import { validateMataKuliahData } from '@/utils/validation/mataKuliahValidation';
-import { usePraktikum } from '@/hooks/usePraktikum';
-import { cn } from '@/lib/utils';
 import { 
   useOnboardingStore, 
   useAutosaveStatus
 } from '@/store/useOnboardingStore';
-import { Field, FieldLabel, FieldContent } from '@/components/ui/field';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -53,25 +41,10 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import TermInput from '@/components/asprak/TermInput';
-import { buildTermString } from '@/utils/termHelpers';
-import { useTermStore } from '@/store/useTermStore';
+
+
+
+
 
 const steps = [
   { id: 'praktikum', title: 'Data Praktikum', description: 'Buat tahun ajaran', icon: <BookOpen /> },
@@ -80,23 +53,46 @@ const steps = [
   { id: 'selesai', title: 'Selesai', description: 'Setup berhasil', icon: <CheckCircle2 /> },
 ];
 
-export default function TahunAjaranBaruClient() {
+interface TahunAjaranBaruClientProps {
+  term?: string;
+  initialPraktikumList?: any[];
+  initialMataKuliahList?: any[];
+}
+
+export default function TahunAjaranBaruClient({
+  term = '',
+  initialPraktikumList = [],
+  initialMataKuliahList = [],
+}: TahunAjaranBaruClientProps = {}) {
   const { 
     currentStep, 
     setCurrentStep,
     completedSteps,
     draft,
-    resetProgress 
+    resetProgress,
+    syncWithTerm,
   } = useOnboardingStore();
   
   const { lastSaved, isDirty } = useAutosaveStatus();
+
+  const [prevTerm, setPrevTerm] = useState(term);
+  if (term !== prevTerm) {
+    setPrevTerm(term);
+    syncWithTerm(term, initialPraktikumList, initialMataKuliahList);
+  }
+
+  useEffect(() => {
+    if (term) {
+      syncWithTerm(term, initialPraktikumList, initialMataKuliahList);
+    }
+  }, [term, initialPraktikumList, initialMataKuliahList, syncWithTerm]);
 
   return (
     <div className="container mx-auto max-w-[2000px] relative space-y-8 2xl:px-8" suppressHydrationWarning>
       <header className="mb-6 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
         <div className="flex items-start gap-4">
           <Button variant="ghost" size="icon" asChild className="shrink-0 mt-1">
-            <Link href="/onboard">
+            <Link prefetch={false} href="/onboard">
               <ArrowLeft className="w-5 h-5" />
             </Link>
           </Button>
@@ -105,6 +101,22 @@ export default function TahunAjaranBaruClient() {
             <p className="text-sm 2xl:text-base text-muted-foreground mt-2">
               Ikuti alur ini untuk menambahkan seluruh data semester baru secara berurutan agar sesuai dengan constraint sistem.
             </p>
+            {term && (
+              <div className="flex flex-wrap items-center gap-2 mt-3">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
+                  Target Tahun Ajaran: <strong className="font-bold">{term}</strong>
+                </span>
+                {initialPraktikumList.length > 0 ? (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                    Mode: Edit Data Eksisting DB
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                    Mode: Setup Baru
+                  </span>
+                )}
+              </div>
+            )}
           </div>
         </div>
         <div className="flex items-center gap-4">

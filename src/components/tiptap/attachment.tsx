@@ -306,7 +306,7 @@ export function AttachmentNodeView(props: any) {
                         value={driveType}
                         onValueChange={(val) => handleFieldChange('driveType', val)}
                       >
-                        <SelectTrigger id="att-drive-type" className="h-8 text-xs">
+                        <SelectTrigger id="att-drive-type" className="h-8 text-xs w-full">
                           <SelectValue placeholder="Pilih Provider Link" />
                         </SelectTrigger>
                         <SelectContent

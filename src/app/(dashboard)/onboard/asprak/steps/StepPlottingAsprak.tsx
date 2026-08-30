@@ -4,16 +4,15 @@ import { useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 
 
-import { FileSpreadsheet, Upload, X, Download, FileText, Loader2, ArrowRight, Trash2 } from 'lucide-react';
+import { FileSpreadsheet, X, Download, FileText, Loader2, ArrowRight, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
 
-import { validatePlottingImport, savePlotting } from '@/lib/fetchers/plottingFetcher';
+import { validatePlottingImport } from '@/lib/fetchers/plottingFetcher';
 import PlottingCSVPreview from '@/components/plotting/PlottingCSVPreview';
 import {
   mapPlottingValidationResponse,

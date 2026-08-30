@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { NavButton } from '@/components/ui/nav-button';
 import { Input } from '@/components/ui/input';
-import { BookOpen, FileSpreadsheet, Download, FileText, AlertCircle, Copy, Loader2, PencilLine, Trash2, Save } from 'lucide-react';
+import { BookOpen, FileSpreadsheet, Download, FileText, AlertCircle, Copy, Loader2, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { useDropzone } from 'react-dropzone';
@@ -102,6 +102,19 @@ export default function PraktikumStep() {
       selected: true,
     })) || [];
   });
+
+  useEffect(() => {
+    if (previewRows.length === 0 && (draft.praktikumList?.length || 0) > 0) {
+      setPreviewRows(
+        draft.praktikumList!.map((p) => ({
+          nama: p.nama,
+          tahun_ajaran: p.tahun_ajaran,
+          status: 'ok' as const,
+          selected: true,
+        }))
+      );
+    }
+  }, [draft.praktikumList, previewRows.length]);
 
   // Modal state (manual add tetap tersedia di kedua mode)
   const [isManualModalOpen, setIsManualModalOpen] = useState(false);

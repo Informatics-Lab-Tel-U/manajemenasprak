@@ -7,7 +7,7 @@ export async function updateSession(request: NextRequest) {
   const requestHeaders = new Headers(request.headers);
   requestHeaders.delete('x-auth-user');
 
-  let supabaseResponse = NextResponse.next({
+  const supabaseResponse = NextResponse.next({
     request: {
       headers: requestHeaders,
     },
@@ -20,6 +20,7 @@ export async function updateSession(request: NextRequest) {
   if (
     request.method === 'OPTIONS' ||
     (pathname === '/api/monitoring/heartbeat' && request.method === 'POST') ||
+    (pathname === '/api/monitoring/status' && request.method === 'GET') ||
     ((pathname === '/api/praktikan' || pathname.startsWith('/api/praktikan/')) &&
       request.method === 'GET')
   ) {
@@ -118,8 +119,12 @@ export async function updateSession(request: NextRequest) {
   }
 
   if (isPublicPath(pathname)) {
-    // Allow logged-in users visiting /login to fall through and get redirected
-    if (user && pengguna && pathname === '/login') {
+    // Allow logged-in users visiting /login, /pending-approval, or /rejected to fall through and get redirected based on status
+    if (
+      user &&
+      pengguna &&
+      (pathname === '/login' || pathname === '/pending-approval' || pathname === '/rejected')
+    ) {
       // fall through
     } else {
       return supabaseResponse;
@@ -141,8 +146,37 @@ export async function updateSession(request: NextRequest) {
   }
 
   const role = pengguna?.role as Role | undefined;
+  const status = (pengguna?.status || 'ACTIVE') as 'PENDING' | 'ACTIVE' | 'REJECTED';
 
-  // Handle logged-in user visiting /login — redirect to their home
+  // 1. Handle PENDING approval status
+  if (status === 'PENDING') {
+    if (pathname !== '/pending-approval') {
+      const pendingUrl = request.nextUrl.clone();
+      pendingUrl.pathname = '/pending-approval';
+      return NextResponse.redirect(pendingUrl);
+    }
+    return supabaseResponse;
+  }
+
+  // 2. Handle REJECTED status
+  if (status === 'REJECTED') {
+    if (pathname !== '/rejected') {
+      const rejectedUrl = request.nextUrl.clone();
+      rejectedUrl.pathname = '/rejected';
+      return NextResponse.redirect(rejectedUrl);
+    }
+    return supabaseResponse;
+  }
+
+  // 3. For ACTIVE users visiting pending/rejected pages, redirect to home
+  if (status === 'ACTIVE' && (pathname === '/pending-approval' || pathname === '/rejected')) {
+    const destination = role ? ROLE_DEFAULT_REDIRECT[role] : '/';
+    const redirectUrl = request.nextUrl.clone();
+    redirectUrl.pathname = destination;
+    return NextResponse.redirect(redirectUrl);
+  }
+
+  // Handle logged-in active user visiting /login — redirect to their home
   if (pathname === '/login') {
     const destination = role ? ROLE_DEFAULT_REDIRECT[role] : '/';
     const redirectUrl = request.nextUrl.clone();

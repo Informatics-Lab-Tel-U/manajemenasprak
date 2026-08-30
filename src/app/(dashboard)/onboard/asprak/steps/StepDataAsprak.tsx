@@ -2,7 +2,7 @@
 
 /* eslint-disable react-doctor/no-chain-state-updates */
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { FileSpreadsheet, FileText, X, Download, Loader2, Trash2 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
@@ -19,7 +19,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
-import { useAsprakOnboardStore, RawCSVRow } from '@/store/useAsprakOnboardStore';
+import { useAsprakOnboardStore } from '@/store/useAsprakOnboardStore';
 import { NavButton } from '@/components/ui/nav-button';
 import AsprakCSVPreview, { PreviewRow } from '@/components/asprak/AsprakCSVPreview';
 import {
@@ -35,6 +35,7 @@ interface StepDataAsprakProps {
   existingCodes: string[];
   existingNims: ExistingNimInfo[];
   existingAspraks: ExistingAsprakInfo[];
+  isAlreadyDone?: boolean;
 }
 
 const handleDownloadTemplate = (format: 'csv' | 'xlsx') => {

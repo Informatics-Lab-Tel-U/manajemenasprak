@@ -50,7 +50,8 @@ interface OnboardingState extends OnboardingProgress {
   setCurrentStep: (step: OnboardingStep) => void;
   markStepCompleted: (step: OnboardingStep) => void;
   unmarkStepCompleted: (step: OnboardingStep) => void;
-  
+  syncWithTerm: (term: string, dbPraktikums?: any[], dbMataKuliah?: any[]) => void;
+
   // Draft actions
   setPraktikumList: (data: (PraktikumDraft & { tempId: string })[]) => void;
   setMataKuliahList: (data: MataKuliahDraft[]) => void;
@@ -128,6 +129,63 @@ export const useOnboardingStore = create<OnboardingState>()(
             lastUpdated: now,
           };
         }),
+
+      syncWithTerm: (term, dbPraktikums = [], dbMataKuliah = []) => {
+        const state = get();
+        const currentTargetTerm = state.draft.targetTerm;
+        const hasDbData = (dbPraktikums?.length || 0) > 0;
+        const isDifferentTerm = currentTargetTerm !== term;
+        const isDraftEmpty = (state.draft.praktikumList?.length || 0) === 0;
+
+        if (isDifferentTerm || (isDraftEmpty && hasDbData)) {
+          const now = new Date().toISOString();
+          if (hasDbData && dbPraktikums) {
+            const mappedPraktikum = dbPraktikums.map((p: any) => ({
+              tempId: p.id || crypto.randomUUID(),
+              id: p.id,
+              nama: p.nama,
+              tahun_ajaran: p.tahun_ajaran || term,
+            }));
+
+            const praktikumIdMap = new Map<string, string>();
+            mappedPraktikum.forEach((p) => {
+              if (p.id) praktikumIdMap.set(p.id, p.tempId);
+            });
+
+            const mappedMk = (dbMataKuliah || []).map((mk: any) => ({
+              id: mk.id,
+              nama_lengkap: mk.nama_lengkap,
+              program_studi: mk.program_studi,
+              dosen_koor: mk.dosen_koor || undefined,
+              id_praktikum: mk.id_praktikum ? (praktikumIdMap.get(mk.id_praktikum) || mk.id_praktikum) : '',
+            }));
+
+            set({
+              currentStep: 'praktikum',
+              completedSteps: ['praktikum', 'matkul', 'jadwal'],
+              startedAt: state.startedAt || now,
+              lastUpdated: now,
+              isDirty: false,
+              draft: {
+                ...INITIAL_STATE.draft,
+                praktikumList: mappedPraktikum,
+                mataKuliahData: mappedMk,
+                targetTerm: term,
+              },
+            });
+          } else if (isDifferentTerm) {
+            set({
+              ...INITIAL_STATE,
+              startedAt: now,
+              lastUpdated: now,
+              draft: {
+                ...INITIAL_STATE.draft,
+                targetTerm: term,
+              },
+            });
+          }
+        }
+      },
 
       // Draft actions
       setPraktikumList: (data) =>
@@ -250,11 +308,7 @@ export const useOnboardingStore = create<OnboardingState>()(
         completedSteps: state.completedSteps,
         startedAt: state.startedAt,
         lastUpdated: state.lastUpdated,
-        draft: {
-          ...state.draft,
-          praktikumList: [],
-          mataKuliahData: [],
-        },
+        draft: state.draft,
       }),
     }
   )

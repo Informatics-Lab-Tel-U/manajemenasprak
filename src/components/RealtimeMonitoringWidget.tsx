@@ -9,7 +9,6 @@ import Link from 'next/link';
 
 import { isLabOnline } from '@/lib/labStatus';
 
-const POLL_INTERVAL_MS = 20_000;
 const RECONNECT_DELAY_MS = 5_000;
 
 export default function RealtimeMonitoringWidget({ initialData }: { initialData: LabStatus[] }) {
@@ -32,25 +31,7 @@ export default function RealtimeMonitoringWidget({ initialData }: { initialData:
     return () => clearInterval(timer);
   }, []);
 
-  // === POLLING FALLBACK ===
-  // Fetch via our own API route (uses admin client server-side, bypasses RLS).
-  useEffect(() => {
-    const poll = async () => {
-      try {
-        const res = await fetch('/api/monitoring/status');
-        if (!res.ok) return;
-        const json = await res.json();
-        if (Array.isArray(json.data) && json.data.length > 0) {
-          updateLabStatus(json.data as LabStatus[]);
-        }
-      } catch {
-        // network error — silently skip, Realtime will still handle updates
-      }
-    };
 
-    const pollInterval = setInterval(poll, POLL_INTERVAL_MS);
-    return () => clearInterval(pollInterval);
-  }, [updateLabStatus]);  
 
   const activeLabsCount = monitoringData.filter((d) => isLabOnline(d, now)).length;
 
@@ -88,7 +69,7 @@ export default function RealtimeMonitoringWidget({ initialData }: { initialData:
                     <span className={`h-2 w-2 rounded-full shrink-0 ${isOnline ? 'bg-green-500' : 'bg-muted-foreground'}`} />
                     <span className="whitespace-nowrap">{room}</span>
                   </div>
-                  <span className="text-[10px] leading-none font-normal text-muted-foreground truncate w-full">
+                  <span className="text-xs leading-none font-normal text-muted-foreground truncate w-full">
                     {isOnline ? (data?.kelas || 'Tidak ada sesi') : 'Offline'}
                   </span>
                 </div>
@@ -98,7 +79,7 @@ export default function RealtimeMonitoringWidget({ initialData }: { initialData:
         </div>
 
         <Button asChild variant="outline" size="sm" className="shrink-0 self-start sm:self-auto">
-          <Link href="/monitoring">Lihat Detail</Link>
+          <Link prefetch={false} href="/monitoring">Lihat Detail</Link>
         </Button>
       </CardContent>
     </Card>

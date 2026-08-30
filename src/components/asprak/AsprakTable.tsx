@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
+import { TableSkeleton } from '@/components/ui/TableSkeleton';
 import {
   Select,
   SelectContent,
@@ -44,57 +44,6 @@ function getAslabTerm(angkatan?: number): string {
   return `${start.toString().padStart(2, '0')}${end.toString().padStart(2, '0')}`;
 }
 
-function AsprakTableSkeleton() {
-  return (
-    <div className="space-y-4">
-      <div className="rounded-md border border-indigo-200/50 dark:border-indigo-500/20">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>NIM</TableHead>
-              <TableHead>Nama Lengkap</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead>Kode</TableHead>
-              <TableHead>Angkatan</TableHead>
-              <TableHead>Aksi</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {Array.from({ length: 10 }).map((_, i) => (
-              <TableRow key={i}>
-                <TableCell>
-                  <Skeleton className="h-4 w-20" />
-                </TableCell>
-                <TableCell>
-                  <Skeleton className="h-4 w-40" />
-                </TableCell>
-                <TableCell>
-                  <Skeleton className="h-6 w-16 rounded-full" />
-                </TableCell>
-                <TableCell>
-                  <Skeleton className="h-6 w-12 rounded-md" />
-                </TableCell>
-                <TableCell>
-                  <Skeleton className="h-4 w-12" />
-                </TableCell>
-                <TableCell>
-                  <Skeleton className="h-8 w-16 rounded-md" />
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-      <div className="flex flex-col gap-4 md:gap-0 md:flex-row md:items-center md:justify-between">
-        <Skeleton className="h-8 w-full sm:w-[150px]" />
-        <div className="flex gap-2">
-          <Skeleton className="h-8 flex-1 sm:flex-none sm:w-24" />
-          <Skeleton className="h-8 flex-1 sm:flex-none sm:w-24" />
-        </div>
-      </div>
-    </div>
-  );
-}
 
 export default function AsprakTable({ data, loading, onViewDetails }: AsprakTableProps) {
   const columns = useMemo<ColumnDef<Asprak>[]>(
@@ -113,9 +62,14 @@ export default function AsprakTable({ data, loading, onViewDetails }: AsprakTabl
         cell: ({ row }) => {
           const role = row.original.role;
           if (role === 'ASLAB') {
+            const term = getAslabTerm(row.original.angkatan);
             return (
-              <Badge className="bg-slate-900 text-white hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200 font-bold px-2 py-0.5">
-                ASLAB {!HIDE_ASLAB_YEAR && getAslabTerm(row.original.angkatan)}
+              <Badge
+                title={`Asisten Laboratorium periode ${term}`}
+                aria-label={`Asisten Laboratorium periode ${term}`}
+                className="bg-slate-900 text-white hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200 font-bold px-2 py-0.5"
+              >
+                ASLAB {!HIDE_ASLAB_YEAR && term}
               </Badge>
             );
           }
@@ -165,7 +119,7 @@ export default function AsprakTable({ data, loading, onViewDetails }: AsprakTabl
   });
 
   if (loading) {
-    return <AsprakTableSkeleton />;
+    return <TableSkeleton columnCount={6} rowCount={10} hasActions={true} />;
   }
 
   return (

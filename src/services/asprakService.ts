@@ -1,7 +1,6 @@
 import 'server-only';
 import { cache } from 'react';
 import { Asprak } from '@/types/database';
-import type { Role } from '@/config/rbac';
 import { getCachedAvailableTerms as getCachedTerms } from './termService';
 import { honoFetch } from '@/lib/honoClient';
 
@@ -56,8 +55,11 @@ export async function deleteAsprak(id: string): Promise<void> {
 }
 
 export async function getExistingCodes(): Promise<string[]> {
-  const result = await honoFetch<string[]>('/api/asprak?action=codes');
-  return result.ok && result.data ? result.data : [];
+  const result = await honoFetch<any[]>('/api/asprak');
+  if (!result.ok || !result.data) return [];
+  return result.data
+    .map((a: any) => (typeof a === 'string' ? a : a?.kode))
+    .filter((k): k is string => typeof k === 'string' && k.length > 0);
 }
 
 export const getCachedAvailableTerms = getCachedTerms;
