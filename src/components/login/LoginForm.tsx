@@ -14,10 +14,16 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Checkbox } from '@/components/ui/checkbox';
 import { TurnstileWidget } from './TurnstileWidget';
 import type { TurnstileInstance } from '@marsidev/react-turnstile';
+import { createClient } from '@/lib/supabase/client';
+import { Microsoft } from '@thesvg/react';
 
 const URL_ERROR_MESSAGES: Record<string, string> = {
   'no-profile': 'Akun Anda belum terdaftar dalam sistem. Hubungi pengelola sistem.',
+  'invalid-domain': 'Hanya akun resmi civitas akademika Telkom University (@student.telkomuniversity.ac.id / @telkomuniversity.ac.id) yang diizinkan.',
+  'auth-code-error': 'Gagal melakukan verifikasi akun Microsoft. Silakan coba lagi.',
+  'no-code': 'Kode autentikasi tidak valid atau sudah kedaluwarsa.',
 };
+
 
 export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) {
   const router = useRouter();
@@ -25,6 +31,7 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [isLoading, setIsLoading] = React.useState(false);
+  const [isOAuthLoading, setIsOAuthLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [showPassword, setShowPassword] = React.useState(false);
   const [rememberMe, setRememberMe] = React.useState(true);
@@ -39,16 +46,35 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
     }
   }, [searchParams]);
 
+  async function handleMicrosoftLogin() {
+    setError(null);
+    setIsOAuthLoading(true);
+
+    try {
+      const supabase = createClient();
+      const { error: oauthError } = await supabase.auth.signInWithOAuth({
+        provider: 'azure',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+          scopes: 'email profile openid',
+        },
+      });
+
+      if (oauthError) {
+        throw oauthError;
+      }
+    } catch (err: any) {
+      console.error('Microsoft OAuth login error:', err);
+      setError(err.message || 'Gagal memulai login dengan Microsoft.');
+      setIsOAuthLoading(false);
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
 
     const hasSiteKey = !!process.env.NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY;
-    console.log('[LoginForm] Form submitted. State:', {
-      hasSiteKey,
-      tokenPresent: !!turnstileToken.current,
-      isUnsupported: isTurnstileUnsupported.current
-    });
 
     if (hasSiteKey && !turnstileToken.current && !isTurnstileUnsupported.current) {
       setError('Harap selesaikan verifikasi keamanan.');
@@ -98,20 +124,52 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
         </p>
       </div>
 
-      <Card>
+      <Card className="glass border-border/60 shadow-xl">
         <CardHeader>
-          <CardTitle>Masuk ke akun Anda</CardTitle>
-          <CardDescription>Masukkan email dan kata sandi akun Anda</CardDescription>
+          <CardTitle>Masuk ke Akun Anda</CardTitle>
+          <CardDescription>
+            Gunakan akun Microsoft Telkom University atau kredensial terdaftar
+          </CardDescription>
         </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} method="POST" className="flex flex-col gap-4">
-            {error && (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
+        <CardContent className="flex flex-col gap-5">
+          {error && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription className="text-xs leading-relaxed">{error}</AlertDescription>
+            </Alert>
+          )}
 
+          {/* Microsoft Single Sign-On Button */}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleMicrosoftLogin}
+            disabled={isLoading || isOAuthLoading}
+            className="w-full h-11 border-border/80 hover:bg-muted/50 font-medium flex items-center justify-center gap-3 transition-all"
+          >
+            {isOAuthLoading ? (
+              <>
+                <Spinner className="h-4 w-4" />
+                <span>Menghubungkan ke Microsoft...</span>
+              </>
+            ) : (
+              <>
+                <Microsoft className="h-5 w-5" />
+                <span>Masuk dengan Akun Microsoft</span>
+              </>
+            )}
+          </Button>
+
+          {/* Elegant Divider */}
+          <div className="relative flex items-center justify-center">
+            <div className="border-t border-border/60 w-full" />
+            <span className="bg-card px-3 text-xs text-muted-foreground uppercase tracking-wider shrink-0">
+              atau masuk dengan email
+            </span>
+            <div className="border-t border-border/60 w-full" />
+          </div>
+
+          <form onSubmit={handleSubmit} method="POST" className="flex flex-col gap-4">
             <div className="flex flex-col gap-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -121,7 +179,7 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                disabled={isLoading}
+                disabled={isLoading || isOAuthLoading}
                 name="email"
                 autoComplete="email"
               />
@@ -136,7 +194,7 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  disabled={isLoading}
+                  disabled={isLoading || isOAuthLoading}
                   name="password"
                   autoComplete="current-password"
                   className="pr-10"
@@ -179,7 +237,7 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
               />
             )}
 
-            <Button type="submit" disabled={isLoading} className="w-full mt-2">
+            <Button type="submit" disabled={isLoading || isOAuthLoading} className="w-full mt-2">
               {isLoading ? (
                 <>
                   <Spinner className="mr-2 h-4 w-4" />

@@ -68,6 +68,9 @@ importers:
       '@tanstack/react-table':
         specifier: ^8.21.3
         version: 8.21.3(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      '@thesvg/react':
+        specifier: ^3.3.1
+        version: 3.3.1(react@19.2.3)
       '@tiptap/extension-dropcursor':
         specifier: ^3.28.0
         version: 3.28.0(@tiptap/extensions@3.28.0(@tiptap/core@3.28.0(@tiptap/pm@3.28.0))(@tiptap/pm@3.28.0))
@@ -2668,6 +2671,12 @@ packages:
     resolution: {integrity: sha512-ldZXEhOBb8Is7xLs01fR3YEc3DERiz5silj8tnGkFZytt1abEvl/GhUmCE0PMLaMPTa3Jk4HbKmRlHmu+gCftg==}
     engines: {node: '>=12'}
 
+  '@thesvg/react@3.3.1':
+    resolution: {integrity: sha512-5YFVOP02XEyumkW1aTTFy6nfctScJSjPhbswVcA+Bcy0ZF+lmIj4mAg/CqUyw2681fnNSVtsH+T53UNYgDgotg==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      react: '>=18'
+
   '@tiptap/core@3.28.0':
     resolution: {integrity: sha512-gUuD5WAYfbDxNSSJya/emh2KSzXZXLUYKW4fEnc1AQ5FE2twzh4LJ9UlKFIawigrUCAksWI5Fy1hRbv+5m4ZdQ==}
     peerDependencies:
@@ -3838,6 +3847,7 @@ packages:
   eslint@9.39.4:
     resolution: {integrity: sha512-XoMjdBOwe/esVgEvLmNsD3IRHkm7fbKIUGvrleloJXUZgDHig2IPWNniv+GwjyJXzuNqVjlr5+4yVUZjycJwfQ==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
+    deprecated: This version is no longer supported. Please see https://eslint.org/version-support for other options.
     hasBin: true
     peerDependencies:
       jiti: '*'
@@ -8798,6 +8808,10 @@ snapshots:
       react-dom: 19.2.3(react@19.2.3)
 
   '@tanstack/table-core@8.21.3': {}
+
+  '@thesvg/react@3.3.1(react@19.2.3)':
+    dependencies:
+      react: 19.2.3
 
   '@tiptap/core@3.28.0(@tiptap/pm@3.28.0)':
     dependencies:

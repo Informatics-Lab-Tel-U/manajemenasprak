@@ -1,9 +1,17 @@
 import type { Role } from '@/config/rbac';
 
+export type UserStatus = 'PENDING' | 'ACTIVE' | 'REJECTED';
+
 export type Pengguna = {
   id: string;
   nama_lengkap: string;
   role: Role;
+  status: UserStatus;
+  nim?: string | null;
+  catatan_request?: string | null;
+  approved_by?: string | null;
+  approved_at?: string | null;
+  rejection_reason?: string | null;
   deleted_at?: string;
   created_at: string;
   updated_at: string;

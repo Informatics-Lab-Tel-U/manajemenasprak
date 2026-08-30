@@ -12,6 +12,12 @@ import {
   ChevronLeft,
   ChevronRight,
   Key,
+  UserCheck,
+  ShieldX,
+  Clock,
+  CheckCircle2,
+  AlertCircle,
+  Users,
 } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import {
@@ -24,6 +30,7 @@ import {
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Table,
   TableBody,
@@ -52,10 +59,12 @@ import {
 } from '@/components/ui/select';
 import { ManajemenAkunFormModal } from './ManajemenAkunFormModal';
 import { ChangePasswordModal } from './ChangePasswordModal';
+import { ApproveRequestModal } from './ApproveRequestModal';
+import { RejectRequestModal } from './RejectRequestModal';
 import type { Pengguna } from '@/types/database';
 import type { Role } from '@/config/rbac';
 
-type UserWithEmail = Pengguna & { email: string };
+type UserWithEmail = Pengguna & { email: string; auth_created_at?: string };
 
 const ROLE_BADGE: Record<Role, { label: string; variant: 'default' | 'secondary' | 'outline' }> = {
   ADMIN: { label: 'Admin', variant: 'default' },
@@ -69,15 +78,28 @@ const ROLE_ICON: Record<Role, React.ElementType> = {
   ASPRAK_KOOR: User,
 };
 
-export function ManajemenAkunClientPage({ users }: { users: UserWithEmail[] }) {
+export function ManajemenAkunClientPage({
+  users,
+  requests = [],
+}: {
+  users: UserWithEmail[];
+  requests?: UserWithEmail[];
+}) {
   const router = useRouter();
   const [isCreateOpen, setIsCreateOpen] = React.useState(false);
   const [editTarget, setEditTarget] = React.useState<UserWithEmail | null>(null);
   const [passwordTarget, setPasswordTarget] = React.useState<UserWithEmail | null>(null);
   const [deleteTarget, setDeleteTarget] = React.useState<UserWithEmail | null>(null);
+  const [approveTarget, setApproveTarget] = React.useState<UserWithEmail | null>(null);
+  const [rejectTarget, setRejectTarget] = React.useState<UserWithEmail | null>(null);
   const [isDeleting, setIsDeleting] = React.useState(false);
 
-  const columns = React.useMemo<ColumnDef<UserWithEmail>[]>(
+  const pendingCount = React.useMemo(() => {
+    return requests.filter((r) => r.status === 'PENDING').length;
+  }, [requests]);
+
+  // Columns for Active Users Table
+  const userColumns = React.useMemo<ColumnDef<UserWithEmail>[]>(
     () => [
       {
         accessorKey: 'nama_lengkap',
@@ -87,7 +109,7 @@ export function ManajemenAkunClientPage({ users }: { users: UserWithEmail[] }) {
       {
         accessorKey: 'email',
         header: 'Email',
-        cell: ({ row }) => <span className="text-muted-foreground">{row.original.email}</span>,
+        cell: ({ row }) => <span className="text-muted-foreground font-mono text-xs">{row.original.email}</span>,
       },
       {
         accessorKey: 'role',
@@ -155,16 +177,109 @@ export function ManajemenAkunClientPage({ users }: { users: UserWithEmail[] }) {
     []
   );
 
-  const table = useReactTable({
+  // Columns for Access Requests Table
+  const requestColumns = React.useMemo<ColumnDef<UserWithEmail>[]>(
+    () => [
+      {
+        accessorKey: 'nama_lengkap',
+        header: 'Nama Pengaju',
+        cell: ({ row }) => <span className="font-medium">{row.original.nama_lengkap}</span>,
+      },
+      {
+        accessorKey: 'email',
+        header: 'Email SSO Kampus',
+        cell: ({ row }) => <span className="text-muted-foreground font-mono text-xs">{row.original.email}</span>,
+      },
+      {
+        accessorKey: 'status',
+        header: 'Status',
+        cell: ({ row }) => {
+          const status = row.original.status;
+          if (status === 'PENDING') {
+            return (
+              <Badge variant="outline" className="border-amber-500/40 text-amber-600 dark:text-amber-400 bg-amber-500/10 gap-1">
+                <Clock className="h-3 w-3" />
+                Menunggu Persetujuan
+              </Badge>
+            );
+          }
+          if (status === 'REJECTED') {
+            return (
+              <Badge variant="outline" className="border-destructive/40 text-destructive bg-destructive/10 gap-1">
+                <AlertCircle className="h-3 w-3" />
+                Ditolak
+              </Badge>
+            );
+          }
+          return (
+            <Badge variant="outline" className="border-emerald-500/40 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 gap-1">
+              <CheckCircle2 className="h-3 w-3" />
+              Disetujui
+            </Badge>
+          );
+        },
+      },
+      {
+        accessorKey: 'created_at',
+        header: 'Waktu Daftar',
+        cell: ({ row }) => (
+          <span className="text-muted-foreground text-sm">
+            {new Date(row.original.created_at).toLocaleDateString('id-ID', {
+              day: 'numeric',
+              month: 'short',
+              year: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+            })}
+          </span>
+        ),
+      },
+      {
+        id: 'request_actions',
+        header: () => <div className="text-center">Aksi</div>,
+        cell: ({ row }) => (
+          <div className="flex justify-center gap-2">
+            <Button
+              size="sm"
+              variant="default"
+              onClick={() => setApproveTarget(row.original)}
+              className="gap-1.5 h-8 px-2.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
+            >
+              <UserCheck className="h-3.5 w-3.5" />
+              Setujui
+            </Button>
+            {row.original.status !== 'REJECTED' && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setRejectTarget(row.original)}
+                className="gap-1.5 h-8 px-2.5 text-xs text-destructive hover:bg-destructive/10 border-destructive/30"
+              >
+                <ShieldX className="h-3.5 w-3.5" />
+                Tolak
+              </Button>
+            )}
+          </div>
+        ),
+      },
+    ],
+    []
+  );
+
+  const usersTable = useReactTable({
     data: users,
-    columns,
+    columns: userColumns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-    initialState: {
-      pagination: {
-        pageSize: 10,
-      },
-    },
+    initialState: { pagination: { pageSize: 10 } },
+  });
+
+  const requestsTable = useReactTable({
+    data: requests,
+    columns: requestColumns,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    initialState: { pagination: { pageSize: 10 } },
   });
 
   async function handleDelete() {
@@ -189,114 +304,226 @@ export function ManajemenAkunClientPage({ users }: { users: UserWithEmail[] }) {
   return (
     <div className="container mx-auto max-w-[2000px] 2xl:px-8 relative space-y-8">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl 2xl:text-3xl font-bold tracking-tight">Manajemen Akun</h1>
           <p className="text-sm 2xl:text-base text-muted-foreground mt-1">
-            Kelola akun pengguna yang terdaftar di sistem
+            Kelola akun pengguna dan permintaan akses sistem laboratorium
           </p>
         </div>
-        <Button onClick={() => setIsCreateOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Tambah Akun
+        <Button onClick={() => setIsCreateOpen(true)} className="gap-2">
+          <Plus className="h-4 w-4" />
+          Tambah Akun Manual
         </Button>
       </div>
 
-      <div className="card glass p-6 border border-border/50">
-        <div className="rounded-md border mb-4">
-          <Table className="2xl:text-base">
-            <TableHeader>
-              {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => (
-                    <TableHead key={header.id}>
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(header.column.columnDef.header, header.getContext())}
-                    </TableHead>
+      <Tabs defaultValue="users" className="space-y-6">
+        <TabsList className="glass border border-border/50 p-1">
+          <TabsTrigger value="users" className="gap-2 text-xs sm:text-sm">
+            <Users className="h-4 w-4" />
+            Akun Aktif ({users.length})
+          </TabsTrigger>
+          <TabsTrigger value="requests" className="gap-2 text-xs sm:text-sm">
+            <Clock className="h-4 w-4" />
+            Permintaan Akses
+            {pendingCount > 0 && (
+              <Badge className="ml-1 px-1.5 py-0 text-[10px] bg-amber-500 text-white font-mono rounded-full">
+                {pendingCount}
+              </Badge>
+            )}
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Tab 1: Active Users */}
+        <TabsContent value="users" className="space-y-4">
+          <div className="card glass p-6 border border-border/50">
+            <div className="rounded-md border mb-4 overflow-hidden">
+              <Table className="2xl:text-base">
+                <TableHeader className="bg-muted/40">
+                  {usersTable.getHeaderGroups().map((headerGroup) => (
+                    <TableRow key={headerGroup.id}>
+                      {headerGroup.headers.map((header) => (
+                        <TableHead key={header.id}>
+                          {header.isPlaceholder
+                            ? null
+                            : flexRender(header.column.columnDef.header, header.getContext())}
+                        </TableHead>
+                      ))}
+                    </TableRow>
                   ))}
-                </TableRow>
-              ))}
-            </TableHeader>
-            <TableBody>
-              {table.getRowModel().rows?.length ? (
-                table.getRowModel().rows.map((row) => (
-                  <TableRow key={row.id}>
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                </TableHeader>
+                <TableBody>
+                  {usersTable.getRowModel().rows?.length ? (
+                    usersTable.getRowModel().rows.map((row) => (
+                      <TableRow key={row.id}>
+                        {row.getVisibleCells().map((cell) => (
+                          <TableCell key={cell.id}>
+                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell
+                        colSpan={userColumns.length}
+                        className="h-32 text-center text-muted-foreground py-12"
+                      >
+                        Belum ada akun aktif terdaftar.
                       </TableCell>
-                    ))}
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell
-                    colSpan={columns.length}
-                    className="h-32 text-center text-muted-foreground py-12"
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+
+            {/* Pagination Controls */}
+            <div className="flex flex-col gap-4 md:gap-0 md:flex-row md:items-center md:justify-between">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                <p className="text-sm font-medium whitespace-nowrap">Baris per halaman</p>
+                <Select
+                  value={`${usersTable.getState().pagination.pageSize}`}
+                  onValueChange={(value) => usersTable.setPageSize(Number(value))}
+                >
+                  <SelectTrigger className="h-8 w-full sm:w-[70px]">
+                    <SelectValue placeholder={usersTable.getState().pagination.pageSize} />
+                  </SelectTrigger>
+                  <SelectContent side="top">
+                    <SelectGroup>
+                      {[10, 20, 30, 50].map((pageSize) => (
+                        <SelectItem key={pageSize} value={`${pageSize}`}>
+                          {pageSize}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex flex-col gap-3 sm:gap-0 sm:flex-row sm:items-center sm:justify-end">
+                <div className="flex w-full sm:w-auto sm:min-w-[120px] items-center justify-center text-sm font-medium">
+                  Halaman {usersTable.getState().pagination.pageIndex + 1} dari {Math.max(1, usersTable.getPageCount())}
+                </div>
+                <div className="flex gap-2 justify-between sm:justify-end sm:ml-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => usersTable.previousPage()}
+                    disabled={!usersTable.getCanPreviousPage()}
                   >
-                    Belum ada akun terdaftar.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
+                    <ChevronLeft className="h-4 w-4" />
+                    <span className="hidden sm:inline ml-1">Sebelumnya</span>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => usersTable.nextPage()}
+                    disabled={!usersTable.getCanNextPage()}
+                  >
+                    <span className="hidden sm:inline">Berikutnya</span>
+                    <ChevronRight className="h-4 w-4 sm:ml-1" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </TabsContent>
 
-        {/* Pagination Controls */}
-        <div className="flex flex-col gap-4 md:gap-0 md:flex-row md:items-center md:justify-between">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-            <p className="text-sm font-medium whitespace-nowrap">Baris per halaman</p>
-            <Select
-              value={`${table.getState().pagination.pageSize}`}
-              onValueChange={(value) => {
-                table.setPageSize(Number(value));
-              }}
-            >
-              <SelectTrigger className="h-8 w-full sm:w-[70px]">
-                <SelectValue placeholder={table.getState().pagination.pageSize} />
-              </SelectTrigger>
-              <SelectContent side="top">
-                <SelectGroup>
-                  {[10, 20, 30, 50].map((pageSize) => (
-                    <SelectItem key={pageSize} value={`${pageSize}`}>
-                      {pageSize}
-                    </SelectItem>
+        {/* Tab 2: Access Requests */}
+        <TabsContent value="requests" className="space-y-4">
+          <div className="card glass p-6 border border-border/50">
+            <div className="rounded-md border mb-4 overflow-hidden">
+              <Table className="2xl:text-base">
+                <TableHeader className="bg-muted/40">
+                  {requestsTable.getHeaderGroups().map((headerGroup) => (
+                    <TableRow key={headerGroup.id}>
+                      {headerGroup.headers.map((header) => (
+                        <TableHead key={header.id}>
+                          {header.isPlaceholder
+                            ? null
+                            : flexRender(header.column.columnDef.header, header.getContext())}
+                        </TableHead>
+                      ))}
+                    </TableRow>
                   ))}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-          </div>
+                </TableHeader>
+                <TableBody>
+                  {requestsTable.getRowModel().rows?.length ? (
+                    requestsTable.getRowModel().rows.map((row) => (
+                      <TableRow key={row.id}>
+                        {row.getVisibleCells().map((cell) => (
+                          <TableCell key={cell.id}>
+                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell
+                        colSpan={requestColumns.length}
+                        className="h-32 text-center text-muted-foreground py-12"
+                      >
+                        Tidak ada permintaan akses yang pending atau ditolak saat ini.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
 
-          <div className="flex flex-col gap-3 sm:gap-0 sm:flex-row sm:items-center sm:justify-end">
-            <div className="flex w-full sm:w-auto sm:min-w-[120px] items-center justify-center text-sm font-medium order-3 sm:order-none">
-              Halaman {table.getState().pagination.pageIndex + 1} dari {table.getPageCount()}
-            </div>
-            <div className="flex gap-2 justify-between sm:justify-end sm:gap-2 order-2 sm:order-none sm:ml-4">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => table.previousPage()}
-                disabled={!table.getCanPreviousPage()}
-                className="flex-1 sm:flex-none"
-              >
-                <ChevronLeft className="h-4 w-4 flex-shrink-0" />
-                <span className="hidden sm:inline ml-1">Sebelumnya</span>
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => table.nextPage()}
-                disabled={!table.getCanNextPage()}
-                className="flex-1 sm:flex-none"
-              >
-                <span className="hidden sm:inline">Berikutnya</span>
-                <ChevronRight className="h-4 w-4 flex-shrink-0 sm:ml-1" />
-              </Button>
+            {/* Pagination Controls */}
+            <div className="flex flex-col gap-4 md:gap-0 md:flex-row md:items-center md:justify-between">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                <p className="text-sm font-medium whitespace-nowrap">Baris per halaman</p>
+                <Select
+                  value={`${requestsTable.getState().pagination.pageSize}`}
+                  onValueChange={(value) => requestsTable.setPageSize(Number(value))}
+                >
+                  <SelectTrigger className="h-8 w-full sm:w-[70px]">
+                    <SelectValue placeholder={requestsTable.getState().pagination.pageSize} />
+                  </SelectTrigger>
+                  <SelectContent side="top">
+                    <SelectGroup>
+                      {[10, 20, 30, 50].map((pageSize) => (
+                        <SelectItem key={pageSize} value={`${pageSize}`}>
+                          {pageSize}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex flex-col gap-3 sm:gap-0 sm:flex-row sm:items-center sm:justify-end">
+                <div className="flex w-full sm:w-auto sm:min-w-[120px] items-center justify-center text-sm font-medium">
+                  Halaman {requestsTable.getState().pagination.pageIndex + 1} dari {Math.max(1, requestsTable.getPageCount())}
+                </div>
+                <div className="flex gap-2 justify-between sm:justify-end sm:ml-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => requestsTable.previousPage()}
+                    disabled={!requestsTable.getCanPreviousPage()}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    <span className="hidden sm:inline ml-1">Sebelumnya</span>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => requestsTable.nextPage()}
+                    disabled={!requestsTable.getCanNextPage()}
+                  >
+                    <span className="hidden sm:inline">Berikutnya</span>
+                    <ChevronRight className="h-4 w-4 sm:ml-1" />
+                  </Button>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
+        </TabsContent>
+      </Tabs>
 
       {/* Create Modal */}
       <ManajemenAkunFormModal
@@ -349,6 +576,28 @@ export function ManajemenAkunClientPage({ users }: { users: UserWithEmail[] }) {
         onOpenChange={(open: boolean) => !open && setPasswordTarget(null)}
         user={passwordTarget}
         onSuccess={() => router.refresh()}
+      />
+
+      {/* Approve Request Modal */}
+      <ApproveRequestModal
+        open={!!approveTarget}
+        onOpenChange={(open) => !open && setApproveTarget(null)}
+        user={approveTarget}
+        onSuccess={() => {
+          setApproveTarget(null);
+          router.refresh();
+        }}
+      />
+
+      {/* Reject Request Modal */}
+      <RejectRequestModal
+        open={!!rejectTarget}
+        onOpenChange={(open) => !open && setRejectTarget(null)}
+        user={rejectTarget}
+        onSuccess={() => {
+          setRejectTarget(null);
+          router.refresh();
+        }}
       />
     </div>
   );
