@@ -724,6 +724,19 @@ const DEFAULT_LIGHT_COLORS = [
   "#f0f9ff", // sky 50
 ];
 
+const DEFAULT_NOISE_FREQUENCY: [number, number] = [0.0001, 0.0009];
+
+const DEFAULT_DEFORM: Required<NonNullable<GradientWaveProps['deform']>> = {
+  incline: 0.35,
+  noiseAmp: 280,
+  noiseFlow: 4.5,
+  offsetTop: -0.5,
+  offsetBottom: -0.5,
+  noiseFreq: [3, 4],
+  noiseSpeed: 10,
+  noiseSeed: 5,
+};
+
 export function GradientWave({
   colors,
   darkColors = DEFAULT_DARK_COLORS,
@@ -733,8 +746,8 @@ export function GradientWave({
   shadowPower = 8,
   darkenTop = false,
   noiseSpeed = 0.00001,
-  noiseFrequency = [0.0001, 0.0009],
-  deform = { incline: 0.35, noiseAmp: 280, noiseFlow: 4.5 },
+  noiseFrequency = DEFAULT_NOISE_FREQUENCY,
+  deform = DEFAULT_DEFORM,
 }: GradientWaveProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const gradientRef = useRef<Gradient | null>(null);

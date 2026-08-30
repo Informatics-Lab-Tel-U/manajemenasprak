@@ -41,10 +41,8 @@ export default function RejectedPage() {
   }
 
   return (
-    <div className="min-h-svh w-full flex items-center justify-center p-4 md:p-8 bg-background relative overflow-hidden">
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 size-96 bg-destructive/10 rounded-full blur-3xl pointer-events-none" />
-
-      <Card className="max-w-lg w-full glass border-border/60 shadow-2xl relative z-10 overflow-hidden">
+    <div className="min-h-svh w-full flex items-center justify-center p-4 md:p-8 bg-background">
+      <Card className="max-w-lg w-full border-border/60 shadow-md">
         <CardHeader className="text-center pb-4 pt-8">
           <div className="mx-auto size-16 rounded-2xl bg-destructive/10 border border-destructive/20 flex items-center justify-center mb-4 text-destructive shadow-inner">
             <ShieldAlert className="size-8" />

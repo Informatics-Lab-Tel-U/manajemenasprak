@@ -31,6 +31,7 @@ import StepMataKuliah from '@/components/pengaturan/excel-steps/StepMataKuliah';
 import StepAsprak from '@/components/pengaturan/excel-steps/StepAsprak';
 import StepPlotting from '@/components/pengaturan/excel-steps/StepPlotting';
 import StepJadwal from '@/components/pengaturan/excel-steps/StepJadwal';
+import { TwoFactorSecurityCard } from '@/components/pengaturan/TwoFactorSecurityCard';
 
 import {
   Dialog,
@@ -802,6 +803,17 @@ export default function DatabaseClientPage({
                 </CardContent>
               </Card>
             </div>
+          </section>
+
+          {/* Security & 2FA Section */}
+          <section className="pb-10 mb-10 border-b border-border/40">
+            <div className="mb-6">
+              <h2 className="text-base font-semibold">Keamanan Akun & 2FA</h2>
+              <p className="text-sm text-muted-foreground">
+                Pengaturan autentikasi dua langkah (Two-Factor Authentication) untuk perlindungan akses data.
+              </p>
+            </div>
+            <TwoFactorSecurityCard />
           </section>
 
           {/* Danger Zone */}

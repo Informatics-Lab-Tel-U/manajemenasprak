@@ -163,10 +163,10 @@ export default function OnboardHubPage() {
             {/* Card 0: Tahun Ajaran Target */}
             <div className="relative flex flex-col md:flex-row gap-6 items-stretch md:items-start group">
               <div className="absolute top-10 bottom-[-32px] left-[19px] w-0.5 hidden md:block bg-primary"></div>
-              <div className="hidden md:flex relative z-10 size-10 shrink-0 items-center justify-center overflow-hidden rounded-md text-sm font-medium transition-all duration-300 border-[3px] border-background bg-primary text-primary-foreground shadow-sm">
+              <div className="hidden md:flex relative z-10 size-10 shrink-0 items-center justify-center overflow-hidden rounded-md text-sm font-medium border-[3px] border-background bg-primary text-primary-foreground shadow-sm">
                 <Target className="w-5 h-5" />
               </div>
-              <Card className="flex-1 flex flex-col transition-all duration-300 shadow-sm border-border bg-card min-h-[200px]">
+              <Card className="flex-1 flex flex-col shadow-sm border-border bg-card min-h-[200px]">
                 <CardHeader className="flex-grow">
                   <CardTitle className="text-xl">Target Setup</CardTitle>
                   <CardDescription className="text-base">
@@ -189,11 +189,11 @@ export default function OnboardHubPage() {
 
             {/* Card 1: Tahun Ajaran & Praktikum */}
             <div className="relative flex flex-col md:flex-row gap-6 items-stretch md:items-start group">
-              <div className={`absolute top-10 bottom-[-32px] left-[19px] w-0.5 hidden md:block transition-colors duration-500 ${isStep1Done ? 'bg-primary' : 'bg-border'}`}></div>
-              <div className={`hidden md:flex relative z-10 size-10 shrink-0 items-center justify-center overflow-hidden rounded-md text-base font-medium transition-all duration-300 border-[3px] border-background shadow-sm bg-primary text-primary-foreground ${!isStep1Done ? 'ring-primary/30 ring-2 ring-offset-2 ring-offset-background' : ''}`}>
+              <div className={`absolute top-10 bottom-[-32px] left-[19px] w-0.5 hidden md:block transition-colors ${isStep1Done ? 'bg-primary' : 'bg-border'}`}></div>
+              <div className={`hidden md:flex relative z-10 size-10 shrink-0 items-center justify-center overflow-hidden rounded-md text-base font-medium border-[3px] border-background shadow-sm bg-primary text-primary-foreground ${!isStep1Done ? 'ring-primary/30 ring-2 ring-offset-2 ring-offset-background' : ''}`}>
                 {isStep1Done ? <Check className="w-5 h-5" strokeWidth={3} /> : '1'}
               </div>
-              <Card className={`flex-1 flex flex-col transition-all duration-300 shadow-sm min-h-[200px] ${isStep1Done ? 'border-border bg-card' : 'border-primary ring-1 ring-primary shadow-md bg-card'}`}>
+              <Card className={`flex-1 flex flex-col shadow-sm min-h-[200px] ${isStep1Done ? 'border-border bg-card' : 'border-primary ring-1 ring-primary shadow-md bg-card'}`}>
                 <CardHeader className="flex-grow">
                   <div className="flex items-start justify-between gap-4">
                     <CardTitle className="text-xl">Langkah 1: Tahun Ajaran & Praktikum</CardTitle>
@@ -215,11 +215,11 @@ export default function OnboardHubPage() {
 
             {/* Card 2: Jadwal Praktikum */}
             <div className="relative flex flex-col md:flex-row gap-6 items-stretch md:items-start group">
-              <div className={`absolute top-10 bottom-[-32px] left-[19px] w-0.5 hidden md:block transition-colors duration-500 ${isStep2Done ? 'bg-primary' : 'bg-border'}`}></div>
-              <div className={`hidden md:flex relative z-10 size-10 shrink-0 items-center justify-center overflow-hidden rounded-md text-base font-medium transition-all duration-300 border-[3px] border-background shadow-sm ${isStep2Done || isStep1Done ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'} ${!isStep2Done && isStep1Done ? 'ring-primary/30 ring-2 ring-offset-2 ring-offset-background' : ''}`}>
+              <div className={`absolute top-10 bottom-[-32px] left-[19px] w-0.5 hidden md:block transition-colors ${isStep2Done ? 'bg-primary' : 'bg-border'}`}></div>
+              <div className={`hidden md:flex relative z-10 size-10 shrink-0 items-center justify-center overflow-hidden rounded-md text-base font-medium border-[3px] border-background shadow-sm ${isStep2Done || isStep1Done ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'} ${!isStep2Done && isStep1Done ? 'ring-primary/30 ring-2 ring-offset-2 ring-offset-background' : ''}`}>
                 {isStep2Done ? <Check className="w-5 h-5" strokeWidth={3} /> : !isStep1Done ? <Lock className="w-4 h-4" /> : '2'}
               </div>
-              <Card className={`flex-1 flex flex-col transition-all duration-300 shadow-sm min-h-[200px] ${isStep2Done ? 'border-border bg-card' : isStep1Done ? 'border-primary ring-1 ring-primary shadow-md bg-card' : 'opacity-70 bg-muted/30 border-border'}`}>
+              <Card className={`flex-1 flex flex-col shadow-sm min-h-[200px] ${isStep2Done ? 'border-border bg-card' : isStep1Done ? 'border-primary ring-1 ring-primary shadow-md bg-card' : 'opacity-70 bg-muted/30 border-border'}`}>
                 <CardHeader className="flex-grow">
                   <div className="flex items-start justify-between gap-4">
                     <CardTitle className="text-xl">Langkah 2: Jadwal Praktikum</CardTitle>
@@ -235,7 +235,7 @@ export default function OnboardHubPage() {
                   <Button 
                     asChild 
                     variant={isStep2Done ? "outline" : "default"} 
-                    className={`w-full sm:w-auto group ${!isStep2Done && isStep1Done ? 'hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 dark:hover:bg-blue-950/50 bg-blue-600 text-white' : ''}`}
+                    className="w-full sm:w-auto"
                     disabled={!isStep1Done}
                   >
                     <Link prefetch={false} href={isStep1Done ? `/onboard/jadwal?term=${currentTerm}` : '#'}>
@@ -248,10 +248,10 @@ export default function OnboardHubPage() {
 
             {/* Card 3: Data Asprak */}
             <div className="relative flex flex-col md:flex-row gap-6 items-stretch md:items-start group">
-              <div className={`hidden md:flex relative z-10 size-10 shrink-0 items-center justify-center overflow-hidden rounded-md text-base font-medium transition-all duration-300 border-[3px] border-background shadow-sm ${isStep3Done || isStep2Done ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'} ${!isStep3Done && isStep2Done ? 'ring-primary/30 ring-2 ring-offset-2 ring-offset-background' : ''}`}>
+              <div className={`hidden md:flex relative z-10 size-10 shrink-0 items-center justify-center overflow-hidden rounded-md text-base font-medium border-[3px] border-background shadow-sm ${isStep3Done || isStep2Done ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'} ${!isStep3Done && isStep2Done ? 'ring-primary/30 ring-2 ring-offset-2 ring-offset-background' : ''}`}>
                 {isStep3Done ? <Check className="w-5 h-5" strokeWidth={3} /> : !isStep2Done ? <Lock className="w-4 h-4" /> : '3'}
               </div>
-              <Card className={`flex-1 flex flex-col transition-all duration-300 shadow-sm min-h-[200px] ${isStep3Done ? 'border-border bg-card' : isStep2Done ? 'border-primary ring-1 ring-primary shadow-md bg-card' : 'opacity-70 bg-muted/30 border-border'}`}>
+              <Card className={`flex-1 flex flex-col shadow-sm min-h-[200px] ${isStep3Done ? 'border-border bg-card' : isStep2Done ? 'border-primary ring-1 ring-primary shadow-md bg-card' : 'opacity-70 bg-muted/30 border-border'}`}>
                 <CardHeader className="flex-grow">
                   <div className="flex items-start justify-between gap-4">
                     <CardTitle className="text-xl">Langkah 3: Data Asprak</CardTitle>
@@ -260,14 +260,14 @@ export default function OnboardHubPage() {
                     </div>
                   </div>
                   <CardDescription className="text-base">
-                    Kelola data asisten praktikum, generate kode asprak, dan plotting.
+                    Input data asisten praktikum (NIM, Nama, Email, Akun).
                   </CardDescription>
                 </CardHeader>
                 <CardFooter>
                   <Button 
                     asChild 
                     variant={isStep3Done ? "outline" : "default"} 
-                    className={`w-full sm:w-auto group ${!isStep3Done && isStep2Done ? 'hover:bg-orange-50 hover:text-orange-600 hover:border-orange-200 dark:hover:bg-orange-950/50 bg-orange-600 text-white' : ''}`}
+                    className="w-full sm:w-auto"
                     disabled={!isStep2Done}
                   >
                     <Link prefetch={false} href={isStep2Done ? `/onboard/asprak?term=${currentTerm}` : '#'}>

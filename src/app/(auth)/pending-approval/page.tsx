@@ -54,10 +54,8 @@ export default function PendingApprovalPage() {
   }
 
   return (
-    <div className="min-h-svh w-full flex items-center justify-center p-4 md:p-8 bg-background relative overflow-hidden">
-      {/* Subtle background ambient blur */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 size-96 rounded-full blur-3xl pointer-events-none" />
-      <Card className="max-w-lg w-full glass border-border/60 shadow-2xl relative z-10 overflow-hidden">
+    <div className="min-h-svh w-full flex items-center justify-center p-4 md:p-8 bg-background">
+      <Card className="max-w-lg w-full border-border/60 shadow-md">
         <CardHeader className="text-center pb-2 pt-2">
           <CardTitle className="text-2xl font-bold tracking-tight">Menunggu Persetujuan Akses</CardTitle>
         </CardHeader>
