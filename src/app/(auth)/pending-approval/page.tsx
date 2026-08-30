@@ -38,10 +38,12 @@ export default function PendingApprovalPage() {
     setIsLoggingOut(true);
     try {
       await logout();
-      router.push('/login');
+      const supabase = createClient();
+      await supabase.auth.signOut({ scope: 'local' });
     } catch (err) {
       console.error('Logout error:', err);
-      setIsLoggingOut(false);
+    } finally {
+      window.location.href = '/login';
     }
   }
 

@@ -57,6 +57,11 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
           scopes: 'email profile openid',
+          queryParams: {
+            // Force Microsoft to always show the account picker, even if a session exists.
+            // Without this, users who just logged out would be silently re-logged in.
+            prompt: 'select_account',
+          },
         },
       });
 

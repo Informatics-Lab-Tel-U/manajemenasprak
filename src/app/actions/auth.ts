@@ -8,7 +8,7 @@ export async function logout() {
   if (!user) {
     throw new Error('Unauthorized');
   }
-  const { error } = await supabase.auth.signOut();
+  const { error } = await supabase.auth.signOut({ scope: 'global' });
   if (error) {
     throw error;
   }
