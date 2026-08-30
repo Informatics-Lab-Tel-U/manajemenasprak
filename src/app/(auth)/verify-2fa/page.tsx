@@ -13,6 +13,7 @@ import { GradientWave } from '@/components/ui/gradient-wave';
 import { logout } from '@/app/actions/auth';
 import { getMfaStatus, verifyTotp } from '@/app/actions/mfa';
 import { createClient } from '@/lib/supabase/client';
+import { AUTH_CONFIG } from '@/config/auth';
 import Image from 'next/image';
 import { Instagram } from 'lucide-react';
 import packageInfo from '../../../../package.json';
@@ -44,7 +45,7 @@ export default function Verify2FAPage() {
         if (activeFactor) {
           setFactorId(activeFactor.id);
         } else {
-          router.replace('/setup-2fa');
+          router.replace(AUTH_CONFIG.paths.setup2fa);
         }
       } catch (err: any) {
         setError(err.message || 'Gagal memuat status autentikasi');
@@ -99,7 +100,7 @@ export default function Verify2FAPage() {
     } catch (err) {
       console.error('Logout error:', err);
     } finally {
-      window.location.href = '/login';
+      window.location.href = AUTH_CONFIG.paths.login;
     }
   }
 

@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { getMfaStatus, unenrollTotp } from '@/app/actions/mfa';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
+import { AUTH_CONFIG } from '@/config/auth';
 import {
   Dialog,
   DialogContent,
@@ -122,7 +123,7 @@ export function TwoFactorSecurityCard() {
               ) : (
                 <Button
                   size="sm"
-                  onClick={() => router.push('/setup-2fa')}
+                  onClick={() => router.push(AUTH_CONFIG.paths.setup2fa)}
                   className="text-xs"
                 >
                   Konfigurasi 2FA

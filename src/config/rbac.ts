@@ -1,19 +1,7 @@
-/**
- * Role-Based Access Control (RBAC) configuration.
- *
- * This is the single source of truth for all role permissions.
- * To grant/revoke access: edit the `ROLE_PERMISSIONS` map below.
- */
+import { ROLES, ALL_ROLES, type Role } from './roles';
+import { AUTH_CONFIG } from './auth';
 
-export const ROLES = {
-  ADMIN: 'ADMIN',
-  ASLAB: 'ASLAB',
-  ASPRAK_KOOR: 'ASPRAK_KOOR',
-} as const;
-
-export type Role = (typeof ROLES)[keyof typeof ROLES];
-
-export const ALL_ROLES: Role[] = [ROLES.ADMIN, ROLES.ASLAB, ROLES.ASPRAK_KOOR];
+export { ROLES, ALL_ROLES, type Role };
 
 /**
  * Defines which routes each role can access.
@@ -66,8 +54,6 @@ export const ROLE_ALLOWED_PATHS: Record<Role, string[]> = {
   ],
   ASPRAK_KOOR: ['/pelanggaran', '/panduan'],
 };
-
-import { AUTH_CONFIG } from './auth';
 
 /**
  * Paths that are always public (no auth required or accessed during unapproved states).

@@ -1,4 +1,4 @@
-import { ROLES, type Role } from './rbac';
+import { ROLES, type Role } from './roles';
 
 /**
  * Centralized Authentication & Security Configuration.

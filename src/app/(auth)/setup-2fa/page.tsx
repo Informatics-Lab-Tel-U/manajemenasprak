@@ -13,6 +13,7 @@ import { GradientWave } from '@/components/ui/gradient-wave';
 import { logout } from '@/app/actions/auth';
 import { enrollTotp, verifyTotp } from '@/app/actions/mfa';
 import { createClient } from '@/lib/supabase/client';
+import { AUTH_CONFIG } from '@/config/auth';
 import { toast } from 'sonner';
 import Image from 'next/image';
 import { Instagram } from 'lucide-react';
@@ -35,7 +36,7 @@ export default function Setup2FAPage() {
       try {
         const res = await enrollTotp();
         if (res.alreadyEnrolled) {
-          router.replace('/verify-2fa');
+          router.replace(AUTH_CONFIG.paths.verify2fa);
           return;
         }
         if (res.error) {
@@ -105,7 +106,7 @@ export default function Setup2FAPage() {
     } catch (err) {
       console.error('Logout error:', err);
     } finally {
-      window.location.href = '/login';
+      window.location.href = AUTH_CONFIG.paths.login;
     }
   }
 
