@@ -2,10 +2,9 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import { Clock, LogOut, RefreshCw, Sparkles, Building2, CheckCircle2 } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { LogOut, RefreshCw, CheckCircle2 } from 'lucide-react';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { logout } from '@/app/actions/auth';
 import { createClient } from '@/lib/supabase/client';

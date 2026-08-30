@@ -119,8 +119,12 @@ export async function updateSession(request: NextRequest) {
   }
 
   if (isPublicPath(pathname)) {
-    // Allow logged-in users visiting /login to fall through and get redirected
-    if (user && pengguna && pathname === '/login') {
+    // Allow logged-in users visiting /login, /pending-approval, or /rejected to fall through and get redirected based on status
+    if (
+      user &&
+      pengguna &&
+      (pathname === '/login' || pathname === '/pending-approval' || pathname === '/rejected')
+    ) {
       // fall through
     } else {
       return supabaseResponse;

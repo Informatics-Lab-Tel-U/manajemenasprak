@@ -4,7 +4,7 @@ import * as React from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { login } from '@/app/actions/auth';
@@ -125,12 +125,6 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
       </div>
 
       <Card className="glass border-border/60 shadow-xl">
-        <CardHeader>
-          <CardTitle>Masuk ke Akun Anda</CardTitle>
-          <CardDescription>
-            Gunakan akun Microsoft Telkom University atau kredensial terdaftar
-          </CardDescription>
-        </CardHeader>
         <CardContent className="flex flex-col gap-5">
           {error && (
             <Alert variant="destructive">

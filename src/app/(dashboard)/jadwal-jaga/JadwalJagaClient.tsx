@@ -91,14 +91,16 @@ export default function JadwalJagaClient({
             </SelectContent>
           </Select>
 
-          <Button
-            variant="outline"
-            onClick={() => setIsRfidModalOpen(true)}
-            className="flex-1 sm:flex-none min-w-0 md:whitespace-nowrap rounded-lg shadow-sm border-border/80 bg-background/80 hover:bg-accent"
-          >
-            <CreditCard size={18} className="flex-shrink-0 text-primary" />
-            <span className="hidden sm:inline ml-2 font-medium">Presensi & RFID</span>
-          </Button>
+          {userRole === 'ADMIN' && (
+            <Button
+              variant="outline"
+              onClick={() => setIsRfidModalOpen(true)}
+              className="flex-1 sm:flex-none min-w-0 md:whitespace-nowrap rounded-lg shadow-sm border-border/80 bg-background/80 hover:bg-accent"
+            >
+              <CreditCard size={18} className="flex-shrink-0 text-primary" />
+              <span className="hidden sm:inline ml-2 font-medium">Presensi & RFID</span>
+            </Button>
+          )}
 
           <Button
             onClick={handleAdd}
