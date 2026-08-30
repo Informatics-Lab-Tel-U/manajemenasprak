@@ -20,10 +20,10 @@ export default async function ManajemenAkunPage() {
     ]);
 
     if (usersRes.ok && usersRes.data) {
-      users = usersRes.data.filter((u) => u.status === 'ACTIVE' || !u.status);
+      users = usersRes.data.filter((u) => !u.deleted_at && (u.status === 'ACTIVE' || !u.status));
     }
     if (requestsRes.ok && requestsRes.data) {
-      requests = requestsRes.data;
+      requests = requestsRes.data.filter((u) => !u.deleted_at);
     }
   } catch (error) {
     console.error('Failed to fetch admin users or access requests:', error);

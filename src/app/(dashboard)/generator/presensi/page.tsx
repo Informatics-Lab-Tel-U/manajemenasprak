@@ -10,7 +10,9 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { format } from 'date-fns';
-import { CalendarIcon, Loader2 } from 'lucide-react';
+import { CalendarIcon, Loader2, AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { PRESENSI_THEMES } from '@/constants/presensiConstants';
 import { usePresensi } from '@/hooks/usePresensi';
@@ -58,8 +60,8 @@ export default function PresensiPage() {
   };
 
   return (
-    <div className="container mx-auto max-w-[2000px] 2xl:px-8 relative">
-      <header className="mb-8">
+    <div className="container mx-auto max-w-[2000px] 2xl:px-8 relative space-y-6">
+      <header className="mb-6">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <h1 className="text-2xl 2xl:text-3xl font-bold tracking-tight">Generator Presensi</h1>
@@ -71,10 +73,11 @@ export default function PresensiPage() {
       </header>
 
       <div className="w-full space-y-6">
-        <Card>
+        {/* Step 1: File & Praktikum Config */}
+        <Card className="bg-card shadow-sm border-border/60">
           <CardHeader>
-            <CardTitle>Opsi File</CardTitle>
-            <CardDescription>Pilih Praktikum dan atur file keluaran</CardDescription>
+            <CardTitle className="text-lg font-bold">1. Konfigurasi File & Praktikum</CardTitle>
+            <CardDescription>Pilih praktikum, kelas, dan atur parameter dasar file Excel</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-6 sm:grid-cols-2">
             <PraktikumSelector
@@ -160,7 +163,7 @@ export default function PresensiPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="globalJumlahPraktikan">Default Praktikan</Label>
+              <Label htmlFor="globalJumlahPraktikan">Default Jumlah Praktikan</Label>
               <Input
                 id="globalJumlahPraktikan"
                 type="number"
@@ -171,7 +174,7 @@ export default function PresensiPage() {
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="globalJumlahAsprak">Default Asprak</Label>
+              <Label htmlFor="globalJumlahAsprak">Default Jumlah Asprak</Label>
               <Input
                 id="globalJumlahAsprak"
                 type="number"
@@ -181,68 +184,87 @@ export default function PresensiPage() {
               />
             </div>
             
-            <div className="sm:col-span-2 flex justify-end">
-              <Button variant="secondary" onClick={state.applyGlobalToAll} disabled={state.kelasNames.length === 0}>
+            <div className="sm:col-span-2 flex justify-end pt-2">
+              <Button variant="outline" onClick={state.applyGlobalToAll} disabled={state.kelasNames.length === 0}>
                 Terapkan Default ke Semua Kelas
               </Button>
             </div>
           </CardContent>
         </Card>
 
+        {/* Step 2: Per-Class Customization */}
         {state.kelasNames.length > 0 && (
-          <Card>
+          <Card className="bg-card shadow-sm border-border/60">
             <CardHeader>
-              <CardTitle>Pengaturan per Kelas</CardTitle>
-              <CardDescription>Atur tanggal, jumlah praktikan, dan jumlah asprak spesifik tiap kelas</CardDescription>
+              <div className="flex justify-between items-center">
+                <div>
+                  <CardTitle className="text-lg font-bold">2. Pengaturan Spesifik per Kelas</CardTitle>
+                  <CardDescription>Sesuaikan tanggal modul 1, kuota praktikan, dan jumlah asprak masing-masing kelas</CardDescription>
+                </div>
+                <Badge variant="outline" className="font-mono text-xs">
+                  {state.kelasNames.length} Kelas
+                </Badge>
+              </div>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-3">
               {state.kelasNames.map((kelasName, i) => (
-                <div key={kelasName} className="flex flex-col md:flex-row gap-4 items-end border p-4 rounded-md bg-muted/20">
-                  <div className="w-full md:w-1/3 flex flex-col space-y-2">
-                    <Label>Tanggal Modul 1 ({kelasName})</Label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant={'outline'}
-                          className={cn(
-                            'w-full justify-start text-left font-normal',
-                            !state.kelasSettings[i]?.tanggalMulai && 'text-muted-foreground'
-                          )}
-                        >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {state.kelasSettings[i]?.tanggalMulai
-                            ? format(state.kelasSettings[i].tanggalMulai, 'PPP')
-                            : <span>Pilih tanggal</span>}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0">
-                        <Calendar
-                          mode="single"
-                          selected={state.kelasSettings[i]?.tanggalMulai}
-                          onSelect={(date) => state.updateKelasSetting(i, 'tanggalMulai', date)}
-                        />
-                      </PopoverContent>
-                    </Popover>
+                <div key={kelasName} className="p-4 rounded-xl border border-border/50 bg-muted/20 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Badge variant="default" className="font-mono text-xs px-2.5 py-0.5">
+                      {kelasName}
+                    </Badge>
+                    <span className="text-xs text-muted-foreground font-medium">Kelas #{i + 1}</span>
                   </div>
-                  
-                  <div className="w-full md:w-1/3 flex flex-col space-y-2">
-                    <Label>Jumlah Praktikan</Label>
-                    <Input
-                      type="number"
-                      min={1}
-                      value={state.kelasSettings[i]?.jumlahPraktikan || 0}
-                      onChange={(e) => state.updateKelasSetting(i, 'jumlahPraktikan', Number(e.target.value))}
-                    />
-                  </div>
-                  
-                  <div className="w-full md:w-1/3 flex flex-col space-y-2">
-                    <Label>Jumlah Asprak</Label>
-                    <Input
-                      type="number"
-                      min={1}
-                      value={state.kelasSettings[i]?.jumlahAsprak || 0}
-                      onChange={(e) => state.updateKelasSetting(i, 'jumlahAsprak', Number(e.target.value))}
-                    />
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-medium">Tanggal Modul 1</Label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant={'outline'}
+                            className={cn(
+                              'w-full justify-start text-left font-normal h-9 text-xs',
+                              !state.kelasSettings[i]?.tanggalMulai && 'text-muted-foreground'
+                            )}
+                          >
+                            <CalendarIcon className="mr-2 h-3.5 w-3.5" />
+                            {state.kelasSettings[i]?.tanggalMulai
+                              ? format(state.kelasSettings[i].tanggalMulai, 'PPP')
+                              : <span>Pilih tanggal</span>}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0">
+                          <Calendar
+                            mode="single"
+                            selected={state.kelasSettings[i]?.tanggalMulai}
+                            onSelect={(date) => state.updateKelasSetting(i, 'tanggalMulai', date)}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                    
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-medium">Jumlah Praktikan</Label>
+                      <Input
+                        type="number"
+                        min={1}
+                        value={state.kelasSettings[i]?.jumlahPraktikan || 0}
+                        onChange={(e) => state.updateKelasSetting(i, 'jumlahPraktikan', Number(e.target.value))}
+                        className="h-9 text-xs font-mono"
+                      />
+                    </div>
+                    
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-medium">Jumlah Asprak</Label>
+                      <Input
+                        type="number"
+                        min={1}
+                        value={state.kelasSettings[i]?.jumlahAsprak || 0}
+                        onChange={(e) => state.updateKelasSetting(i, 'jumlahAsprak', Number(e.target.value))}
+                        className="h-9 text-xs font-mono"
+                      />
+                    </div>
                   </div>
                 </div>
               ))}
@@ -250,14 +272,22 @@ export default function PresensiPage() {
           </Card>
         )}
 
-        <Card>
+        {/* Step 3: Assessment Options & Generate */}
+        <Card className="bg-card shadow-sm border-border/60">
           <CardHeader>
-            <CardTitle>Kolom Penilaian Opsional</CardTitle>
-            <CardDescription>
-              Pilih komponen nilai apa saja yang akan ada di setiap modul
-            </CardDescription>
+            <div className="flex justify-between items-center">
+              <div>
+                <CardTitle className="text-lg font-bold">3. Kolom Penilaian & Rekapitulasi</CardTitle>
+                <CardDescription>
+                  Pilih komponen penilaian modul dan validasi total bobot 100%
+                </CardDescription>
+              </div>
+              <Badge variant={state.isWeightValid ? 'default' : 'outline'} className={`font-mono text-xs ${!state.isWeightValid ? 'border-destructive/40 text-destructive bg-destructive/10' : ''}`}>
+                Total Bobot: {state.totalWeight}%
+              </Badge>
+            </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
             <OptionsToggles 
               opsi={state.opsi} 
               setOpsi={state.setOpsi} 
@@ -267,17 +297,28 @@ export default function PresensiPage() {
               loadingAsprak={data.loadingAsprak}
               hasPraktikum={!!state.selectedPraktikumId}
             />
+
             {!state.isWeightValid && state.totalWeight > 0 && (
-              <p className="text-sm text-destructive mt-4">
-                Total bobot saat ini: {state.totalWeight}%. Total bobot harus tepat 100%.
-              </p>
+              <Alert variant="destructive" className="mt-4">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle className="font-semibold">Bobot Penilaian Tidak Valid</AlertTitle>
+                <AlertDescription className="text-xs mt-1">
+                  Total bobot nilai saat ini adalah <strong>{state.totalWeight}%</strong>. Seluruh komponen penilaian bertipe angka harus berjumlah tepat <strong>100%</strong> sebelum file dapat di-generate.
+                </AlertDescription>
+              </Alert>
             )}
           </CardContent>
-          <CardFooter className="bg-muted/50 flex justify-end p-4 border-t">
+          <CardFooter className="bg-muted/20 flex flex-col sm:flex-row items-center justify-between p-4 border-t border-border/50 gap-3">
+            <p className="text-xs text-muted-foreground text-center sm:text-left">
+              {state.kelasNames.length === 0 
+                ? 'Tentukan minimal 1 kelas untuk mengaktifkan proses generate.'
+                : `Siap men-generate template untuk ${state.kelasNames.length} kelas dan ${state.jumlahModul} modul.`}
+            </p>
             <Button
               size="lg"
               onClick={handleGenerate}
               disabled={isGenerating || state.kelasNames.length === 0 || (!state.isWeightValid && state.totalWeight > 0)}
+              className="w-full sm:w-auto"
             >
               {isGenerating ? (
                 <>
