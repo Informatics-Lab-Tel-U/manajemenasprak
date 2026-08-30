@@ -1,18 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
-
-// Allowed official Telkom University email domains
-const ALLOWED_EMAIL_DOMAINS = [
-  'student.telkomuniversity.ac.id',
-  'telkomuniversity.ac.id',
-];
-
-function isTelkomUniversityEmail(email?: string): boolean {
-  if (!email) return false;
-  const domain = email.split('@')[1]?.toLowerCase();
-  return ALLOWED_EMAIL_DOMAINS.includes(domain);
-}
+import { isAllowedEmailDomain, AUTH_CONFIG } from '@/config/auth';
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
@@ -35,11 +24,11 @@ export async function GET(request: Request) {
     const user = data.user;
     const email = user.email?.toLowerCase() || '';
 
-    // 🛡️ SECURITY LAYER: Enforce Telkom University domain
-    if (!isTelkomUniversityEmail(email)) {
+    // 🛡️ SECURITY LAYER: Enforce allowed email domain
+    if (!isAllowedEmailDomain(email)) {
       await supabase.auth.signOut();
       return NextResponse.redirect(
-        `${origin}/login?error=invalid-domain`
+        `${origin}${AUTH_CONFIG.paths.login}?error=invalid-domain`
       );
     }
 

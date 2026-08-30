@@ -67,17 +67,19 @@ export const ROLE_ALLOWED_PATHS: Record<Role, string[]> = {
   ASPRAK_KOOR: ['/pelanggaran', '/panduan'],
 };
 
+import { AUTH_CONFIG } from './auth';
+
 /**
  * Paths that are always public (no auth required or accessed during unapproved states).
  */
 export const PUBLIC_PATHS = [
-  '/login',
+  AUTH_CONFIG.paths.login,
   '/auth',
-  '/maintenance',
-  '/pending-approval',
-  '/rejected',
-  '/verify-2fa',
-  '/setup-2fa',
+  AUTH_CONFIG.paths.maintenance,
+  AUTH_CONFIG.paths.pendingApproval,
+  AUTH_CONFIG.paths.rejected,
+  AUTH_CONFIG.paths.verify2fa,
+  AUTH_CONFIG.paths.setup2fa,
 ];
 
 /**

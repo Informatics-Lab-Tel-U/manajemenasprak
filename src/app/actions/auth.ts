@@ -1,6 +1,8 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
+import { AUTH_CONFIG, isMfaRequiredForRole } from '@/config/auth';
+import type { Role } from '@/config/rbac';
 
 export async function logout() {
   const supabase = await createClient();
@@ -65,16 +67,16 @@ export async function login(email: string, password: string, turnstileToken: str
         cache: 'no-store',
       });
 
-      let role: string | undefined;
+      let role: Role | undefined;
       if (meRes.ok) {
         const meData = await meRes.json();
         role = meData.data?.pengguna?.role;
       }
 
       if (aalData?.currentLevel === 'aal1' && aalData?.nextLevel === 'aal2') {
-        redirectTo = '/verify-2fa';
-      } else if (role === 'ADMIN' && aalData?.nextLevel !== 'aal2') {
-        redirectTo = '/setup-2fa';
+        redirectTo = AUTH_CONFIG.paths.verify2fa;
+      } else if (isMfaRequiredForRole(role) && aalData?.nextLevel !== 'aal2') {
+        redirectTo = AUTH_CONFIG.paths.setup2fa;
       }
     } catch (err) {
       console.error('[Login Action] Error checking MFA state:', err);

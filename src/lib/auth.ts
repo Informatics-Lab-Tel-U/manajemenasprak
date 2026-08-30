@@ -4,7 +4,8 @@ import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import { createClient } from '@/lib/supabase/server';
 import { logger } from '@/lib/logger';
-import type { Role } from '@/config/rbac';
+import { Role } from '@/config/rbac';
+import { AUTH_CONFIG, isMfaRequiredForRole } from '@/config/auth';
 import type { Pengguna } from '@/types/database';
 
 export type AuthUser = {
@@ -79,7 +80,7 @@ export const getCurrentUser = cache(async (): Promise<AuthUser | null> => {
  * Redirects to /login if the user is not authenticated.
  * Returns the authenticated user if they are logged in.
  */
-export async function requireAuth(redirectTo = '/login'): Promise<AuthUser> {
+export async function requireAuth(redirectTo = AUTH_CONFIG.paths.login): Promise<AuthUser> {
   const user = await getCurrentUser();
   if (!user) redirect(redirectTo);
 
@@ -89,11 +90,11 @@ export async function requireAuth(redirectTo = '/login'): Promise<AuthUser> {
     const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
 
     if (aalData?.currentLevel === 'aal1' && aalData?.nextLevel === 'aal2') {
-      redirect('/verify-2fa');
+      redirect(AUTH_CONFIG.paths.verify2fa);
     }
 
-    if (user.pengguna.role === 'ADMIN' && aalData?.nextLevel !== 'aal2') {
-      redirect('/setup-2fa');
+    if (isMfaRequiredForRole(user.pengguna.role) && aalData?.nextLevel !== 'aal2') {
+      redirect(AUTH_CONFIG.paths.setup2fa);
     }
   }
 
@@ -152,8 +153,8 @@ export async function requireRoleApi(
     };
   }
 
-  // Enforce MFA AAL2 for ADMIN users at route handler level (defense-in-depth)
-  if (user.pengguna.role === 'ADMIN') {
+  // Enforce MFA AAL2 for mandated roles at route handler level (defense-in-depth)
+  if (isMfaRequiredForRole(user.pengguna.role)) {
     const supabase = await createClient();
     const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
     if (aalData?.currentLevel !== 'aal2') {

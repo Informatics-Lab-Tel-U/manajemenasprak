@@ -1,6 +1,7 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
+import { AUTH_CONFIG } from '@/config/auth';
 
 export interface MfaFactorInfo {
   id: string;
@@ -90,7 +91,7 @@ export async function enrollTotp(): Promise<{
     // 2. Buat faktor TOTP baru
     const { data, error } = await supabase.auth.mfa.enroll({
       factorType: 'totp',
-      issuer: 'Informatics Lab Tel-U',
+      issuer: AUTH_CONFIG.mfaIssuer,
     });
 
     if (error) {
