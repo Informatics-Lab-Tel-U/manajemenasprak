@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 import { hasAccess, isPublicPath, ROLE_DEFAULT_REDIRECT, type Role } from '@/config/rbac';
+import { AUTH_CONFIG, isMfaRequiredForRole } from '@/config/auth';
 
 export async function updateSession(request: NextRequest) {
   // Prevent client spoofing of the auth header
@@ -127,11 +128,11 @@ export async function updateSession(request: NextRequest) {
     if (
       user &&
       pengguna &&
-      (pathname === '/login' ||
-        pathname === '/pending-approval' ||
-        pathname === '/rejected' ||
-        pathname === '/verify-2fa' ||
-        pathname === '/setup-2fa')
+      (pathname === AUTH_CONFIG.paths.login ||
+        pathname === AUTH_CONFIG.paths.pendingApproval ||
+        pathname === AUTH_CONFIG.paths.rejected ||
+        pathname === AUTH_CONFIG.paths.verify2fa ||
+        pathname === AUTH_CONFIG.paths.setup2fa)
     ) {
       // fall through
     } else {
@@ -141,9 +142,9 @@ export async function updateSession(request: NextRequest) {
 
   if (!user || !pengguna) {
     // Only redirect if it's not already login or public
-    if (pathname !== '/login' && !isPublicPath(pathname)) {
+    if (pathname !== AUTH_CONFIG.paths.login && !isPublicPath(pathname)) {
       const loginUrl = request.nextUrl.clone();
-      loginUrl.pathname = '/login';
+      loginUrl.pathname = AUTH_CONFIG.paths.login;
       return NextResponse.redirect(loginUrl);
     }
     return supabaseResponse;
@@ -158,9 +159,9 @@ export async function updateSession(request: NextRequest) {
 
   // 1. Handle PENDING approval status
   if (status === 'PENDING') {
-    if (pathname !== '/pending-approval') {
+    if (pathname !== AUTH_CONFIG.paths.pendingApproval) {
       const pendingUrl = request.nextUrl.clone();
-      pendingUrl.pathname = '/pending-approval';
+      pendingUrl.pathname = AUTH_CONFIG.paths.pendingApproval;
       return NextResponse.redirect(pendingUrl);
     }
     return supabaseResponse;
@@ -168,9 +169,9 @@ export async function updateSession(request: NextRequest) {
 
   // 2. Handle REJECTED status
   if (status === 'REJECTED') {
-    if (pathname !== '/rejected') {
+    if (pathname !== AUTH_CONFIG.paths.rejected) {
       const rejectedUrl = request.nextUrl.clone();
-      rejectedUrl.pathname = '/rejected';
+      rejectedUrl.pathname = AUTH_CONFIG.paths.rejected;
       return NextResponse.redirect(rejectedUrl);
     }
     return supabaseResponse;
@@ -182,27 +183,27 @@ export async function updateSession(request: NextRequest) {
 
     // A. User has enrolled 2FA and needs to complete AAL2 challenge
     if (aalData?.currentLevel === 'aal1' && aalData?.nextLevel === 'aal2') {
-      if (pathname !== '/verify-2fa') {
+      if (pathname !== AUTH_CONFIG.paths.verify2fa) {
         const verifyUrl = request.nextUrl.clone();
-        verifyUrl.pathname = '/verify-2fa';
+        verifyUrl.pathname = AUTH_CONFIG.paths.verify2fa;
         return NextResponse.redirect(verifyUrl);
       }
       return supabaseResponse;
     }
 
-    // B. Admin role MUST enroll in 2FA if not yet enrolled
-    if (role === 'ADMIN' && aalData?.nextLevel !== 'aal2') {
-      if (pathname !== '/setup-2fa') {
+    // B. Mandated roles MUST enroll in 2FA if not yet enrolled
+    if (isMfaRequiredForRole(role) && aalData?.nextLevel !== 'aal2') {
+      if (pathname !== AUTH_CONFIG.paths.setup2fa) {
         const setupUrl = request.nextUrl.clone();
-        setupUrl.pathname = '/setup-2fa';
+        setupUrl.pathname = AUTH_CONFIG.paths.setup2fa;
         return NextResponse.redirect(setupUrl);
       }
       return supabaseResponse;
     }
 
-    // C. User visiting 2FA pages while already fully authenticated (AAL2 or non-enrolled non-admin)
+    // C. User visiting 2FA pages while already fully authenticated (AAL2 or non-enrolled non-mandated)
     if (
-      (pathname === '/verify-2fa' || pathname === '/setup-2fa') &&
+      (pathname === AUTH_CONFIG.paths.verify2fa || pathname === AUTH_CONFIG.paths.setup2fa) &&
       aalData?.currentLevel === 'aal2'
     ) {
       const destination = role ? ROLE_DEFAULT_REDIRECT[role] : '/';
@@ -213,7 +214,7 @@ export async function updateSession(request: NextRequest) {
   }
 
   // 4. For ACTIVE users visiting pending/rejected pages, redirect to home
-  if (status === 'ACTIVE' && (pathname === '/pending-approval' || pathname === '/rejected')) {
+  if (status === 'ACTIVE' && (pathname === AUTH_CONFIG.paths.pendingApproval || pathname === AUTH_CONFIG.paths.rejected)) {
     const destination = role ? ROLE_DEFAULT_REDIRECT[role] : '/';
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = destination;
@@ -221,7 +222,7 @@ export async function updateSession(request: NextRequest) {
   }
 
   // Handle logged-in active user visiting /login — redirect to their home
-  if (pathname === '/login') {
+  if (pathname === AUTH_CONFIG.paths.login) {
     const destination = role ? ROLE_DEFAULT_REDIRECT[role] : '/';
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = destination;
@@ -231,7 +232,7 @@ export async function updateSession(request: NextRequest) {
   if (!role || pengguna?.deleted_at) {
     await supabase.auth.signOut();
     const loginUrl = request.nextUrl.clone();
-    loginUrl.pathname = '/login';
+    loginUrl.pathname = AUTH_CONFIG.paths.login;
     loginUrl.searchParams.set('error', 'no-profile');
     return NextResponse.redirect(loginUrl);
   }
