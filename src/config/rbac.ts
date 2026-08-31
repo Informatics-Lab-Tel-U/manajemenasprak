@@ -56,16 +56,12 @@ export const ROLE_ALLOWED_PATHS: Record<Role, string[]> = {
 };
 
 /**
- * Paths that are always public (no auth required or accessed during unapproved states).
+ * Paths that are completely public (accessible without any authentication).
  */
 export const PUBLIC_PATHS = [
   AUTH_CONFIG.paths.login,
   '/auth',
   AUTH_CONFIG.paths.maintenance,
-  AUTH_CONFIG.paths.pendingApproval,
-  AUTH_CONFIG.paths.rejected,
-  AUTH_CONFIG.paths.verify2fa,
-  AUTH_CONFIG.paths.setup2fa,
 ];
 
 /**

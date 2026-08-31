@@ -58,10 +58,12 @@ export async function updateSession(request: NextRequest) {
   ] = await Promise.all([
     supabase.auth.getUser(),
     supabase.auth.getSession(),
-    fetch(`${process.env.HONO_BACKEND_URL}/api/system/maintenance`, { cache: 'no-store' }).catch((err) => {
-      console.error('[Middleware] Failed to fetch maintenance status:', err);
-      return null;
-    }),
+    process.env.HONO_BACKEND_URL
+      ? fetch(`${process.env.HONO_BACKEND_URL}/api/system/maintenance`, {
+          cache: 'no-store',
+          signal: AbortSignal.timeout(2000),
+        }).catch(() => null)
+      : Promise.resolve(null),
   ]);
 
   const token = session?.access_token;
@@ -123,31 +125,21 @@ export async function updateSession(request: NextRequest) {
     return supabaseResponse;
   }
 
+  // Public paths handler
   if (isPublicPath(pathname)) {
-    // Allow logged-in users visiting auth flow pages to fall through and get routed based on status & MFA level
-    if (
-      user &&
-      pengguna &&
-      (pathname === AUTH_CONFIG.paths.login ||
-        pathname === AUTH_CONFIG.paths.pendingApproval ||
-        pathname === AUTH_CONFIG.paths.rejected ||
-        pathname === AUTH_CONFIG.paths.verify2fa ||
-        pathname === AUTH_CONFIG.paths.setup2fa)
-    ) {
-      // fall through
+    // If an authenticated user visits /login or /maintenance, fall through to status routing below
+    if (user && pengguna && (pathname === AUTH_CONFIG.paths.login || pathname === AUTH_CONFIG.paths.maintenance)) {
+      // fall through to status routing
     } else {
       return supabaseResponse;
     }
   }
 
+  // All non-public paths require authenticated user & valid profile
   if (!user || !pengguna) {
-    // Only redirect if it's not already login or public
-    if (pathname !== AUTH_CONFIG.paths.login && !isPublicPath(pathname)) {
-      const loginUrl = request.nextUrl.clone();
-      loginUrl.pathname = AUTH_CONFIG.paths.login;
-      return NextResponse.redirect(loginUrl);
-    }
-    return supabaseResponse;
+    const loginUrl = request.nextUrl.clone();
+    loginUrl.pathname = AUTH_CONFIG.paths.login;
+    return NextResponse.redirect(loginUrl);
   }
 
   if (penggunaError) {

@@ -2,13 +2,15 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import { LogOut, RefreshCw, CheckCircle2 } from 'lucide-react';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { LogOut, RefreshCw, CheckCircle2, Clock, Loader2 } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { AuthBrandingPanel } from '@/components/auth/AuthBrandingPanel';
 import { logout } from '@/app/actions/auth';
 import { createClient } from '@/lib/supabase/client';
-import { Spinner } from '@/components/ui/spinner';
+import { AUTH_CONFIG } from '@/config/auth';
+import packageInfo from '../../../../package.json';
 
 export default function PendingApprovalPage() {
   const router = useRouter();
@@ -43,7 +45,7 @@ export default function PendingApprovalPage() {
     } catch (err) {
       console.error('Logout error:', err);
     } finally {
-      window.location.href = '/login';
+      window.location.href = AUTH_CONFIG.paths.login;
     }
   }
 
@@ -54,54 +56,96 @@ export default function PendingApprovalPage() {
   }
 
   return (
-    <div className="min-h-svh w-full flex items-center justify-center p-4 md:p-8 bg-background">
-      <Card className="max-w-lg w-full border-border/60 shadow-md">
-        <CardHeader className="text-center pb-2 pt-2">
-          <CardTitle className="text-2xl font-bold tracking-tight">Menunggu Persetujuan Akses</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4 text-sm">
-          {/* User info container */}
-          <div className="p-4 rounded-xl bg-muted/40 border border-border/40 space-y-2">
-            <div className="flex justify-between items-center text-xs text-muted-foreground">
-              <span className="flex items-center gap-1.5 font-medium">
-                Microsoft Account
-              </span>
-              <span className="font-mono text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                <CheckCircle2 className="size-3" /> Terverifikasi SSO
-              </span>
+    <div className="relative flex flex-col md:flex-row min-h-svh w-full">
+      <AuthBrandingPanel />
+
+      {/* Right panel */}
+      <div className="w-full md:w-[48%] lg:w-[40%] shrink-0 bg-background flex flex-col justify-center items-center py-8 z-10 rounded-t-3xl md:rounded-none md:h-dvh shadow-[0_-10px_40px_rgba(0,0,0,0.1)] md:shadow-none">
+        <div className="p-6 w-full max-w-md lg:w-[80%]">
+          <div className="flex flex-col gap-6">
+            <div>
+              <h2 className="text-2xl font-semibold tracking-tight">Menunggu Persetujuan</h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                Akun Anda belum diizinkan mengakses sistem
+              </p>
             </div>
-            <div className="font-semibold text-foreground text-base truncate">
-              {userName || 'Memuat...'}
-            </div>
-            <div className="text-muted-foreground font-mono text-xs truncate">
-              {userEmail || '...'}
+
+            <Card className="glass border-border/60 shadow-xl">
+              <CardContent className="flex flex-col gap-5">
+                {/* Status indicator */}
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/40 border border-border/50">
+                  <Clock className="size-5 text-muted-foreground shrink-0" />
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Permintaan akses Anda sedang ditinjau. Halaman ini akan otomatis diperbarui
+                    setelah administrator memberikan persetujuan.
+                  </p>
+                </div>
+
+                {/* User info */}
+                <div className="space-y-1.5">
+                  <p className="text-xs font-medium text-muted-foreground">Akun yang masuk</p>
+                  <div className="p-3 rounded-lg border border-border/50 bg-muted/30 space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-foreground truncate">
+                        {userName || (
+                          <span className="text-muted-foreground">Memuat...</span>
+                        )}
+                      </span>
+                      <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 flex items-center gap-1 shrink-0 ml-2">
+                        <CheckCircle2 className="size-3" />
+                        SSO
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground font-mono truncate">
+                      {userEmail || '—'}
+                    </p>
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Actions */}
+                <div className="flex flex-col gap-2">
+                  <Button
+                    onClick={handleCheckStatus}
+                    disabled={isChecking}
+                    className="w-full gap-2"
+                  >
+                    {isChecking ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : (
+                      <RefreshCw className="size-4" />
+                    )}
+                    Periksa Status Akses
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-muted-foreground">Ingin ganti akun?</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleLogout}
+                disabled={isLoggingOut}
+                className="text-xs"
+              >
+                {isLoggingOut ? (
+                  <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <LogOut className="mr-1.5 h-3.5 w-3.5" />
+                )}
+                Keluar
+              </Button>
             </div>
           </div>
-        </CardContent>
+        </div>
+      </div>
 
-        <Separator className="bg-border/50" />
-
-        <CardFooter className="pt-4 pb-6 flex flex-col sm:flex-row gap-3">
-          <Button
-            variant="outline"
-            onClick={handleLogout}
-            disabled={isLoggingOut}
-            className="w-full sm:w-auto flex-1 gap-2"
-          >
-            {isLoggingOut ? <Spinner className="size-4" /> : <LogOut className="size-4" />}
-            Keluar / Ganti Akun
-          </Button>
-
-          <Button
-            onClick={handleCheckStatus}
-            disabled={isChecking}
-            className="w-full sm:w-auto flex-1 gap-2"
-          >
-            <RefreshCw className={`size-4 ${isChecking ? 'animate-spin' : ''}`} />
-            Periksa Status Akses
-          </Button>
-        </CardFooter>
-      </Card>
+      <div className="absolute bottom-4 right-4 md:bottom-6 md:left-8 md:right-auto z-50 text-[10px] md:text-xs font-mono font-semibold text-muted-foreground/50 pointer-events-none">
+        v{packageInfo.version}
+      </div>
     </div>
   );
 }
