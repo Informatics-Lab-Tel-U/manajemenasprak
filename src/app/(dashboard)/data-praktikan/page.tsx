@@ -1,4 +1,6 @@
-import PraktikanClientPage from '@/components/praktikan/PraktikanClientPage';
+import { PraktikanClientWrapper } from './PraktikanClientWrapper';
+
+export const dynamic = 'force-dynamic';
 
 export const metadata = {
   title: 'Data Praktikan | Manajemen Asprak',
@@ -6,5 +8,5 @@ export const metadata = {
 };
 
 export default function DataPraktikanPage() {
-  return <PraktikanClientPage />;
+  return <PraktikanClientWrapper />;
 }

@@ -1,5 +1,5 @@
 import { requireAuth } from '@/lib/auth';
-import PelanggaranClientPage from './PelanggaranClientPage';
+import { PelanggaranClientWrapper } from './PelanggaranClientWrapper';
 import * as pelanggaranService from '@/services/pelanggaranService';
 import * as praktikumService from '@/services/praktikumService';
 
@@ -33,7 +33,7 @@ export default async function PelanggaranPage() {
     .reverse();
 
   return (
-    <PelanggaranClientPage
+    <PelanggaranClientWrapper
       initialPraktikumList={praktikumList}
       initialTahunAjaranList={tahunAjaranList}
       initialCountMap={countMap}
