@@ -1,6 +1,6 @@
 import { requireAuth } from '@/lib/auth';
 import { getAuditLogs } from '@/services/auditLogService';
-import AuditLogsClientPage from './AuditLogsClientPage';
+import { AuditLogsClientWrapper } from './AuditLogsClientWrapper';
 import { redirect } from 'next/navigation';
 
 export const dynamic = 'force-dynamic';
@@ -31,6 +31,6 @@ export default async function AuditLogsPage(props: {
   }
 
   return (
-    <AuditLogsClientPage logs={logs} totalCount={count} currentPage={page} pageSize={pageSize} />
+    <AuditLogsClientWrapper logs={logs} totalCount={count} currentPage={page} pageSize={pageSize} />
   );
 }

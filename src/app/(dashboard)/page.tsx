@@ -24,27 +24,26 @@ export default async function Home() {
   let initialMonitoringData: any[] = [];
 
   try {
-    // Fetch terms first so we can use the latest term for all other queries
-    initialTerms = (await fetchAvailableTerms()) || [];
-    latestTerm = initialTerms[0] ?? '';
-
     // Get active modul based on current date (WIB)
     const nowUtc = new Date();
     const nowWib = new Date(nowUtc.getTime() + 7 * 60 * 60 * 1000);
     const todayStr = nowWib.toISOString().split('T')[0];
 
-    const initialModuls = (await getModulScheduleByTerm(latestTerm)) || [];
+    const [termsRes, modulsRes, statsRes, jadwalRes, penggantiRes, monitoringRes] = await Promise.all([
+      fetchAvailableTerms(),
+      getModulScheduleByTerm('all'),
+      getStats('all'),
+      getJadwalByTerm('all'),
+      getJadwalPengganti(1),
+      getMonitoringLabs(),
+    ]);
+
+    initialTerms = termsRes || [];
+    const initialModuls = modulsRes || [];
     activeModul =
       initialModuls
         .filter((m) => m.tanggal_mulai && m.tanggal_mulai <= todayStr)
         .sort((a, b) => b.modul - a.modul)[0]?.modul || 1;
-
-    const [statsRes, jadwalRes, penggantiRes, monitoringRes] = await Promise.all([
-      getStats(latestTerm),
-      getJadwalByTerm(latestTerm),
-      getJadwalPengganti(activeModul),
-      getMonitoringLabs(),
-    ]);
 
     initialStats = statsRes;
     initialJadwal = jadwalRes || [];
