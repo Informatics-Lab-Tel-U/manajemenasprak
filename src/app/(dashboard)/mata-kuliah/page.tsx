@@ -17,21 +17,16 @@ export default async function MataKuliahPage() {
   let initialValidPraktikums: any[] = [];
 
   try {
-    const res1 = await Promise.all([
+    const [termsRes, pNamesRes, mkRes, pRes] = await Promise.all([
       getAvailableTerms(),
       getUniquePraktikumNames(),
+      getMataKuliahByTerm('all'),
+      getPraktikumByTerm('all'),
     ]);
-    terms = res1[0] || [];
-    praktikumNames = res1[1] || [];
-
-    const selectedTerm = terms[0] || 'all';
-
-    const res2 = await Promise.all([
-      getMataKuliahByTerm(selectedTerm),
-      getPraktikumByTerm(selectedTerm),
-    ]);
-    initialGroupedData = res2[0] || [];
-    initialValidPraktikums = res2[1] || [];
+    terms = termsRes || [];
+    praktikumNames = pNamesRes || [];
+    initialGroupedData = mkRes || [];
+    initialValidPraktikums = pRes || [];
   } catch (error) {
     console.error('[MataKuliahPage] SSR fetch error:', error);
   }
