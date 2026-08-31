@@ -1,4 +1,3 @@
-import { Suspense } from 'react';
 import { requireAuth } from '@/lib/auth';
 import {
   getCachedAvailableTerms,
@@ -6,8 +5,7 @@ import {
   getExistingCodes,
   getCachedAllAsprak,
 } from '@/services/asprakService';
-import AsprakClientPage from './AsprakClientPage';
-import AsprakLoading from './loading';
+import { AsprakClientWrapper } from './AsprakClientWrapper';
 
 export const dynamic = 'force-dynamic';
 
@@ -42,14 +40,12 @@ export default async function AsprakPage() {
   }));
 
   return (
-    <Suspense fallback={<AsprakLoading />}>
-      <AsprakClientPage
-        initialAsprakList={initialAsprakList}
-        initialTerms={terms}
-        initialExistingCodes={existingCodes}
-        initialExistingNims={initialExistingNims}
-        initialExistingAspraks={initialExistingAspraks}
-      />
-    </Suspense>
+    <AsprakClientWrapper
+      initialAsprakList={initialAsprakList}
+      initialTerms={terms}
+      initialExistingCodes={existingCodes}
+      initialExistingNims={initialExistingNims}
+      initialExistingAspraks={initialExistingAspraks}
+    />
   );
 }
