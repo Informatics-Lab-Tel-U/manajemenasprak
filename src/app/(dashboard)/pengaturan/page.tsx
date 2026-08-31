@@ -1,8 +1,6 @@
-import { Suspense } from 'react';
 import { requireAuth } from '@/lib/auth';
 import { getAllMaintenanceStatuses } from '@/services/systemService';
-import PengaturanClientPage from './PengaturanClientPage';
-import PengaturanLoading from './loading';
+import { PengaturanClientWrapper } from './PengaturanClientWrapper';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,12 +15,10 @@ export default async function PengaturanPage() {
   }
 
   return (
-    <Suspense fallback={<PengaturanLoading />}>
-      <PengaturanClientPage
-        initialIsMaintenance={initialMaintenanceStatuses.dashboard}
-        initialMaintenanceStatuses={initialMaintenanceStatuses}
-        initialUserRole={authUser.pengguna.role}
-      />
-    </Suspense>
+    <PengaturanClientWrapper
+      initialIsMaintenance={initialMaintenanceStatuses.dashboard}
+      initialMaintenanceStatuses={initialMaintenanceStatuses}
+      initialUserRole={authUser.pengguna.role}
+    />
   );
 }
