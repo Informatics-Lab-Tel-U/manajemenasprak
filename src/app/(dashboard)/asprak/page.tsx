@@ -20,14 +20,16 @@ export default async function AsprakPage() {
   let initialAsprakList: any[] = [];
 
   try {
-    const res = await Promise.all([
+    const [termsRes, codesRes, allAsprakRes, asprakListRes] = await Promise.all([
       getCachedAvailableTerms(),
       getExistingCodes(),
       getCachedAllAsprak(),
+      getCachedAspraksWithAssignments('all'),
     ]);
-    allAsprak = res[2] || [];
-
-    initialAsprakList = await getCachedAspraksWithAssignments(terms[0] || 'all');
+    terms = termsRes || [];
+    existingCodes = codesRes || [];
+    allAsprak = allAsprakRes || [];
+    initialAsprakList = asprakListRes || [];
   } catch (error) {
     console.error('[AsprakPage] SSR data fetch error:', error);
   }

@@ -16,16 +16,14 @@ export default async function JadwalPage() {
   let initialJadwal: Jadwal[] = [];
 
   try {
-    // Parallelize initial data fetching with cached versions for deduplication
-    const res = await Promise.all([
+    const [termsRes, mkRes, jadwalRes] = await Promise.all([
       getCachedAvailableTerms(),
       getAllMataKuliah(),
+      getCachedJadwalByTerm('all'),
     ]);
-    terms = res[0] || [];
-    mataKuliahList = res[1] || [];
-
-    // Fetch initial schedule for the latest term with cached version
-    initialJadwal = await getCachedJadwalByTerm(terms[0] || 'all');
+    terms = termsRes || [];
+    mataKuliahList = mkRes || [];
+    initialJadwal = jadwalRes || [];
   } catch (error) {
     console.error('[JadwalPage] SSR initial data fetch failed, using fallback empty array:', error);
   }
