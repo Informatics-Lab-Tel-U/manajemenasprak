@@ -14,19 +14,14 @@ export default async function ManajemenAkunPage() {
   let requests: UserWithEmail[] = [];
 
   try {
-    const [usersRes, requestsRes] = await Promise.all([
-      honoFetch<UserWithEmail[]>('/api/admin/users'),
-      honoFetch<UserWithEmail[]>('/api/admin/users/requests'),
-    ]);
+    const usersRes = await honoFetch<UserWithEmail[]>('/api/admin/users');
 
     if (usersRes.ok && usersRes.data) {
       users = usersRes.data.filter((u) => !u.deleted_at && (u.status === 'ACTIVE' || !u.status));
-    }
-    if (requestsRes.ok && requestsRes.data) {
-      requests = requestsRes.data.filter((u) => !u.deleted_at);
+      requests = usersRes.data.filter((u) => !u.deleted_at && (u.status === 'PENDING' || u.status === 'REJECTED'));
     }
   } catch (error) {
-    console.error('Failed to fetch admin users or access requests:', error);
+    console.error('Failed to fetch admin users:', error);
   }
 
   return <ManajemenAkunClientPage users={users} requests={requests} />;

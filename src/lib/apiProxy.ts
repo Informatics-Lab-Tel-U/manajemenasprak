@@ -30,12 +30,10 @@ export async function forwardToHono(request: NextRequest, customPath?: string) {
 
     if (!authHeader) {
       try {
-        const supabase = await createClient();
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-        if (session?.access_token) {
-          authHeader = `Bearer ${session.access_token}`;
+        const { getCurrentUser } = await import('@/lib/auth');
+        const authUser = await getCurrentUser();
+        if (authUser?.token) {
+          authHeader = `Bearer ${authUser.token}`;
         }
       } catch {
         // Fallback for unauthenticated requests

@@ -248,6 +248,7 @@ export async function updateSession(request: NextRequest) {
   const authUser = {
     id: user.id,
     email: user.email ?? '',
+    token: token ?? '',
     pengguna,
   };
   requestHeaders.set('x-auth-user', Buffer.from(JSON.stringify(authUser)).toString('base64'));

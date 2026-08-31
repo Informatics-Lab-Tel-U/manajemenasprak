@@ -25,12 +25,10 @@ export async function honoFetch<T = any>(
 
   if (!authHeader && !useServiceRole) {
     try {
-      const supabase = await createClient();
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (session?.access_token) {
-        authHeader = `Bearer ${session.access_token}`;
+      const { getCurrentUser } = await import('@/lib/auth');
+      const authUser = await getCurrentUser();
+      if (authUser?.token) {
+        authHeader = `Bearer ${authUser.token}`;
       }
     } catch {
       // Fallback if no active session

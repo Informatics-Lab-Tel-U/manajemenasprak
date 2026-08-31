@@ -75,28 +75,9 @@ export const getCurrentUser = cache(async (): Promise<AuthUser | null> => {
   }
 });
 
-/**
- * Server-side auth guard.
- * Redirects to /login if the user is not authenticated.
- * Returns the authenticated user if they are logged in.
- */
 export async function requireAuth(redirectTo = AUTH_CONFIG.paths.login): Promise<AuthUser> {
   const user = await getCurrentUser();
   if (!user) redirect(redirectTo);
-
-  // Enforce MFA for active users at Server Component level (zero-bypass protection)
-  if (user.pengguna.status === 'ACTIVE') {
-    const supabase = await createClient();
-    const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-
-    if (aalData?.currentLevel === 'aal1' && aalData?.nextLevel === 'aal2') {
-      redirect(AUTH_CONFIG.paths.verify2fa);
-    }
-
-    if (isMfaRequiredForRole(user.pengguna.role) && aalData?.nextLevel !== 'aal2') {
-      redirect(AUTH_CONFIG.paths.setup2fa);
-    }
-  }
 
   return user;
 }
