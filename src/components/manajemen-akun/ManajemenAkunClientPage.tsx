@@ -64,7 +64,7 @@ import { RejectRequestModal } from './RejectRequestModal';
 import type { Pengguna } from '@/types/database';
 import type { Role } from '@/config/rbac';
 
-type UserWithEmail = Pengguna & { email: string; auth_created_at?: string };
+type UserWithEmail = Pengguna & { email: string; auth_created_at?: string; provider?: string };
 
 const ROLE_BADGE: Record<Role, { label: string; variant: 'default' | 'secondary' | 'outline' }> = {
   ADMIN: { label: 'Admin', variant: 'default' },
@@ -109,7 +109,16 @@ export function ManajemenAkunClientPage({
       {
         accessorKey: 'email',
         header: 'Email',
-        cell: ({ row }) => <span className="text-muted-foreground font-mono text-xs">{row.original.email}</span>,
+        cell: ({ row }) => (
+          <div className="flex items-center gap-1.5">
+            <span className="text-muted-foreground font-mono text-xs">{row.original.email}</span>
+            {row.original.provider === 'azure' && (
+              <Badge variant="outline" className="text-[10px] px-1.5 py-0 font-normal text-muted-foreground border-border/60">
+                SSO
+              </Badge>
+            )}
+          </div>
+        ),
       },
       {
         accessorKey: 'role',
@@ -142,36 +151,41 @@ export function ManajemenAkunClientPage({
       {
         id: 'actions',
         header: () => <div className="text-center">Aksi</div>,
-        cell: ({ row }) => (
-          <div className="flex justify-center gap-1">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setPasswordTarget(row.original)}
-              title="Ubah Kata Sandi"
-              className="text-primary hover:text-primary"
-            >
-              <Key className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setEditTarget(row.original)}
-              title="Edit"
-            >
-              <Pencil className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setDeleteTarget(row.original)}
-              title="Hapus"
-              className="text-destructive hover:text-destructive"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>
-        ),
+        cell: ({ row }) => {
+          const isSso = row.original.provider === 'azure';
+          return (
+            <div className="flex justify-center gap-1">
+              {!isSso && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setPasswordTarget(row.original)}
+                  title="Ubah Kata Sandi"
+                  className="text-primary hover:text-primary"
+                >
+                  <Key className="h-4 w-4" />
+                </Button>
+              )}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setEditTarget(row.original)}
+                title="Edit"
+              >
+                <Pencil className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setDeleteTarget(row.original)}
+                title="Hapus"
+                className="text-destructive hover:text-destructive"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          );
+        },
       },
     ],
     []

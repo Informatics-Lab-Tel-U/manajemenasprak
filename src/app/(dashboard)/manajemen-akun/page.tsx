@@ -5,7 +5,7 @@ import { honoFetch } from '@/lib/honoClient';
 
 export const dynamic = 'force-dynamic';
 
-type UserWithEmail = Pengguna & { email: string; auth_created_at?: string };
+type UserWithEmail = Pengguna & { email: string; auth_created_at?: string; provider?: string };
 
 export default async function ManajemenAkunPage() {
   await requireRole(['ADMIN'], '/');
