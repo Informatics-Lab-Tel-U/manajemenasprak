@@ -12,11 +12,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Key,
-  UserCheck,
-  ShieldX,
   Clock,
-  CheckCircle2,
-  AlertCircle,
   Users,
 } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
@@ -211,23 +207,20 @@ export function ManajemenAkunClientPage({
           const status = row.original.status;
           if (status === 'PENDING') {
             return (
-              <Badge variant="outline" className="border-amber-500/40 text-amber-600 dark:text-amber-400 bg-amber-500/10 gap-1">
-                <Clock className="h-3 w-3" />
+              <Badge variant="outline">
                 Menunggu Persetujuan
               </Badge>
             );
           }
           if (status === 'REJECTED') {
             return (
-              <Badge variant="outline" className="border-destructive/40 text-destructive bg-destructive/10 gap-1">
-                <AlertCircle className="h-3 w-3" />
+              <Badge variant="destructive">
                 Ditolak
               </Badge>
             );
           }
           return (
-            <Badge variant="outline" className="border-emerald-500/40 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 gap-1">
-              <CheckCircle2 className="h-3 w-3" />
+            <Badge variant="secondary">
               Disetujui
             </Badge>
           );
@@ -252,24 +245,19 @@ export function ManajemenAkunClientPage({
         id: 'request_actions',
         header: () => <div className="text-center">Aksi</div>,
         cell: ({ row }) => (
-          <div className="flex justify-center gap-2">
+          <div className="flex justify-center gap-1.5">
             <Button
               size="sm"
-              variant="default"
               onClick={() => setApproveTarget(row.original)}
-              className="gap-1.5 h-8 px-2.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
             >
-              <UserCheck className="h-3.5 w-3.5" />
               Setujui
             </Button>
             {row.original.status !== 'REJECTED' && (
               <Button
                 size="sm"
-                variant="outline"
+                variant="destructive-outline"
                 onClick={() => setRejectTarget(row.original)}
-                className="gap-1.5 h-8 px-2.5 text-xs text-destructive hover:bg-destructive/10 border-destructive/30"
               >
-                <ShieldX className="h-3.5 w-3.5" />
                 Tolak
               </Button>
             )}
@@ -341,7 +329,7 @@ export function ManajemenAkunClientPage({
             <Clock className="h-4 w-4" />
             Permintaan Akses
             {pendingCount > 0 && (
-              <Badge className="ml-1 px-1.5 py-0 text-[10px] bg-amber-500 text-white font-mono rounded-full">
+              <Badge variant="secondary" className="ml-1 px-1.5 py-0 text-[10px]">
                 {pendingCount}
               </Badge>
             )}

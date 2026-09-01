@@ -2,7 +2,6 @@
 
 import * as React from 'react';
 import { toast } from 'sonner';
-import { ShieldCheck, UserCheck, Building2 } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
 import {
@@ -44,7 +43,7 @@ interface ApproveRequestModalProps {
 
 const ROLE_OPTIONS: { value: Role; label: string; desc: string }[] = [
   { value: 'ASLAB', label: 'Asisten Laboratorium', desc: 'Akses penuh fitur operasional praktikum & modul' },
-  { value: 'ASPRAK_KOOR', label: 'Koordinator Asprak', desc: 'Akses terbatas untuk monitoring & pelanggaran mata praktikum terkait' },
+  { value: 'ASPRAK_KOOR', label: 'Koordinator Asprak', desc: 'Monitoring & pelanggaran mata praktikum terkait' },
   { value: 'ADMIN', label: 'Administrator', desc: 'Akses penuh seluruh sistem dan manajemen akun' },
 ];
 
@@ -95,7 +94,7 @@ export function ApproveRequestModal({
     if (!user) return;
 
     if (role === 'ASPRAK_KOOR' && !selectedPraktikumId) {
-      toast.error('Harap pilih mata praktikum binaan untuk Koordinator Asprak.');
+      toast.error('Harap pilih mata praktikum untuk Koordinator Asprak.');
       return;
     }
 
@@ -115,7 +114,7 @@ export function ApproveRequestModal({
         throw new Error(json.error || 'Gagal menyetujui akun.');
       }
 
-      toast.success(`Akun "${user.nama_lengkap}" berhasil disetujui sebagai ${role}.`);
+      toast.success(`Akun "${user.nama_lengkap}" berhasil disetujui.`);
       onOpenChange(false);
       onSuccess();
     } catch (err: any) {
@@ -131,66 +130,45 @@ export function ApproveRequestModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-xl">
-            <UserCheck className="h-5 w-5 text-emerald-500" />
-            Setujui Permintaan Akses
-          </DialogTitle>
+          <DialogTitle>Setujui Permintaan Akses</DialogTitle>
           <DialogDescription>
-            Tentukan hak akses dan peran sistem untuk akun yang mendaftar melalui SSO Telkom University.
+            Tentukan peran untuk akun <strong>{user.nama_lengkap}</strong> ({user.email}).
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-2">
-          {/* User Preview Box */}
-          <div className="p-3.5 rounded-lg bg-muted/50 border border-border/60 space-y-1">
-            <div className="text-xs text-muted-foreground font-medium flex items-center gap-1.5">
-              <Building2 className="h-3.5 w-3.5" /> Akun Microsoft Terverifikasi
-            </div>
-            <div className="font-semibold text-foreground text-sm">{user.nama_lengkap}</div>
-            <div className="font-mono text-xs text-muted-foreground">{user.email}</div>
-          </div>
-
           {/* Role Selection */}
           <div className="space-y-2">
-            <Label className="text-sm font-medium">Pilih Peran (Role)</Label>
+            <Label className="text-sm font-medium">Pilih Peran</Label>
             <RadioGroup
               value={role}
               onValueChange={(val) => setRole(val as Role)}
-              className="gap-2.5"
+              className="gap-2"
             >
               {ROLE_OPTIONS.map((opt) => (
-                <FieldLabel
-                  key={opt.value}
-                  htmlFor={`role-${opt.value}`}
-                  className={`border rounded-lg p-3 cursor-pointer transition-all flex items-start gap-3 ${
-                    role === opt.value
-                      ? 'border-primary bg-primary/5 shadow-sm'
-                      : 'border-border/60 hover:bg-muted/30'
-                  }`}
-                >
-                  <RadioGroupItem value={opt.value} id={`role-${opt.value}`} className="mt-0.5" />
-                  <FieldContent className="p-0 space-y-0.5">
-                    <FieldTitle className="text-sm font-medium leading-none">{opt.label}</FieldTitle>
-                    <FieldDescription className="text-xs text-muted-foreground">{opt.desc}</FieldDescription>
-                  </FieldContent>
+                <FieldLabel key={opt.value} htmlFor={`role-${opt.value}`}>
+                  <Field orientation="horizontal">
+                    <RadioGroupItem value={opt.value} id={`role-${opt.value}`} />
+                    <FieldContent>
+                      <FieldTitle>{opt.label}</FieldTitle>
+                      <FieldDescription>{opt.desc}</FieldDescription>
+                    </FieldContent>
+                  </Field>
                 </FieldLabel>
               ))}
             </RadioGroup>
           </div>
 
-          {/* If Koordinator Asprak -> Pick Practicum */}
+          {/* Praktikum picker for ASPRAK_KOOR */}
           {role === 'ASPRAK_KOOR' && (
-            <div className="space-y-2 pt-1">
-              <Label className="text-sm font-medium">Pilih Mata Praktikum Binaan</Label>
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Mata Praktikum Binaan</Label>
               {loadingPraktikum ? (
                 <div className="flex items-center gap-2 text-xs text-muted-foreground py-2">
-                  <Spinner className="h-4 w-4" /> Memuat data praktikum...
+                  <Spinner className="h-4 w-4" /> Memuat...
                 </div>
               ) : (
-                <Select
-                  value={selectedPraktikumId}
-                  onValueChange={setSelectedPraktikumId}
-                >
+                <Select value={selectedPraktikumId} onValueChange={setSelectedPraktikumId}>
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Pilih praktikum..." />
                   </SelectTrigger>
@@ -207,13 +185,13 @@ export function ApproveRequestModal({
           )}
         </div>
 
-        <DialogFooter className="gap-2 sm:gap-0">
+        <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading}>
             Batal
           </Button>
-          <Button onClick={handleApprove} disabled={isLoading} className="gap-2">
-            {isLoading ? <Spinner className="h-4 w-4" /> : <ShieldCheck className="h-4 w-4" />}
-            Setujui & Berikan Akses
+          <Button onClick={handleApprove} disabled={isLoading}>
+            {isLoading ? <Spinner className="h-4 w-4" /> : null}
+            Setujui
           </Button>
         </DialogFooter>
       </DialogContent>
