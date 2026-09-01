@@ -112,17 +112,6 @@ export default function Setup2FAPage() {
     }
   }
 
-  if (isInitializing) {
-    return (
-      <div className="min-h-svh w-full flex items-center justify-center p-4 bg-background">
-        <div className="flex flex-col items-center gap-3">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-          <p className="text-sm text-muted-foreground">Menyiapkan pendaftaran 2FA...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="relative flex flex-col md:flex-row min-h-svh w-full">
       <AuthBrandingPanel />
@@ -140,123 +129,132 @@ export default function Setup2FAPage() {
 
             <Card className="glass border-border/60 shadow-xl">
               <CardContent className="flex flex-col gap-5">
-                {error && (
-                  <Alert variant="destructive">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription className="text-xs leading-relaxed">{error}</AlertDescription>
-                  </Alert>
-                )}
-
-                {/* Step 1: Scan QR */}
-                <div className="space-y-3">
-                  <p className="text-xs font-semibold text-foreground">
-                    1. Pindai QR Code dengan Aplikasi Authenticator
-                  </p>
-                  <div className="flex justify-center">
-                    {qrCodeSvg ? (
-                      <div
-                        className="bg-white p-3 rounded-lg border shadow-sm inline-block"
-                        dangerouslySetInnerHTML={{ __html: qrCodeSvg }}
-                      />
-                    ) : (
-                      <div className="size-48 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">
-                        Memuat QR...
-                      </div>
-                    )}
+                {isInitializing ? (
+                  <div className="flex flex-col items-center justify-center py-10 gap-3">
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground">Menyiapkan pendaftaran 2FA...</p>
                   </div>
+                ) : (
+                  <>
+                    {error && (
+                      <Alert variant="destructive">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertDescription className="text-xs leading-relaxed">{error}</AlertDescription>
+                      </Alert>
+                    )}
 
-                  {secret && (
-                    <div className="space-y-1.5">
-                      <span className="text-[11px] text-muted-foreground block">
-                        Atau masukkan kunci rahasia secara manual:
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <code className="px-2.5 py-1 text-xs bg-muted border rounded font-mono font-bold flex-1 select-all break-all">
-                          {secret}
-                        </code>
+                    {/* Step 1: Scan QR */}
+                    <div className="space-y-3">
+                      <p className="text-xs font-semibold text-foreground">
+                        1. Pindai QR Code dengan Aplikasi Authenticator
+                      </p>
+                      <div className="flex justify-center">
+                        {qrCodeSvg ? (
+                          <div
+                            className="bg-white p-3 rounded-lg border shadow-sm inline-block"
+                            dangerouslySetInnerHTML={{ __html: qrCodeSvg }}
+                          />
+                        ) : (
+                          <div className="size-48 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">
+                            Memuat QR...
+                          </div>
+                        )}
+                      </div>
+
+                      {secret && (
+                        <div className="space-y-1.5">
+                          <span className="text-[11px] text-muted-foreground block">
+                            Atau masukkan kunci rahasia secara manual:
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <code className="px-2.5 py-1 text-xs bg-muted border rounded font-mono font-bold flex-1 select-all break-all">
+                              {secret}
+                            </code>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={handleCopySecret}
+                              className="h-8 shrink-0 text-xs gap-1"
+                            >
+                              {copied ? (
+                                <Check className="size-3.5 text-green-500" />
+                              ) : (
+                                <Copy className="size-3.5" />
+                              )}
+                              {copied ? 'Tersalin' : 'Salin'}
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <Separator />
+
+                    {/* Step 2: Confirmation code */}
+                    <form onSubmit={handleVerify} className="flex flex-col gap-5">
+                      <div className="flex flex-col gap-3 items-center">
+                        <Label htmlFor="setupOtp" className="self-start text-sm font-medium">
+                          2. Masukkan 6 Digit Kode dari Aplikasi
+                        </Label>
+                        <InputOTP
+                          id="setupOtp"
+                          maxLength={6}
+                          value={code}
+                          onChange={handleCodeChange}
+                          disabled={isLoading}
+                          containerClassName="justify-center"
+                        >
+                          <InputOTPGroup>
+                            <InputOTPSlot index={0} />
+                            <InputOTPSlot index={1} />
+                            <InputOTPSlot index={2} />
+                          </InputOTPGroup>
+                          <InputOTPSeparator />
+                          <InputOTPGroup>
+                            <InputOTPSlot index={3} />
+                            <InputOTPSlot index={4} />
+                            <InputOTPSlot index={5} />
+                          </InputOTPGroup>
+                        </InputOTP>
+                      </div>
+
+                      <div className="flex flex-col gap-2.5 mt-2">
+                        <Button
+                          type="submit"
+                          className="w-full"
+                          disabled={isLoading || code.length !== 6 || !factorId}
+                        >
+                          {isLoading ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Mengaktifkan 2FA...
+                            </>
+                          ) : (
+                            'Konfirmasi & Aktifkan 2FA'
+                          )}
+                        </Button>
+
                         <Button
                           type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={handleCopySecret}
-                          className="h-8 shrink-0 text-xs gap-1"
+                          variant="destructive-outline"
+                          onClick={handleLogout}
+                          disabled={isLoggingOut}
+                          className="w-full"
                         >
-                          {copied ? (
-                            <Check className="size-3.5 text-green-500" />
+                          {isLoggingOut ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Keluar...
+                            </>
                           ) : (
-                            <Copy className="size-3.5" />
+                            'Keluar'
                           )}
-                          {copied ? 'Tersalin' : 'Salin'}
                         </Button>
                       </div>
-                    </div>
-                  )}
-                </div>
-
-                <Separator />
-
-                {/* Step 2: Confirmation code */}
-                <form onSubmit={handleVerify} className="flex flex-col gap-5">
-                  <div className="flex flex-col gap-3 items-center">
-                    <Label htmlFor="setupOtp" className="self-start text-sm font-medium">
-                      2. Masukkan 6 Digit Kode dari Aplikasi
-                    </Label>
-                    <InputOTP
-                      id="setupOtp"
-                      maxLength={6}
-                      value={code}
-                      onChange={handleCodeChange}
-                      disabled={isLoading}
-                      containerClassName="justify-center"
-                    >
-                      <InputOTPGroup>
-                        <InputOTPSlot index={0} />
-                        <InputOTPSlot index={1} />
-                        <InputOTPSlot index={2} />
-                      </InputOTPGroup>
-                      <InputOTPSeparator />
-                      <InputOTPGroup>
-                        <InputOTPSlot index={3} />
-                        <InputOTPSlot index={4} />
-                        <InputOTPSlot index={5} />
-                      </InputOTPGroup>
-                    </InputOTP>
-                  </div>
-
-                  <div className="flex flex-col gap-2.5 mt-2">
-                    <Button
-                      type="submit"
-                      className="w-full"
-                      disabled={isLoading || code.length !== 6 || !factorId}
-                    >
-                      {isLoading ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Mengaktifkan 2FA...
-                        </>
-                      ) : (
-                        'Konfirmasi & Aktifkan 2FA'
-                      )}
-                    </Button>
-
-                    <Button
-                      type="button"
-                      variant="destructive-outline"
-                      onClick={handleLogout}
-                      disabled={isLoggingOut}
-                      className="w-full"
-                    >
-                      {isLoggingOut ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Keluar...
-                        </>
-                      ) : (
-                        'Keluar'
-                      )}
-                    </Button>
-                  </div>
-                </form>
+                    </form>
+                  </>
+                )}
               </CardContent>
             </Card>
           </div>
