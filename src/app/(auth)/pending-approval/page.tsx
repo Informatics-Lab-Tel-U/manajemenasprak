@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import { LogOut, RefreshCw, CheckCircle2, Clock, Loader2 } from 'lucide-react';
+import { RefreshCw, CheckCircle2, Clock, Loader2 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -66,21 +66,12 @@ export default function PendingApprovalPage() {
             <div>
               <h2 className="text-2xl font-semibold tracking-tight">Menunggu Persetujuan</h2>
               <p className="text-sm text-muted-foreground mt-1">
-                Akun Anda belum diizinkan mengakses sistem
+                Permintaan akses sedang ditinjau oleh administrator
               </p>
             </div>
 
             <Card className="glass border-border/60 shadow-xl">
               <CardContent className="flex flex-col gap-5">
-                {/* Status indicator */}
-                <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/40 border border-border/50">
-                  <Clock className="size-5 text-muted-foreground shrink-0" />
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    Permintaan akses Anda sedang ditinjau. Halaman ini akan otomatis diperbarui
-                    setelah administrator memberikan persetujuan.
-                  </p>
-                </div>
-
                 {/* User info */}
                 <div className="space-y-1.5">
                   <p className="text-xs font-medium text-muted-foreground">Akun yang masuk</p>
@@ -102,10 +93,15 @@ export default function PendingApprovalPage() {
                   </div>
                 </div>
 
+                <div className="flex items-center gap-2.5 p-3 rounded-lg bg-muted/40 border border-border/50 text-xs text-muted-foreground">
+                  <Clock className="size-4 shrink-0" />
+                  <span>Akses akan otomatis aktif setelah disetujui.</span>
+                </div>
+
                 <Separator />
 
                 {/* Actions */}
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-2.5">
                   <Button
                     onClick={handleCheckStatus}
                     disabled={isChecking}
@@ -118,27 +114,26 @@ export default function PendingApprovalPage() {
                     )}
                     Periksa Status Akses
                   </Button>
+
+                  <Button
+                    type="button"
+                    variant="destructive-outline"
+                    onClick={handleLogout}
+                    disabled={isLoggingOut}
+                    className="w-full"
+                  >
+                    {isLoggingOut ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Keluar...
+                      </>
+                    ) : (
+                      'Keluar'
+                    )}
+                  </Button>
                 </div>
               </CardContent>
             </Card>
-
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-muted-foreground">Ingin ganti akun?</span>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleLogout}
-                disabled={isLoggingOut}
-                className="text-xs"
-              >
-                {isLoggingOut ? (
-                  <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  <LogOut className="mr-1.5 h-3.5 w-3.5" />
-                )}
-                Keluar
-              </Button>
-            </div>
           </div>
         </div>
       </div>
