@@ -74,38 +74,38 @@ const MemberListSection: React.FC<MemberListSectionProps> = ({
           <Plus className="w-4 h-4 mr-2" /> Tambah
         </Button>
       </div>
-      
+
       {members.length === 0 ? (
         <p className="text-sm text-muted-foreground italic">Belum ada foto.</p>
       ) : (
         <div className="flex flex-wrap gap-4">
           {members.map((member, idx) => (
-            <div 
-              key={member.id} 
+            <div
+              key={member.id}
               className={`relative group w-32 h-32 rounded-lg overflow-hidden border ${dragActiveIdx === idx ? 'border-primary ring-2 ring-primary/50' : 'border-border'} bg-muted flex-shrink-0 transition-all`}
               onDragEnter={(e) => handleDrag(e, idx)}
               onDragLeave={(e) => handleDrag(e, idx)}
               onDragOver={(e) => handleDrag(e, idx)}
               onDrop={(e) => handleDrop(e, idx)}
             >
-              <img 
-                src={member.image} 
-                alt="Foto" 
+              <img
+                src={member.image}
+                alt="Foto"
                 className="w-full h-full object-cover"
               />
               <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity gap-2">
-                <Button 
-                  size="icon" 
-                  variant="ghost" 
+                <Button
+                  size="icon"
+                  variant="ghost"
                   className="text-white hover:bg-white/20 hover:text-white h-8 w-8"
                   disabled={uploadingId === member.id}
                   onClick={() => onUploadClick(type, idx)}
                 >
                   <Upload className="w-4 h-4" />
                 </Button>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
+                <Button
+                  variant="ghost"
+                  size="icon"
                   className="text-red-400 hover:bg-red-500/20 hover:text-red-400 h-8 w-8"
                   onClick={() => onRemove(type, idx)}
                 >
@@ -134,9 +134,9 @@ export default function AslabTeamManager({ initialData }: AslabTeamManagerProps)
   });
   const [isPending, startTransition] = useTransition();
   const [uploadingId, setUploadingId] = useState<string | null>(null);
-  
+
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [activeUploadContext, setActiveUploadContext] = useState<{type: keyof AslabTeamData, index: number} | null>(null);
+  const [activeUploadContext, setActiveUploadContext] = useState<{ type: keyof AslabTeamData, index: number } | null>(null);
 
   const supabase = createClient();
 
@@ -145,7 +145,7 @@ export default function AslabTeamManager({ initialData }: AslabTeamManagerProps)
       id: crypto.randomUUID(),
       image: '/BGWID.jpg' // default image
     };
-    
+
     setData(prev => ({
       ...prev,
       [type]: [...prev[type], newMember]
@@ -186,9 +186,9 @@ export default function AslabTeamManager({ initialData }: AslabTeamManagerProps)
   const uploadFile = async (type: keyof AslabTeamData, index: number, file: File) => {
     const member = data[type][index];
     const memberId = member.id;
-    
+
     setUploadingId(memberId);
-    
+
     try {
       const fileExt = file.name.split('.').pop();
       const fileName = `${memberId}-${Date.now()}.${fileExt}`;
@@ -225,12 +225,12 @@ export default function AslabTeamManager({ initialData }: AslabTeamManagerProps)
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0 || !activeUploadContext) return;
-    
+
     const file = e.target.files[0];
     const { type, index } = activeUploadContext;
-    
+
     await uploadFile(type, index, file);
-    
+
     setActiveUploadContext(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
@@ -247,58 +247,58 @@ export default function AslabTeamManager({ initialData }: AslabTeamManagerProps)
   };
   return (
     <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
-      <input 
-        type="file" 
-        accept="image/*" 
-        className="hidden" 
+      <input
+        type="file"
+        accept="image/*"
+        className="hidden"
         ref={fileInputRef}
         onChange={handleFileChange}
       />
-      
+
       <div className="p-6 border-b border-border bg-muted/20">
         <div className="flex items-center gap-2">
           <h2 className="text-lg font-semibold">Foto Tim Asisten Laboratorium</h2>
         </div>
         <p className="text-sm text-muted-foreground mt-1">
-          Kelola foto tim (Koordinator, Wakil Koordinator, Reguler) yang akan ditampilkan di website publik.
+          Kelola foto ASLAB yang akan ditampilkan di publik.
         </p>
       </div>
-      
+
       <div className="p-6 space-y-8">
-        <MemberListSection 
-          title="Koordinator" 
-          type="koordinator" 
-          members={data.koordinator} 
+        <MemberListSection
+          title="Koordinator"
+          type="koordinator"
+          members={data.koordinator}
           uploadingId={uploadingId}
           onAdd={handleAddMember}
           onRemove={handleRemoveMember}
           onUploadClick={triggerFileUpload}
           onDropFile={uploadFile}
         />
-        <MemberListSection 
-          title="Wakil Koordinator" 
-          type="wakil_koordinator" 
-          members={data.wakil_koordinator} 
+        <MemberListSection
+          title="Wakil Koordinator"
+          type="wakil_koordinator"
+          members={data.wakil_koordinator}
           uploadingId={uploadingId}
           onAdd={handleAddMember}
           onRemove={handleRemoveMember}
           onUploadClick={triggerFileUpload}
           onDropFile={uploadFile}
         />
-        <MemberListSection 
-          title="Asisten Reguler" 
-          type="asisten" 
-          members={data.asisten} 
+        <MemberListSection
+          title="Asisten Reguler"
+          type="asisten"
+          members={data.asisten}
           uploadingId={uploadingId}
           onAdd={handleAddMember}
           onRemove={handleRemoveMember}
           onUploadClick={triggerFileUpload}
           onDropFile={uploadFile}
         />
-        
+
         <div className="pt-4 flex justify-end border-t border-border">
-          <Button 
-            onClick={handleSave} 
+          <Button
+            onClick={handleSave}
             disabled={isPending}
           >
             {isPending ? (

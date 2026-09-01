@@ -71,9 +71,6 @@ export function TwoFactorSecurityCard() {
         <CardHeader>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <div className="flex items-center gap-2.5">
-              <div className="size-9 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
-                <KeyRound className="size-4" />
-              </div>
               <div>
                 <CardTitle className="text-base font-bold">Autentikasi Dua Langkah (2FA)</CardTitle>
                 <CardDescription className="text-xs">
@@ -83,7 +80,7 @@ export function TwoFactorSecurityCard() {
             </div>
             {!isLoading && (
               <Badge variant={hasVerifiedFactor ? 'default' : 'outline'} className="text-xs self-start sm:self-auto font-mono">
-                {hasVerifiedFactor ? '2FA Aktif' : 'Belum Aktif'}
+                {hasVerifiedFactor ? 'Aktif' : 'Belum Aktif'}
               </Badge>
             )}
           </div>
@@ -92,19 +89,14 @@ export function TwoFactorSecurityCard() {
           <div className="p-4 rounded-xl border border-border/50 bg-muted/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="space-y-1">
               <div className="flex items-center gap-2">
-                {hasVerifiedFactor ? (
-                  <ShieldCheck className="size-4 text-primary" />
-                ) : (
-                  <ShieldAlert className="size-4 text-muted-foreground" />
-                )}
                 <span className="text-sm font-semibold">
                   {hasVerifiedFactor ? 'Perangkat Authenticator Terdaftar' : 'Autentikasi 2FA Belum Dikonfigurasi'}
                 </span>
               </div>
               <p className="text-xs text-muted-foreground leading-relaxed max-w-xl">
                 {hasVerifiedFactor
-                  ? 'Akun ini dilindungi dengan verifikasi dua langkah (AAL2). Setiap kali login, sistem akan meminta 6 digit kode dari aplikasi authenticator Anda.'
-                  : 'Sangat direkomendasikan untuk mengaktifkan 2FA guna mencegah pengambilalihan akun dan menjaga integritas data laboratorium.'}
+                  ? 'Akun ini dilindungi dengan verifikasi dua langkah (AAL2).'
+                  : 'Sangat direkomendasikan untuk mengaktifkan 2FA.'}
               </p>
             </div>
 

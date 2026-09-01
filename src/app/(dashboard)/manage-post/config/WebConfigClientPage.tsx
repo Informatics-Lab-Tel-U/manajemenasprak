@@ -1,12 +1,12 @@
 'use client';
 
 import React, { useState, useTransition } from 'react';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -19,9 +19,9 @@ interface WebConfigClientPageProps {
   initialActiveTerm: string | null;
 }
 
-export default function WebConfigClientPage({ 
-  initialTerms, 
-  initialActiveTerm 
+export default function WebConfigClientPage({
+  initialTerms,
+  initialActiveTerm
 }: WebConfigClientPageProps) {
   const [activeTerm, setActiveTerm] = useState<string>(initialActiveTerm || (initialTerms[0] ?? ''));
   const [isPending, startTransition] = useTransition();
@@ -67,15 +67,15 @@ export default function WebConfigClientPage({
         <div className="p-6 border-b border-border bg-muted/20">
           <h2 className="text-lg font-semibold">Tahun Ajaran Aktif (Jadwal Praktikum)</h2>
           <p className="text-sm text-muted-foreground mt-1">
-            Pilih Tahun Ajaran yang datanya akan ditampilkan di halaman Jadwal Praktikum publik.
+            Pilih Tahun Ajaran yang datanya akan ditampilkan publik.
           </p>
         </div>
-        
+
         <div className="p-6 space-y-6">
           <div className="space-y-3">
             <label className="text-sm font-medium">Tahun Ajaran</label>
-            <Select 
-              value={activeTerm} 
+            <Select
+              value={activeTerm}
               onValueChange={setActiveTerm}
               disabled={isPending || initialTerms.length === 0}
             >
@@ -99,8 +99,8 @@ export default function WebConfigClientPage({
           </div>
 
           <div className="pt-4 flex justify-end">
-            <Button 
-              onClick={handleSave} 
+            <Button
+              onClick={handleSave}
               disabled={isPending || !activeTerm || activeTerm === initialActiveTerm}
             >
               {isPending ? (
