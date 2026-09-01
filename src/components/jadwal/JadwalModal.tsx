@@ -105,14 +105,14 @@ export function JadwalModal({
           dosen: initialData.dosen || '',
         });
 
-        const currentMK = mataKuliahList.find((mk) => mk.id === initialData.id_mk);
-        if (currentMK?.praktikum) {
-          updateUiState({
-            selectedPraktikum: currentMK?.praktikum?.nama || '',
-            isPJJ: initialData.kelas.toUpperCase().includes('PJJ'),
-            isCustomJam: !initialData.sesi || initialData.sesi === 0
-          });
-        }
+        const currentMK = mataKuliahList.find((mk) => mk.id === initialData.id_mk) as any;
+        const prakName =
+          currentMK?.praktikum?.nama || currentMK?.mk_singkat || currentMK?.nama_singkat || '';
+        updateUiState({
+          selectedPraktikum: prakName,
+          isPJJ: (initialData.kelas || '').toUpperCase().includes('PJJ'),
+          isCustomJam: !initialData.sesi || initialData.sesi === 0,
+        });
       } else {
         const defaultDay = 'SENIN';
         const defaultSession = STATIC_SESSIONS[defaultDay][0];

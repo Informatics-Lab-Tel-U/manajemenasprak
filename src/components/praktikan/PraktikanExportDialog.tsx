@@ -40,7 +40,7 @@ export default function PraktikanExportDialog({
   isExporting,
 }: PraktikanExportDialogProps) {
   const [mode, setMode] = useState<'kelas' | 'all' | 'current'>('current');
-  const [selectedKelas, setSelectedKelas] = useState('');
+  const [selectedKelas, setSelectedKelas] = useState(() => (options.length > 0 ? options[0] : ''));
 
   const [prevOpen, setPrevOpen] = useState(open);
 

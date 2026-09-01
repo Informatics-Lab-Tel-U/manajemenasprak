@@ -201,7 +201,9 @@ export default function AsprakClientPage({
     const result = await getAssignments(asprak.id);
 
     // Map to IDs directly, getting all assignments across all terms
-    const currentAssignmentIds = result.map((a) => a.praktikum.id);
+    const currentAssignmentIds = (result || [])
+      .map((a) => a.praktikum?.id)
+      .filter((id): id is string => Boolean(id));
 
     setEditTarget({
       asprak,
