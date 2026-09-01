@@ -41,7 +41,7 @@ export default function PraktikanBulkDeleteDialog({
   isDeleting,
 }: PraktikanBulkDeleteDialogProps) {
   const [mode, setMode] = useState<'kelas' | 'all'>('kelas');
-  const [selectedKelas, setSelectedKelas] = useState('');
+  const [selectedKelas, setSelectedKelas] = useState(() => (options.length > 0 ? options[0] : ''));
   const [confirmText, setConfirmText] = useState('');
 
   const [prevOpen, setPrevOpen] = useState(open);

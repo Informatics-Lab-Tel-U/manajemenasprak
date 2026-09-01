@@ -40,19 +40,21 @@ export default function AsprakEditModal({
 }: AsprakEditModalProps) {
   const { getPraktikumByTerm, loading: loadingPraktikum } = usePraktikum();
   const [availablePraktikums, setAvailablePraktikums] = useState<Praktikum[]>([]);
-  const [selectedPraktikumIds, setSelectedPraktikumIds] = useState<string[]>([]);
+  const [selectedPraktikumIds, setSelectedPraktikumIds] = useState<string[]>(assignments || []);
   const [newKode, setNewKode] = useState<string>(asprak.kode);
   const [rfidUid, setRfidUid] = useState<string>(asprak.rfid_uid || '');
   const [forceOverride, setForceOverride] = useState(false);
   const [saving, setSaving] = useState(false);
   const [existingAspraks, setExistingAspraks] = useState<{ kode: string; angkatan: number }[]>([]);
 
+  const [prevAsprakId, setPrevAsprakId] = useState(asprak.id);
   const [prevOpen, setPrevOpen] = useState(open);
 
-  if (open !== prevOpen) {
+  if (open !== prevOpen || asprak.id !== prevAsprakId) {
     setPrevOpen(open);
+    setPrevAsprakId(asprak.id);
     if (open) {
-      setSelectedPraktikumIds(assignments);
+      setSelectedPraktikumIds(assignments || []);
       setNewKode(asprak.kode);
       setRfidUid(asprak.rfid_uid || '');
       setForceOverride(false);

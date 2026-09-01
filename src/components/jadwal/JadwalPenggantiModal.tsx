@@ -204,18 +204,20 @@ export function JadwalPenggantiModal({
   useEffect(() => {
     if (isOpen) {
       if (initialData) {
-        const j = initialData.jadwal as Jadwal | undefined;
-        const term = j?.mata_kuliah?.praktikum?.tahun_ajaran || '';
-        const praktikumNama = j?.mata_kuliah?.praktikum?.nama || '';
+        const j = initialData.jadwal as any;
+        const praktikumNama =
+          j?.mata_kuliah?.praktikum?.nama || j?.mata_kuliah?.mk_singkat || j?.mata_kuliah?.nama_singkat || '';
 
-        updateUiState({ selectedPraktikum: praktikumNama });
-        updateUiState({ selectedJadwalId: initialData.id_jadwal || '' });
-        updateUiState({ modul: initialData.modul });
-        updateUiState({ tanggal: initialData.tanggal });
-        updateUiState({ hari: initialData.hari });
-        updateUiState({ sesi: initialData.sesi });
-        updateUiState({ jam: initialData.jam });
-        updateUiState({ ruangan: initialData.ruangan });
+        updateUiState({
+          selectedPraktikum: praktikumNama,
+          selectedJadwalId: initialData.id_jadwal || '',
+          modul: initialData.modul,
+          tanggal: initialData.tanggal,
+          hari: initialData.hari,
+          sesi: initialData.sesi,
+          jam: initialData.jam,
+          ruangan: initialData.ruangan,
+        });
       } else {
         updateUiState({
           selectedPraktikum: '',
@@ -225,7 +227,7 @@ export function JadwalPenggantiModal({
           hari: 'SENIN',
           sesi: 1,
           jam: '06:30',
-          ruangan: ''
+          ruangan: '',
         });
       }
     }

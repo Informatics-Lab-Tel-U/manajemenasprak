@@ -40,7 +40,7 @@ export default function JadwalPenggantiExportDialog({
   isExporting,
 }: JadwalPenggantiExportDialogProps) {
   const [mode, setMode] = useState<'matakuliah' | 'all' | 'current'>('current');
-  const [selectedMataKuliah, setSelectedMataKuliah] = useState('');
+  const [selectedMataKuliah, setSelectedMataKuliah] = useState(() => (options.length > 0 ? options[0] : ''));
 
   const [prevOpen, setPrevOpen] = useState(open);
 
