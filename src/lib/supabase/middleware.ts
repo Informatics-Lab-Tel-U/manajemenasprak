@@ -3,6 +3,32 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { hasAccess, isPublicPath, ROLE_DEFAULT_REDIRECT, type Role } from '@/config/rbac';
 import { AUTH_CONFIG, isMfaRequiredForRole } from '@/config/auth';
 
+let cachedMaintenance: { active: boolean; timestamp: number } | null = null;
+const MAINTENANCE_TTL_MS = 15000; // 15 seconds
+
+async function getMaintenanceStatus(backendUrl?: string): Promise<boolean> {
+  if (!backendUrl) return false;
+  const now = Date.now();
+  if (cachedMaintenance && now - cachedMaintenance.timestamp < MAINTENANCE_TTL_MS) {
+    return cachedMaintenance.active;
+  }
+  try {
+    const res = await fetch(`${backendUrl}/api/system/maintenance`, {
+      cache: 'no-store',
+      signal: AbortSignal.timeout(1500),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      const active = !!data.active;
+      cachedMaintenance = { active, timestamp: now };
+      return active;
+    }
+  } catch (e) {
+    console.error('[Middleware] Maintenance check failed:', e);
+  }
+  return cachedMaintenance?.active ?? false;
+}
+
 export async function updateSession(request: NextRequest) {
   // Prevent client spoofing of the auth header
   const requestHeaders = new Headers(request.headers);
@@ -50,33 +76,19 @@ export async function updateSession(request: NextRequest) {
   // getUser() performs server-side JWT verification (unlike getSession() which only
   // validates locally). getSession() is still called for the access_token needed
   // to forward to the Hono backend.
-  // Both run in parallel with maintenance fetch to avoid sequential latency.
+  // Both run in parallel with maintenance check to avoid sequential latency.
   const [
     { data: { user } },
     { data: { session } },
-    maintenanceRes,
+    isMaintenanceMode,
   ] = await Promise.all([
     supabase.auth.getUser(),
     supabase.auth.getSession(),
-    process.env.HONO_BACKEND_URL
-      ? fetch(`${process.env.HONO_BACKEND_URL}/api/system/maintenance`, {
-          cache: 'no-store',
-          signal: AbortSignal.timeout(2000),
-        }).catch(() => null)
-      : Promise.resolve(null),
+    getMaintenanceStatus(process.env.HONO_BACKEND_URL),
   ]);
 
   const token = session?.access_token;
 
-  let isMaintenanceMode = false;
-  if (maintenanceRes?.ok) {
-    try {
-      const data = await maintenanceRes.json();
-      isMaintenanceMode = !!data.active;
-    } catch (e) {
-      console.error('[Middleware] Failed to parse maintenance response', e);
-    }
-  }
 
   // Single pengguna query to Hono backend
   let pengguna: any = null;

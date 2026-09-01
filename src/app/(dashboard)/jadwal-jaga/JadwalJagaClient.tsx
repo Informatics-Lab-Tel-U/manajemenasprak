@@ -27,6 +27,7 @@ export default function JadwalJagaClient({
   const { activeTerm } = useTermStore();
   const selectedTerm = activeTerm || '';
   const [selectedModul, setSelectedModul] = useState('Modul 1');
+  const [selectedDay, setSelectedDay] = useState('SENIN');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isRfidModalOpen, setIsRfidModalOpen] = useState(false);
   const [editingData, setEditingData] = useState<any>(null);
@@ -112,15 +113,14 @@ export default function JadwalJagaClient({
         </div>
       </div>
 
-      <div className="h-[600px] 2xl:h-[800px]">
-        <JagaPanel
+      <JagaPanel
           term={selectedTerm}
           selectedModul={selectedModul}
           userRole={userRole}
           onRefreshTrigger={refreshTrigger}
           onEdit={handleEdit}
+          onDayChange={setSelectedDay}
         />
-      </div>
 
       <JagaInputModal
         isOpen={isModalOpen}
@@ -131,7 +131,7 @@ export default function JadwalJagaClient({
         term={selectedTerm}
         selectedModul={modulNum}
         konfigurasiModul={konfigurasiModul}
-        defaultDay="SENIN"
+        defaultDay={selectedDay}
         userRole={userRole}
         editData={editingData}
         onSuccess={() => {

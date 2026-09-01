@@ -30,6 +30,7 @@ interface JagaPanelProps {
   userRole?: string;
   onRefreshTrigger?: number;
   onEdit?: (data: any) => void;
+  onDayChange?: (day: string) => void;
 }
 
 export default function JagaPanel({
@@ -40,6 +41,7 @@ export default function JagaPanel({
   userRole: _userRole,
   onRefreshTrigger,
   onEdit,
+  onDayChange,
 }: JagaPanelProps) {
   const isDefault = selectedModul === 'Default';
   const modulNum = isDefault ? 0 : parseInt(selectedModul.replace('Modul ', ''));
@@ -275,7 +277,7 @@ export default function JagaPanel({
     <>
       <div className="flex flex-col h-full">
         {/* Konten — langsung tanpa header button */}
-        <div className="flex-1 overflow-y-auto no-scrollbar">
+        <div>
           <div className="mb-4 pt-1">
             <div className="text-sm 2xl:text-base text-muted-foreground mb-2 flex items-center justify-between">
               <span>Menampilkan shift untuk hari:</span>
@@ -287,7 +289,10 @@ export default function JagaPanel({
                   <button
                     key={d}
                     type="button"
-                    onClick={() => setLocalDay(d)}
+                    onClick={() => {
+                      setLocalDay(d);
+                      onDayChange?.(d.toUpperCase());
+                    }}
                     className={`px-4 py-1.5 rounded-full text-sm 2xl:text-base font-medium whitespace-nowrap transition-colors border
                        ${
                          activeDay.toUpperCase() === d.toUpperCase()

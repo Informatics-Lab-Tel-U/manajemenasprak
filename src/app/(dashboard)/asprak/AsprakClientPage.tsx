@@ -125,6 +125,11 @@ export default function AsprakClientPage({
     }
   };
 
+  useEffect(() => {
+    refreshCodesAndNims();
+  }, []);
+
+
   const handleFormSubmit = async (data: UpsertAsprakInput) => {
     const result = await upsert(data);
 
