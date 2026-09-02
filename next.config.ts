@@ -1,10 +1,15 @@
 import type { NextConfig } from 'next';
 import withBundleAnalyzer from '@next/bundle-analyzer';
 
+const isDockerBuild = process.env.DOCKER_BUILD === 'true';
+
 const nextConfig: NextConfig = {
   images: {
     unoptimized: true,
   },
+  // Produces a self-contained Node.js server when building for Docker.
+  // Not set for CF Workers (opennextjs-cloudflare) builds.
+  ...(isDockerBuild && { output: 'standalone' }),
   turbopack: {},
   webpack: (config, { isServer, webpack }) => {
     if (isServer) {
