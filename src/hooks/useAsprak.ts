@@ -37,7 +37,10 @@ export function useAsprak(
   const [loading, setLoading] = useState(!isInitialDataValid);
   const [error, setError] = useState<string | null>(null);
 
-  const selectedTerm = activeTerm || '';
+  // Fallback ke effectiveInitialTerm jika activeTerm belum hydrate dari Zustand/localStorage.
+  // Ini mencegah fetchAll di-bail-out saat pertama kali halaman dibuka (race condition
+  // antara Zustand persist hydration dan GlobalTermSelector's useEffect).
+  const selectedTerm = activeTerm || effectiveInitialTerm;
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
