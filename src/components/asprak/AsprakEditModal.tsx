@@ -25,7 +25,8 @@ interface AsprakEditModalProps {
     praktikumIds: string[],
     newKode: string,
     forceOverride: boolean,
-    rfidUid?: string
+    rfidUid?: string,
+    namaLengkap?: string
   ) => Promise<void>;
   onClose: () => void;
   open: boolean;
@@ -42,6 +43,7 @@ export default function AsprakEditModal({
   const [availablePraktikums, setAvailablePraktikums] = useState<Praktikum[]>([]);
   const [selectedPraktikumIds, setSelectedPraktikumIds] = useState<string[]>(assignments || []);
   const [newKode, setNewKode] = useState<string>(asprak.kode);
+  const [namaLengkap, setNamaLengkap] = useState<string>(asprak.nama_lengkap);
   const [rfidUid, setRfidUid] = useState<string>(asprak.rfid_uid || '');
   const [forceOverride, setForceOverride] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -56,6 +58,7 @@ export default function AsprakEditModal({
     if (open) {
       setSelectedPraktikumIds(assignments || []);
       setNewKode(asprak.kode);
+      setNamaLengkap(asprak.nama_lengkap);
       setRfidUid(asprak.rfid_uid || '');
       setForceOverride(false);
     }
@@ -118,12 +121,18 @@ export default function AsprakEditModal({
   };
 
   const handleSave = async () => {
-    if (newKode.length !== 3 || kodeError) {
+    if (newKode.length !== 3 || kodeError || !namaLengkap.trim()) {
       return;
     }
 
     setSaving(true);
-    await onSave(selectedPraktikumIds, newKode.toUpperCase(), forceOverride, rfidUid);
+    await onSave(
+      selectedPraktikumIds,
+      newKode.toUpperCase(),
+      forceOverride,
+      rfidUid,
+      namaLengkap.trim()
+    );
     setSaving(false);
     onClose();
   };
@@ -198,8 +207,16 @@ export default function AsprakEditModal({
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label className="text-muted-foreground text-xs">Nama Lengkap</Label>
-              <div className="font-medium text-sm truncate">{asprak.nama_lengkap}</div>
+              <Label htmlFor="nama_lengkap" className="text-muted-foreground text-xs">
+                Nama Lengkap
+              </Label>
+              <Input
+                id="nama_lengkap"
+                value={namaLengkap}
+                onChange={(e) => setNamaLengkap(e.target.value)}
+                className="transition-colors h-8 text-xs font-medium"
+                placeholder="Nama Lengkap Asisten"
+              />
             </div>
             <div>
               <Label htmlFor="rfid_uid" className="text-muted-foreground text-xs">

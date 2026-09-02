@@ -222,7 +222,8 @@ export default function AsprakClientPage({
     praktikumIds: string[],
     newKode: string,
     forceOverride: boolean,
-    rfidUid?: string
+    rfidUid?: string,
+    namaLengkap?: string
   ) => {
     if (!editTarget) return;
 
@@ -234,7 +235,8 @@ export default function AsprakClientPage({
       newKode,
       editTarget.asprak.nim,
       forceOverride,
-      rfidUid
+      rfidUid,
+      namaLengkap
     );
 
     if (result.ok) {

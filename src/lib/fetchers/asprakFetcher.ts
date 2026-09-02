@@ -106,7 +106,8 @@ export async function updateAssignments(
   newKode?: string,
   nim?: string,
   forceOverride?: boolean,
-  rfid_uid?: string | null
+  rfid_uid?: string | null,
+  nama_lengkap?: string
 ): Promise<ServiceResult<void>> {
   try {
     const res = await fetch('/api/asprak', {
@@ -121,6 +122,7 @@ export async function updateAssignments(
         nim,
         forceOverride,
         rfid_uid,
+        nama_lengkap,
       }),
     });
 
