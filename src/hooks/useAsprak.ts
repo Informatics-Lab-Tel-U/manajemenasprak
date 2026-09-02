@@ -31,7 +31,7 @@ export function useAsprak(
   const { activeTerm, setActiveTerm } = useTermStore();
 
   const effectiveInitialTerm = initialTerm || initialData?.terms?.[0] || 'all';
-  const isInitialDataValid = !!(initialData?.asprakList && (activeTerm || '') === effectiveInitialTerm);
+  const isInitialDataValid = !!(initialData?.asprakList?.length && (activeTerm || '') === effectiveInitialTerm);
 
   const [data, setData] = useState<Asprak[]>(initialData?.asprakList || []);
   const [loading, setLoading] = useState(!isInitialDataValid);
