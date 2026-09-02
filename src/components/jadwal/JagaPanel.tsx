@@ -309,6 +309,43 @@ export default function JagaPanel({
             )}
           </div>
           {renderContent()}
+
+          {/* Legenda Status Kehadiran / Penjagaan */}
+          {!isDefault && !loading && (
+            <div className="mt-6 flex flex-wrap items-center gap-3 sm:gap-6 text-xs text-muted-foreground border-t border-border/50 pt-4 px-1">
+              <span className="font-semibold text-foreground/80 text-xs">Legenda:</span>
+              
+              <div className="flex items-center gap-1.5">
+                <span className="flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded border bg-green-50/80 text-green-800 border-green-300 dark:bg-green-950/40 dark:text-green-300 dark:border-green-800/60 ring-1 ring-green-500/50">
+                  <CheckCircle2 className="w-3 h-3 text-green-600 dark:text-green-400" />
+                  Hadir
+                </span>
+                <span className="text-muted-foreground">Tepat Waktu</span>
+              </div>
+
+              <div className="flex items-center gap-1.5">
+                <span className="flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded border bg-amber-50/80 text-amber-900 border-amber-300 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/60 ring-1 ring-amber-500/50">
+                  <CheckCircle2 className="w-3 h-3 text-amber-600 dark:text-amber-400" />
+                  Terlambat
+                </span>
+                <span className="text-muted-foreground">Presensi &gt; Toleransi</span>
+              </div>
+
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] font-semibold px-2 py-0.5 rounded border bg-blue-50/50 text-blue-700 border-blue-200/60 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800/40">
+                  ASLAB
+                </span>
+                <span className="text-muted-foreground">Belum Hadir</span>
+              </div>
+
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] font-semibold px-2 py-0.5 rounded border bg-slate-50/50 text-slate-700 border-slate-200/60 dark:bg-slate-800/40 dark:text-slate-300 dark:border-slate-700/60">
+                  ASPRAK
+                </span>
+                <span className="text-muted-foreground">Belum Hadir</span>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
