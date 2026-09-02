@@ -103,13 +103,15 @@ export default function JadwalJagaClient({
             </Button>
           )}
 
-          <Button
-            onClick={handleAdd}
-            className="flex-1 sm:flex-none min-w-0 md:whitespace-nowrap rounded-lg shadow-sm"
-          >
-            <Plus size={18} className="flex-shrink-0" />
-            <span className="hidden sm:inline ml-2 font-medium">Input Jaga</span>
-          </Button>
+          {userRole === 'ADMIN' && (
+            <Button
+              onClick={handleAdd}
+              className="flex-1 sm:flex-none min-w-0 md:whitespace-nowrap rounded-lg shadow-sm"
+            >
+              <Plus size={18} className="flex-shrink-0" />
+              <span className="hidden sm:inline ml-2 font-medium">Input Jaga</span>
+            </Button>
+          )}
         </div>
       </div>
 

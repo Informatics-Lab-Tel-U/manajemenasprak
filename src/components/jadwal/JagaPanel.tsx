@@ -38,7 +38,7 @@ export default function JagaPanel({
   selectedModul,
   filterDay,
   hideInputButton: _hideInputButton,
-  userRole: _userRole,
+  userRole,
   onRefreshTrigger,
   onEdit,
   onDayChange,
@@ -217,44 +217,46 @@ export default function JagaPanel({
                         ) : null}
 
                         {/* Hover Actions */}
-                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-1 border-l pl-1 border-current/20">
-                          <button
-                            type="button"
-                            aria-label="Edit"
-                            onClick={() => {
-                              if (onEdit) {
-                                onEdit({
+                        {userRole === 'ADMIN' && (
+                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-1 border-l pl-1 border-current/20">
+                            <button
+                              type="button"
+                              aria-label="Edit"
+                              onClick={() => {
+                                if (onEdit) {
+                                  onEdit({
+                                    id: j.id,
+                                    id_asprak: j.id_asprak,
+                                    hari: j.hari,
+                                    shift: j.shift,
+                                  });
+                                }
+                              }}
+                              className="hover:text-primary transition-colors p-0.5"
+                              title="Edit"
+                            >
+                              <Edit2 className="w-3 h-3" />
+                            </button>
+                            <button
+                              type="button"
+                              aria-label="Delete"
+                              title="Delete"
+                              onClick={() => {
+                                setDeletingItem({
                                   id: j.id,
+                                  code: j.asprak?.kode || 'Asisten',
                                   id_asprak: j.id_asprak,
-                                  hari: j.hari,
-                                  shift: j.shift,
+                                  shift: shiftInfo.shift,
                                 });
-                              }
-                            }}
-                            className="hover:text-primary transition-colors p-0.5"
-                            title="Edit"
-                          >
-                            <Edit2 className="w-3 h-3" />
-                          </button>
-                          <button
-                            type="button"
-                            aria-label="Delete"
-                            title="Delete"
-                            onClick={() => {
-                              setDeletingItem({
-                                id: j.id,
-                                code: j.asprak?.kode || 'Asisten',
-                                id_asprak: j.id_asprak,
-                                shift: shiftInfo.shift,
-                              });
-                              setDeleteScope('single');
-                              setIsDeleteDialogOpen(true);
-                            }}
-                            className="hover:text-destructive transition-colors p-0.5"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
-                        </div>
+                                setDeleteScope('single');
+                                setIsDeleteDialogOpen(true);
+                              }}
+                              className="hover:text-destructive transition-colors p-0.5"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        )}
                       </div>
                     );
                   })

@@ -201,8 +201,7 @@ export default function JagaInputModal({
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Tidak Diizinkan</AlertTitle>
             <AlertDescription>
-              Input jaga untuk Modul {selectedModul} baru bisa dilakukan mulai hari Sabtu minggu
-              sebelumnya.
+              Hanya Administrator yang memiliki akses untuk menginput atau mengubah jadwal jaga.
             </AlertDescription>
           </Alert>
         ) : (
