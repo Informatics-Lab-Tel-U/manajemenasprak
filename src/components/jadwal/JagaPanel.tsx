@@ -198,7 +198,7 @@ export default function JagaPanel({
                       >
                         {isHadir ? (
                           <CheckCircle2
-                            className={`w-3.5 h-3.5 shrink-0 animate-pulse ${
+                            className={`w-3.5 h-3.5 shrink-0 ${
                               isTerlambat ? 'text-amber-600 dark:text-amber-400' : 'text-green-600 dark:text-green-400'
                             }`}
                           />
