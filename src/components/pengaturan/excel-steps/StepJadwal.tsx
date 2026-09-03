@@ -37,7 +37,6 @@ export default function StepJadwal({ data, term, onNext, onPrev, onImport }: Ste
         if (res.ok) {
           const json = await res.json();
           if (json.ok && Array.isArray(json.data)) {
-            // flatten grouped mk to simple list for easier search
             const flat = json.data.reduce((acc: any[], group: any) => {
               return [...acc, ...group.items];
             }, []);
@@ -56,7 +55,6 @@ export default function StepJadwal({ data, term, onNext, onPrev, onImport }: Ste
     };
   }, [term]);
 
-  // Replaced with imported validateJadwalConflicts
 
   useEffect(() => {
     let active = true;
@@ -69,8 +67,6 @@ export default function StepJadwal({ data, term, onNext, onPrev, onImport }: Ste
 
       if (mataKuliahList.length === 0) {
         // Wait for mata kuliah list to load if needed.
-        // Technically it could be empty if term has no MK yet,
-        // but usually we import MK before Jadwal in this flow anyway.
       }
 
       const preview = buildJadwalPreviewRows(data, mataKuliahList, term);

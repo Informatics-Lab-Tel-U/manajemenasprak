@@ -25,7 +25,6 @@ interface AsprakGenerationRulesProps {
   existingCodes?: string[];
 }
 
-// Helper to safely generate codes
 const generateCodes = (name: string, generator: (words: string[]) => string[]) => {
   const words = getWords(name);
   if (!words.length) return [];

@@ -34,7 +34,6 @@ export default function JadwalCSVPreview({
   loading,
   onSkip,
 }: JadwalCSVPreviewProps) {
-  // ─── Stats for Preview ───────────────────────────────────────────────────
   const totalOk = rows.filter((r) => r.status === 'ok').length;
   const totalWarning = rows.filter((r) => r.status === 'warning').length;
   const totalError = rows.filter((r) => r.status === 'error').length;

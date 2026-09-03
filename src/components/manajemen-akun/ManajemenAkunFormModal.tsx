@@ -85,11 +85,9 @@ export function ManajemenAkunFormModal({ open, onOpenChange, mode, user, onSucce
    // single
   
 
-  /* ── Load praktikum list once per dialog open ── */
   React.useEffect(() => {
     if (!open) return;
 
-    // Reset form fields
     updateState({
       nama: user?.nama_lengkap ?? '',
       email: user?.email ?? '',
@@ -160,7 +158,6 @@ export function ManajemenAkunFormModal({ open, onOpenChange, mode, user, onSucce
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
-  /* ── Re-fetch praktikum when user explicitly switches role to ASPRAK_KOOR ── */
   React.useEffect(() => {
     if (!open || role !== 'ASPRAK_KOOR' || praktikumList.length > 0 || loadingPraktikum) return;
 

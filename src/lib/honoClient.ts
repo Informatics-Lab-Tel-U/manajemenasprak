@@ -9,9 +9,6 @@ export interface HonoFetchOptions extends RequestInit {
   useServiceRole?: boolean;
 }
 
-/**
- * Server-side helper to make authenticated HTTP calls to Hono Backend
- */
 export async function honoFetch<T = any>(
   path: string,
   options: HonoFetchOptions = {}
@@ -31,7 +28,6 @@ export async function honoFetch<T = any>(
         authHeader = `Bearer ${authUser.token}`;
       }
     } catch {
-      // Fallback if no active session
     }
   }
 

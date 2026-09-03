@@ -76,7 +76,6 @@ export default function FontGeneratorForm({
         return;
       }
 
-      // Convert Base64 to Blob
       const byteCharacters = atob(base64);
       const byteNumbers = new Array(byteCharacters.length);
       for (let i = 0; i < byteCharacters.length; i++) {
@@ -85,7 +84,6 @@ export default function FontGeneratorForm({
       const byteArray = new Uint8Array(byteNumbers);
       const blob = new Blob([byteArray], { type: 'font/ttf' });
 
-      // Download file
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;

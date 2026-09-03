@@ -14,7 +14,6 @@ const backendUrl = process.env.HONO_BACKEND_URL || 'https://manajemenasprak-back
 const getCachedKelas = (mataKuliah: string | null) =>
   unstable_cache(
     async () => {
-      // Call backend with action=kelas-by-mk
       const url = new URL(`${backendUrl}/api/praktikan`);
       url.searchParams.set('action', 'kelas-by-mk');
       if (mataKuliah) {

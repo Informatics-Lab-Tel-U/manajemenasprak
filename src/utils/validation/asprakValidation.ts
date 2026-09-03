@@ -4,7 +4,6 @@ import type { ExistingAsprakInfo } from '@/components/asprak/AsprakImportCSVModa
 
 const CODE_RECYCLE_YEARS = 5;
 
-// Define a type for existing nims with roles
 export type ExistingNimInfo = { nim: string; role: string; kode?: string };
 
 export function validateAsprakData(
@@ -19,7 +18,6 @@ export function validateAsprakData(
       .filter((k): k is string => typeof k === 'string' && k.length > 0)
       .map((c) => c.toUpperCase())
   );
-  // We check uniqueness for NIM+Role combination
   const existingRecords = new Map<string, string>();
   existingNims.forEach((e) => {
     if (e.kode && typeof e.kode === 'string') {
@@ -27,9 +25,7 @@ export function validateAsprakData(
     }
   });
 
-  // Map column variations mapped from headers
   const normalizedData = data.map((r: any) => {
-    // Find keys case-insensitively
     const keys = Object.keys(r);
     const getVal = (possibleNames: string[]) => {
       for (const p of possibleNames) {
@@ -81,7 +77,6 @@ export function validateAsprakData(
     let originalKode = row.kode ? row.kode.toUpperCase() : '';
     let generated = generatedCodes[idx];
 
-    // Determine status
     let status: PreviewRow['status'] = 'ok';
     let statusMessage = '';
 
@@ -94,7 +89,6 @@ export function validateAsprakData(
     } else if (existingRecords.has(`${nim}_${role}`)) {
       status = 'warning';
       statusMessage = `Data sudah ada di DB — akan di-update`;
-      // Preserve their existing code if they didn't provide one
       if (!originalKode) {
         const oldCode = existingRecords.get(`${nim}_${role}`);
         if (oldCode) {
@@ -110,13 +104,11 @@ export function validateAsprakData(
       statusMessage = 'Angkatan tidak valid';
     }
 
-    // Check if code generation failed
     if (generated.rule === 'FAILED' && !originalKode && status === 'ok') {
       status = 'error';
       statusMessage = 'Kode gagal di-generate — isi manual di kolom kode';
     }
 
-    // Track this NIM+Role as seen in current CSV
     if (nim) seenNimsInCSV.add(`${nim}_${role}`);
 
     const codeSource: PreviewRow['codeSource'] =
@@ -139,7 +131,6 @@ export function validateAsprakData(
         finalCodeRule = 'Provided (CSV) [Forced]';
       }
       finalCodeSource = 'csv';
-      // Only clear code generation failures, preserve NIM duplicate errors
       if (finalStatusMessage.includes('Kode gagal di-generate')) {
         finalStatus = 'ok';
         finalStatusMessage = '';
@@ -156,7 +147,6 @@ export function validateAsprakData(
       codeSource: finalCodeSource,
       status: finalStatus,
       statusMessage: finalStatusMessage,
-      // Track originals for tag revert on edit
       originalKode: finalDisplayKode,
       originalCodeRule: finalCodeRule,
       originalCodeSource: finalCodeSource,
@@ -179,7 +169,6 @@ export function validateAsprakCodeEdit(
   const uppercased = newCode.toUpperCase();
   row.kode = uppercased;
 
-  // ── Tag revert ──
   if (uppercased === row.originalKode) {
     row.codeSource = row.originalCodeSource;
     row.codeRule = row.originalCodeRule;
@@ -188,7 +177,6 @@ export function validateAsprakCodeEdit(
     row.codeRule = 'Manual edit';
   }
 
-  // ── Real-time conflict check ──
   if (/^[A-Z]{3}$/.test(uppercased)) {
     const conflictInCSV =
       row.role !== 'ASLAB' &&
@@ -204,7 +192,6 @@ export function validateAsprakCodeEdit(
       row.role !== 'ASLAB' &&
       !forceOverride &&
       existingAspraks.some((a) => {
-        // Skip conflict check if it's the exact same user (by NIM)
         if (a.nim === row.nim || !a.kode || typeof a.kode !== 'string') return false;
         if (a.kode.toUpperCase() !== uppercased) return false;
         const gap = row.angkatan - a.angkatan;

@@ -67,7 +67,6 @@ export default function AsprakEditModal({
   useEffect(() => {
     const controller = new AbortController();
     if (open) {
-      // Always fetch ALL praktikums to allow cross-term editing
       getPraktikumByTerm('all')
         .then((data) => {
           if (!controller.signal.aborted) setAvailablePraktikums(data);
@@ -145,7 +144,6 @@ export default function AsprakEditModal({
     }
   };
 
-  // Group praktikums by term
   const groupedPraktikums = useMemo(() => {
     const groups: Record<string, Praktikum[]> = {};
     availablePraktikums.forEach((p) => {
@@ -154,7 +152,6 @@ export default function AsprakEditModal({
       }
       groups[p.tahun_ajaran].push(p);
     });
-    // Sort terms descending (latest first)
     return Object.entries(groups).sort((a, b) => b[0].localeCompare(a[0]));
   }, [availablePraktikums]);
 

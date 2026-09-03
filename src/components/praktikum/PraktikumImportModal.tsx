@@ -11,20 +11,10 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
 
-// Import the Preview Component
 import PraktikumCSVPreview, { PraktikumPreviewRow } from './PraktikumCSVPreview';
-// Import Validation Logic
 import { validatePraktikumData } from '@/utils/validation/praktikumValidation';
-// Import Utility
 import { parseSpreadsheet, downloadTemplate } from '@/lib/spreadsheet';
 
-// We reuse TermInput to set the term globally?
-// Or do we read term from CSV?
-// Requirement says: "csv/xlsx nya adalah kolom nama_singkat, tahun_ajaran".
-// So term is IN the CSV. We don't need TermInput for the whole import, but maybe as a default?
-// Actually, if tahun_ajaran is in CSV, we should use it.
-// If it's missing, maybe we can ask for a default term.
-// Let's assume it's in CSV as per requirement.
 
 interface PraktikumImportModalProps {
   onImport: (rows: { nama: string; tahun_ajaran: string }[]) => Promise<void>;
@@ -50,7 +40,6 @@ export default function PraktikumImportModal({
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  // File Parsing
   const processFile = useCallback(
     async (file: File) => {
       setError(null);
@@ -62,7 +51,6 @@ export default function PraktikumImportModal({
           return;
         }
         
-        // Convert matrix back to object array expected by validation
         const headers = matrix[0].map((h: string) => h.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_'));
         const data = matrix.slice(1).reduce((acc: any[], row: string[]) => {
           if (!row || !row.some(Boolean)) return acc; // skip empty rows

@@ -42,7 +42,6 @@ const VIOLATION_TYPES = [
 
 type ViolationType = (typeof VIOLATION_TYPES)[number];
 
-// Which side-panel is currently open
 type SidePanel = 'asprak' | 'jadwal' | null;
 
 interface PelanggaranFormProps {
@@ -96,12 +95,10 @@ export default function PelanggaranForm({
     });
   }, [initialPraktikumId, initialModul]);
 
-  // ── Violation fields ──
   const [selectedAsprakIds, setSelectedAsprakIds] = useState<string[]>([]);
   const [idJadwal, setIdJadwal] = useState('');
   const [jenis, setJenis] = useState('');
 
-  // ── Side panel state ──
   const [sidePanel, setSidePanel] = useState<SidePanel>(null);
   const [asprakSearch, setAsprakSearch] = useState('');
   const [jadwalSearch, setJadwalSearch] = useState('');
@@ -116,7 +113,6 @@ export default function PelanggaranForm({
     setJadwalSearch('');
   }
 
-  // Reset violation fields (called on context change)
   const resetViolationFields = useCallback(() => {
     setSelectedAsprakIds([]);
     setIdJadwal('');
@@ -127,7 +123,6 @@ export default function PelanggaranForm({
     setSidePanel(null);
   }, []);
 
-  // ── Derived lists ──
   const filteredPraktikumList = useMemo(
     () =>
       selectedTahunAjaran
@@ -214,7 +209,6 @@ export default function PelanggaranForm({
 
   const contextReady = !!selectedTahunAjaran && !!selectedPraktikumId;
 
-  // ── Rendered side panel content ──
   const sidePanelContent =
     sidePanel === 'asprak' ? (
       <div className="flex flex-col h-full p-2">
@@ -326,7 +320,6 @@ export default function PelanggaranForm({
           ) : (
             filteredJadwal.map((j) => {
               const selected = idJadwal === j.id;
-              // Find substitute for CURRENT selected module
               const currentModulNum = parseInt(modul);
               const substitute = j.jadwal_pengganti?.find((jp) => jp.modul === currentModulNum);
 

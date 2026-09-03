@@ -72,7 +72,6 @@ interface Props {
   idPraktikum: string;
 }
 
-// ── Recap table: per-asprak breakdown ────────────────────────────
 function buildRecap(violations: Pelanggaran[]) {
   const map = new Map<
     string,
@@ -96,7 +95,6 @@ function buildRecap(violations: Pelanggaran[]) {
   return Array.from(map.values()).sort((a, b) => b.total - a.total);
 }
 
-// ── Sort button helper ────────────────────────────────────────────
 function SortHeader({ column, label }: { column: any; label: string }) {
   return (
     <Button
@@ -152,13 +150,11 @@ export default function PelanggaranDetailClient({
   const canFinalize =
     (role === 'ADMIN' || role === 'ASLAB' || role === 'ASPRAK_KOOR') && !isFinalized;
 
-  // ── Hydration fix ──
   const [mounted, setMounted] = React.useState(false);
   React.useEffect(() => {
     setMounted(true);
   }, []);
 
-  // ── Term Sync & Redirect ──
   const { activeTerm, setActiveTerm } = useTermStore();
   const hasSyncedTermRef = React.useRef(false);
 
@@ -172,7 +168,6 @@ export default function PelanggaranDetailClient({
       }
       hasSyncedTermRef.current = true;
     } else {
-      // User changed term manually via dropdown
       if (activeTerm !== praktikum.tahun_ajaran) {
         toast.info('Tahun ajaran diubah, mengalihkan ke daftar pelanggaran...');
         // eslint-disable-next-line react-doctor/nextjs-no-client-side-redirect
@@ -181,12 +176,10 @@ export default function PelanggaranDetailClient({
     }
   }, [activeTerm, praktikum?.tahun_ajaran, router, setActiveTerm]);
 
-  // Filter violations by selected module
   const filteredViolations = React.useMemo(() => {
     return violations.filter((v) => v.modul === Number(selectedModul));
   }, [violations, selectedModul]);
 
-  // ── Violation log columns ─────────────────────────────────────
   const columns = React.useMemo<ColumnDef<Pelanggaran>[]>(
     () => [
       {
@@ -268,7 +261,6 @@ export default function PelanggaranDetailClient({
     [isFinalized, setViolationToDelete]
   );
 
-  // ── Sorting & Filtering ─────────────────────────────────────
   const table = useReactTable({
     data: filteredViolations,
     columns,

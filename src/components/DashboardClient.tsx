@@ -38,7 +38,6 @@ export default function DashboardClient({
   const { terms, selectedTerm, stats, rawJadwal, jadwalPengganti, loading } =
     useDashboard(initialTerms, initialStats, initialJadwal, initialPengganti, activeModul);
 
-  // Derive today's day name (WIB)
   const todayDate = new Date();
   const currentDayNameRaw = format(todayDate, 'EEEE', { locale: id }).toUpperCase();
   const validDays = ['SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU', 'MINGGU'];

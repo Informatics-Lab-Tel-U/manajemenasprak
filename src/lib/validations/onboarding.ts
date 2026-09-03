@@ -1,9 +1,5 @@
 import { z } from 'zod';
 
-// ============================================================================
-// TAHUN AJARAN VALIDATION
-// ============================================================================
-
 /**
  * Validasi format tahun ajaran
  * Format yang diterima: "2024/2025 Ganjil", "2024/2025 Genap", "2425-1", "2425-2"
@@ -14,13 +10,9 @@ export const tahunAjaranSchema = z
   .min(1, 'Tahun ajaran tidak boleh kosong')
   .refine(
     (val) => {
-      // Format: "2024/2025 Ganjil" atau "2024/2025 Genap"
       const fullFormat = /^\d{4}\/\d{4}\s?(Ganjil|Genap)$/i.test(val);
-      // Format: "2425-1" atau "2425-2"
       const shortFormat = /^\d{4}-[12]$/i.test(val);
-      // Format: "2024/2025" saja
       const yearOnly = /^\d{4}\/\d{4}$/.test(val);
-      // Format: "2425 Ganjil" atau "2425 Genap"
       const shortYearFormat = /^\d{4}\s?(Ganjil|Genap)$/i.test(val);
 
       return fullFormat || shortFormat || yearOnly || shortYearFormat;
@@ -30,10 +22,6 @@ export const tahunAjaranSchema = z
         'Format tahun ajaran tidak valid. Contoh: "2024/2025 Ganjil", "2425-1", atau "2024/2025"',
     }
   );
-
-// ============================================================================
-// PRAKTIKUM VALIDATION
-// ============================================================================
 
 export const praktikumSchema = z.object({
   nama: z
@@ -46,10 +34,6 @@ export const praktikumSchema = z.object({
 });
 
 export const praktikumBulkSchema = z.array(praktikumSchema).min(1, 'Minimal 1 data praktikum');
-
-// ============================================================================
-// MATA KULIAH VALIDATION
-// ============================================================================
 
 const programStudiOptions = ['Informatika', 'Sistem Informasi', 'Teknik Komputer'] as const;
 
@@ -70,13 +54,8 @@ export const mataKuliahSchema = z.object({
 });
 
 export const mataKuliahWithPraktikumSchema = mataKuliahSchema.extend({
-  // eslint-disable-next-line react-doctor/zod-v4-prefer-top-level-string-formats
   id_praktikum: z.string().uuid('ID Praktikum tidak valid'),
 });
-
-// ============================================================================
-// COPY VALIDATION
-// ============================================================================
 
 export const copyTahunAjaranSchema = z.object({
   sourceTerm: z.string().min(1, 'Tahun ajaran sumber tidak boleh kosong'),
@@ -87,10 +66,6 @@ export const copyTahunAjaranSchema = z.object({
     copyAsprakAssignments: z.boolean().default(false),
   }),
 });
-
-// ============================================================================
-// ONBOARDING STATE VALIDATION
-// ============================================================================
 
 export type OnboardingStep = 'praktikum' | 'matkul' | 'jadwal' | 'selesai';
 
@@ -104,9 +79,6 @@ export const onboardingDraftSchema = z.object({
   lastUpdated: z.string().optional(),
 });
 
-// ============================================================================
-// UTILITY FUNCTIONS
-// ============================================================================
 
 /**
  * Parse dan validasi data praktikum dari CSV/Excel
@@ -168,12 +140,10 @@ export function validateUniqueTahunAjaran(
 export function normalizeTahunAjaran(input: string): string {
   const trimmed = input.trim();
 
-  // Sudah format standar
   if (/^\d{4}\/\d{4}\s?(Ganjil|Genap)$/i.test(trimmed)) {
     return trimmed.replace(/\s+/g, ' ');
   }
 
-  // Format "2425-1" atau "2425-2"
   const shortFormat = trimmed.match(/^(\d{2})(\d{2})-([12])$/i);
   if (shortFormat) {
     const year1 = `20${shortFormat[1]}`;
@@ -182,7 +152,6 @@ export function normalizeTahunAjaran(input: string): string {
     return `${year1}/${year2} ${semester}`;
   }
 
-  // Format "2425 Ganjil" atau "2425 Genap"
   const shortYearFormat = trimmed.match(/^(\d{2})(\d{2})\s?(Ganjil|Genap)$/i);
   if (shortYearFormat) {
     const year1 = `20${shortYearFormat[1]}`;
@@ -191,7 +160,6 @@ export function normalizeTahunAjaran(input: string): string {
     return `${year1}/${year2} ${semester}`;
   }
 
-  // Format "2024/2025" tanpa semester
   if (/^\d{4}\/\d{4}$/.test(trimmed)) {
     return `${trimmed} Ganjil`; // Default ke Ganjil
   }

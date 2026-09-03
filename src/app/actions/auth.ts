@@ -68,7 +68,6 @@ export async function login(email: string, password: string, turnstileToken: str
       // Check MFA Assurance Level
       const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
 
-      // Check Pengguna Role via Hono Backend API
       const meRes = await fetch(`${process.env.HONO_BACKEND_URL}/api/auth/me`, {
         headers: { Authorization: `Bearer ${authData.session?.access_token}` },
         cache: 'no-store',

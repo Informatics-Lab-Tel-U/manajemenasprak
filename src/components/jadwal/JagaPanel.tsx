@@ -62,14 +62,12 @@ export default function JagaPanel({
     initPresensi();
   }, [initPresensi]);
 
-  // Sync refresh with parent trigger
   useEffect(() => {
     if (onRefreshTrigger !== undefined && onRefreshTrigger > 0) {
       refresh();
     }
   }, [onRefreshTrigger, refresh]);
 
-  // Delete Confirmation State
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [deletingItem, setDeletingItem] = useState<{
     id: string;

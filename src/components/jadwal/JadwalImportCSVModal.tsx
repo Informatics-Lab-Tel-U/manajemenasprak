@@ -19,7 +19,6 @@ import {
 } from '@/utils/validation/jadwalValidation';
 import { parseSpreadsheet, downloadTemplate } from '@/lib/spreadsheet';
 
-// ─── Types ───────────────────────────────────────────────────────────────────
 
 interface RawCSVRow {
   kelas?: string;
@@ -30,7 +29,6 @@ interface RawCSVRow {
   ruangan?: string;
   total_asprak?: string | number;
   dosen?: string;
-  // allow legacy column just in case
   mata_kuliah?: string;
 }
 
@@ -42,7 +40,6 @@ interface JadwalImportCSVModalProps {
   term?: string;
 }
 
-// ─── Constants ───────────────────────────────────────────────────────────────
 
 const REQUIRED_COLS = ['kelas', 'hari', 'sesi', 'jam', 'ruangan']; // removed mata_kuliah, checking nama_singkat dynamically
 
@@ -50,7 +47,6 @@ const handleDownloadTemplate = (format: 'csv' | 'xlsx') => {
   downloadTemplate('jadwal', format);
 };
 
-// ─── Component ───────────────────────────────────────────────────────────────
 
 export default function JadwalImportCSVModal({
   mataKuliahList,
@@ -65,7 +61,6 @@ export default function JadwalImportCSVModal({
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  // Replaced with imported validateJadwalConflicts
 
   const processAndValidate = useCallback(
     async (file: File) => {
@@ -109,7 +104,6 @@ export default function JadwalImportCSVModal({
     [mataKuliahList, term]
   );
 
-  // ─── Handlers ────────────────────────────────────────────────────────────
 
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -171,7 +165,6 @@ export default function JadwalImportCSVModal({
     setError(null);
   };
 
-  // ─── Render ──────────────────────────────────────────────────────────────
 
   return (
     <Dialog open={open} onOpenChange={onClose}>

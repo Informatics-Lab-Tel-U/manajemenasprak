@@ -131,7 +131,6 @@ function rowsFromMatrix(
 }
 
 async function parseTextMatrix(value: string): Promise<SheetMatrix> {
-  // Convert pasted tab-separated string to matrix manually
   const rows = value.split('\n').filter(Boolean);
   return rows.map(row => row.split('\t').map(cell => cell.trim()));
 }

@@ -24,7 +24,6 @@ export default async function Home() {
   let initialMonitoringData: any[] = [];
 
   try {
-    // Get active modul based on current date (WIB)
     const nowUtc = new Date();
     const nowWib = new Date(nowUtc.getTime() + 7 * 60 * 60 * 1000);
     const todayStr = nowWib.toISOString().split('T')[0];

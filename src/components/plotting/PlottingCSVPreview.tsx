@@ -40,13 +40,6 @@ export default function PlottingCSVPreview({
   onSkip,
 }: PlottingCSVPreviewProps) {
   const totalValid = rows.filter((r) => r.status === 'valid').length;
-  // Resolved ambiguous rows count as valid for saving purposes?
-  // Or just display "Ambiguous" count but with candidates selected?
-  // User wants to see what's happening.
-  // I'll keep them as 'ambiguous' status visually until resolved?
-  // Or if selectedCandidateIds > 0, consider them resolved?
-  // The logic in parent `handleConfirm` handles saving.
-  // Visual counts:
   const totalAmbiguous = rows.filter((r) => r.status === 'ambiguous').length;
   const totalInvalid = rows.filter((r) => r.status === 'invalid').length;
 

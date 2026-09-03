@@ -185,7 +185,7 @@ export default function PraktikanClientPage() {
       } else if (payload.action === 'kelas' && payload.kelas) {
         url += `?kelas=${encodeURIComponent(payload.kelas)}`;
       } else {
-        return; // invalid
+        return;
       }
 
       const response = await fetch(url, {

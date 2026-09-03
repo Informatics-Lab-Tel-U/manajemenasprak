@@ -58,7 +58,6 @@ export default function StepPlotting({ data, term, onNext, onPrev, onSuccess }: 
         return;
       }
 
-      // Validate via API
       const res = await validatePlottingImport(rawRows, term);
 
       if (!active) return;
@@ -90,12 +89,10 @@ export default function StepPlotting({ data, term, onNext, onPrev, onSuccess }: 
       if (!row.selected) return;
       if (row.status === 'invalid') return;
 
-      // Valid rows
       if (row.status === 'valid' && row.asprakId && row.praktikumId) {
         payload.push({ asprak_id: row.asprakId, praktikum_id: row.praktikumId });
       }
 
-      // Ambiguous rows (resolved via multiple selection)
       else if (row.status === 'ambiguous' && row.selectedCandidateIds && row.praktikumId) {
         row.selectedCandidateIds.forEach((id: string) => {
           payload.push({ asprak_id: id, praktikum_id: row.praktikumId! });

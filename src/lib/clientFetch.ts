@@ -4,9 +4,6 @@ export interface ClientFetchOptions extends RequestInit {
   params?: Record<string, string | number | boolean | undefined>;
 }
 
-/**
- * Client-side helper for making requests to Next.js API Proxy routes (/api/*)
- */
 export async function apiFetch<T = any>(
   endpoint: string,
   options: ClientFetchOptions = {}

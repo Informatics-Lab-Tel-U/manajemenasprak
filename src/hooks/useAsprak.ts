@@ -3,10 +3,6 @@
 
 /* eslint-disable react-doctor/no-chain-state-updates, react-doctor/no-cascading-set-state, react-doctor/no-effect-chain, react-doctor/rendering-hydration-no-flicker */
 
-/**
- * useAsprak Hook
- * Uses fetchers for client-side API calls
- */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Asprak } from '@/types/database';
@@ -37,16 +33,12 @@ export function useAsprak(
   const [loading, setLoading] = useState(!isInitialDataValid);
   const [error, setError] = useState<string | null>(null);
 
-  // Fallback ke effectiveInitialTerm jika activeTerm belum hydrate dari Zustand/localStorage.
-  // Ini mencegah fetchAll di-bail-out saat pertama kali halaman dibuka (race condition
-  // antara Zustand persist hydration dan GlobalTermSelector's useEffect).
   const selectedTerm = activeTerm || effectiveInitialTerm;
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
     setError(null);
 
-    // activeTerm handles the global state. Wait until activeTerm is initialized (not empty)
     if (!selectedTerm) {
       setLoading(false);
       return;

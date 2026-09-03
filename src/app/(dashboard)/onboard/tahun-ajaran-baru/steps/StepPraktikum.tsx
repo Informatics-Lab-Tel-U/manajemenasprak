@@ -57,7 +57,6 @@ export default function PraktikumStep() {
   } = useOnboardingStore();
   const { activeTerm } = useTermStore();
 
-  // Term Detection
   const getNextTerm = () => {
     if (!activeTerm || activeTerm.length < 6) {
       const currentYear = new Date().getFullYear().toString().slice(-2);
@@ -93,7 +92,6 @@ export default function PraktikumStep() {
   const [termsLoading, setTermsLoading] = useState(false);
   const [isCopyModalOpen, setIsCopyModalOpen] = useState(false);
 
-  // Unified State
   const [previewRows, setPreviewRows] = useState<PraktikumPreviewRow[]>(() => {
     return draft.praktikumList?.map((p) => ({
       nama: p.nama,
@@ -139,7 +137,6 @@ export default function PraktikumStep() {
     }
   };
 
-  // Handlers for CSV
   const processSpreadsheet = useCallback(
     async (file: File) => {
       setUploadError(null);
@@ -215,7 +212,6 @@ export default function PraktikumStep() {
     setPreviewRows((prev) => prev.map((row) => (row.status !== 'error' && row.status !== 'skipped' ? { ...row, selected: checked } : row)));
   }, []);
 
-  // Handlers for Manual Add
   const handleAddManual = (e: React.FormEvent) => {
     e.preventDefault();
     if (!manualInputName) return;
@@ -293,7 +289,6 @@ export default function PraktikumStep() {
       return;
     }
 
-    // Create Draft data with temporary UUIDs, preserving existing tempId if any
     const draftData = selectedRows.map((r) => {
       const existing = draft.praktikumList?.find((p) => p.nama.toUpperCase() === r.nama.toUpperCase());
       return {

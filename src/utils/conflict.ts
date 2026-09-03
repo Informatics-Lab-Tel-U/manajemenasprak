@@ -31,7 +31,6 @@ export function checkCodeConflict(
   existingOwner: Asprak | null,
   newNim: string
 ): ConflictCheckResult {
-  // No conflict if code is not taken
   if (!existingOwner) {
     return {
       hasConflict: false,
@@ -39,7 +38,6 @@ export function checkCodeConflict(
     };
   }
 
-  // Same person - no conflict
   const isSamePerson = existingOwner.nim === newNim;
   if (isSamePerson) {
     return {
@@ -49,11 +47,9 @@ export function checkCodeConflict(
     };
   }
 
-  // Different person - check if owner is inactive
   const ownerIsInactive = isAsprakInactive(existingOwner.angkatan);
 
   if (ownerIsInactive) {
-    // Code can be recycled from inactive user
     return {
       hasConflict: false,
       existingOwner,
@@ -62,7 +58,6 @@ export function checkCodeConflict(
     };
   }
 
-  // Active owner, different person - conflict!
   return {
     hasConflict: true,
     existingOwner,

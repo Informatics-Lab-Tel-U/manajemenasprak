@@ -89,7 +89,6 @@ export async function validateJadwalConflicts(
         }
       }
     } else {
-      // If ruangan is empty but it's not PJJ, mark as error
       if (!newRow.kelas.toUpperCase().includes('PJJ')) {
         newRow.status = 'error';
         newRow.statusMessage = 'Ruangan tidak boleh kosong (Kecuali PJJ)';

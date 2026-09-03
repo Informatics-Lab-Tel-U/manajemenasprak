@@ -44,7 +44,6 @@ export function GlobalTermSelector({ availableTerms, disabled = false }: GlobalT
     );
   }
 
-  // Fallback to first term if activeTerm is not yet synchronized
   const displayValue = activeTerm && availableTerms.includes(activeTerm) 
     ? activeTerm 
     : availableTerms[0] || '';

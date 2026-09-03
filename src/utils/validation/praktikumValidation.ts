@@ -6,16 +6,13 @@ export function validatePraktikumData(
 ): PraktikumPreviewRow[] {
   const preview: PraktikumPreviewRow[] = [];
 
-  // Create a fast lookup map for existing praktikums
   const existingMap = new Set(
     existingPraktikums.map((p) => `${p.nama.toUpperCase()}|${p.tahun_ajaran}`)
   );
 
-  // We also need to keep track of duplicates within the CSV itself
   const internalMap = new Set<string>();
 
   data.forEach((row: any) => {
-    // Allow flexible column names (from Excel sheets or CSV)
     const nama = (
       row.nama_singkat ||
       row.nama_lengkap ||
@@ -44,7 +41,6 @@ export function validatePraktikumData(
     } else {
       const key = `${nama}|${tahunAjaran}`;
 
-      // Check against database
       if (existingMap.has(key)) {
         status = 'skipped';
         statusMessage = 'Sudah ada di database';

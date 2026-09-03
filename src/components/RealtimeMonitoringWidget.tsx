@@ -19,13 +19,11 @@ export default function RealtimeMonitoringWidget({ initialData }: { initialData:
 
   const [now, setNow] = useState(new Date());
 
-  // Init store with SSR data
   useEffect(() => {
     setInitialLabStatus(initialData);
     init();
   }, [initialData, setInitialLabStatus, init]);
 
-  // Clock tick for local TTL calculation
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(timer);

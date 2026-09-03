@@ -31,13 +31,11 @@ export default function MataKuliahManualModal({
   defaultTerm,
   onConfirm,
 }: MataKuliahManualModalProps) {
-  // Term State
   const initialYear = defaultTerm ? defaultTerm.substring(0, 2) : '25';
   const initialSem = defaultTerm && defaultTerm.endsWith('2') ? '2' : '1';
   const [termYear, setTermYear] = useState(initialYear);
   const [termSem, setTermSem] = useState<'1' | '2'>(initialSem);
 
-  // Form State
   const [selectedPraktikumId, setSelectedPraktikumId] = useState('');
   const [newMkSingkat, setNewMkSingkat] = useState('');
   const [namaLengkap, setNamaLengkap] = useState('');
@@ -51,11 +49,9 @@ export default function MataKuliahManualModal({
     []
   );
 
-  // Computed Term
   const term = buildTermString(termYear, termSem);
   const isTermValid = termYear.length >= 2;
 
-  // Fetch Praktikums when Term changes
   useEffect(() => {
     const controller = new AbortController();
     if (!open || !isTermValid) {
@@ -83,7 +79,6 @@ export default function MataKuliahManualModal({
       }
     }
     fetchPraktikums();
-    // Reset selection on term change
     setSelectedPraktikumId('');
 
     return () => {

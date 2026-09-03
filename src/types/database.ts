@@ -89,7 +89,6 @@ export type Jadwal = {
   updated_at: string;
   mata_kuliah?: MataKuliah;
   jadwal_pengganti?: JadwalPengganti[];
-  // Extended properties for UI
   is_pengganti?: boolean;
   tanggal?: string;
 };

@@ -16,7 +16,6 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   try {
     post = await blogService.getBlogPostBySlug(slug);
   } catch {
-    // Fallback metadata if fetch fails
   }
 
   return {
@@ -39,7 +38,6 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
     notFound();
   }
 
-  // Increment view count in background
   blogService.incrementBlogViewCount(post.id).catch(console.error);
 
   return (

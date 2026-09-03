@@ -11,7 +11,6 @@ export function mapPlottingValidationResponse(data: any): ExtendedPreviewRow[] {
   const mapped: ExtendedPreviewRow[] = [];
   let idx = 0;
 
-  // Valid
   validRows?.forEach((r: any) => {
     mapped.push({
       index: idx++,
@@ -24,7 +23,6 @@ export function mapPlottingValidationResponse(data: any): ExtendedPreviewRow[] {
     });
   });
 
-  // Ambiguous
   ambiguousRows?.forEach((r: any) => {
     mapped.push({
       index: idx++,
@@ -39,7 +37,6 @@ export function mapPlottingValidationResponse(data: any): ExtendedPreviewRow[] {
     });
   });
 
-  // Invalid
   invalidRows?.forEach((r: any) => {
     mapped.push({
       index: idx++,

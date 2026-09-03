@@ -1,12 +1,8 @@
-/**
- * Utility functions for Tiptap document processing in Next.js
- */
-
 export function normalizeTiptapContent(doc: any) {
   if (!doc || typeof doc !== 'object') return doc;
-  
+
   const cloned = JSON.parse(JSON.stringify(doc));
-  
+
   function traverse(node: any) {
     if (node.marks && Array.isArray(node.marks)) {
       node.marks.forEach((mark: any) => {
@@ -30,7 +26,7 @@ export function normalizeTiptapContent(doc: any) {
         }
       });
     }
-    
+
     if (node.content && Array.isArray(node.content)) {
       node.content.forEach(traverse);
     }

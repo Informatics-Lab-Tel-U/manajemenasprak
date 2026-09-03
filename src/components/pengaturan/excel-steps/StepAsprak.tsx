@@ -49,7 +49,6 @@ export default function StepAsprak({ data, term, onNext, onPrev, onImport }: Ste
   const [forceOverride, setForceOverride] = useState(false);
   const [showOverrideConfirm, setShowOverrideConfirm] = useState(false);
 
-  // Asprak specific existing data fetched independently
   // eslint-disable-next-line react-doctor/rerender-state-only-in-handlers
   const [existingCodes, setExistingCodes] = useState<string[]>([]);
   // eslint-disable-next-line react-doctor/rerender-state-only-in-handlers

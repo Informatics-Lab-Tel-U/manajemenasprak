@@ -94,7 +94,6 @@ export function ManajemenAkunClientPage({
     return requests.filter((r) => r.status === 'PENDING').length;
   }, [requests]);
 
-  // Columns for Active Users Table
   const userColumns = React.useMemo<ColumnDef<UserWithEmail>[]>(
     () => [
       {
@@ -187,7 +186,6 @@ export function ManajemenAkunClientPage({
     []
   );
 
-  // Columns for Access Requests Table
   const requestColumns = React.useMemo<ColumnDef<UserWithEmail>[]>(
     () => [
       {

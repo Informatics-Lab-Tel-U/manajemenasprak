@@ -13,8 +13,8 @@ export const useTermStore = create<TermState>()(
       setActiveTerm: (term) => set({ activeTerm: term }),
     }),
     {
-      name: 'term-storage', // name of the item in the storage (must be unique)
-      storage: createJSONStorage(() => localStorage), // (optional) by default, 'localStorage' is used
+      name: 'term-storage',
+      storage: createJSONStorage(() => localStorage),
     }
   )
 );

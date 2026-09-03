@@ -29,8 +29,6 @@ export default function PraktikumCSVPreview({
   const totalError = rows.filter((r) => r.status === 'error').length;
 
   const selectableRows = rows.filter((r) => r.status !== 'error' && r.status !== 'skipped'); // Skipped usually means duplicate in DB, maybe we don't select them? Or just warn.
-  // Actually, if it's skipped (duplicate), we probably shouldn't import it again or just ignore it.
-  // Let's assume 'skipped' means it exists. We might not want to re-import.
 
   const selectedCount = rows.filter((r) => r.selected).length;
   const allSelected = selectableRows.length > 0 && selectedCount === selectableRows.length;

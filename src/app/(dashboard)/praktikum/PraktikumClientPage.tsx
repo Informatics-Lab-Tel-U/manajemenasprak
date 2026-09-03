@@ -39,7 +39,6 @@ export default function PraktikumClientPage({
 
   useEffect(() => {
     async function fetchPraktikums() {
-      // Skip if we are at the initial term
       if (selectedTerm === initialTerms[0]) {
         return;
       }

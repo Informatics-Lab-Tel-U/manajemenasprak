@@ -74,7 +74,6 @@ export default function DatabaseClientPage({
   const [selectedDeleteTerm, setDeleteTerm] = useState('');
   const deleteTerm = selectedDeleteTerm || globalActiveTerm || (tahunAjaranList.length > 0 ? tahunAjaranList[0] : '');
 
-  // Maintenance Mode States
   const [isMaintenance, setIsMaintenance] = useState(initialIsMaintenance);
   const [loadingMaintenance, setLoadingMaintenance] = useState(false);
   const [maintenanceStatuses, setMaintenanceStatuses] = useState({
@@ -85,7 +84,6 @@ export default function DatabaseClientPage({
   const [loadingMaintenanceApp, setLoadingMaintenanceApp] = useState<string | null>(null);
   const [userRole] = useState<Role | null>(initialUserRole);
 
-  // Wizard States
   const [wizardStep, setWizardStep] = useState<number>(0);
   const [excelData, setExcelData] = useState<{
     praktikum: any[];
@@ -246,7 +244,6 @@ export default function DatabaseClientPage({
       if (res.ok && data.ok) {
         updateUiState({ status: { type: 'success', message: `Berhasil menghapus semua data untuk angkatan ${deleteDataTerm}!` } });
 
-        // Check if universal active term was deleted
         if (deleteDataTerm === globalActiveTerm) {
           const newTerms = tahunAjaranList.filter(t => t !== deleteDataTerm);
           if (newTerms.length > 0) {
@@ -256,7 +253,6 @@ export default function DatabaseClientPage({
           }
         }
 
-        // Reset danger zone select state to force fallback to the new term
         setDeleteDataTerm('');
 
         refetchTahunAjaran();
