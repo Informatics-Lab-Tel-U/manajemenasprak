@@ -157,11 +157,9 @@ export default function TahunAjaranBaruClient({
         onValueChange={(id) => {
           const targetIndex = steps.findIndex(s => s.id === id);
           const currentIndex = steps.findIndex(s => s.id === currentStep);
-          // Allow going back or going to an already completed step
           if (targetIndex <= currentIndex || completedSteps.includes(id as any)) {
             setCurrentStep(id as any);
           } else {
-            // If trying to jump ahead, check if previous step is completed
             const previousStepId = steps[targetIndex - 1]?.id;
             if (completedSteps.includes(previousStepId as any)) {
               setCurrentStep(id as any);

@@ -56,7 +56,6 @@ export function LightWavesBackground({
   const startTimeRef = useRef(0);
   const [isDark, setIsDark] = useState<boolean>(true);
 
-  // Watch for theme class changes on <html>
   useEffect(() => {
     setIsDark(isDarkMode());
 
@@ -116,7 +115,6 @@ export function LightWavesBackground({
     const ro = new ResizeObserver(updateSize);
     ro.observe(container);
 
-    // Dark mode theme values
     const darkBg = {
       top: '#030712',
       mid: '#0a0f1a',
@@ -126,7 +124,6 @@ export function LightWavesBackground({
       glowOpacityScale: 1,
     };
 
-    // Light mode theme values
     const lightBg = {
       top: '#f0f7ff',
       mid: '#e8f0fe',
@@ -143,7 +140,6 @@ export function LightWavesBackground({
 
       const time = (Date.now() - startTimeRef.current) * 0.001 * speed;
 
-      // Background gradient
       const bgGradient = ctx.createLinearGradient(0, 0, 0, height);
       bgGradient.addColorStop(0, theme.top);
       bgGradient.addColorStop(0.5, theme.mid);
@@ -151,7 +147,6 @@ export function LightWavesBackground({
       ctx.fillStyle = bgGradient;
       ctx.fillRect(0, 0, width, height);
 
-      // Ambient glow spots
       ctx.globalCompositeOperation = dark ? 'lighter' : 'multiply';
 
       const glowSpots = [
@@ -193,7 +188,6 @@ export function LightWavesBackground({
         ctx.fillRect(0, 0, width, height);
       }
 
-      // Flowing waves
       ctx.globalCompositeOperation = 'source-over';
       for (const wave of wavesRef.current) {
         const rgb = hexToRgb(wave.color);
@@ -233,7 +227,6 @@ export function LightWavesBackground({
         ctx.fill();
       }
 
-      // Top glow highlight
       const firstColor = hexToRgb(waveColors[0]);
       const topGlow = ctx.createLinearGradient(0, 0, 0, height * 0.4);
       topGlow.addColorStop(
@@ -256,7 +249,6 @@ export function LightWavesBackground({
     };
   }, [colors, lightColors, speed, intensity, initWaves, isDark, activeColors]);
 
-  // Vignette color changes per theme
   const vignetteStyle = isDark
     ? 'radial-gradient(ellipse at center, transparent 0%, transparent 50%, rgba(3,7,18,0.7) 100%)'
     : 'radial-gradient(ellipse at center, transparent 0%, transparent 50%, rgba(209,225,255,0.5) 100%)';

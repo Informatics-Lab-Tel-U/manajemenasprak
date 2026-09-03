@@ -62,7 +62,6 @@ export function GroupColorModal({ isOpen, onClose, mataKuliahList }: GroupColorM
     if (isOpen) {
       const dbColors: Record<string, string> = {};
       uniqueGroups.forEach((groupName) => {
-        // Find any MK in this group that has a color
         const mkWithColor = mataKuliahList.find(
           (mk: any) =>
             (mk.praktikum?.nama === groupName || mk.mk_singkat === groupName || mk.nama_singkat === groupName) &&
@@ -89,7 +88,6 @@ export function GroupColorModal({ isOpen, onClose, mataKuliahList }: GroupColorM
 
     setLoading(true);
     try {
-      // Build global updates
       const updates = uniqueGroups.flatMap((name) =>
         colors[name] !== initialColors[name]
           ? [{ nama: name, warna: colors[name] }]

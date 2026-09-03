@@ -665,13 +665,13 @@ void main() {
 }
 
 export interface GradientWaveProps {
-  colors?: string[]; // gradient colors
-  isPlaying?: boolean; // animation toggle
-  className?: string; // custom Tailwind classes
-  shadowPower?: number; // strength of top darkening
-  darkenTop?: boolean; // enable/disable top shadow
-  noiseSpeed?: number; // global noise animation speed
-  noiseFrequency?: [number, number]; // global noise frequency
+  colors?: string[];
+  isPlaying?: boolean;
+  className?: string;
+  shadowPower?: number;
+  darkenTop?: boolean;
+  noiseSpeed?: number;
+  noiseFrequency?: [number, number];
   deform?: {
     incline?: number;
     offsetTop?: number;
@@ -686,14 +686,14 @@ export interface GradientWaveProps {
 
 export interface GradientWaveProps {
   colors?: string[]; // custom colors (overrides theme colors)
-  darkColors?: string[]; // custom dark mode colors
-  lightColors?: string[]; // custom light mode colors
-  isPlaying?: boolean; // animation toggle
-  className?: string; // custom Tailwind classes
-  shadowPower?: number; // strength of top darkening
-  darkenTop?: boolean; // enable/disable top shadow
-  noiseSpeed?: number; // global noise animation speed
-  noiseFrequency?: [number, number]; // global noise frequency
+  darkColors?: string[];
+  lightColors?: string[];
+  isPlaying?: boolean;
+  className?: string;
+  shadowPower?: number;
+  darkenTop?: boolean;
+  noiseSpeed?: number;
+  noiseFrequency?: [number, number];
   deform?: {
     incline?: number;
     offsetTop?: number;
@@ -707,21 +707,21 @@ export interface GradientWaveProps {
 }
 
 const DEFAULT_DARK_COLORS = [
-  "#020617", // deep slate/black
-  "#0f172a", // slate 900
-  "#1e3a8a", // brand dark blue 900
-  "#2563eb", // brand primary blue 600
-  "#0284c7", // brand cyan 600
-  "#0f172a", // base slate 900
+  "#020617",
+  "#0f172a",
+  "#1e3a8a",
+  "#2563eb",
+  "#0284c7",
+  "#0f172a",
 ];
 
 const DEFAULT_LIGHT_COLORS = [
-  "#f8fafc", // slate 50
-  "#e0f2fe", // sky 100
-  "#93c5fd", // blue 300
-  "#3b82f6", // brand blue 500
-  "#60a5fa", // brand blue 400
-  "#f0f9ff", // sky 50
+  "#f8fafc",
+  "#e0f2fe",
+  "#93c5fd",
+  "#3b82f6",
+  "#60a5fa",
+  "#f0f9ff",
 ];
 
 const DEFAULT_NOISE_FREQUENCY: [number, number] = [0.0001, 0.0009];
@@ -753,7 +753,6 @@ export function GradientWave({
   const gradientRef = useRef<Gradient | null>(null);
   const [isDark, setIsDark] = React.useState(true);
 
-  // Detect theme class on <html>
   useEffect(() => {
     const checkDark = () => {
       if (typeof document !== "undefined") {
@@ -776,7 +775,6 @@ export function GradientWave({
   useEffect(() => {
     if (!containerRef.current) return;
 
-    // Clean up any existing canvas in container
     while (containerRef.current.firstChild) {
       containerRef.current.removeChild(containerRef.current.firstChild);
     }
@@ -796,7 +794,6 @@ export function GradientWave({
       const gradient = new Gradient(canvas, activeColors);
       gradientRef.current = gradient;
 
-      // apply props to uniforms
       gradient.mesh.material.uniforms.u_shadow_power.value = shadowPower;
       gradient.mesh.material.uniforms.u_darken_top.value = darkenTop ? 1 : 0;
       gradient.mesh.material.uniforms.u_global.value.noiseFreq.value =
@@ -804,7 +801,6 @@ export function GradientWave({
       gradient.mesh.material.uniforms.u_global.value.noiseSpeed.value =
         noiseSpeed;
 
-      // deform settings (only if provided)
       Object.assign(gradient.mesh.material.uniforms.u_vertDeform.value, {
         ...gradient.mesh.material.uniforms.u_vertDeform.value,
         ...deform,

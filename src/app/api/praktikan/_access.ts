@@ -56,7 +56,16 @@ function findProvidedApiKey(request: NextRequest) {
 function resolveCorsOrigin(origin: string | null) {
   const normalized = normalizeOrigin(origin);
   if (!normalized) return null;
-  return ALLOWED_ORIGINS.includes(normalized) ? normalized : null;
+  if (ALLOWED_ORIGINS.includes(normalized)) {
+    return normalized;
+  }
+
+  // Safe development check: allow localhost and 127.0.0.1 on any port only in dev mode
+  if (process.env.NODE_ENV === 'development' && /^https?:\/\/(localhost|127\.0\.0\.1)(:[0-9]+)?$/.test(normalized)) {
+    return normalized;
+  }
+
+  return null;
 }
 
 function corsHeaders(origin: string) {

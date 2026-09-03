@@ -1,9 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 
-// ============================================================================
-// TYPES
-// ============================================================================
 
 export type OnboardingStep = 'praktikum' | 'matkul' | 'jadwal' | 'selesai';
 
@@ -46,13 +43,11 @@ interface OnboardingState extends OnboardingProgress {
   draft: OnboardingDraft;
   isDirty: boolean;
   
-  // Actions
   setCurrentStep: (step: OnboardingStep) => void;
   markStepCompleted: (step: OnboardingStep) => void;
   unmarkStepCompleted: (step: OnboardingStep) => void;
   syncWithTerm: (term: string, dbPraktikums?: any[], dbMataKuliah?: any[]) => void;
 
-  // Draft actions
   setPraktikumList: (data: (PraktikumDraft & { tempId: string })[]) => void;
   setMataKuliahList: (data: MataKuliahDraft[]) => void;
   addMataKuliahDraft: (data: MataKuliahDraft) => void;
@@ -63,19 +58,14 @@ interface OnboardingState extends OnboardingProgress {
   setMode: (mode: OnboardingMode) => void;
   setTargetTerm: (term: string | undefined) => void;
   
-  // State actions
   setIsDirty: (dirty: boolean) => void;
   resetProgress: () => void;
   
-  // Utility
   isStepCompleted: (step: OnboardingStep) => boolean;
   canProceedToStep: (step: OnboardingStep) => boolean;
   getProgressPercentage: () => number;
 }
 
-// ============================================================================
-// CONSTANTS
-// ============================================================================
 
 const STEP_ORDER: OnboardingStep[] = ['praktikum', 'matkul', 'jadwal', 'selesai'];
 
@@ -91,16 +81,12 @@ const INITIAL_STATE: OnboardingProgress & { draft: OnboardingDraft; isDirty: boo
   isDirty: false,
 };
 
-// ============================================================================
-// STORE
-// ============================================================================
 
 export const useOnboardingStore = create<OnboardingState>()(
   persist(
     (set, get) => ({
       ...INITIAL_STATE,
 
-      // Step navigation
       setCurrentStep: (step) =>
         set((state) => {
           const now = new Date().toISOString();
@@ -187,7 +173,6 @@ export const useOnboardingStore = create<OnboardingState>()(
         }
       },
 
-      // Draft actions
       setPraktikumList: (data) =>
         set((state) => {
           const now = new Date().toISOString();
@@ -259,7 +244,6 @@ export const useOnboardingStore = create<OnboardingState>()(
           draft: { ...state.draft, targetTerm: term },
         })),
 
-      // State actions
       setIsDirty: (dirty) => set({ isDirty: dirty }),
 
       resetProgress: () =>
@@ -269,7 +253,6 @@ export const useOnboardingStore = create<OnboardingState>()(
           lastUpdated: null,
         }),
 
-      // Utility functions
       isStepCompleted: (step) => {
         const state = get();
         return state.completedSteps.includes(step);
@@ -279,10 +262,8 @@ export const useOnboardingStore = create<OnboardingState>()(
         const state = get();
         const stepIndex = STEP_ORDER.indexOf(step);
         
-        // Can always go to first step
         if (stepIndex === 0) return true;
         
-        // Check if all previous steps are completed
         const completedSet = new Set(state.completedSteps);
         for (let i = 0; i < stepIndex; i++) {
           if (!completedSet.has(STEP_ORDER[i])) {
@@ -314,9 +295,6 @@ export const useOnboardingStore = create<OnboardingState>()(
   )
 );
 
-// ============================================================================
-// HOOKS
-// ============================================================================
 
 /**
  * Hook untuk mendapatkan status step

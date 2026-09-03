@@ -10,7 +10,6 @@ interface JadwalOnboardState {
   jadwalRows: JadwalPreviewRow[];
   targetTerm: string | null;
 
-  // Actions
   setCurrentStep: (step: JadwalOnboardStep) => void;
   markStepCompleted: (step: JadwalOnboardStep) => void;
   setJadwalRows: (rows: JadwalPreviewRow[]) => void;

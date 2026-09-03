@@ -44,7 +44,6 @@ import {
 import { useTermStore } from '@/store/useTermStore';
 import { parseSpreadsheet, downloadTemplate } from '@/lib/spreadsheet';
 
-// ─── Types ───────────────────────────────────────────────────────────────────
 
 interface RawCSVRow {
   nama_lengkap?: string;
@@ -78,7 +77,6 @@ interface AsprakImportCSVModalProps {
   open: boolean;
 }
 
-// ─── Step type ───────────────────────────────────────────────────────────────
 
 type Step = 'upload' | 'preview';
 
@@ -88,7 +86,6 @@ const handleDownloadTemplate = (format: 'csv' | 'xlsx') => {
   downloadTemplate('asprak', format);
 };
 
-// ─── Component ───────────────────────────────────────────────────────────────
 
 export default function AsprakImportCSVModal({
   existingCodes,
@@ -102,14 +99,11 @@ export default function AsprakImportCSVModal({
   const initialYear = activeTerm ? activeTerm.substring(0, 2) : '25';
   const initialSem = activeTerm && activeTerm.endsWith('2') ? '2' : '1';
 
-  // Term state
   const [termYear, setTermYear] = useState(initialYear);
   const [termSem, setTermSem] = useState<'1' | '2'>(initialSem as '1' | '2');
 
-  // Step state
   const [step, setStep] = useState<Step>('upload');
 
-  // CSV state
   const [fileName, setFileName] = useState<string | null>(null);
   const [parsedData, setParsedData] = useState<any[]>([]);
   const [previewRows, setPreviewRows] = useState<PreviewRow[]>([]);
@@ -118,11 +112,9 @@ export default function AsprakImportCSVModal({
   const [forceOverride, setForceOverride] = useState(false);
   const [showOverrideConfirm, setShowOverrideConfirm] = useState(false);
 
-  // Derived
   const term = useMemo(() => buildTermString(termYear, termSem), [termYear, termSem]);
   const isTermValid = term.length > 0 && !isNaN(parseInt(termYear));
 
-  // ─── CSV Parsing ─────────────────────────────────────────────────────────
 
   const processFile = useCallback(async (file: File) => {
     setError(null);
@@ -180,7 +172,6 @@ export default function AsprakImportCSVModal({
     }
   }, []);
 
-  // Re-run validation when data or forceOverride changes
   // eslint-disable-next-line react-doctor/no-chain-state-updates
   // eslint-disable-next-line react-doctor/no-chain-state-updates
   useEffect(() => {
@@ -193,13 +184,11 @@ export default function AsprakImportCSVModal({
     }
   }, [parsedData, existingCodes, existingNims, forceOverride]);
 
-  // ─── Selection Handlers ────────────────────────────────────────────────
 
   const handleToggleSelect = useCallback((rowIndex: number) => {
     setPreviewRows((prev) => {
       const updated = [...prev];
       const row = { ...updated[rowIndex] };
-      // Only toggle if not disabled
       if (row.status !== 'error' && row.status !== 'duplicate-csv' && row.status !== 'warning') {
         row.selected = !row.selected;
         updated[rowIndex] = row;
@@ -211,7 +200,6 @@ export default function AsprakImportCSVModal({
   const handleToggleAll = useCallback((checked: boolean) => {
     setPreviewRows((prev) => {
       return prev.map((row) => {
-        // Only modify selectable rows
         if (row.status !== 'error' && row.status !== 'duplicate-csv' && row.status !== 'warning') {
           return { ...row, selected: checked };
         }
@@ -220,7 +208,6 @@ export default function AsprakImportCSVModal({
     });
   }, []);
 
-  // ─── Inline Code Edit ─────────────────────────────────────────────────
 
   const handleCodeEdit = useCallback(
     (rowIndex: number, newCode: string) => {
@@ -237,7 +224,6 @@ export default function AsprakImportCSVModal({
       const row = { ...updated[rowIndex] };
       row.role = newRole;
       updated[rowIndex] = row;
-      // Re-run validation for the entire dataset when a role changes
       try {
         const remappedData = updated.map((r) => ({
           nama_lengkap: r.nama_lengkap,
@@ -288,10 +274,8 @@ export default function AsprakImportCSVModal({
     setShowOverrideConfirm(false);
   };
 
-  // ─── Template Download ──────────────────────────────────────────────────
 
 
-  // ─── Drag & Drop ────────────────────────────────────────────────────────
 
   const onDrop = useCallback(
     (acceptedFiles: File[]) => {
@@ -309,10 +293,8 @@ export default function AsprakImportCSVModal({
     disabled: !isTermValid,
   });
 
-  // ─── Confirm Save ───────────────────────────────────────────────────────
 
   const handleConfirm = async () => {
-    // Only import SELECTED rows
     const selectedRows = previewRows.filter(
       (r) => r.selected && (r.status === 'ok' || r.status === 'warning')
     );
@@ -341,7 +323,6 @@ export default function AsprakImportCSVModal({
     }
   };
 
-  // ─── Back from preview ──────────────────────────────────────────────────
 
   const handleBack = () => {
     setStep('upload');
@@ -352,7 +333,6 @@ export default function AsprakImportCSVModal({
     setForceOverride(false);
   };
 
-  // ─── Reset on close ─────────────────────────────────────────────────────
 
   const handleClose = () => {
     setStep('upload');
@@ -365,7 +345,6 @@ export default function AsprakImportCSVModal({
     onClose();
   };
 
-  // ─── Render ──────────────────────────────────────────────────────────────
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>

@@ -44,7 +44,6 @@ export default function PelanggaranClientPage({
     loading,
   } = usePelanggaran(initialTahunAjaranList[0], isKoor, userId, initialData);
 
-  // ── Hydration fix ──
   const [mounted, setMounted] = React.useState(false);
   React.useEffect(() => {
     setMounted(true);

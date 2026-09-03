@@ -13,7 +13,6 @@ export async function exportSpreadsheet(data: any[], filename: string, sheetName
       const errJson = await response.json();
       errStr = errJson.error || errStr;
     } catch {
-      // ignore
     }
     throw new Error(errStr);
   }
@@ -26,7 +25,6 @@ export async function exportSpreadsheet(data: any[], filename: string, sheetName
   document.body.appendChild(link);
   link.click();
   
-  // Cleanup
   link.remove();
   setTimeout(() => window.URL.revokeObjectURL(url), 100);
 }
@@ -52,7 +50,6 @@ export function downloadTemplate(type: string, format: 'csv' | 'xlsx' = 'csv') {
   const url = `/api/util/template?type=${type}&format=${format}`;
   const link = document.createElement('a');
   link.href = url;
-  // Let the browser handle the download and filename from the Content-Disposition header
   document.body.appendChild(link);
   link.click();
   link.remove();
@@ -73,7 +70,6 @@ export async function generatePresensiExcel(options: any) {
       const errJson = await response.json();
       errStr = errJson.error || errStr;
     } catch {
-      // ignore
     }
     throw new Error(errStr);
   }

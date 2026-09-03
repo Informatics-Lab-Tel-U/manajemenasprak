@@ -71,7 +71,6 @@ export function JadwalModal({
   const selectedTerm = activeTerm || '';
 
 
-  // Filter available praktikum names based on the selected term
   const availablePraktikum = Array.from(
     new Set(
       mataKuliahList.flatMap((mk: any) => {
@@ -82,14 +81,12 @@ export function JadwalModal({
     )
   ).filter(Boolean) as string[];
 
-  // Filter valid Mata Kuliah based on both term and praktikum name
   const filteredMataKuliah = mataKuliahList.filter((mk: any) => {
     const termMatch = !mk.praktikum?.tahun_ajaran || mk.praktikum?.tahun_ajaran === selectedTerm;
     const prakName = mk.praktikum?.nama || mk.mk_singkat || mk.nama_singkat;
     return termMatch && prakName === selectedPraktikum;
   });
 
-  // Reset form when modal opens or initialData changes
   useEffect(() => {
     if (isOpen) {
       setIsDetailsEditable(!initialData);

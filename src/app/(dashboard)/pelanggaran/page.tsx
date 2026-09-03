@@ -11,7 +11,6 @@ export default async function PelanggaranPage() {
   const role = authUser.pengguna.role;
   const isKoor = role === 'ASPRAK_KOOR';
 
-  // ── Parallelize data fetching ──
   let praktikumList: any[] = [];
   let countMap: any = {};
 

@@ -50,18 +50,15 @@ export default function JagaRfidModal({
   const [asprakList, setAsprakList] = useState<Asprak[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Combobox Popover States
   const [openAsprakRfid, setOpenAsprakRfid] = useState(false);
   const [searchQueryRfid, setSearchQueryRfid] = useState('');
 
   const [openAsprakManual, setOpenAsprakManual] = useState(false);
   const [searchQueryManual, setSearchQueryManual] = useState('');
 
-  // Form State: Daftarkan RFID
   const [selectedAsprakIdRfid, setSelectedAsprakIdRfid] = useState('');
   const [rfidInput, setRfidInput] = useState('');
 
-  // Form State: Presensi Manual
   const [selectedAsprakIdManual, setSelectedAsprakIdManual] = useState('');
   const [selectedHari, setSelectedHari] = useState('SENIN');
   const [selectedShift, setSelectedShift] = useState('1');
@@ -69,7 +66,6 @@ export default function JagaRfidModal({
 
   const hasLoadedRef = useRef(false);
 
-  // Load Asisten List
   useEffect(() => {
     if (!isOpen) {
       hasLoadedRef.current = false;
@@ -111,7 +107,6 @@ export default function JagaRfidModal({
     };
   }, [isOpen, term]);
 
-  // Filtered Aspraks for Combobox
   const filteredAspraksRfid = useMemo(() => {
     const q = searchQueryRfid.toLowerCase();
     return asprakList.filter(
@@ -149,7 +144,6 @@ export default function JagaRfidModal({
     }
   };
 
-  // Submit Simpan / Pasangkan RFID ke Asisten
   const handleSaveRfid = async () => {
     if (!selectedAsprakIdRfid) {
       toast.error('Pilih asisten terlebih dahulu');
@@ -179,7 +173,6 @@ export default function JagaRfidModal({
     }
   };
 
-  // Submit Presensi Manual
   const handleSaveManual = async () => {
     if (!selectedAsprakIdManual || !selectedHari || !selectedShift) {
       toast.error('Harap lengkapi semua data form');

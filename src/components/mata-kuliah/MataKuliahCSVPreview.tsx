@@ -115,7 +115,6 @@ export default function MataKuliahCSVPreview({
             </thead>
             <tbody>
             {rows.map((row, idx) => {
-              // Validations
               const isMkUnknown =
                 !validPraktikums.some((p) => p.nama === row.mk_singkat) && !row.mappedPraktikumId;
               const isProdiInvalid = !isValidProdi(row.program_studi);

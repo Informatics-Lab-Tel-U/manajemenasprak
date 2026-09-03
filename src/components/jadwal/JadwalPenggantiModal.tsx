@@ -93,7 +93,6 @@ export function JadwalPenggantiModal({
 
   
 
-  // Detect PJJ from the selected jadwal's kelas suffix
   const isPJJ = useMemo(() => {
     const j = allJadwal.find((jad) => jad.id === selectedJadwalId);
     return !!j?.kelas?.toLowerCase().includes('pjj');
@@ -116,16 +115,13 @@ export function JadwalPenggantiModal({
 
   const [modulSchedules, setModulSchedules] = useState<any[]>([]);
 
-  // --- Derived lists ---
 
-  // Unique terms from mataKuliahList
   const availableTerms = useMemo(() => {
     return Array.from(
       new Set(mataKuliahList.flatMap((mk) => mk.praktikum?.tahun_ajaran ? [mk.praktikum.tahun_ajaran] : []))
     ) as string[];
   }, [mataKuliahList]);
 
-  // Unique praktikum names for the selected term (from mataKuliahList)
   const availablePraktikum = useMemo(() => {
     if (!selectedTerm) return [];
     return Array.from(
@@ -164,21 +160,17 @@ export function JadwalPenggantiModal({
       const isPJJ = (s: string) => upper(s).includes('PJJ');
       const isINT = (s: string) => upper(s).includes('INT');
 
-      // 1. Primary sort: prefix group
       const pr = prefixRank(a) - prefixRank(b);
       if (pr !== 0) return pr;
 
-      // 2. PJJ after non-PJJ within same prefix
       const pjjA = isPJJ(a);
       const pjjB = isPJJ(b);
       if (pjjA !== pjjB) return pjjA ? 1 : -1;
 
-      // 3. INT after regular numbers (within same PJJ status)
       const intA = isINT(a);
       const intB = isINT(b);
       if (intA !== intB) return intA ? 1 : -1;
 
-      // 4. Numeric sort on the last segment
       const numericSuffix = (s: string) => {
         const cleaned = s
           .toUpperCase()
@@ -195,7 +187,6 @@ export function JadwalPenggantiModal({
     return [...filtered].sort((a, b) => sortKelas(a.kelas, b.kelas));
   }, [selectedTerm, selectedPraktikum, allJadwal]);
 
-  // The currently selected jadwal object
   const selectedJadwal = useMemo(() => {
     return allJadwal.find((j) => j.id === selectedJadwalId);
   }, [selectedJadwalId, allJadwal]);
@@ -233,7 +224,6 @@ export function JadwalPenggantiModal({
     }
   }, [isOpen, initialData, currentTerm]);
 
-  // Fetch TMM when selectedTerm changes
   useEffect(() => {
     if (isOpen && selectedTerm) {
       const fetchTMM = async () => {
@@ -248,7 +238,6 @@ export function JadwalPenggantiModal({
 
 
 
-  // Sync date when Modul, Hari, or modulSchedules changes
   useEffect(() => {
     if (isOpen && modulSchedules.length > 0) {
       const newTanggal = calculateDate(modul, hari, modulSchedules);
@@ -268,7 +257,6 @@ export function JadwalPenggantiModal({
   const handleHariChange = (val: string) => {
     updateUiState({ hari: val });
     if (isPJJ) {
-      // Recalculate sessions from current jam if PJJ
       updateUiState({ sesi: calculateSesiFromJamPJJ(jam, val) });
     } else {
       const sessionObj = STATIC_SESSIONS[val]?.find((s) => s.sesi === sesi);

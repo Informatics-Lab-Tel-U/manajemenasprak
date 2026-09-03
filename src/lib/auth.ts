@@ -15,16 +15,11 @@ export type AuthUser = {
   pengguna: Pengguna;
 };
 
-/**
- * Returns the current authenticated user + their Pengguna profile (with role).
- * Returns null if not authenticated or profile not found.
- * Wrapped with React.cache() so multiple calls in the same request share one DB query.
- */
 export const getCurrentUser = cache(async (): Promise<AuthUser | null> => {
   try {
     const headersList = await headers();
     const authUserHeader = headersList.get('x-auth-user');
-    
+
     if (authUserHeader) {
       const decodedStr = Buffer.from(authUserHeader, 'base64').toString('utf-8');
       const authUser = JSON.parse(decodedStr) as AuthUser;
@@ -82,15 +77,6 @@ export async function requireAuth(redirectTo = AUTH_CONFIG.paths.login): Promise
   return user;
 }
 
-/**
- * Server-side role guard.
- * Redirects to `redirectTo` if the user does not have one of the allowed roles.
- * Automatically calls requireAuth first (redirects to /login if unauthenticated).
- *
- * NOTE: This is intended for Server Components / Server Actions only.
- * In Route Handlers (app/api/**) use `requireRoleApi` instead, because
- * `redirect()` throws an internal error there instead of producing a JSON 403.
- */
 export async function requireRole(allowedRoles: Role[], redirectTo = '/'): Promise<AuthUser> {
   const user = await requireAuth();
   if (!allowedRoles.includes(user.pengguna.role)) {
@@ -100,21 +86,8 @@ export async function requireRole(allowedRoles: Role[], redirectTo = '/'): Promi
   return user;
 }
 
-/**
- * Result type for the Route Handler auth guard.
- * On failure, return `response` directly from the handler.
- */
 export type RoleGuardResult = { ok: true; user: AuthUser } | { ok: false; response: NextResponse };
 
-/**
- * Auth + role guard for API Route Handlers (app/api/**).
- *
- * Unlike `requireRole` (which uses `redirect()` and is meant for Server
- * Components), this returns a proper JSON response (401 when unauthenticated,
- * 403 when the role is not allowed). This is the only guard that should be
- * used inside Route Handlers, and it is especially important for endpoints
- * that use the service-role admin client (which bypasses RLS).
- */
 export async function requireRoleApi(
   allowedRoles: Role[],
   forbiddenMessage = 'Anda tidak memiliki akses untuk aksi ini'
@@ -134,7 +107,6 @@ export async function requireRoleApi(
     };
   }
 
-  // Enforce MFA AAL2 for mandated roles at route handler level (defense-in-depth)
   if (isMfaRequiredForRole(user.pengguna.role)) {
     const supabase = await createClient();
     const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();

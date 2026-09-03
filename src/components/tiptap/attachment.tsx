@@ -172,11 +172,9 @@ export function AttachmentNodeView(props: any) {
   const isEditable = editor.isEditable;
   const labelToShow = buttonText || 'Buka Link';
 
-  // Auto-detect OneDrive link
   const isOneDriveCard = driveType === 'onedrive' ||
     (downloadUrl && (downloadUrl.includes('onedrive') || downloadUrl.includes('1drv.ms') || downloadUrl.includes('sharepoint')));
 
-  // Real-time reactive update on every input change
   const handleFieldChange = (field: string, val: string) => {
     const nextAttrs: Record<string, any> = {
       title,
@@ -187,7 +185,6 @@ export function AttachmentNodeView(props: any) {
       [field]: val,
     };
 
-    // Auto-detect driveType if URL matches OneDrive or SharePoint
     if (
       field === 'downloadUrl' &&
       (val.includes('onedrive') || val.includes('1drv.ms') || val.includes('sharepoint'))
@@ -248,7 +245,6 @@ export function AttachmentNodeView(props: any) {
                   className="w-80 p-4"
                   align="end"
                   onInteractOutside={(e) => {
-                    // Prevent Popover from closing when interacting with shadcn Select portal dropdown
                     const target = e.target as HTMLElement;
                     if (target?.closest?.('[data-radix-select-viewport]') || target?.closest?.('[role="listbox"]')) {
                       e.preventDefault();

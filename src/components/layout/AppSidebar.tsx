@@ -172,7 +172,6 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  // Filter groups and their items based on role access
   const visibleNavGroups = ALL_NAV_GROUPS.map((group) => {
     const visibleItems = group.items.filter((item) => {
       if (item.items) {

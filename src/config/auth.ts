@@ -50,6 +50,8 @@ export function isMfaRequiredForRole(role?: Role | null): boolean {
  */
 export function isAllowedEmailDomain(email?: string): boolean {
   if (!email) return false;
-  const domain = email.split('@')[1]?.toLowerCase();
+  const trimmed = email.trim().toLowerCase();
+  const domain = trimmed.split('@').pop()?.trim();
+  if (!domain) return false;
   return (AUTH_CONFIG.allowedEmailDomains as readonly string[]).includes(domain);
 }

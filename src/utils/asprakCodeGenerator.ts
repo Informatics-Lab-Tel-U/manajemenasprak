@@ -12,14 +12,10 @@
  * @module utils/asprakCodeGenerator
  */
 
-// ─── Types ───────────────────────────────────────────────────────────────────
-
 export interface CodeGenerationResult {
   code: string;
   rule: string;
 }
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
 
 /**
  * Sanitize a name for code generation:
@@ -36,33 +32,27 @@ function sanitizeName(name: string): string {
     .trim();
 }
 
-/** Split sanitized name into words */
 export function getWords(name: string): string[] {
   return sanitizeName(name).split(' ').filter(Boolean);
 }
 
-/** Safe charAt — returns empty string if out of bounds */
 function safeChar(word: string, index: number): string {
   return index < word.length ? word[index] : '';
 }
 
-/** Last character of a word */
 function lastChar(word: string): string {
   return word.length > 0 ? word[word.length - 1] : '';
 }
 
-/** Middle character of a word (floor midpoint) */
 function midChar(word: string): string {
   if (word.length < 3) return safeChar(word, 1);
   return word[Math.floor(word.length / 2)];
 }
 
-/** Check if a code is valid (exactly 3 uppercase letters) */
 function isValidCode(code: string): boolean {
   return /^[A-Z]{3}$/.test(code);
 }
 
-/** Generate C(n,3) combinations from an array of characters */
 function combinations3(chars: string[]): string[] {
   const results: string[] = [];
   const n = chars.length;
@@ -76,7 +66,6 @@ function combinations3(chars: string[]): string[] {
   return results;
 }
 
-/** Get unique characters from a string, preserving order of first appearance */
 function uniqueChars(str: string): string[] {
   const seen = new Set<string>();
   const result: string[] = [];
@@ -89,19 +78,13 @@ function uniqueChars(str: string): string[] {
   return result;
 }
 
-// ─── Standard Rules per Word Count ───────────────────────────────────────────
-
 export function rulesFor1Word(words: string[]): string[] {
   const w = words[0];
   const candidates: string[] = [];
 
-  // 1.1: Three first letters
   candidates.push(safeChar(w, 0) + safeChar(w, 1) + safeChar(w, 2));
-  // 1.2: char 1, 2, 4
   candidates.push(safeChar(w, 0) + safeChar(w, 1) + safeChar(w, 3));
-  // 1.3: char 1, 3, 4
   candidates.push(safeChar(w, 0) + safeChar(w, 2) + safeChar(w, 3));
-  // 1.4: char 1, 2, last
   candidates.push(safeChar(w, 0) + safeChar(w, 1) + lastChar(w));
 
   return candidates;
@@ -111,13 +94,9 @@ export function rulesFor2Words(words: string[]): string[] {
   const [w1, w2] = words;
   const candidates: string[] = [];
 
-  // 2.1: first2(w1) + first(w2)
   candidates.push(safeChar(w1, 0) + safeChar(w1, 1) + safeChar(w2, 0));
-  // 2.2: first(w1) + first2(w2)
   candidates.push(safeChar(w1, 0) + safeChar(w2, 0) + safeChar(w2, 1));
-  // 2.3: first(w1) + first(w2) + last(w2)
   candidates.push(safeChar(w1, 0) + safeChar(w2, 0) + lastChar(w2));
-  // 2.4: first2(w1) + last(w2)
   candidates.push(safeChar(w1, 0) + safeChar(w1, 1) + lastChar(w2));
 
   return candidates;
@@ -127,27 +106,17 @@ export function rulesFor3Words(words: string[]): string[] {
   const [w1, w2, w3] = words;
   const candidates: string[] = [];
 
-  // 3.1: first of each word
   candidates.push(safeChar(w1, 0) + safeChar(w2, 0) + safeChar(w3, 0));
-  // 3.2: first(w1) + first2(w2)
   candidates.push(safeChar(w1, 0) + safeChar(w2, 0) + safeChar(w2, 1));
-  // 3.3: first2(w1) + first(w2)
   candidates.push(safeChar(w1, 0) + safeChar(w1, 1) + safeChar(w2, 0));
-  // 3.4: first(w1) + first(w2) + second(w3)
   candidates.push(safeChar(w1, 0) + safeChar(w2, 0) + safeChar(w3, 1));
-  // 3.5: first(w1) + first2(w3)
   candidates.push(safeChar(w1, 0) + safeChar(w3, 0) + safeChar(w3, 1));
-  // 3.6: first2(w1) + first(w3)
   candidates.push(safeChar(w1, 0) + safeChar(w1, 1) + safeChar(w3, 0));
-  // 3.7: first(w1) + first(w2) + last(w3)
   candidates.push(safeChar(w1, 0) + safeChar(w2, 0) + lastChar(w3));
-  // 3.8: first(w1) + second(w2) + first(w3)
   candidates.push(safeChar(w1, 0) + safeChar(w2, 1) + safeChar(w3, 0));
 
   return candidates;
 }
-
-// ─── Fallback: Strategic Positions ───────────────────────────────────────────
 
 function getStrategicPool(words: string[]): string[] {
   const pool: string[] = [];
@@ -164,7 +133,6 @@ export function generateStrategicCandidates(words: string[]): string[] {
   const strategicPool = getStrategicPool(words);
   const strategicCombos = combinations3(strategicPool);
 
-  // Prioritize combos starting with first letter of name
   const firstLetter = safeChar(words[0], 0);
   const prioritized = [
     ...strategicCombos.filter((c) => c[0] === firstLetter),
@@ -172,8 +140,6 @@ export function generateStrategicCandidates(words: string[]): string[] {
   ];
   return prioritized;
 }
-
-// ─── Fallback: Full Combinatorics ────────────────────────────────────────────
 
 function getFullPool(name: string): string[] {
   return uniqueChars(sanitizeName(name).replace(/\s/g, ''));
@@ -191,8 +157,6 @@ export function generateFullCandidates(namaLengkap: string): string[] {
   ];
   return fullPrioritized;
 }
-
-// ─── Main Generator ─────────────────────────────────────────────────────────
 
 /**
  * Generate a 3-letter asprak code from a full name.
@@ -217,8 +181,6 @@ export function generateAsprakCode(
     throw new Error(`Nama "${namaLengkap}" tidak valid untuk generate kode.`);
   }
 
-  // ── Phase 1: Standard Rules ──────────────────────────────────────────────
-
   let standardCandidates: string[] = [];
   if (n === 1) standardCandidates = rulesFor1Word(words);
   else if (n === 2) standardCandidates = rulesFor2Words(words);
@@ -232,8 +194,6 @@ export function generateAsprakCode(
     }
   }
 
-  // ── Phase 2: Strategic Fallback ──────────────────────────────────────────
-
   const strategicCandidates = generateStrategicCandidates(words);
   for (const code of strategicCandidates) {
     if (isValidCode(code) && !usedCodes.has(code)) {
@@ -241,16 +201,12 @@ export function generateAsprakCode(
     }
   }
 
-  // ── Phase 3: Full Combinatorics ──────────────────────────────────────────
-
   const fullCandidates = generateFullCandidates(namaLengkap);
   for (const code of fullCandidates) {
     if (isValidCode(code) && !usedCodes.has(code)) {
       return { code, rule: 'Fallback L2 (Full)' };
     }
   }
-
-  // ── Phase 4: Failure ─────────────────────────────────────────────────────
 
   throw new Error(
     `Tidak dapat generate kode untuk "${namaLengkap}". Semua kombinasi dari huruf nama sudah terpakai.`
@@ -272,7 +228,6 @@ export function batchGenerateCodes(
   const allUsed = new Set(existingCodes);
   const results: (CodeGenerationResult | null)[] = new Array(rows.length).fill(null);
 
-  // ── Phase 1: Claim explicitly provided codes ──
   // We process these first so auto-generated codes don't "steal" a code
   // that was explicitly requested by a later row in the CSV.
   for (let i = 0; i < rows.length; i++) {
@@ -290,7 +245,6 @@ export function batchGenerateCodes(
     }
   }
 
-  // ── Phase 2: Auto-generate the remaining rows ──
   for (let i = 0; i < rows.length; i++) {
     if (results[i] !== null) continue;
 

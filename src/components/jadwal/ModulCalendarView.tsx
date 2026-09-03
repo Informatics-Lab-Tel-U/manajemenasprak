@@ -26,7 +26,6 @@ interface ModulCalendarViewProps {
 const DAY_NAMES = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
 
 export function ModulCalendarView({ rows }: ModulCalendarViewProps) {
-  // Determine date ranges for each module
   // A module runs for 7 days starting from tanggal_mulai
   const moduleRanges = useMemo(() => {
     return rows.reduce((acc: { modul: number; start: Date; end: Date }[], r) => {
@@ -61,7 +60,6 @@ export function ModulCalendarView({ rows }: ModulCalendarViewProps) {
   }, [moduleRanges]);
 
   const getModuleForDay = (date: Date) => {
-    // Find the module where the date falls into its 7-day range
     for (const range of moduleRanges) {
       if (date >= range.start && date <= range.end) {
         return range.modul;

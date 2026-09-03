@@ -14,7 +14,6 @@ export function validateMataKuliahData(
   const internalMap = new Set<string>();
 
   return data.map((r: any) => {
-    // Fallbacks for different header formats (e.g. from template vs random casing)
     const mk_singkat = (
       r.mk_singkat ||
       r['Nama Singkat'] ||
@@ -34,7 +33,6 @@ export function validateMataKuliahData(
       .trim()
       .toUpperCase();
 
-    // Use localValidPraktikums for validation
     const isMkKnown = localValidPraktikums.some(
       (p) => p.nama.toUpperCase() === mk_singkat.toUpperCase()
     );
@@ -46,8 +44,6 @@ export function validateMataKuliahData(
 
     const key = `${mk_singkat.toUpperCase()}|${program_studi.toUpperCase()}`;
 
-    // Check Duplicates
-    // existingMataKuliah is grouped by mk_singkat
     const existingGroup = existingMataKuliah.find(
       (g) => g.mk_singkat.toUpperCase() === mk_singkat.toUpperCase()
     );

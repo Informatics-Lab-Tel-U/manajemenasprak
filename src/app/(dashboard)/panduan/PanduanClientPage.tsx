@@ -39,7 +39,6 @@ interface PanduanClientPageProps {
   role: Role;
 }
 
-// Memoize DataTable to prevent unnecessary re-renders
 export const MemoizedDataTable = React.memo(DataTable);
 
 const PanduanClientPageComponent = function PanduanClientPage({ role }: PanduanClientPageProps) {
@@ -773,10 +772,8 @@ const PanduanClientPageComponent = function PanduanClientPage({ role }: PanduanC
   );
 };
 
-// Wrap with React.memo to prevent unnecessary re-renders when parent re-renders
 export default React.memo(PanduanClientPageComponent);
 
-// ─── Helper Components ────────────────────────────────────────────────────────
 
 function StepCard({ number, title, desc }: { number: number; title: string; desc: string }) {
   return (

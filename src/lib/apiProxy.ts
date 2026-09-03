@@ -3,22 +3,16 @@ import { createClient } from '@/lib/supabase/server';
 
 const BACKEND_URL = process.env.HONO_BACKEND_URL || 'https://manajemenasprak-backend.iflabdev.workers.dev';
 
-/**
- * Standard Next.js Route Handler Proxy function to forward requests to Hono Backend.
- * Supports JSON, FormData, text payloads, and binary/file stream responses.
- */
 export async function forwardToHono(request: NextRequest, customPath?: string) {
   try {
     const path = customPath || request.nextUrl.pathname;
     const [pathWithoutSearch, customSearch] = path.split('?');
     const targetUrl = new URL(`${BACKEND_URL}${pathWithoutSearch}`);
 
-    // Merge query params from the original incoming request
     request.nextUrl.searchParams.forEach((value, key) => {
       targetUrl.searchParams.set(key, value);
     });
 
-    // Merge query params from customPath if any were passed
     if (customSearch) {
       new URLSearchParams(customSearch).forEach((value, key) => {
         targetUrl.searchParams.set(key, value);
@@ -36,7 +30,6 @@ export async function forwardToHono(request: NextRequest, customPath?: string) {
           authHeader = `Bearer ${authUser.token}`;
         }
       } catch {
-        // Fallback for unauthenticated requests
       }
     }
 

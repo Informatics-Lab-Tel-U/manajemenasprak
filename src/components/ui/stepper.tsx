@@ -8,7 +8,6 @@ import { Check } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
 
-// Types
 type StepperOrientation = 'horizontal' | 'vertical'
 type StepState = 'active' | 'completed' | 'inactive' | 'loading'
 type StepIndicators = {
@@ -92,7 +91,6 @@ function Stepper({
   onValueChange,
   ...props
 }: StepperProps) {
-  // Define stepper once — steps are expected to be stable references
   const stepperDefRef = useRef<any>(null)
 
   if (stepperDefRef.current === null) {
@@ -107,9 +105,6 @@ function Stepper({
 
   const [triggerNodes, setTriggerNodes] = useState<HTMLButtonElement[]>([])
 
-  // Track viewport breakpoint (tailwind md = 768px). If `responsive` is true
-  // and the configured orientation is horizontal, switch to vertical on
-  // Viewport width smaller than md.
   const [isMdUp, setIsMdUp] = useState<boolean>(true)
 
   useEffect(() => {
@@ -127,7 +122,6 @@ function Stepper({
     return () => mql.removeEventListener('change', handler)
   }, [responsive])
 
-  // Register/unregister triggers
   const registerTrigger = useCallback((node: HTMLButtonElement | null, remove = false) => {
     setTriggerNodes(prev => {
       if (!node) return prev
@@ -138,7 +132,6 @@ function Stepper({
     })
   }, [])
 
-  // Keyboard navigation logic
   const focusNext = useCallback(
     (currentIdx: number) => triggerNodes[(currentIdx + 1) % triggerNodes.length]?.focus(),
     [triggerNodes]
@@ -153,7 +146,6 @@ function Stepper({
 
   const focusLast = useCallback(() => triggerNodes[triggerNodes.length - 1]?.focus(), [triggerNodes])
 
-  // Determine effective orientation when responsive behavior is enabled.
   const effectiveOrientation: StepperOrientation = useMemo(() => {
     if (responsive && orientation === 'horizontal') {
       return isMdUp ? 'horizontal' : 'vertical'
@@ -162,7 +154,6 @@ function Stepper({
     return orientation
   }, [responsive, orientation, isMdUp])
 
-  // Context value
   const contextValue = useMemo<StepperContextValue>(
     () => ({
       stepper,
@@ -271,7 +262,6 @@ function StepperTrigger({ asChild = false, className, children, tabIndex, ...pro
   const id = `stepper-tab-${step.id}`
   const panelId = `stepper-panel-${step.id}`
 
-  // Register this trigger via callback ref for correct mount/unmount handling
   const btnRef = useRef<HTMLButtonElement | null>(null)
 
   const triggerRef = useCallback(
@@ -287,7 +277,6 @@ function StepperTrigger({ asChild = false, className, children, tabIndex, ...pro
     [registerTrigger]
   )
 
-  // Find our index among triggers for navigation
   const myIdx = useMemo(() => triggerNodes.findIndex((n: HTMLButtonElement) => n === btnRef.current), [triggerNodes])
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {

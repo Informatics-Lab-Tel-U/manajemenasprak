@@ -41,7 +41,6 @@ export interface PreviewRow {
   codeSource: 'csv' | 'generated';
   status: 'ok' | 'warning' | 'error' | 'duplicate-csv';
   statusMessage?: string;
-  // Original values for tracking manual edits vs reverts
   originalKode: string;
   originalCodeRule: string;
   originalCodeSource: 'csv' | 'generated';
@@ -97,7 +96,6 @@ export default function AsprakCSVPreview({
     (r) => r.codeSource === 'csv' && r.codeRule !== 'Manual edit' && r.status === 'ok'
   ).length;
 
-  // Count selectable rows (OK)
   const selectableRows = rows.filter((r) => r.status === 'ok');
   const selectedCount = selectableRows.filter((r) => r.selected).length;
   const allSelected = selectableRows.length > 0 && selectedCount === selectableRows.length;

@@ -52,7 +52,6 @@ export default function OnboardHubPage() {
   const handleYearChange = (newYear: string) => {
     setTermYear(newYear);
     
-    // Smart semester switching logic
     if (newYear.length === 2 && !isNaN(parseInt(newYear))) {
       const newTermPrefix = `${newYear}${parseInt(newYear) + 1}`;
       const targetTerm = `${newTermPrefix}-${termSem}`;
@@ -86,7 +85,6 @@ export default function OnboardHubPage() {
         setStatus(resData);
         setIsLoading(false);
 
-        // Sync local stores against current DB ground truth
         if (resData) {
           syncJadwalTerm(term, Boolean(resData.step2_done));
           syncAsprakTerm(term, Boolean(resData.step3_done));

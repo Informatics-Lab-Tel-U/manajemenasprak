@@ -33,7 +33,6 @@ export default function StepMataKuliah({
   );
   const [existingMataKuliah, setExistingMataKuliah] = useState<MataKuliahGrouped[]>([]);
 
-  // Fetch valid praktikums AND existing MK for the term
   useEffect(() => {
     const controller = new AbortController();
 
@@ -76,7 +75,6 @@ export default function StepMataKuliah({
     };
   }, [term]);
 
-  // Process data after fetch is complete (or updated)
   useEffect(() => {
     if (isFetching) return;
 

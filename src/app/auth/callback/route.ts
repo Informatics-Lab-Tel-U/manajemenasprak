@@ -59,21 +59,50 @@ export async function GET(request: Request) {
       console.error('[OAuth Callback] Failed to ensure pengguna row:', err);
     }
 
-    // Check forwarded host for correct redirection behind proxies/load balancers
-    const forwardedHost = request.headers.get('x-forwarded-host');
-    const isLocalEnv = process.env.NODE_ENV === 'development';
+    // Industry-standard host validation to prevent Host Header Poisoning
+    function resolveSafeBaseOrigin(req: Request, reqOrigin: string): string {
+      const forwardedHost = req.headers.get('x-forwarded-host')?.trim();
+      const isLocal = process.env.NODE_ENV === 'development';
 
-    const isValidRelativeUrl =
-      next.startsWith('/') && !next.startsWith('//') && !next.startsWith('/\\');
-    const targetRedirect = isValidRelativeUrl ? next : '/';
+      if (isLocal) {
+        return reqOrigin;
+      }
 
-    if (isLocalEnv) {
-      return NextResponse.redirect(`${origin}${targetRedirect}`);
-    } else if (forwardedHost) {
-      return NextResponse.redirect(`https://${forwardedHost}${targetRedirect}`);
-    } else {
-      return NextResponse.redirect(`${origin}${targetRedirect}`);
+      if (forwardedHost) {
+        // Validate against trusted host patterns
+        const isAllowedHost =
+          /^([a-z0-9-]+\.)*iflabdev\.(org|pages\.dev|workers\.dev)$/i.test(forwardedHost) ||
+          /^([a-z0-9-]+\.)*telkomuniversity\.ac\.id$/i.test(forwardedHost) ||
+          /^([a-z0-9-]+\.)*vercel\.app$/i.test(forwardedHost) ||
+          /^(localhost|127\.0\.0\.1)(:[0-9]+)?$/i.test(forwardedHost);
+
+        if (isAllowedHost) {
+          const forwardedProto = req.headers.get('x-forwarded-proto') || 'https';
+          return `${forwardedProto}://${forwardedHost}`;
+        }
+      }
+
+      return reqOrigin;
     }
+
+    // OWASP ASVS: Strictly resolve target redirect to same-origin path
+    function getSafeRedirectPath(nextParam: string | null, baseOrigin: string): string {
+      if (!nextParam) return '/';
+      try {
+        const parsed = new URL(nextParam, baseOrigin);
+        if (parsed.origin === new URL(baseOrigin).origin) {
+          return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+        }
+      } catch {
+        // Malformed URL
+      }
+      return '/';
+    }
+
+    const safeBaseOrigin = resolveSafeBaseOrigin(request, origin);
+    const safeRedirectPath = getSafeRedirectPath(next, safeBaseOrigin);
+
+    return NextResponse.redirect(`${safeBaseOrigin}${safeRedirectPath}`);
   } catch (err) {
     console.error('[OAuth Callback] Unexpected error:', err);
     return NextResponse.redirect(`${origin}/login?error=auth-code-error`);

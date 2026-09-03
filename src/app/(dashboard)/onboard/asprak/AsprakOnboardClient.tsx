@@ -130,7 +130,6 @@ export default function AsprakOnboardClient({
           if (targetIndex <= currentIndex || completedSteps.includes(id as any)) {
             setCurrentStep(id as AsprakOnboardStep);
           } else {
-            // If trying to jump ahead, check if previous step is completed
             const previousStepId = steps[targetIndex - 1]?.id;
             if (completedSteps.includes(previousStepId as any)) {
               setCurrentStep(id as AsprakOnboardStep);

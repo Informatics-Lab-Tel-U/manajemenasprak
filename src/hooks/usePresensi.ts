@@ -7,7 +7,6 @@ import { AsprakEntry, KelasSetting, PresensiFormOptions, ThemeKey } from '@/type
 export function usePresensi() {
   const { activeTerm } = useTermStore();
 
-  // --- UI State ---
   const [namaFile, setNamaFile] = useState('presensi');
   const [jumlahModul, setJumlahModul] = useState(8);
   const [globalJumlahPraktikan, setGlobalJumlahPraktikan] = useState(40);
@@ -25,12 +24,10 @@ export function usePresensi() {
   const [selectedJurusan, setSelectedJurusan] = useState<string>('all');
   const [generateRekapSheet, setGenerateRekapSheet] = useState(true);
 
-  // --- Class/Asprak Data State ---
   const [kelasNames, setKelasNames] = useState<string[]>([]);
   const [kelasSettings, setKelasSettings] = useState<KelasSetting[]>([]);
   const [customKelasInput, setCustomKelasInput] = useState('');
 
-  // --- External Data State ---
   const [praktikumList, setPraktikumList] = useState<{ id: string; nama: string }[]>([]);
   const [loadingPraktikum, setLoadingPraktikum] = useState(false);
   const [allFetchedKelas, setAllFetchedKelas] = useState<string[]>([]);
@@ -39,7 +36,6 @@ export function usePresensi() {
   const [asprakList, setAsprakList] = useState<AsprakEntry[]>([]);
   const [loadingAsprak, setLoadingAsprak] = useState(false);
 
-  // Derived logic
   const totalWeight =
     (opsi.tp.enabled && opsi.tp.inputType === 'number' ? opsi.tp.weight : 0) +
     (opsi.jurnal.enabled && opsi.jurnal.inputType === 'number' ? opsi.jurnal.weight : 0) +
@@ -47,7 +43,6 @@ export function usePresensi() {
 
   const isWeightValid = totalWeight === 100 || totalWeight === 0;
 
-  // --- Handlers ---
   const handleAddCustomKelas = useCallback(() => {
     if (!customKelasInput.trim()) return;
     const kelasNamesSet = new Set(kelasNames);
@@ -95,9 +90,6 @@ export function usePresensi() {
     toast.success('Parameter global diterapkan ke semua kelas');
   }, [globalJumlahPraktikan, globalJumlahAsprak, globalTanggalMulai]);
 
-  // --- Effects ---
-
-  // 1. Fetch Praktikum List
   useEffect(() => {
     async function fetchPraktikum() {
       if (!activeTerm) return;
@@ -113,7 +105,6 @@ export function usePresensi() {
     fetchPraktikum();
   }, [activeTerm]);
 
-  // 2. Fetch Kelas & Auto-set nama file
   useEffect(() => {
     async function fetchKelas() {
       if (!selectedPraktikumId) {
@@ -158,7 +149,6 @@ export function usePresensi() {
     latestKelasNames.current = kelasNames;
   }, [kelasNames]);
 
-  // 3. Filter Kelas by Jurusan
   useEffect(() => {
     if (allFetchedKelas.length === 0) return;
 
@@ -200,7 +190,6 @@ export function usePresensi() {
     });
   }, [selectedJurusan, allFetchedKelas, globalJumlahPraktikan, globalJumlahAsprak]);
 
-  // 4. Fetch Asprak List
   useEffect(() => {
     async function fetchAsprak() {
       if (!selectedPraktikumId) {

@@ -66,7 +66,6 @@ export default function DashboardCharts({
   );
 
 
-  // Schedule Matrix Logic
   const [todayDate, setTodayDate] = React.useState(new Date());
 
   React.useEffect(() => {
@@ -81,9 +80,7 @@ export default function DashboardCharts({
     return ROOMS;
   }, []);
 
-  // Filter Logic
   const [programType, setProgramType] = React.useState<'REGULER' | 'PJJ'>('REGULER');
-  // Calculate currentDayName if not already present (it should be 'SENIN'-'MINGGU')
   const currentDayNameRaw = format(todayDate, 'EEEE', { locale: id }).toUpperCase();
   const currentDayName =
     currentDayNameRaw === 'SENIN' ||
@@ -110,7 +107,6 @@ export default function DashboardCharts({
     programType,
   });
 
-  // Extract today's matrix and sessions from the hook results
   const scheduleMatrix = fullMatrix[currentDayName] || {};
   const visibleSessions = dynamicSessionsByDay[currentDayName] || [];
 
@@ -125,7 +121,6 @@ export default function DashboardCharts({
     initPresensi();
   }, [initPresensi]);
 
-  // Determine active session based on current time
   const currentHour = todayDate.getHours();
   const currentMin = todayDate.getMinutes();
   const timeValue = currentHour + currentMin / 60;

@@ -69,7 +69,6 @@ export default function StepPlottingAsprak({ term }: StepPlottingAsprakProps) {
         return;
       }
 
-      // Validate via API
       const pendingAspraks = validatedAsprakRows.map(r => ({
         kode: r.kode,
         nama_lengkap: r.nama_lengkap,
@@ -147,12 +146,10 @@ export default function StepPlottingAsprak({ term }: StepPlottingAsprakProps) {
       if (!row.selected) return;
       if (row.status === 'invalid') return;
 
-      // Valid rows
       if (row.status === 'valid' && row.asprakId && row.praktikumId) {
         payload.push({ asprak_id: row.asprakId, praktikum_id: row.praktikumId });
       }
 
-      // Ambiguous rows (resolved via multiple selection)
       else if (row.status === 'ambiguous' && row.selectedCandidateIds && row.praktikumId) {
         row.selectedCandidateIds.forEach((id) => {
           payload.push({ asprak_id: id, praktikum_id: row.praktikumId! });

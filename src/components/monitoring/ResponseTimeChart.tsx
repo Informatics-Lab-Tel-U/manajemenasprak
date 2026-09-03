@@ -19,7 +19,6 @@ const chartConfig = {
 const SPIKE_THRESHOLD = 800;
 
 export function ResponseTimeChart({ data, compact = false }: ResponseTimeChartProps) {
-  // Filter out nulls for rendering
   const chartData = data.map(d => ({
     time: new Date(d.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
     value: d.response_time_ms ?? 0,

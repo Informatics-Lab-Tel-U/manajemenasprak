@@ -24,7 +24,6 @@ import {
   UpsertAsprakInput,
 } from '@/lib/fetchers/asprakFetcher';
 import { fetchPraktikumByTerm } from '@/lib/fetchers/praktikumFetcher';
-// Manual debounce helper if hook doesn't exist
 function useDebounceValue<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
   useEffect(() => {
@@ -48,7 +47,6 @@ interface AssignmentBlock {
 }
 
 export default function AsprakForm({ onSubmit, onCancel }: AsprakFormProps) {
-  // Personal Data
   const [nama, setNama] = useState('');
   const [nim, setNim] = useState('');
   const [kode, setKode] = useState('');
@@ -57,20 +55,17 @@ export default function AsprakForm({ onSubmit, onCancel }: AsprakFormProps) {
   const [forceOverride, setForceOverride] = useState(false);
   const [isManualCode, setIsManualCode] = useState(false);
 
-  // Validation States
   const [nimStatus, setNimStatus] = useState<'idle' | 'checking' | 'valid' | 'taken'>('idle');
   const [codeStatus, setCodeStatus] = useState<
     'idle' | 'generating' | 'valid' | 'invalid_length' | 'taken' | 'hard_conflict'
   >('idle');
   const [ruleInfo, setRuleInfo] = useState('');
 
-  // Data
   const [assignments, setAssignments] = useState<AssignmentBlock[]>([]);
   const [availableTerms, setAvailableTerms] = useState<string[]>([]);
   const [existingAspraks, setExistingAspraks] = useState<{ kode: string; angkatan: number }[]>([]);
   const [submitLoading, setSubmitLoading] = useState(false);
 
-  // Debounced Values
   const debouncedNama = useDebounceValue(nama, 800);
   const debouncedNim = useDebounceValue(nim, 800);
 
@@ -98,7 +93,6 @@ export default function AsprakForm({ onSubmit, onCancel }: AsprakFormProps) {
     return () => controller.abort();
   }, []);
 
-  // NIM Check Effect
   // eslint-disable-next-line react-doctor/no-chain-state-updates
   useEffect(() => {
     if (!debouncedNim || debouncedNim.length < 5) {
@@ -192,7 +186,6 @@ export default function AsprakForm({ onSubmit, onCancel }: AsprakFormProps) {
     gen();
   }, [debouncedNama, forceOverride, angkatan, validateKodeMatch, isManualCode]);
 
-  // Handle manual input change
   const handleCodeChange = (val: string) => {
     const up = val.toUpperCase().replace(/[^A-Z]/g, '');
     setKode(up);
@@ -207,7 +200,6 @@ export default function AsprakForm({ onSubmit, onCancel }: AsprakFormProps) {
     if (kode) validateKodeMatch(kode, forceOverride, angkatan);
   }, [forceOverride, kode, angkatan, validateKodeMatch]);
 
-  // Assignment Logic
   const addAssignmentBlock = () => {
     setAssignments((prev) => [
       ...prev,
@@ -232,14 +224,12 @@ export default function AsprakForm({ onSubmit, onCancel }: AsprakFormProps) {
       return;
     }
 
-    // Update term
     setAssignments((prev) =>
       prev.map((a) =>
         a.id === blockId ? { ...a, term, loadingCourses: true, selectedCourseNames: [] } : a
       )
     );
 
-    // Fetch courses
     const res = await fetchPraktikumByTerm(term);
 
     setAssignments((prev) =>
@@ -317,7 +307,6 @@ export default function AsprakForm({ onSubmit, onCancel }: AsprakFormProps) {
     }
   };
 
-  // Helper to filter terms
   const getDisabledTerms = (currentBlockId: string) => {
     return new Set(
       assignments.flatMap((a) => 

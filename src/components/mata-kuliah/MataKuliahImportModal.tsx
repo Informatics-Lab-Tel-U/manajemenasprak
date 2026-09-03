@@ -19,7 +19,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
-import { cn } from '@/lib/utils'; // Ensure utility exists or use standard class string
+import { cn } from '@/lib/utils';
 
 import TermInput from '@/components/asprak/TermInput';
 import { buildTermString } from '@/utils/termHelpers';
@@ -48,7 +48,6 @@ export default function MataKuliahImportModal({
   onImport,
   defaultTerm,
 }: MataKuliahImportModalProps) {
-  // Parse default term if provided (e.g. "2425-1")
   const initialYear = defaultTerm ? defaultTerm.substring(0, 2) : '25';
   const initialSem = defaultTerm && defaultTerm.endsWith('2') ? '2' : '1';
 
@@ -66,7 +65,6 @@ export default function MataKuliahImportModal({
 
   const [showConfirmClose, setShowConfirmClose] = useState(false);
 
-  // Derived
   const term = useMemo(() => buildTermString(termYear, termSem), [termYear, termSem]);
   const isTermValid = term.length > 0 && !isNaN(parseInt(termYear));
 
@@ -235,7 +233,6 @@ export default function MataKuliahImportModal({
 
   const handleAttemptClose = (isOpen: boolean) => {
     if (!isOpen) {
-      // User trying to close
       if (step === 'preview') {
         setShowConfirmClose(true);
       } else {

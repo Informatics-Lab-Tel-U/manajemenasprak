@@ -140,7 +140,6 @@ export function useJadwal(
 
   useEffect(() => {
     if (selectedTerm) {
-      // Fetch if term changed OR if modul changed (and we need replacements)
       fetchJadwal();
     }
   }, [selectedTerm, selectedModul, fetchJadwal]);

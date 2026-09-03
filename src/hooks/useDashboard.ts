@@ -89,7 +89,6 @@ export function useDashboard(
       }
       return;
     }
-    // User changed the term selector: refetch
     fetchDashboardData(selectedTerm);
   }, [selectedTerm, fetchDashboardData, isInitialTermMatching]);
 

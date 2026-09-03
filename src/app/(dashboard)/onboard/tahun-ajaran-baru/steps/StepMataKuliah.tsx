@@ -295,7 +295,6 @@ export default function MatkulStep() {
         if (existingPrak) {
           id_praktikum = existingPrak.tempId;
         } else {
-          // Buat Baru case: we generate a new Praktikum draft
           let newPrak = newPraktikums.find(p => p.nama.toUpperCase() === r.mk_singkat.toUpperCase());
           if (!newPrak) {
             newPrak = {

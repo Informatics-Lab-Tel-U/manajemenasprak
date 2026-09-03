@@ -30,7 +30,6 @@ async function getMaintenanceStatus(backendUrl?: string): Promise<boolean> {
 }
 
 export async function updateSession(request: NextRequest) {
-  // Prevent client spoofing of the auth header
   const requestHeaders = new Headers(request.headers);
   requestHeaders.delete('x-auth-user');
 
@@ -42,8 +41,6 @@ export async function updateSession(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
-  // EARLY EXIT: Do not perform any DB/Auth checks for preflight requests
-  // or completely public machine-to-machine APIs (like monitoring heartbeat).
   if (
     request.method === 'OPTIONS' ||
     (pathname === '/api/monitoring/heartbeat' && request.method === 'POST') ||
@@ -72,11 +69,6 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  // IMPORTANT: Do not add any logic between createServerClient and getUser().
-  // getUser() performs server-side JWT verification (unlike getSession() which only
-  // validates locally). getSession() is still called for the access_token needed
-  // to forward to the Hono backend.
-  // Both run in parallel with maintenance check to avoid sequential latency.
   const [
     { data: { user } },
     { data: { session } },
@@ -111,14 +103,12 @@ export async function updateSession(request: NextRequest) {
     }
   }
 
-  // 1. Redirect away from /maintenance if mode is OFF
   if (!isMaintenanceMode && pathname === '/maintenance') {
     const url = request.nextUrl.clone();
     url.pathname = '/';
     return NextResponse.redirect(url);
   }
 
-  // 2. Redirect to /maintenance if mode is ON (except for ADMINs & login page)
   if (isMaintenanceMode && !pathname.startsWith('/api/auth')) {
     const isAdmin = pengguna?.role === 'ADMIN';
 
@@ -129,7 +119,6 @@ export async function updateSession(request: NextRequest) {
     }
   }
 
-  // Early exits — non-public API paths
   if (pathname.startsWith('/api/')) {
     if (!user || !pengguna) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -137,17 +126,13 @@ export async function updateSession(request: NextRequest) {
     return supabaseResponse;
   }
 
-  // Public paths handler
   if (isPublicPath(pathname)) {
-    // If an authenticated user visits /login or /maintenance, fall through to status routing below
     if (user && pengguna && (pathname === AUTH_CONFIG.paths.login || pathname === AUTH_CONFIG.paths.maintenance)) {
-      // fall through to status routing
     } else {
       return supabaseResponse;
     }
   }
 
-  // All non-public paths require authenticated user & valid profile
   if (!user || !pengguna) {
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = AUTH_CONFIG.paths.login;
@@ -161,7 +146,6 @@ export async function updateSession(request: NextRequest) {
   const role = pengguna?.role as Role | undefined;
   const status = (pengguna?.status || 'ACTIVE') as 'PENDING' | 'ACTIVE' | 'REJECTED';
 
-  // 1. Handle PENDING approval status
   if (status === 'PENDING') {
     if (pathname !== AUTH_CONFIG.paths.pendingApproval) {
       const pendingUrl = request.nextUrl.clone();
@@ -171,7 +155,6 @@ export async function updateSession(request: NextRequest) {
     return supabaseResponse;
   }
 
-  // 2. Handle REJECTED status
   if (status === 'REJECTED') {
     if (pathname !== AUTH_CONFIG.paths.rejected) {
       const rejectedUrl = request.nextUrl.clone();
@@ -181,11 +164,9 @@ export async function updateSession(request: NextRequest) {
     return supabaseResponse;
   }
 
-  // 3. MFA (TOTP) Security Enforcement for ACTIVE users
   if (status === 'ACTIVE') {
     const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
 
-    // A. User has enrolled 2FA and needs to complete AAL2 challenge
     if (aalData?.currentLevel === 'aal1' && aalData?.nextLevel === 'aal2') {
       if (pathname !== AUTH_CONFIG.paths.verify2fa) {
         const verifyUrl = request.nextUrl.clone();
@@ -195,7 +176,6 @@ export async function updateSession(request: NextRequest) {
       return supabaseResponse;
     }
 
-    // B. Mandated roles MUST enroll in 2FA if not yet enrolled
     if (isMfaRequiredForRole(role) && aalData?.nextLevel !== 'aal2') {
       if (pathname !== AUTH_CONFIG.paths.setup2fa) {
         const setupUrl = request.nextUrl.clone();
@@ -204,8 +184,6 @@ export async function updateSession(request: NextRequest) {
       }
       return supabaseResponse;
     }
-
-    // C. User visiting 2FA pages while already fully authenticated (AAL2 or non-enrolled non-mandated)
     if (
       (pathname === AUTH_CONFIG.paths.verify2fa || pathname === AUTH_CONFIG.paths.setup2fa) &&
       aalData?.currentLevel === 'aal2'
@@ -217,7 +195,6 @@ export async function updateSession(request: NextRequest) {
     }
   }
 
-  // 4. For ACTIVE users visiting pending/rejected pages, redirect to home
   if (status === 'ACTIVE' && (pathname === AUTH_CONFIG.paths.pendingApproval || pathname === AUTH_CONFIG.paths.rejected)) {
     const destination = role ? ROLE_DEFAULT_REDIRECT[role] : '/';
     const redirectUrl = request.nextUrl.clone();
@@ -225,7 +202,6 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  // Handle logged-in active user visiting /login — redirect to their home
   if (pathname === AUTH_CONFIG.paths.login) {
     const destination = role ? ROLE_DEFAULT_REDIRECT[role] : '/';
     const redirectUrl = request.nextUrl.clone();
@@ -248,7 +224,6 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  // Inject the user profile into the request headers for Server Components
   const authUser = {
     id: user.id,
     email: user.email ?? '',
@@ -263,7 +238,6 @@ export async function updateSession(request: NextRequest) {
     },
   });
 
-  // Preserve any cookies set by Supabase
   supabaseResponse.cookies.getAll().forEach((cookie) => {
     finalResponse.cookies.set(cookie.name, cookie.value);
   });

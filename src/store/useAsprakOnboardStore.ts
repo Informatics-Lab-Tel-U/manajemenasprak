@@ -36,7 +36,6 @@ interface AsprakOnboardState {
   validatedPlottingRows: ValidatedPlottingRow[];
   targetTerm: string | null;
 
-  // Actions
   setCurrentStep: (step: AsprakOnboardStep) => void;
   markStepCompleted: (step: AsprakOnboardStep) => void;
   unmarkStepCompleted: (step: AsprakOnboardStep) => void;

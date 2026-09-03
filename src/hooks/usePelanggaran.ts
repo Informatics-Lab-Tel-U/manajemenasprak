@@ -125,10 +125,6 @@ export function usePelanggaran(
   };
 
   useEffect(() => {
-    // If we have initial data, we can skip the first fetch
-    // But we might still want to fetch asprak/jadwal in the background if they are needed elsewhere
-    // However, on the list page they are not used.
-    // To keep it simple and performant: if we have initial counts, we skip initial fetchData.
     if (!initialData) {
       fetchData();
       fetchPraktikum();

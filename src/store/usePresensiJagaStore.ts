@@ -11,7 +11,6 @@ interface PresensiJagaState {
   getPresensiForAsprak: (idAsprak: string, shift?: number) => PresensiJaga | undefined;
 }
 
-// Client browser Supabase untuk websocket
 const supabase = createClient();
 let channelPresensi: ReturnType<typeof supabase.channel> | null = null;
 let initPromise: Promise<void> | null = null;
@@ -36,7 +35,6 @@ export const usePresensiJagaStore = create<PresensiJagaState>((set, get) => ({
     initPromise = (async () => {
       set({ isInitialized: true });
 
-      // Fetch today's data from server proxy
       const fetchToday = async () => {
         try {
           const res = await fetch('/api/jaga/presensi/today');
@@ -53,7 +51,6 @@ export const usePresensiJagaStore = create<PresensiJagaState>((set, get) => ({
 
       await fetchToday();
 
-      // Subscribe to Supabase Realtime for table 'presensi_jaga'
       if (!channelPresensi) {
         channelPresensi = supabase
           .channel('global_presensi_jaga')
@@ -75,7 +72,6 @@ export const usePresensiJagaStore = create<PresensiJagaState>((set, get) => ({
                   return { todayPresensi: [newRow, ...state.todayPresensi] };
                 });
                 
-                // Re-fetch today untuk mendapatkan data join relasi asprak secara lengkap
                 fetchToday();
               } else if (payload.eventType === 'UPDATE') {
                 const updatedRow = payload.new as PresensiJaga;

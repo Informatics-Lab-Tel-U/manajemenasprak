@@ -58,7 +58,6 @@ export default function AsprakExportModal({ onClose, open }: AsprakExportModalPr
         return;
       }
 
-      // 1. Prepare data for "asprak"
       const dataAsprak = result.data.map((asprak) => ({
         nama_lengkap: asprak.nama_lengkap,
         nim: asprak.nim,
@@ -66,7 +65,6 @@ export default function AsprakExportModal({ onClose, open }: AsprakExportModalPr
         angkatan: asprak.angkatan,
       }));
 
-      // 2. Prepare data for "asprak_praktikum"
       const dataPlotting: { kode_asprak: string; mk_singkat: string }[] = [];
       result.data.forEach((asprak) => {
         if (asprak.assignments && asprak.assignments.length > 0) {
