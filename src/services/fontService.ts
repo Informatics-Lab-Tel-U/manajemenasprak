@@ -8,7 +8,8 @@ export async function generateFont(labId: string): Promise<string | null> {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-praktikan-api-key': process.env.PRAKTIKAN_GET_API_KEY || ''
+          'x-api-key': process.env.INTERNAL_API_KEY || process.env.PRAKTIKAN_GET_API_KEY || '',
+          'x-praktikan-api-key': process.env.INTERNAL_API_KEY || process.env.PRAKTIKAN_GET_API_KEY || ''
         },
         body: JSON.stringify({ lab_id: labId })
       }

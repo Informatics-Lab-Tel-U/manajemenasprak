@@ -17,31 +17,38 @@ export async function logout() {
 }
 
 export async function login(email: string, password: string, turnstileToken: string | null) {
-  const turnstileSecret = process.env.TURNSTILE_SECRET;
+  // VULN-07 FIX: Was reading TURNSTILE_SECRET but env file defines TURNSTILE_SECRET_KEY.
+  // Mismatch caused turnstileSecret to always be undefined, silently skipping CAPTCHA.
+  const turnstileSecret = process.env.TURNSTILE_SECRET_KEY;
 
-  if (turnstileSecret) {
-    if (!turnstileToken) {
-      return { error: 'Verifikasi Turnstile diperlukan.' };
+  if (!turnstileSecret) {
+    // Fail-closed: if secret is not configured, refuse to proceed rather than skip verification.
+    // In development, set TURNSTILE_SECRET_KEY to the test key: 1x0000000000000000000000000000000AA
+    console.error('[auth] TURNSTILE_SECRET_KEY is not set. Refusing login to prevent CAPTCHA bypass.');
+    return { error: 'Server misconfiguration: bot protection unavailable.' };
+  }
+
+  if (!turnstileToken) {
+    return { error: 'Verifikasi Turnstile diperlukan.' };
+  }
+
+  try {
+    const verifyRes = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        secret: turnstileSecret,
+        response: turnstileToken,
+      }),
+    });
+
+    const verifyData = await verifyRes.json();
+    if (!verifyData.success) {
+      return { error: 'Verifikasi Turnstile gagal. Silakan coba lagi.' };
     }
-
-    try {
-      const verifyRes = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({
-          secret: turnstileSecret,
-          response: turnstileToken,
-        }),
-      });
-
-      const verifyData = await verifyRes.json();
-      if (!verifyData.success) {
-        return { error: 'Verifikasi Turnstile gagal. Silakan coba lagi.' };
-      }
-    } catch (err) {
-      console.error('Turnstile siteverify error:', err);
-      return { error: 'Gagal melakukan verifikasi keamananan.' };
-    }
+  } catch (err) {
+    console.error('Turnstile siteverify error:', err);
+    return { error: 'Gagal melakukan verifikasi keamananan.' };
   }
 
   const supabase = await createClient();

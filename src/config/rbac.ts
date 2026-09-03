@@ -79,6 +79,9 @@ export const ROLE_DEFAULT_REDIRECT: Record<Role, string> = {
 export function hasAccess(role: Role, urlPath: string): boolean {
   const pathname = urlPath.split('?')[0];
   const allowed = ROLE_ALLOWED_PATHS[role];
+  // VULN-10 FIX: Guard against unknown/undefined role to prevent TypeError crash.
+  // Fail-closed: unknown roles are denied rather than crashing the middleware.
+  if (!allowed) return false;
   return allowed.some((allowedPath) => {
     if (allowedPath === '/') return pathname === '/';
     return pathname === allowedPath || pathname.startsWith(allowedPath + '/');
