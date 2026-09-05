@@ -50,8 +50,8 @@ const ROLE_OPTIONS: { value: Role; label: string; desc: string }[] = [
 ];
 
 const LOGBOOK_ROLE_OPTIONS: { value: 'INTERN' | 'ASLAB' | 'ADMIN'; label: string; desc: string }[] = [
-  { value: 'INTERN', label: 'Intern (Anak Magang)', desc: 'Menulis logbook harian, upload bukti kegiatan, dan edit draf' },
-  { value: 'ASLAB', label: 'Asisten Lab (Reviewer)', desc: 'Meninjau, memverifikasi, dan memberi komentar pada logbook' },
+  { value: 'INTERN', label: 'Intern', desc: 'Menulis logbook harian, upload bukti kegiatan, dan edit draf' },
+  { value: 'ASLAB', label: 'Asisten Laboratorium (Reviewer)', desc: 'Meninjau, memverifikasi, dan memberi komentar pada logbook' },
   { value: 'ADMIN', label: 'Administrator Logbook', desc: 'Akses penuh seluruh fitur operasional intern logbook' },
 ];
 
