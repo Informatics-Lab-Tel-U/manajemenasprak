@@ -57,6 +57,7 @@ const ROLE_OPTIONS: { value: Role; label: string }[] = [
   { value: 'ADMIN', label: 'Administrator' },
   { value: 'ASLAB', label: 'Asisten Laboratorium' },
   { value: 'ASPRAK_KOOR', label: 'Koordinator Asprak' },
+  { value: 'ASPRAK', label: 'Asisten Praktikum' },
 ];
 
 export function ManajemenAkunFormModal({ open, onOpenChange, mode, user, onSuccess }: Props) {

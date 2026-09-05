@@ -42,8 +42,9 @@ interface ApproveRequestModalProps {
 }
 
 const ROLE_OPTIONS: { value: Role; label: string; desc: string }[] = [
-  { value: 'ASLAB', label: 'Asisten Laboratorium', desc: 'Akses penuh fitur operasional praktikum & modul' },
+  { value: 'ASPRAK', label: 'Asisten Praktikum', desc: 'Akses modul & pelaksanaan kegiatan praktikum yang ditugaskan' },
   { value: 'ASPRAK_KOOR', label: 'Koordinator Asprak', desc: 'Monitoring & pelanggaran mata praktikum terkait' },
+  { value: 'ASLAB', label: 'Asisten Laboratorium', desc: 'Akses penuh fitur operasional praktikum & modul' },
   { value: 'ADMIN', label: 'Administrator', desc: 'Akses penuh seluruh sistem dan manajemen akun' },
 ];
 
