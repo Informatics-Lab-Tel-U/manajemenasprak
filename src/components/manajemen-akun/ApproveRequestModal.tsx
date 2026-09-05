@@ -2,7 +2,6 @@
 
 import * as React from 'react';
 import { toast } from 'sonner';
-import { BookOpen, Laptop } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
 import {
@@ -163,12 +162,9 @@ export function ApproveRequestModal({
         <div className="space-y-5 py-2">
           {/* Section 1: Manajemen Asprak */}
           <div className="rounded-lg border border-border/70 bg-card p-4 space-y-3">
-            <div className="flex items-center gap-2 border-b border-border/50 pb-2">
-              <Laptop className="h-4 w-4 text-primary" />
-              <div className="flex-1">
-                <h4 className="text-sm font-semibold">Manajemen Asisten Praktikum</h4>
-                <p className="text-xs text-muted-foreground">Aplikasi operasional praktikum laboratorium</p>
-              </div>
+            <div className="border-b border-border/50 pb-2">
+              <h4 className="text-sm font-semibold">Manajemen Asisten Praktikum</h4>
+              <p className="text-xs text-muted-foreground">Aplikasi operasional praktikum laboratorium</p>
             </div>
 
             <div className="space-y-2">
@@ -223,12 +219,9 @@ export function ApproveRequestModal({
           {/* Section 2: Intern Logbook */}
           <div className="rounded-lg border border-border/70 bg-card p-4 space-y-3">
             <div className="flex items-center justify-between border-b border-border/50 pb-2">
-              <div className="flex items-center gap-2">
-                <BookOpen className="h-4 w-4 text-primary" />
-                <div>
-                  <h4 className="text-sm font-semibold">Intern Logbook</h4>
-                  <p className="text-xs text-muted-foreground">Sistem pelaporan & evaluasi kegiatan magang lab</p>
-                </div>
+              <div>
+                <h4 className="text-sm font-semibold">Intern Logbook</h4>
+                <p className="text-xs text-muted-foreground">Sistem pelaporan & evaluasi kegiatan magang lab</p>
               </div>
               <div className="flex items-center gap-2">
                 <Label htmlFor="toggle-logbook" className="text-xs cursor-pointer text-muted-foreground">
