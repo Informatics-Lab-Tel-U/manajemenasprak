@@ -164,7 +164,6 @@ export function ApproveRequestModal({
           <div className="rounded-lg border border-border/70 bg-card p-4 space-y-3">
             <div className="border-b border-border/50 pb-2">
               <h4 className="text-sm font-semibold">Manajemen Asisten Praktikum</h4>
-              <p className="text-xs text-muted-foreground">Aplikasi operasional praktikum laboratorium</p>
             </div>
 
             <div className="space-y-2">
@@ -219,10 +218,7 @@ export function ApproveRequestModal({
           {/* Section 2: Intern Logbook */}
           <div className="rounded-lg border border-border/70 bg-card p-4 space-y-3">
             <div className="flex items-center justify-between border-b border-border/50 pb-2">
-              <div>
-                <h4 className="text-sm font-semibold">Intern Logbook</h4>
-                <p className="text-xs text-muted-foreground">Sistem pelaporan & evaluasi kegiatan magang lab</p>
-              </div>
+              <h4 className="text-sm font-semibold">Intern Logbook</h4>
               <div className="flex items-center gap-2">
                 <Label htmlFor="toggle-logbook" className="text-xs cursor-pointer text-muted-foreground">
                   {enableLogbook ? 'Akses Diberikan' : 'Tidak Ada Akses'}
