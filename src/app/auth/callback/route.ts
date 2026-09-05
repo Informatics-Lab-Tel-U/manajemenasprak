@@ -17,7 +17,12 @@ export async function GET(request: Request) {
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (error || !data.user) {
-      console.error('[OAuth Callback] exchangeCodeForSession failed:', error);
+      console.error('[OAuth Callback] exchangeCodeForSession failed:', {
+        message: error?.message,
+        name: error?.name,
+        status: (error as any)?.status,
+        code: (error as any)?.code,
+      });
       return NextResponse.redirect(`${origin}/login?error=auth-code-error`);
     }
 
@@ -31,6 +36,8 @@ export async function GET(request: Request) {
         `${origin}${AUTH_CONFIG.paths.login}?error=invalid-domain`
       );
     }
+
+    let userStatus = 'ACTIVE';
 
     // Ensure user profile exists in 'pengguna' table
     try {
@@ -54,6 +61,9 @@ export async function GET(request: Request) {
           role: 'ASLAB', // placeholder role until approved by admin
           status: 'PENDING',
         });
+        userStatus = 'PENDING';
+      } else {
+        userStatus = existingProfile.status || 'ACTIVE';
       }
     } catch (err) {
       console.error('[OAuth Callback] Failed to ensure pengguna row:', err);
@@ -71,6 +81,7 @@ export async function GET(request: Request) {
       if (forwardedHost) {
         // Validate against trusted host patterns
         const isAllowedHost =
+          /^([a-z0-9-]+\.)*iflab\.web\.id$/i.test(forwardedHost) ||
           /^([a-z0-9-]+\.)*iflabdev\.(org|pages\.dev|workers\.dev)$/i.test(forwardedHost) ||
           /^([a-z0-9-]+\.)*telkomuniversity\.ac\.id$/i.test(forwardedHost) ||
           /^([a-z0-9-]+\.)*vercel\.app$/i.test(forwardedHost) ||
@@ -100,6 +111,15 @@ export async function GET(request: Request) {
     }
 
     const safeBaseOrigin = resolveSafeBaseOrigin(request, origin);
+
+    if (userStatus === 'PENDING') {
+      return NextResponse.redirect(`${safeBaseOrigin}${AUTH_CONFIG.paths.pendingApproval}`);
+    }
+
+    if (userStatus === 'REJECTED') {
+      return NextResponse.redirect(`${safeBaseOrigin}${AUTH_CONFIG.paths.rejected}`);
+    }
+
     const safeRedirectPath = getSafeRedirectPath(next, safeBaseOrigin);
 
     return NextResponse.redirect(`${safeBaseOrigin}${safeRedirectPath}`);
