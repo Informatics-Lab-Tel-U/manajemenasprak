@@ -66,12 +66,18 @@ const ROLE_BADGE: Record<Role, { label: string; variant: 'default' | 'secondary'
   ADMIN: { label: 'Admin', variant: 'default' },
   ASLAB: { label: 'Aslab', variant: 'secondary' },
   ASPRAK_KOOR: { label: 'Koor Asprak', variant: 'outline' },
+  ASPRAK: { label: 'Asprak', variant: 'outline' },
+  MAHASISWA: { label: 'Mahasiswa', variant: 'outline' },
+  INTERN: { label: 'Intern', variant: 'outline' },
 };
 
 const ROLE_ICON: Record<Role, React.ElementType> = {
   ADMIN: ShieldCheck,
   ASLAB: Shield,
   ASPRAK_KOOR: User,
+  ASPRAK: User,
+  MAHASISWA: User,
+  INTERN: User,
 };
 
 export function ManajemenAkunClientPage({
